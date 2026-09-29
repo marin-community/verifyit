@@ -99,10 +99,12 @@ spec = parse_spec((tests_dir / "verifier.toml").read_text())
 reward = grade(spec, tests_dir=tests_dir, workspace=Path("/app"))
 ```
 
-Run the package tests from the repository root:
+For development, see [CONTRIBUTING.md](CONTRIBUTING.md),
+[AGENTS.md](AGENTS.md), and the [repository skills](.agents/skills).
+Run the package checks from the repository root:
 
 ```bash
-uv sync --all-extras --group test
+uv sync --locked --all-extras --group test
 uv run pytest tests
 uv run ruff check .
 uv run black --check .
