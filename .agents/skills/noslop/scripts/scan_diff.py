@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import ast
+import os
 import re
 import subprocess
 import sys
@@ -64,7 +66,7 @@ class AddedLine:
 
 def added_lines(base: str) -> list[AddedLine]:
     result = subprocess.run(
-        ["git", "diff", "--unified=0", "--no-ext-diff", base, "--"],
+        ["git", "-c", "core.quotePath=true", "diff", "--unified=0", "--no-ext-diff", base, "--"],
         check=True,
         text=True,
         stdout=subprocess.PIPE,
@@ -73,8 +75,16 @@ def added_lines(base: str) -> list[AddedLine]:
     new_line = 0
     lines: list[AddedLine] = []
     for raw in result.stdout.splitlines():
-        if raw.startswith("+++ b/"):
-            path = raw[6:]
+        if raw.startswith("diff --git "):
+            path = ""
+            new_line = 0
+            continue
+        if raw.startswith("+++ "):
+            destination = raw[4:].rstrip("\t")
+            if destination.startswith('"'):
+                # Git quotes paths as C strings with octal escapes for UTF-8 bytes.
+                destination = os.fsdecode(ast.literal_eval("b" + destination))
+            path = destination.removeprefix("b/")
             continue
         if raw.startswith("@@"):
             match = re.search(r"\+(\d+)", raw)
@@ -100,7 +110,15 @@ def untracked_lines() -> list[AddedLine]:
     for path in filter(None, paths):
         if suffix(path) not in PROSE_SUFFIXES and not TEST_PATH.search(path):
             continue
-        lines.extend(AddedLine(path, index, text) for index, text in enumerate(Path(path).read_text().splitlines(), 1))
+        content = Path(path).read_bytes()
+        if b"\0" in content:
+            continue
+        try:
+            text = content.decode("utf-8")
+        except UnicodeDecodeError:
+            # Binary fixtures under tests/ are outside the scanner's text rules.
+            continue
+        lines.extend(AddedLine(path, index, line) for index, line in enumerate(text.splitlines(), 1))
     return lines
 
 
