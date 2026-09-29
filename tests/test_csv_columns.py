@@ -4,9 +4,10 @@
 import csv
 
 import pytest
-from tasktrove_verify.grade import InvalidTask, Status
-from tasktrove_verify.modes import grade_csv
-from tasktrove_verify.spec import CsvColumnsSpec
+
+from verifyit.grade import InvalidTask, Status
+from verifyit.modes import grade_csv
+from verifyit.spec import CsvColumnsSpec
 
 ORDERS = 'name,email,quantity\nAda,ada@example.com,3\n"Grace, C.",grace@example.com,1\n'
 

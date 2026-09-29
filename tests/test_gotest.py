@@ -6,8 +6,9 @@ import shutil
 from pathlib import Path
 
 import pytest
-from tasktrove_verify.modes import grade_gotest
-from tasktrove_verify.spec import GotestSpec
+
+from verifyit.modes import grade_gotest
+from verifyit.spec import GotestSpec
 
 # A real `go test -json ./...` stream: one package with a passing test, a failing test with a
 # subtest, and a skipped test.

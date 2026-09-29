@@ -5,8 +5,9 @@ import sys
 from pathlib import Path
 
 import pytest
-from tasktrove_verify.modes import grade_pytest
-from tasktrove_verify.spec import PytestSpec
+
+from verifyit.modes import grade_pytest
+from verifyit.spec import PytestSpec
 
 REAL_TESTS = """
 from calc import add
@@ -161,7 +162,7 @@ def test_setup_runs_in_the_workspace_before_the_tests(tmp_path):
     (workspace / "test_marker.py").write_text(
         "import pathlib\n\ndef test_marker():\n    assert pathlib.Path('made-by-setup').read_text() == 'tests-dir\\n'\n"
     )
-    spec = PytestSpec(paths=("test_marker.py",), setup='echo tests-dir > made-by-setup; test -d "$TASKTROVE_TESTS_DIR"')
+    spec = PytestSpec(paths=("test_marker.py",), setup='echo tests-dir > made-by-setup; test -d "$VERIFYIT_TESTS_DIR"')
     assert grade_pytest.grade(spec, tests_dir, workspace).reward == 1.0
     failing = PytestSpec(paths=("test_marker.py",), setup="exit 3")
     reward = grade_pytest.grade(failing, tests_dir, workspace)

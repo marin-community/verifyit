@@ -3,8 +3,8 @@
 
 from pathlib import Path
 
-from tasktrove_verify.modes import grade_junit
-from tasktrove_verify.spec import JunitSpec
+from verifyit.modes import grade_junit
+from verifyit.spec import JunitSpec
 
 MAVEN_REPORT = """<?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="com.example.CalcTest" tests="4" failures="1" errors="0" skipped="1">

@@ -5,21 +5,22 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from tasktrove_verify.grade import InvalidTask, Status
-from tasktrove_verify.modes import grade_script
-from tasktrove_verify.spec import ScriptSpec
 
-# The grading script is handed the workspace as its cwd and the three TASKTROVE_* variables.
+from verifyit.grade import InvalidTask, Status
+from verifyit.modes import grade_script
+from verifyit.spec import ScriptSpec
+
+# The grading script is handed the workspace as its cwd and the three VERIFYIT_* variables.
 BASH_REWARD_JSON = """\
 #!/bin/bash
 set -euo pipefail
-answer=$(cat "$TASKTROVE_WORKSPACE/answer.txt")
-[[ "$PWD" == "$TASKTROVE_WORKSPACE" ]] || exit 9
-[[ -f "$TASKTROVE_TESTS_DIR/verifier.toml" ]] || exit 10
+answer=$(cat "$VERIFYIT_WORKSPACE/answer.txt")
+[[ "$PWD" == "$VERIFYIT_WORKSPACE" ]] || exit 9
+[[ -f "$VERIFYIT_TESTS_DIR/verifier.toml" ]] || exit 10
 if [[ "$answer" == "$1" ]]; then reward=1.0; else reward=0.0; fi
-printf '{"reward": %s, "note": "compared"}\\n' "$reward" > "$TASKTROVE_LOGS_DIR/reward.json"
+printf '{"reward": %s, "note": "compared"}\\n' "$reward" > "$VERIFYIT_LOGS_DIR/reward.json"
 # Lower-precedence channels disagree on purpose.
-printf '0.25\\n' > "$TASKTROVE_LOGS_DIR/reward.txt"
+printf '0.25\\n' > "$VERIFYIT_LOGS_DIR/reward.txt"
 echo 0.5
 """
 
@@ -27,7 +28,7 @@ PYTHON_REWARD_TXT = """\
 import os
 from pathlib import Path
 
-logs = Path(os.environ["TASKTROVE_LOGS_DIR"])
+logs = Path(os.environ["VERIFYIT_LOGS_DIR"])
 (logs / "reward.txt").write_text("0.75\\n")
 print("grading finished")
 """
@@ -59,8 +60,8 @@ def test_reward_json_wins_over_reward_txt_and_stdout(tmp_path):
 
 def test_malformed_reward_json_does_not_fall_back_to_another_channel(tmp_path):
     body = """#!/bin/bash
-printf '{broken' > "$TASKTROVE_LOGS_DIR/reward.json"
-printf '1.0' > "$TASKTROVE_LOGS_DIR/reward.txt"
+printf '{broken' > "$VERIFYIT_LOGS_DIR/reward.json"
+printf '1.0' > "$VERIFYIT_LOGS_DIR/reward.txt"
 """
     tests = _tests_dir(tmp_path, body, "test.sh")
     with pytest.raises(RuntimeError, match="not valid JSON"):
@@ -89,7 +90,7 @@ def test_last_stdout_line_is_the_reward_of_last_resort(tmp_path):
 
 
 def test_reward_outside_the_unit_interval_scores_zero(tmp_path):
-    body = '#!/bin/bash\nprintf \'{"reward": 7.0}\' > "$TASKTROVE_LOGS_DIR/reward.json"\n'
+    body = '#!/bin/bash\nprintf \'{"reward": 7.0}\' > "$VERIFYIT_LOGS_DIR/reward.json"\n'
     tests = _tests_dir(tmp_path, body, "test.sh")
     reward = grade_script.grade(ScriptSpec(path="test.sh"), tests, _workspace(tmp_path))
     assert (reward.reward, reward.status) == (0.0, Status.SCORED)
@@ -98,7 +99,7 @@ def test_reward_outside_the_unit_interval_scores_zero(tmp_path):
 
 
 def test_failing_script_that_still_reported_a_reward_is_scored(tmp_path):
-    body = '#!/bin/bash\nprintf \'{"reward": 0.5}\' > "$TASKTROVE_LOGS_DIR/reward.json"\necho boom >&2\nexit 3\n'
+    body = '#!/bin/bash\nprintf \'{"reward": 0.5}\' > "$VERIFYIT_LOGS_DIR/reward.json"\necho boom >&2\nexit 3\n'
     tests = _tests_dir(tmp_path, body, "test.sh")
     reward = grade_script.grade(ScriptSpec(path="test.sh"), tests, _workspace(tmp_path))
     assert (reward.reward, reward.status) == (0.5, Status.SCORED)

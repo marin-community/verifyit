@@ -4,9 +4,9 @@
 import json
 from pathlib import Path
 
-from tasktrove_verify import grade as grade_module
-from tasktrove_verify.grade import Status, main, scored
-from tasktrove_verify.spec import Mode
+from verifyit import grade as grade_module
+from verifyit.grade import Status, main, scored
+from verifyit.spec import Mode
 
 
 def _verdict(logs: Path) -> dict:

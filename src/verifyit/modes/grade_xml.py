@@ -12,9 +12,9 @@ mode checks only the requested field names.
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from tasktrove_verify.grade import InvalidTask, Reward, read_output, scored
-from tasktrove_verify.modes.extract import unwrap_fence
-from tasktrove_verify.spec import XmlElementsSpec
+from verifyit.grade import InvalidTask, Reward, read_output, scored
+from verifyit.modes.extract import unwrap_fence
+from verifyit.spec import XmlElementsSpec
 
 MAX_REPORTED_NAMES = 8
 

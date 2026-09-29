@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import pytest
-from tasktrove_verify.spec import (
+
+from verifyit.spec import (
     Compare,
     Constraint,
     ExactSpec,

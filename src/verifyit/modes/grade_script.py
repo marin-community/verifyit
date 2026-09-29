@@ -4,10 +4,10 @@
 """Mode script: run the task's own grading script and read back the reward it reports.
 
 This is the fallback for converters whose original ``test.sh`` logic fits no other mode. The script
-runs in the agent's workspace with ``TASKTROVE_TESTS_DIR``, ``TASKTROVE_WORKSPACE`` and
-``TASKTROVE_LOGS_DIR`` exported, and reports its reward through one of three channels, checked in
-this order: ``$TASKTROVE_LOGS_DIR/reward.json`` holding ``{"reward": <float>, ...}``,
-``$TASKTROVE_LOGS_DIR/reward.txt`` holding a bare float, or a float on the last non-empty line of
+runs in the agent's workspace with ``VERIFYIT_TESTS_DIR``, ``VERIFYIT_WORKSPACE`` and
+``VERIFYIT_LOGS_DIR`` exported, and reports its reward through one of three channels, checked in
+this order: ``$VERIFYIT_LOGS_DIR/reward.json`` holding ``{"reward": <float>, ...}``,
+``$VERIFYIT_LOGS_DIR/reward.txt`` holding a bare float, or a float on the last non-empty line of
 stdout. A script that exits without reporting a reward returns an infrastructure failure.
 """
 
@@ -19,10 +19,10 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from tasktrove_verify.grade import REWARD_JSON, REWARD_TXT, InvalidTask, Reward, scored
-from tasktrove_verify.modes.extract import last_line
-from tasktrove_verify.modes.run import STDERR_TAIL, run_command
-from tasktrove_verify.spec import DEFAULT_WORKSPACE, ScriptSpec, Spec
+from verifyit.grade import REWARD_JSON, REWARD_TXT, InvalidTask, Reward, scored
+from verifyit.modes.extract import last_line
+from verifyit.modes.run import STDERR_TAIL, run_command
+from verifyit.spec import DEFAULT_WORKSPACE, ScriptSpec, Spec
 
 SHELL = "bash"
 PYTHON = "python3"
@@ -61,13 +61,13 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
     interpreter = SHELL if script.suffix == ".sh" else PYTHON
     command = [interpreter, str(script), *spec.args]
 
-    with tempfile.TemporaryDirectory(prefix="tasktrove-script-") as logs:
+    with tempfile.TemporaryDirectory(prefix="verifyit-script-") as logs:
         logs_dir = Path(logs)
         env = {
             **os.environ,
-            "TASKTROVE_TESTS_DIR": str(tests_dir),
-            "TASKTROVE_WORKSPACE": str(cwd),
-            "TASKTROVE_LOGS_DIR": str(logs_dir),
+            "VERIFYIT_TESTS_DIR": str(tests_dir),
+            "VERIFYIT_WORKSPACE": str(cwd),
+            "VERIFYIT_LOGS_DIR": str(logs_dir),
         }
         completion = _run(command, cwd, env, spec.timeout)
         reported = _reported_reward(logs_dir, completion.stdout)

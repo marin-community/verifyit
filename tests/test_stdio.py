@@ -5,9 +5,10 @@ import sys
 from pathlib import Path
 
 import pytest
-from tasktrove_verify.grade import Status, grade
-from tasktrove_verify.modes import grade_stdio
-from tasktrove_verify.spec import Compare, StdioSpec
+
+from verifyit.grade import Status, grade
+from verifyit.modes import grade_stdio
+from verifyit.spec import Compare, StdioSpec
 
 DOUBLE = "import sys\nfor line in sys.stdin:\n    print(int(line.strip()) * 2)\n"
 OFF_BY_ONE = "import sys\nfor line in sys.stdin:\n    print(int(line.strip()) * 2 + 1)\n"

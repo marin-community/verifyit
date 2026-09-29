@@ -4,10 +4,11 @@
 from pathlib import Path
 
 import pytest
-from tasktrove_verify.grade import Status
-from tasktrove_verify.grade import grade as dispatch
-from tasktrove_verify.modes import grade_exact
-from tasktrove_verify.spec import ExactSpec
+
+from verifyit.grade import Status
+from verifyit.grade import grade as dispatch
+from verifyit.modes import grade_exact
+from verifyit.spec import ExactSpec
 
 
 def _answer(workspace: Path, text: str) -> None:

@@ -19,9 +19,9 @@ import re
 from collections import Counter
 from pathlib import Path
 
-from tasktrove_verify.grade import InvalidTask, Reward, read_output, scored
-from tasktrove_verify.modes.extract import collapse_whitespace, extract_boxed
-from tasktrove_verify.spec import ExactSpec
+from verifyit.grade import InvalidTask, Reward, read_output, scored
+from verifyit.modes.extract import collapse_whitespace, extract_boxed
+from verifyit.spec import ExactSpec
 
 ITEM_SEPARATOR = re.compile(r"[\n,]")
 MAX_DETAIL_CHARS = 400

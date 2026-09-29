@@ -17,8 +17,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from tasktrove_verify.grade import InvalidTask, Reward, scored
-from tasktrove_verify.spec import DEFAULT_WORKSPACE, GotestSpec, JunitSpec, PytestSpec, StdioSpec
+from verifyit.grade import InvalidTask, Reward, scored
+from verifyit.spec import DEFAULT_WORKSPACE, GotestSpec, JunitSpec, PytestSpec, StdioSpec
 
 KILL_GRACE = 5.0
 STDERR_TAIL = 2000
@@ -92,7 +92,7 @@ def _kill_group(proc: subprocess.Popen) -> None:
 
 def run_setup(command: str, tests_dir: Path, workspace: Path, timeout: float) -> Completed:
     """Run a spec's ``setup`` shell command in the workspace with the tests directory in its environment."""
-    env = {"TASKTROVE_TESTS_DIR": str(tests_dir), "TASKTROVE_WORKSPACE": str(workspace)}
+    env = {"VERIFYIT_TESTS_DIR": str(tests_dir), "VERIFYIT_WORKSPACE": str(workspace)}
     return run_command(["bash", "-lc", command], workspace, timeout, env=env)
 
 

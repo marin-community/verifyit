@@ -4,9 +4,10 @@
 import json
 
 import pytest
-from tasktrove_verify.grade import InvalidTask, Status
-from tasktrove_verify.modes import grade_json_schema
-from tasktrove_verify.spec import JsonSchemaSpec, SchemaFormat
+
+from verifyit.grade import InvalidTask, Status
+from verifyit.modes import grade_json_schema
+from verifyit.spec import JsonSchemaSpec, SchemaFormat
 
 SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",

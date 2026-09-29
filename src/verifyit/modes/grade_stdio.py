@@ -14,10 +14,10 @@ import tempfile
 from pathlib import Path
 from typing import NamedTuple
 
-from tasktrove_verify.grade import InvalidTask, Reward, scored
-from tasktrove_verify.modes.extract import last_line
-from tasktrove_verify.modes.run import STDERR_TAIL, Completed, run_command, split_command, workdir
-from tasktrove_verify.spec import Compare, StdioSpec
+from verifyit.grade import InvalidTask, Reward, scored
+from verifyit.modes.extract import last_line
+from verifyit.modes.run import STDERR_TAIL, Completed, run_command, split_command, workdir
+from verifyit.spec import Compare, StdioSpec
 
 INPUT_PATTERN = re.compile(r"^input_(.+)\.txt$")
 JUDGE_ACCEPT = "1"
@@ -37,7 +37,7 @@ def grade(spec: StdioSpec, tests_dir: Path, workspace: Path) -> Reward:
         if build.timed_out or build.returncode != 0:
             return scored(0.0, reason="build_failed", stderr=build.stderr[-STDERR_TAIL:], passed=0, total=len(cases))
 
-    with tempfile.TemporaryDirectory(prefix="tasktrove-stdio-") as scratch:
+    with tempfile.TemporaryDirectory(prefix="verifyit-stdio-") as scratch:
         got_path = Path(scratch) / "got.txt"
         for index, (number, input_path, expected_path) in enumerate(cases):
             try:

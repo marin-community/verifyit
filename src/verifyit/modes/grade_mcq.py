@@ -15,8 +15,8 @@ import re
 import string
 from pathlib import Path
 
-from tasktrove_verify.grade import InvalidTask, Reward, read_output, scored
-from tasktrove_verify.spec import McqSpec
+from verifyit.grade import InvalidTask, Reward, read_output, scored
+from verifyit.spec import McqSpec
 
 ANSWER = re.compile(r"Answer\s*:\s*(?!Answer)\s*([A-Za-z0-9])\s*")
 BOXED_LETTER = re.compile(r"\\boxed\{\s*([A-Za-z0-9])\s*\}")

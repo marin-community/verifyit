@@ -8,10 +8,10 @@ import pytest
 
 pytest.importorskip("math_verify", reason="math mode needs the `answer` extra")
 
-from tasktrove_verify.grade import Status
-from tasktrove_verify.grade import grade as dispatch
-from tasktrove_verify.modes import grade_math
-from tasktrove_verify.spec import MathSpec, MathType
+from verifyit.grade import Status
+from verifyit.grade import grade as dispatch
+from verifyit.modes import grade_math
+from verifyit.spec import MathSpec, MathType
 
 
 def _answer(workspace: Path, text: str) -> None:

@@ -1,0 +1,27 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.22"
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - run: uv sync --locked --all-extras --group test
+      - run: uv run pytest tests
+      - run: uv run ruff check .
+      - run: uv run black --check .
+      - run: uv run pyrefly check
+      - run: uv build

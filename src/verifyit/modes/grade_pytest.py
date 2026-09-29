@@ -15,9 +15,9 @@ import tempfile
 from dataclasses import replace
 from pathlib import Path
 
-from tasktrove_verify.grade import Reward, scored
-from tasktrove_verify.modes.run import STDERR_TAIL, check_ids, restore, run_command, run_setup, workdir
-from tasktrove_verify.spec import PytestSpec
+from verifyit.grade import Reward, scored
+from verifyit.modes.run import STDERR_TAIL, check_ids, restore, run_command, run_setup, workdir
+from verifyit.spec import PytestSpec
 
 REPORT_NAME = "report.json"
 PASS_OUTCOMES = frozenset({"passed", "xpassed"})
@@ -31,7 +31,7 @@ def grade(spec: PytestSpec, tests_dir: Path, workspace: Path) -> Reward:
         setup = run_setup(spec.setup, tests_dir, directory, spec.timeout)
         if setup.timed_out or setup.returncode != 0:
             return scored(0.0, reason="setup_failed", stderr=setup.stderr[-STDERR_TAIL:], passed=0, total=0)
-    with tempfile.TemporaryDirectory(prefix="tasktrove-pytest-") as scratch:
+    with tempfile.TemporaryDirectory(prefix="verifyit-pytest-") as scratch:
         report_path = Path(scratch) / REPORT_NAME
         argv = [
             spec.python,

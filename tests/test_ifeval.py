@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import pytest
-from tasktrove_verify.grade import InvalidTask, Status
-from tasktrove_verify.modes import grade_ifeval
-from tasktrove_verify.spec import Constraint, IfevalSpec
+
+from verifyit.grade import InvalidTask, Status
+from verifyit.modes import grade_ifeval
+from verifyit.spec import Constraint, IfevalSpec
 
 # One passing and one failing response per constraint, written the way a model would answer.
 CASES = [

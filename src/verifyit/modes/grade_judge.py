@@ -10,8 +10,8 @@ question put to the model on its own, and the reward is the fraction answered ye
 default mean aggregation scored them. Either rubric can sit behind ``constraints``, deterministic
 IFEval checks that must all pass first.
 
-The judge is any OpenAI-compatible chat endpoint, configured through ``TASKTROVE_JUDGE_BASE_URL``,
-``TASKTROVE_JUDGE_API_KEY`` and ``TASKTROVE_JUDGE_MODEL`` (``spec.model`` wins when set). A runner
+The judge is any OpenAI-compatible chat endpoint, configured through ``VERIFYIT_JUDGE_BASE_URL``,
+``VERIFYIT_JUDGE_API_KEY`` and ``VERIFYIT_JUDGE_MODEL`` (``spec.model`` wins when set). A runner
 without a configured endpoint returns an infrastructure failure.
 """
 
@@ -24,15 +24,15 @@ from pathlib import Path
 
 import openai
 
-from tasktrove_verify.grade import InvalidTask, Reward, read_output, scored
-from tasktrove_verify.modes.extract import extract_boxed
-from tasktrove_verify.modes.grade_ifeval import resolve_checks
-from tasktrove_verify.modes.ifeval import Check
-from tasktrove_verify.spec import RUBRIC_CHECKLIST, RUBRIC_REFERENCE, RUBRICS, JudgeSpec, Spec
+from verifyit.grade import InvalidTask, Reward, read_output, scored
+from verifyit.modes.extract import extract_boxed
+from verifyit.modes.grade_ifeval import resolve_checks
+from verifyit.modes.ifeval import Check
+from verifyit.spec import RUBRIC_CHECKLIST, RUBRIC_REFERENCE, RUBRICS, JudgeSpec, Spec
 
-BASE_URL_ENV = "TASKTROVE_JUDGE_BASE_URL"
-API_KEY_ENV = "TASKTROVE_JUDGE_API_KEY"
-MODEL_ENV = "TASKTROVE_JUDGE_MODEL"
+BASE_URL_ENV = "VERIFYIT_JUDGE_BASE_URL"
+API_KEY_ENV = "VERIFYIT_JUDGE_API_KEY"
+MODEL_ENV = "VERIFYIT_JUDGE_MODEL"
 
 ATTEMPTS = 2
 REASONING_LIMIT = 400

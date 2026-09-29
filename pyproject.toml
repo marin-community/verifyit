@@ -3,10 +3,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tasktrove-verify"
+name = "verifyit"
 version = "0.1.0"
-description = "One grader for TaskTrove Clean tasks: reads tests/verifier.toml, writes /logs/verifier/reward.json."
+description = "Task output grading with declarative verifier specifications and structured verdicts."
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 # The core depends only on a TOML reader so it installs quickly into every task image. Each mode
 # that needs more declares an extra below.
@@ -14,31 +16,63 @@ dependencies = [
     "tomlkit>=0.13",
 ]
 
+[project.urls]
+Repository = "https://github.com/marin-community/verifyit"
+Issues = "https://github.com/marin-community/verifyit/issues"
+
 [project.scripts]
-tasktrove-verify = "tasktrove_verify.grade:main"
+verifyit = "verifyit.grade:main"
 
 [project.optional-dependencies]
 answer = ["math-verify>=0.7", "sympy>=1.12"]
 schema = ["jsonschema>=4.20", "pyyaml>=6.0"]
 judge = ["openai>=1.40"]
 reasoning-gym = ["reasoning-gym>=0.1"]
-all = ["tasktrove-verify[answer,schema,judge,reasoning-gym]"]
+all = ["verifyit[answer,schema,judge,reasoning-gym]"]
 
 [dependency-groups]
 test = [
     "pytest>=8.3.2",
     "pytest-timeout",
     "pytest-json-report>=1.5",
+    "ruff==0.14.3",
+    "black==25.9.0",
+    "pyrefly>=1.0.0,<1.1.0",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/tasktrove_verify"]
+packages = ["src/verifyit"]
 
 [tool.hatch.build.targets.sdist]
-only-include = ["src/tasktrove_verify"]
+only-include = ["src/verifyit", "tests", "README.md", "LICENSE"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "tests"]
 timeout = 120
 filterwarnings = ["ignore::DeprecationWarning"]
 addopts = "--import-mode=importlib"
+
+[tool.ruff]
+line-length = 121
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["A", "B", "E", "F", "I", "RUF", "UP", "W", "N805", "PLR0124", "PLR1722", "RET502", "RET503", "SIM115", "PLC0415", "TID252", "ICN001"]
+ignore = ["F722", "B008", "UP015", "UP046", "UP047", "A005", "E741"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["verifyit"]
+
+[tool.black]
+line-length = 121
+target-version = ["py311"]
+
+[tool.pyrefly]
+python-version = "3.11"
+project-includes = ["src/**/*.py"]
+disable-project-excludes-heuristics = true
+search-path = ["src"]
+python-interpreter-path = ".venv/bin/python"

@@ -4,9 +4,10 @@
 import json
 
 import pytest
-from tasktrove_verify.grade import InvalidTask, Status
-from tasktrove_verify.modes import grade_reasoning_gym
-from tasktrove_verify.spec import ReasoningGymSpec
+
+from verifyit.grade import InvalidTask, Status
+from verifyit.modes import grade_reasoning_gym
+from verifyit.spec import ReasoningGymSpec
 
 NEEDLE_ENTRY = {
     "question": "Who savors playing the accordion? Reply only with a name.",

@@ -1,9 +1,9 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-from tasktrove_verify import grade as grade_module
-from tasktrove_verify.grade import InvalidTask, Status
-from tasktrove_verify.spec import McqSpec, Mode
+from verifyit import grade as grade_module
+from verifyit.grade import InvalidTask, Status
+from verifyit.spec import McqSpec, Mode
 
 
 def test_invalid_task_becomes_invalid_task_reward(tmp_path, monkeypatch):

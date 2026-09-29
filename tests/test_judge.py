@@ -7,9 +7,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
-from tasktrove_verify.grade import Status
-from tasktrove_verify.modes import grade_judge
-from tasktrove_verify.spec import Constraint, JudgeSpec
+
+from verifyit.grade import Status
+from verifyit.modes import grade_judge
+from verifyit.spec import Constraint, JudgeSpec
 
 # The dataset's own reference answer, apostrophe included: the gate must fold case, spacing and
 # punctuation without mangling non-ASCII text.
@@ -20,7 +21,7 @@ REFERENCE = (
 BOXED_RESPONSE = f"The victim state may act only in the narrow case described.\n\\boxed{{{REFERENCE}}}"
 SPACED_RESPONSE = REFERENCE.lower().replace("attack and", "attack   and").rstrip(".")
 QUESTION = "Under the narrow interpretation of Article 51 of the UN Charter, when may force be used?"
-ENV_VARS = ("TASKTROVE_JUDGE_BASE_URL", "TASKTROVE_JUDGE_API_KEY", "TASKTROVE_JUDGE_MODEL")
+ENV_VARS = ("VERIFYIT_JUDGE_BASE_URL", "VERIFYIT_JUDGE_API_KEY", "VERIFYIT_JUDGE_MODEL")
 
 
 class FakeJudgeServer(ThreadingHTTPServer):
@@ -63,9 +64,9 @@ def fake_judge(monkeypatch):
     server.prompts = []
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    monkeypatch.setenv("TASKTROVE_JUDGE_BASE_URL", f"http://127.0.0.1:{server.server_port}/v1")
-    monkeypatch.setenv("TASKTROVE_JUDGE_API_KEY", "test-key")
-    monkeypatch.setenv("TASKTROVE_JUDGE_MODEL", "fake/judge-9b")
+    monkeypatch.setenv("VERIFYIT_JUDGE_BASE_URL", f"http://127.0.0.1:{server.server_port}/v1")
+    monkeypatch.setenv("VERIFYIT_JUDGE_API_KEY", "test-key")
+    monkeypatch.setenv("VERIFYIT_JUDGE_MODEL", "fake/judge-9b")
     try:
         yield server
     finally:
@@ -152,14 +153,14 @@ def test_second_attempt_is_accepted(tmp_path, fake_judge):
 
 def test_missing_endpoint_configuration_is_an_infra_error(tmp_path, unconfigured_judge):
     spec = JudgeSpec(references=(REFERENCE,), exact_gate=False)
-    with pytest.raises(RuntimeError, match="TASKTROVE_JUDGE_BASE_URL"):
+    with pytest.raises(RuntimeError, match="VERIFYIT_JUDGE_BASE_URL"):
         grade_judge.grade(spec, tmp_path, _workspace(tmp_path, "a paraphrase"))
 
 
 def test_missing_model_configuration_is_an_infra_error(tmp_path, fake_judge, monkeypatch):
-    monkeypatch.delenv("TASKTROVE_JUDGE_MODEL")
+    monkeypatch.delenv("VERIFYIT_JUDGE_MODEL")
     spec = JudgeSpec(references=(REFERENCE,), exact_gate=False)
-    with pytest.raises(RuntimeError, match="TASKTROVE_JUDGE_MODEL"):
+    with pytest.raises(RuntimeError, match="VERIFYIT_JUDGE_MODEL"):
         grade_judge.grade(spec, tmp_path, _workspace(tmp_path, "a paraphrase"))
 
 

@@ -19,10 +19,11 @@ Expected text that math-verify cannot parse raises ``InvalidTask``.
 import re
 import threading
 from pathlib import Path
+from typing import Any
 
-from tasktrove_verify.grade import InvalidTask, Reward, numeric_tolerance, read_output, scored
-from tasktrove_verify.modes.extract import BOXED, extract_boxed, last_line, strip_math_delimiters
-from tasktrove_verify.spec import MathSpec, MathType, NumericSpec
+from verifyit.grade import InvalidTask, Reward, numeric_tolerance, read_output, scored
+from verifyit.modes.extract import BOXED, extract_boxed, last_line, strip_math_delimiters
+from verifyit.spec import MathSpec, MathType, NumericSpec
 
 SET_TYPES = frozenset({MathType.SET, MathType.INTERVAL})
 
@@ -34,8 +35,8 @@ TIMEOUT = 5
 NUMBER = re.compile(r"[-+]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d*)?(?:[eE][-+]?\d+)?|[-+]?\.\d+(?:[eE][-+]?\d+)?")
 
 
-def _timeout() -> int | None:
-    return TIMEOUT if threading.current_thread() is threading.main_thread() else None
+def _timeout() -> int:
+    return TIMEOUT if threading.current_thread() is threading.main_thread() else 0
 
 
 def _parse(text: str) -> list:
@@ -46,7 +47,7 @@ def _parse(text: str) -> list:
     return parse(f"${strip_math_delimiters(text)}$", parsing_timeout=timeout) or parse(text, parsing_timeout=timeout)
 
 
-def _verify(expected: object, candidate: object, allow_set_relation_comp: bool = False) -> bool:
+def _verify(expected: Any, candidate: Any, allow_set_relation_comp: bool = False) -> bool:
     from math_verify import verify  # noqa: PLC0415
 
     return verify(expected, candidate, allow_set_relation_comp=allow_set_relation_comp, timeout_seconds=_timeout())

@@ -9,9 +9,9 @@ constraint raises ``InvalidTask`` before the candidate is read.
 
 from pathlib import Path
 
-from tasktrove_verify.grade import InvalidTask, Reward, read_output, scored
-from tasktrove_verify.modes.ifeval import CONSTRAINTS, Check
-from tasktrove_verify.spec import Constraint, IfevalSpec
+from verifyit.grade import InvalidTask, Reward, read_output, scored
+from verifyit.modes.ifeval import CONSTRAINTS, Check
+from verifyit.spec import Constraint, IfevalSpec
 
 
 def resolve_checks(constraints: tuple[Constraint, ...]) -> list[tuple[Constraint, Check]]:

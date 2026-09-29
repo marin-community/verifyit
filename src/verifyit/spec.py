@@ -160,7 +160,7 @@ class PytestSpec:
     must_not_break: tuple[str, ...] = ()
     setup: str = ""
     """Shell command run in the workspace after restore and before the tests, with
-    ``TASKTROVE_TESTS_DIR`` and ``TASKTROVE_WORKSPACE`` in its environment."""
+    ``VERIFYIT_TESTS_DIR`` and ``VERIFYIT_WORKSPACE`` in its environment."""
     restore: tuple[str, ...] = ()
     python: str = "python3"
     timeout: float = 600.0
@@ -175,7 +175,7 @@ class JunitSpec:
     must_not_break: tuple[str, ...] = ()
     setup: str = ""
     """Shell command run in the workspace after restore and before the tests, with
-    ``TASKTROVE_TESTS_DIR`` and ``TASKTROVE_WORKSPACE`` in its environment."""
+    ``VERIFYIT_TESTS_DIR`` and ``VERIFYIT_WORKSPACE`` in its environment."""
     restore: tuple[str, ...] = ()
     timeout: float = 600.0
     workspace: str = DEFAULT_WORKSPACE
@@ -189,7 +189,7 @@ class GotestSpec:
     must_not_break: tuple[str, ...] = ()
     setup: str = ""
     """Shell command run in the workspace after restore and before the tests, with
-    ``TASKTROVE_TESTS_DIR`` and ``TASKTROVE_WORKSPACE`` in its environment."""
+    ``VERIFYIT_TESTS_DIR`` and ``VERIFYIT_WORKSPACE`` in its environment."""
     restore: tuple[str, ...] = ()
     timeout: float = 600.0
     workspace: str = DEFAULT_WORKSPACE

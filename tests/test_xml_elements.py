@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import pytest
-from tasktrove_verify.grade import InvalidTask, Status
-from tasktrove_verify.modes import grade_xml
-from tasktrove_verify.spec import XmlElementsSpec
+
+from verifyit.grade import InvalidTask, Status
+from verifyit.modes import grade_xml
+from verifyit.spec import XmlElementsSpec
 
 ORDER = """
 <order id="A-1">

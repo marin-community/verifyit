@@ -16,7 +16,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from tasktrove_verify.spec import (
+from verifyit.spec import (
     DEFAULT_WORKSPACE,
     RUBRIC_REFERENCE,
     ExactSpec,
@@ -35,7 +35,7 @@ REWARD_JSON = "reward.json"
 REWARD_TXT = "reward.txt"
 VERDICT_JSON = "verdict.json"
 
-logger = logging.getLogger("tasktrove_verify")
+logger = logging.getLogger("verifyit")
 
 
 class Status(StrEnum):
@@ -173,7 +173,7 @@ GRADERS: dict[Mode, Grader] = {}
 
 def grader_for(mode: Mode) -> Grader:
     if mode not in GRADERS:
-        GRADERS[mode] = importlib.import_module(f"tasktrove_verify.modes.{MODE_MODULES[mode]}").grade
+        GRADERS[mode] = importlib.import_module(f"verifyit.modes.{MODE_MODULES[mode]}").grade
     return GRADERS[mode]
 
 

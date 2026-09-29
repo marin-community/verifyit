@@ -14,9 +14,9 @@ has the id ``FooSuite.AddsTwo``.
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from tasktrove_verify.grade import Reward, scored
-from tasktrove_verify.modes.run import STDERR_TAIL, check_ids, restore, run_command, run_setup, split_command, workdir
-from tasktrove_verify.spec import JunitSpec
+from verifyit.grade import Reward, scored
+from verifyit.modes.run import STDERR_TAIL, check_ids, restore, run_command, run_setup, split_command, workdir
+from verifyit.spec import JunitSpec
 
 FAILURE_TAGS = ("failure", "error")
 SKIP_TAG = "skipped"
