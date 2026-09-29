@@ -22,5 +22,7 @@ jobs:
       - run: uv sync --locked --all-extras --group test
       - run: uv run pytest tests
       - run: infra/pre-commit.py --all-files
+        env:
+          UV_PYTHON: "3.12"
       - run: uv run --isolated --locked --python 3.12 --group style marin-style sync --check
       - run: uv build
