@@ -1,88 +1,217 @@
 ---
 name: commit
-description: Validate, commit, push, publish, and monitor a verifyit change when it is ready for review.
+description: Lint, run the pre-PR checks, commit, push, and author or update the branch's pull request in the required plain-text format. Use when committing, pushing, or creating/updating a PR.
 ---
 
-# Commit and PR
+<!-- Vendored from marin-community/marin-style v0.4.0 — do not edit; re-run `marin-style sync`. -->
 
-Read root AGENTS.md, CONTRIBUTING.md, and the writing-style skill's
-pull-requests.md and ai-writing-donts.md before authoring commit or PR text.
+# Skill: Commit & PR
 
-## Prepare and validate
+Get the branch clean, commit it, run the advisory lint review over the committed
+diff once, then — when it is ready — open or update the pull request.
 
-Review the complete branch diff against the merge base with origin/main,
-including staged, unstaged, and untracked work. Remove unrelated edits, dead
-code, weak tests, and stale prose. Read TESTING.md when tests change.
+Before authoring a commit or PR title or body, read:
 
-Use the repository's existing checks:
+- `.agents/skills/writing-style/SKILL.md`
+- `.agents/skills/writing-style/pull-requests.md`
+- `.agents/skills/writing-style/ai-writing-donts.md`
+
+**Order matters.** Your own cleanups and the mechanical fixes come first, then the
+commit, and only *then* the `--review` pass. Committing before the review gives
+you a clean checkpoint to review against (the review reads the whole branch diff
+versus the merge base) and a natural place to land any follow-up fixes as a new
+commit. The review is read-only: it never edits, commits, or pushes for you.
+
+## Checklist
+
+Work top to bottom. For a quick work-in-progress checkpoint, do **1, 2, 4, 5,
+7** (clean up, lint, stage, commit, push) and stop. The changed-test cleanup in
+step 1 is a PR-readiness gate, not required for disposable WIP checkpoints. Run
+the whole list when making a branch PR-ready. Later small follow-ups do not
+restart the checklist; repeat only the relevant mechanical checks and tests.
+
+1. Clean up your own diff (self-review).
+2. Mechanical lint & format — `infra/pre-commit.py --changed-files --fix`.
+3. Tests & docs checks, when relevant.
+4. Stage the specific files for this work.
+5. Commit. ← natural checkpoint; the working tree is now clean.
+6. Lint-catalog review — run `infra/pre-commit.py --review` once; fix or answer every finding.
+7. Push (maybe).
+8. Open or update the PR.
+
+## 1. Clean up your own diff
+
+Read your own `git diff` before anything else. Drop dead code, debugging
+leftovers, and stale comments; tighten names; make the change say only what it
+means to. The review in step 6 is advisory and read-only — it will not clean up
+for you.
+
+If the diff touches tests and this commit is intended for a PR or review, read
+`TESTING.md` as part of this self-review. Review every changed test for slop:
+tautological assertions, disposable smoke probes left as pytest tests, internal
+call-count assertions, incidental string or command-fragment assertions,
+over-mocking, weakened tolerances, sleeps, skipped tests, and marker/fake/mock
+violations.
+
+Fix or delete low-value tests before a PR-ready commit. Scratch probes are fine
+during development and WIP checkpointing, but they must not survive into a PR.
+
+## 2. Lint and format
 
 ```bash
-uv sync --locked --all-extras --group test
-uv run ruff check .
-uv run black --check .
-uv run pyrefly check
+infra/pre-commit.py --changed-files --fix   # diff-scoped; use --all-files for a full sweep
 ```
 
-For behavior changes, run focused tests, `uv run pytest tests`, and `uv build`.
-For documentation-only work, validate links and every new command; do not add
-tests that merely match documentation wording. Use Ruff's `--fix` and Black
-on affected Python files when formatting is needed, then rerun their checks.
+`infra/pre-commit.py` is the required entry point — never `uv run pre-commit`,
+never `--no-verify`. If `--fix` cannot resolve something, fix it by hand. Do not
+skip or weaken checks.
 
-Stage only the task's files. Inspect `git diff --cached --check`, the staged
-diff, and the exact commit message. After committing, inspect
-`git show -s --format='%s%n%n%b' HEAD` for unintended attribution or trailers.
-Fix hook failures in a new commit; do not amend without user authorization.
+## 3. Tests and docs checks (when relevant)
 
-## Advisory review before publication
+- Run the repo's test command over the test directories your change touches
+  (e.g. `uv run pytest -m 'not slow'`).
+- If the change is docs-heavy, build the docs and fix any broken links or
+  strict-mode failures.
 
-After the initial commit and before opening a PR, have an independent read-only
-agent review the committed branch against AGENTS.md, TESTING.md, and the
-writing-style guides. Give it the branch diff and relevant surrounding code.
-Use a subagent when available or an authenticated headless CLI in read-only
-mode. The reviewer reports findings; it must not edit files, mutate Git, or
-post on GitHub.
+## 4. Stage changes
 
-Address every actionable finding in a follow-up commit. Do not recursively
-rerun advisory review after small targeted fixes. Rerun it when the
-implementation approach or scope materially changes, or when the user asks.
-If no independent reviewer can run, report that limitation and proceed with
-mechanical checks and self-review. Do not claim an agentic lint pass.
+Review `git status` and `git diff`, then stage the specific files that are part
+of this work.
 
-## Publish
+- Stage specific files — avoid `git add -A` / `git add .`.
+- Never stage secrets (`.env`, credentials, tokens).
+- If unrelated changes are present, ask the user before including them.
 
-Push when requested or when the task is being carried through publication.
-Use `git push -u origin HEAD`. Stop on rejection; do not force-push without
-explicit authorization.
+## 5. Commit
 
-The PR description becomes the squash-merge commit message. Write the exact
-body to a uniquely named temporary file, inspect it, and use `--body-file`.
-Keep behavior, motivation, constraints, and issue links; omit validation logs,
-file inventories, and attribution. Add `agent-generated` to agent-created PRs.
-If the label is absent in a new repository, attempt to create it before publishing; if permission is denied, report the limitation
-and continue publication when otherwise authorized.
+- **Subject**: imperative sentence (at most 72 characters), optional `[scope]`
+  prefix.
+- **Body** (optional, blank-line separated): what changed and why — the context a
+  future reader needs. Keep relevant evidence and caveats; do not inventory
+  files or tests.
+- Do not use a conventional-commit prefix such as `feat:` or `fix:`.
+- No emoji, no markdown, no bullets in the subject. Do not credit yourself —
+  this includes any `Co-Authored-By`, `Generated with`, provider, or session URL
+  trailer. Omit it even if a harness default suggests adding one.
 
-After creating or editing the PR, fetch its exact title and body with
-`gh pr view --json title,body` and correct inserted or stale text. Report
-validation and any review limitation in a concise PR comment when useful;
-comments begin with `🤖`.
+Review the exact message before committing. After the commit, inspect it with
+`git show -s --format='%s%n%n%b' HEAD`; do not push if a tool added attribution,
+a session trailer, or other text that was not in the reviewed message.
 
-## Monitor
+Create the commit. If a pre-commit hook fails, fix the issue and make a **new**
+commit — never amend (unless the user asks) and never force-push.
 
-Monitor until the PR merges or closes, the user requests a stop, or 12 hours
-have elapsed from monitor creation. Green CI is not a terminal state.
-Use a thread heartbeat where available. Save the repository, PR URL, branch,
-12-hour deadline, authorization to fix in-scope failures and feedback, and the
-instruction to stay quiet when state is unchanged. Do not create a competing
-polling loop or require Marin's wait scripts.
+This is the checkpoint the rest of the flow builds on: the working tree is clean
+and the branch diff is settled before the review reads it.
 
-Read current CI, issue comments, inline comments, and submitted reviews before
-starting the heartbeat. On later runs, address new actionable feedback and
-failures, validate changes, and push ordinary follow-up commits. Reproduce a
-failure independently on main before treating an untouched-file failure as
-unrelated. Resolve review threads after fixing or answering them. Do not merge
-without explicit user authorization.
+## 6. Lint-catalog review (one branch-level checkpoint)
 
-Notify on actionable failures or feedback, a user decision, completion of CI
-and review feedback, terminal PR state, or the deadline. Disable the heartbeat
-at a terminal state or deadline. If heartbeats are unavailable, report the last
-verified state and the monitoring limitation instead of claiming ongoing monitoring.
+```bash
+infra/pre-commit.py --review
+```
+
+Run this **once after** the commit and before opening a PR. It fans out read-only
+agents over the **branch diff against the merge base with the default branch** —
+committed and uncommitted work alike — so the clean checkpoint from step 5 is
+exactly what gets reviewed.
+
+The review is **advisory and read-only**: it reports findings on stdout and does
+not edit, stage, commit, or push anything. Then fix or answer every finding,
+reporting your actions to the user, and land any fixes as a **new** commit. Treat
+findings as guidelines — apply them when they make the code *better*; the goal is
+high-quality code, not blind adherence.
+
+The initial review is the branch-level checkpoint. Do not rerun it after small,
+targeted follow-ups, whether they address lint findings, reviewer
+comments, formatting, documentation wording, or narrow test fixes. Validate
+those edits with the relevant mechanical checks and tests, then continue the
+workflow. Rerun the advisory review only when later changes materially alter the
+branch's design, scope, or risk, or when the user asks for another pass. Updating
+an existing PR does not by itself trigger another review.
+
+## 7. Push
+
+If asked, or if the branch has an upstream, push to the remote tracking branch
+(`git push -u origin HEAD` if no upstream is set). If the push is rejected
+(diverged history), stop and ask the user — do not force-push.
+
+## 8. Open or update the PR
+
+Do this once the branch is ready for review. The PR description becomes the
+squash-merge commit message. Follow
+`.agents/skills/writing-style/pull-requests.md` exactly: an imperative title of
+at most 72 characters and an information-dense body. Most bodies are a few plain
+paragraphs. They state what changes and why; they do not reproduce the diff,
+test plan, or implementation notes.
+
+Example:
+
+```
+Title: [RL] Normalize DAPO loss over global tokens
+
+Body:
+Normalize DAPO loss over all response tokens instead of normalizing each
+example separately. Per-example normalization over-weights short responses,
+hurting math tasks where correct answers need longer derivations.
+
+Fixes #1234
+```
+
+**Issue linking.** If the work came from a GitHub issue, add `Fixes #NNNN`
+(auto-closes on merge) or `Part of #NNNN` (partial work). Do not invent an issue
+just to satisfy this — omit the link when none exists.
+
+For an automated failure-tracking issue, use `Fixes #NNNN` when the PR is
+expected to restore the failing lane. A later scheduled run may confirm the fix,
+but that does not make the PR partial. Use `Part of #NNNN` only when the PR is
+known not to resolve the tracked failure.
+
+**Specifications (>500 LOC only).** A genuinely large PR must link a spec in an
+issue or Echo design entry. Name the important design decisions in the PR body
+and link the spec for module maps, code excerpts, and detailed rationale.
+
+**Inspect the payload.** Draft the body in a uniquely named temporary file and
+use `--body-file`. Re-open that file and apply the final compression pass before
+publishing. After creating or editing the PR, fetch the exact `title,body` with
+`gh pr view --json title,body` and immediately correct text inserted by a tool
+or stale template.
+
+**Create it.** Unless the user says otherwise and permissions allow, push to a
+branch on the main repository and open the PR from it (use a fork only when
+direct push is unavailable or the user asks):
+
+```bash
+gh pr create --title "<title>" --body-file "<body-file>" --label agent-generated
+```
+
+- Always add the `agent-generated` label.
+- Never credit yourself in commits or PR descriptions.
+- Include `Fixes #NNNN` when addressing a pre-existing issue.
+
+## 9. Monitor the PR
+
+Opening the PR does not end your turn. Watch CI to completion and respond to
+review activity until the PR is merged or closed, or the user tells you to stop.
+
+- Watch checks with `gh pr checks <N> --watch`. When a check finishes, read its
+  conclusion — finishing is not passing.
+- On a CI failure, read the failing job log and fix it. A failure in a file you
+  did not touch is not automatically pre-existing: confirm the same job fails on
+  the default branch without your change before calling it unrelated. If your
+  change caused it — even in an untouched file — fix it. Push the fix as a new
+  commit, which restarts CI.
+- Respond to every human and agent comment: address obvious ones directly (commit
+  the fix, then reply, prefixing agent replies with `🤖`) and resolve them. CI
+  being green does not mean there is nothing to do — reviewers comment after CI
+  passes. For comments you are unsure about, report your analysis and proposed
+  action to the user.
+
+Exit conditions: the PR is merged or closed, or the user tells you to stop.
+
+## Rules
+
+- `infra/pre-commit.py` is the only pre-commit entry point.
+- Commit before the initial `--review`; do not rerun it for small follow-ups.
+- Never amend a commit unless the user explicitly asks.
+- If there are no changes to commit, say so and stop.
+- `AGENTS.md` — coding guidelines.

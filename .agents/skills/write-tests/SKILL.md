@@ -1,18 +1,47 @@
 ---
 name: write-tests
-description: Add, revise, or review verifyit tests for an explicit behavior change, regression, or test-quality request.
+description: Write or revise tests with an emphasis on behavior, regression coverage, pytest style, and avoiding "slop tests." Use when adding tests, fixing failing tests, reviewing test quality, or deciding what test would catch a bug.
 ---
 
-# Write tests
+<!-- Vendored from marin-community/marin-style v0.4.0 — do not edit; re-run `marin-style sync`. -->
 
-Read root AGENTS.md, CONTRIBUTING.md, and TESTING.md. They own behavioral value,
-test style, fakes and mocks, timing, numerical tolerances, and commands.
+# Write Tests
 
-Before adding a standalone scalar or configuration guard test, name the
-reported regression or public contract it protects. Otherwise test the
-consequential behavior on the valid path or omit the test. Do not pin a dependency
-version, default, or serialized configuration unless a consumer depends on it.
+Use this skill when a change needs tests or when existing tests look too coupled
+to implementation details.
 
-Extend the existing mode test file. Prefer real temp workspaces, subprocesses,
-and the local judge HTTP fixture to mocks of internal helpers. Run focused
-tests while editing and the full local suite for behavior changes before publication.
+Read `TESTING.md` before writing or reviewing non-trivial tests. It is the shared
+behavior-focused testing policy, also used by `commit`. Read `AGENTS.md` for the
+repo's coding standards. If the repo has package- or module-specific testing
+docs, read the nearest one for local commands, markers, fakes, mocks, and
+numerical tolerances before choosing a test style.
+
+## Workflow
+
+1. Find existing tests for the touched behavior before creating a new file.
+2. Check for repo-specific testing rules for commands, markers, fakes, mocks, and
+   numerical tolerances.
+3. Name the behavior that should fail if the code is wrong. For a scalar or
+   configuration guard, also name the reported regression or
+   compatibility-critical public contract it protects. If there is none, do not
+   add a standalone guard test.
+4. Write the smallest test that observes consequential behavior through a public API,
+   structured output, persisted state, or real side effect.
+5. Prefer a regression test before the fix when fixing a bug. Ensure the test
+   fails before implementing the bug fix.
+6. Keep test setup realistic but small. Use fixtures and parameterization to
+   remove duplication.
+7. Prefer one behavior test that covers the valid outcome and meaningful
+   boundary over separate tests for every validation predicate.
+8. Run the narrow test first, then the relevant package test command. Before a
+   PR, run the repo lint entry point required by `AGENTS.md`.
+
+## Default Commands
+
+- Run the repo's test command over the test directories your change touches
+  (e.g. `uv run pytest -m 'not slow'`).
+- For package-specific commands, use the relevant package testing doc.
+
+For PR preparation, run `infra/pre-commit.py --changed-files --fix` or
+`infra/pre-commit.py --all-files --fix` as appropriate. Do not replace it with
+`uv run pre-commit`.

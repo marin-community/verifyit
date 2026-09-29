@@ -106,9 +106,7 @@ Run the package checks from the repository root:
 ```bash
 uv sync --locked --all-extras --group test
 uv run pytest tests
-uv run ruff check .
-uv run black --check .
-uv run pyrefly check
+infra/pre-commit.py --all-files
 uv build
 ```
 

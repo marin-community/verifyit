@@ -104,9 +104,7 @@ while safe fixes remain.
 Run the narrow affected tests, then:
 
 ```bash
-uv run ruff check .
-uv run black --check .
-uv run pyrefly check
+infra/pre-commit.py --changed-files --fix
 ```
 
 Run independent advisory review at the point required by the commit workflow. Do not claim a clean pass while known findings remain.

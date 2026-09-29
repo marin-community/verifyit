@@ -1,26 +1,28 @@
 ---
 name: debug
-description: Diagnose a stated verifyit grading, parsing, CLI, dependency, or executable-test failure.
+description: Debug code bugs and operational faults while recording distilled hypotheses, evidence, and outcomes in Marin's shared Echo work log.
 ---
 
-# Debug
+<!-- Vendored from marin-community/marin-style v0.4.0 — do not edit; re-run `marin-style sync`. -->
 
-Read AGENTS.md, CONTRIBUTING.md, and TESTING.md. Keep working notes in the
-active task or existing issue/PR. Search Git history and related GitHub issues
-when prior behavior could explain the symptom.
+# Skill: Debug
 
-Reproduce with the smallest spec, candidate output, and local workspace that
-shows the failure. Identify whether the observable outcome is a wrong score,
-invalid task, infrastructure error, or an incorrect CLI/verdict file. Trace
-through spec parsing, grade dispatch, the mode grader, and shared execution
-helpers as needed.
+Invoke `consult-echo` before forming a new diagnosis when prior decisions,
+incidents, or exact errors could help. Use `task-logbook` to append distilled
+milestones to Echo during any multi-step investigation. Do not create a
+repository debug-log file unless the user explicitly asks for one.
 
-Keep optional-dependency installation and task-toolchain failures distinct
-from candidate failure. Use the local HTTP fixture for judge diagnosis unless
-a live endpoint is explicitly part of the requested work. For subprocess
-failures, inspect exit status, timeout state, stdout/stderr, and process-group
-cleanup in a temporary workspace.
+For infrastructure or operational faults, first read any operations runbook the
+repo provides and follow its matching section. Its guardrails take precedence.
 
-State a falsifiable cause, change one cause at a time, and validate the failed
-behavior through the public API or CLI. Add a regression test when it protects
-the observable contract; follow write-tests and the commit workflow for publication.
+Work one hypothesis at a time:
+
+1. Record the initial symptom and evidence in the Echo work log.
+2. State one falsifiable hypothesis and the smallest check that distinguishes it.
+3. Run the check, then append the result and its evidence URL or command output.
+4. Repeat until the cause is established or the investigation is blocked.
+5. Add a regression test for a code fix when one can catch the failure.
+
+At resolution, invoke `write-ops-log` for an infrastructure incident or a
+durable multi-step diagnosis. The final Echo wiki entry records the reusable
+cause, recovery, and evidence; the work log remains the chronological record.

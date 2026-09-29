@@ -5,7 +5,7 @@ description: Review an explicitly identified verifyit pull request for introduce
 
 # Review a pull request
 
-Inspect PR metadata, current head, issue comments, inline comments, and submitted
+Read the shared core referenced by AGENTS.md. Inspect PR metadata, current head, issue comments, inline comments, and submitted
 reviews with `gh`. Read AGENTS.md and the instructions that scope changed
 paths; read TESTING.md when tests change. Review the complete merge-base diff
 and relevant surrounding code at the PR's current head. If a requested head
