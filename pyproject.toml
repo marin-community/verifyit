@@ -31,6 +31,9 @@ reasoning-gym = ["reasoning-gym>=0.1"]
 all = ["verifyit[answer,schema,judge,reasoning-gym]"]
 
 [dependency-groups]
+style = [
+    "marin-style @ git+https://github.com/marin-community/marin-style@727f180cd423246ca1a6164163a5883cda5bf52b ; python_version >= '3.12'",
+]
 test = [
     "pytest>=8.3.2",
     "pytest-timeout",
@@ -76,3 +79,8 @@ project-includes = ["src/**/*.py"]
 disable-project-excludes-heuristics = true
 search-path = ["src"]
 python-interpreter-path = ".venv/bin/python"
+
+[tool.marin-style]
+checks = ["ruff-check", "black", "typecheck"]
+ruff_version = "0.14.3"
+black_version = "25.9.0"
