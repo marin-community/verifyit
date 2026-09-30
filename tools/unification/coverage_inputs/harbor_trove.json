@@ -489,16 +489,19 @@
       "entity_id": "harbor:bfcl",
       "evidence": [
         "docs/unification/harbor_semantics.json#bfcl",
-        "docs/unification/harbor_inventory.json#bfcl"
+        "docs/unification/harbor_inventory.json#bfcl",
+        "integrations/harbor/bfcl-script-verifyit.patch",
+        "evidence/e2e/wiring/harbor-bfcl/image-results-branches.json",
+        "evidence/e2e/wiring/harbor-bfcl/manager-image-results-branches.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_native_runtime_bridge",
+      "implementation_present": true,
       "name": "bfcl",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/bfcl/src/bfcl_adapter/task-template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate the other generated task categories and archived candidate workspaces before wider deployment; the retained source scorer is not a native BFCL comparator.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Generated evaluate.py uses official BFCL AST/function-call evaluator; preserve execution/multi-turn task-type routing and native correctness result. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "A generated ScriptSpec executes the preserved BFCL test.sh and category-specific evaluator inside the original task Python, then converts its binary reward to a structured verdict. The client rejects boolean/numeric and overflowing numeric-string false positives while retaining source matching for ordinary values.",
       "source_evidence": [
         {
           "functions": [
@@ -529,8 +532,8 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Eleven bounded generated-image cases executed pinned original test.sh, direct verifyit CLI and actual Harbor Verifier, including simple, live relevance, irrelevance and reordered parallel calls. Boolean/numeric and overflowing numeric-string source false positives became scored zero; malformed trusted evaluator was unscored. Other categories and saved model-run workspaces remain unvalidated; frozen bfclparity-pi tracker links could not be replayed while AWS SSO credentials were expired."
     },
     {
       "entity_id": "harbor:bigcodebench_hard",

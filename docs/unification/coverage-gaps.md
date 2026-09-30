@@ -8,7 +8,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Evalchemy 42 custom benchmarks | 5 native integrations + 3 math hybrids | 34 not integrated (23 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid | 17 not integrated; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 26 source-patched (16 with selected real traces, 10 without eligible real traces) | 1 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
-| Harbor 87 adapters | 11 exact/MCQ/pytest clients + 1 structured native-runtime bridge | 75 not integrated; tau3 retains native evaluator |
+| Harbor 87 adapters | 11 exact/MCQ/pytest clients + 2 structured source-runtime bridges | 74 not integrated; BFCL and tau3 retain source evaluators |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
@@ -140,7 +140,7 @@ The two external objectives are not correctness verifiers:
 
 ## Harbor
 
-The 75 unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval, HumanEvalFix, BigCodeBench-Hard, AutoCodeBench, MMAU, CodePDE and ReplicationBench invoke the existing pytest route. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; 11 primitive clients are now implemented.
+The 74 unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval, HumanEvalFix, BigCodeBench-Hard, AutoCodeBench, MMAU, CodePDE and ReplicationBench invoke the existing pytest route. BFCL and tau3 retain source scorers behind structured ScriptSpec clients. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; 11 primitive clients are now implemented.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
@@ -151,7 +151,6 @@ The 75 unwired adapters are named individually. Four answer-file clients invoke 
 | aider_polyglot | not_integrated | pytest, gotest, junit, script | Generated language-specific test commands and test-source merge; Python pytest, Go tests and XML-reporting Java suites map to their primitives; Rust/native custom exits retain script. Port test-source merge and route Python pytest, Go terminal events, Java JUnit and custom Rust/native execution according to actual reports; preserve per-language setup and native binary all-pass policy. |
 | algotune | not_integrated | pytest, script | Pytest asserts optimization speedup plus correctness; retain device/runtime benchmark and reward emitted by test, not generic pass fraction. Keep native device/runtime correctness and timing assertions plus the original speedup reward; pytest pass fraction alone does not preserve optimization scoring. |
 | arc_agi_2 | not_integrated | json-schema | JSON output grid structural equality maps to schema const expected grid. Generate schema const plus integer cell types from the exact expected grid; provide the task file discovery/configuration. |
-| bfcl | not_integrated | script | Generated evaluate.py uses official BFCL AST/function-call evaluator; preserve execution/multi-turn task-type routing and native correctness result. Add a structured ScriptSpec producer around adapters/bfcl/src/bfcl_adapter/task-template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary. |
 | bird_bench | not_integrated | script | Execute predicted and ground-truth SQL against task database and compare result sets; retain SQL progress timeout and database state. Add a structured ScriptSpec producer around adapters/bird_bench/src/bird_bench/task-template/tests/evaluate.py, adapters/bird_bench/src/bird_bench/task-template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary. |
 | bixbench | not_integrated | judge | Binary OpenAI semantic question/target/prediction judge; retain prompts and existing answer discovery. Port source question/target/prediction prompt and answer discovery into a status-preserving script client; classify unavailable API/model as infra_error rather than zero. |
 | bixbench-verified-50 | not_integrated | numeric, judge | Declared precision_policy selects deterministic rounded numeric comparison or semantic judge. Dispatch precision_policy: round both normalized finite numbers to the declared decimal precision before exact comparison; keep the native semantic judge only for judge policies, with explicit status translation. |
@@ -236,10 +235,11 @@ The 75 unwired adapters are named individually. Four answer-file clients invoke 
 | replicationbench | native_route_available | pytest | The generated PytestSpec runs the protected source comparator and retains its binary all-tests reward, comparison artifact and task Python environment. Validate additional generated task instances, broader data dependencies and saved model traces before wider deployment. |
 | satbench | native_route_available | exact | The generated script takes the last case-sensitive [SAT] or [UNSAT] marker and grades that label exactly. No missing client integration; validate model-run traces and each task image before wider deployment. |
 
-### Retained native evaluator
+### Retained source evaluators
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
+| bfcl | native_fallback | script | A generated ScriptSpec executes the preserved BFCL test.sh and category-specific evaluator inside the original task Python, then converts its binary reward to a structured verdict. Validate the other generated task categories and archived candidate workspaces before wider deployment; the retained source scorer is not a native BFCL comparator. |
 | tau3-bench | native_fallback | script | Native state/tool-action/NL evaluation remains in tau2; verifyit provides structured score/status/process boundary. No missing client integration: current tau3 patch invokes ScriptSpec.verdict_file and trusted pinned asset manifest, retaining native tau2 simulation/judge runtime. |
 
 ### Additional tracker replay requirements
@@ -275,6 +275,8 @@ Harbor MMAU preserves the source CTRF artifact with PytestSpec arguments alongsi
 Harbor CodePDE's generated PytestSpec runs the unchanged upstream nRMSE evaluator in a protected directory for each of five PDE variants. The candidate solver receives only public numerical inputs in an unprivileged Landlock child; trusted code validates exact shape and finite values before computing the source metric and binary 0.05 threshold. Ten generated-image reference/wrong cases matched original test.sh, CLI and Harbor Verifier on bounded HDF5 fixtures. Seven adversarial cases reject source false positives from forged stdout and reference reads, along with reward writes and malformed outputs; missing/empty solvers stay unscored. A detached candidate child was reaped before scoring. Full-size data and saved model traces remain unvalidated.
 
 Harbor ReplicationBench's generated PytestSpec executes the protected source comparator and preserves its binary all-tests policy and comparison artifact. A generated image matched original test.sh, direct CLI and Harbor Verifier for nested passing, wrong and missing-result fixtures. The source accepted a boolean as a numeric answer; the patched comparator scores it zero. Explicit null remains valid, while absent or malformed trusted references and incompatible tolerances are unscored. These are bounded generated fixtures; broader task data and saved model traces remain unvalidated.
+
+Harbor BFCL's structured ScriptSpec keeps the source evaluator and task Python, with verifyit on a separate Python 3.11 runtime. Eleven generated-image cases matched original test.sh, direct CLI and Harbor Verifier across simple, live relevance, irrelevance and parallel calls. Two source false positives from boolean/numeric and overflowing numeric-string comparisons score zero after hardening; a malformed protected evaluator is unscored. Other categories and the linked bfclparity-pi model workspaces remain unvalidated because the available AWS SSO token expired.
 
 SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Ten patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, two dormant QA APIs, legacy text2sql and three dormant math APIs. These routes have source-fixture validation, with documented intentional math corrections; the SWE pivot dispatches to Harbor in the observed population.
 

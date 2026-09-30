@@ -102,6 +102,21 @@ unscored, while explicit null remains valid. Broader task instances, scientific
 data and saved model traces remain unvalidated. Evidence is in
 `evidence/e2e/wiring/harbor-replicationbench/`.
 
+Apply `bfcl-script-verifyit.patch` after the Harbor dispatcher patch. Its
+generated `ScriptSpec` executes the original `test.sh` and category-specific
+evaluator through verifyit's structured native-runtime bridge. The benchmark
+continues on Python 3.10 for the tested Python categories; verifyit uses a
+separate Python 3.11 environment pinned to local commit
+`aece7bd55701b60945135c4091578bb49bbd726e`. The image proof replaced only
+the unpublished Git install with a wheel from that exact commit. Eleven
+generated-image cases ran the pinned source script, direct CLI and actual Harbor
+Verifier, covering simple, live relevance, irrelevance and reordered parallel
+calls. Boolean-as-number and overflowing numeric-string comparisons no longer
+earn source false-positive credit. Invalid trusted references abort generation;
+malformed protected evaluator code leaves no reward. Other categories and
+archived candidate workspaces remain unvalidated while AWS SSO is expired.
+Evidence is in `evidence/e2e/wiring/harbor-bfcl/`.
+
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
 required by each task's `tests/verifier.toml` inside the verifier image. The
