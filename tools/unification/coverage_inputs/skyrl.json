@@ -1,0 +1,1832 @@
+{
+  "schema_version": 1,
+  "project": "MarinSkyRL",
+  "source_revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+  "verifyit_audit_revision": "b5b6e111aadb8ece8ea5c1527ee78494b763c21c",
+  "population_definition": "All built-in gym registrations; all Nemotron _step agent branches; dormant GeneralReactTask/WebResearchTask dispatch and exported unused scorers. External user-registered gym envs are open extension points, not enumerable repository verifiers.",
+  "counts": {
+    "inventory_entries": 48,
+    "scoring_routes": 46,
+    "external_objective_placeholders": 2,
+    "source_patched_routes": 9,
+    "pending_scoring_routes": 37,
+    "pending_active_scoring_routes": 28,
+    "pending_dormant_scoring_routes": 9,
+    "zero_core_extension_unwired_routes": 15,
+    "existing_class_behavior_gap_routes": 19,
+    "real_replayed_source_routes": 6,
+    "implemented_routes_missing_real_traces": 3,
+    "native_fallback_in_cutover_routes": 0,
+    "distinct_source_scoring_contract_families": 17,
+    "status_counts": {
+      "implemented_validated": 6,
+      "implemented_not_validated": 3,
+      "not_integrated": 18,
+      "capability_gap": 19,
+      "not_a_correctness_verifier": 2
+    },
+    "unwired_dormant_math_comparator_parity_audits": 3,
+    "inherited_planning_existing_class_extension_routes": 23
+  },
+  "classification_notes": [
+    "Status describes actual integration, not whether a concrete specification fulfills the mapping deliverable. All46 scoring routes have composition/extension specs; no new mode categories are proposed.",
+    "Capability_gap rows also require source wiring; not_integrated rows need no proposed core extension. Dormant status is orthogonal.",
+    "No real verified traces is a validation gap only for implemented routes, not a missing capability. Unpatched observed real traces do not imply migration.",
+    "Existing prepared math API is implemented; remaining math semantics require source parity/comparator-policy proof. Historic docs proposal to expose this API is stale and not counted as missing.",
+    "Native source scorers on unpatched routes are native-only runtime, not hybrid fallback inside an implemented verifyit cutover.",
+    "Calendar is a task-owned deterministic ScriptSpec harness integration, not an IFEval capability gap; no new class option is required.",
+    "Inherited23 extension-strategy routes split into19 concrete existing-class behavior gaps,1calendar harness wiring case and3 dormant math parity-audit cases."
+  ],
+  "real_trace_replay": {
+    "verified_population": 5460,
+    "eligible_cutover_links": 3695,
+    "groups": 22,
+    "selected_links": 66,
+    "pinned_native_matches": 66,
+    "archive_matches": 65,
+    "archive_drift_evidence": "evidence/e2e/skyrl/source-drift-full.json",
+    "selection_sha256": "40448efd0826308eeeca3a1920b0565028e9d746d00b5e6d5b7fde41a2272e6e"
+  },
+  "contract_groups": {
+    "arithmetic": [
+      "aime",
+      "gsm8k",
+      "gsm8k_multi_turn",
+      "searchcode"
+    ],
+    "calendar": [
+      "nemotron_ultra/calendar_simple_agent"
+    ],
+    "code": [
+      "lcb",
+      "nemotron_ultra/code_gen_simple_agent",
+      "dormant/coder1"
+    ],
+    "cohort": [
+      "nemotron_ultra/genrm_simple_agent",
+      "nemotron_ultra/genrm_simple_agent_reasoning_off"
+    ],
+    "format": [
+      "nemotron_ultra/citation_format_simple_agent",
+      "nemotron_ultra/freeform_formatting_simple_agent"
+    ],
+    "grid": [
+      "nemotron_ultra/nvarc_inductive_simple_agent",
+      "nemotron_ultra/nvarc_transductive_simple_agent"
+    ],
+    "instruction": [
+      "ifeval",
+      "nemotron_ultra/instruction_following_simple_agent"
+    ],
+    "lean": [
+      "nemotron_ultra/math_formal_lean_refinement_agent"
+    ],
+    "math-judge": [
+      "nemotron_ultra/ns_tools_simple_agent",
+      "nemotron_ultra/math_with_judge_simple_agent",
+      "dormant/torl",
+      "dormant/naive_dapo",
+      "dormant/prime_math"
+    ],
+    "mcq": [
+      "mcq",
+      "nemotron_ultra/mcqa_simple_agent"
+    ],
+    "no-verifier": [
+      "preference",
+      "prompt_only"
+    ],
+    "qa": [
+      "search",
+      "dormant/qa_em",
+      "dormant/qa_f1"
+    ],
+    "reasoning-gym": [
+      "reasoning_gym",
+      "nemotron_ultra/reasoning_gym_simple_agent"
+    ],
+    "rounded-scalar": [
+      "nemotron_ultra/rdkit_chemistry_agent"
+    ],
+    "rubric": [
+      "nemotron_ultra/abstention_simple_agent",
+      "nemotron_ultra/multichallenge_simple_agent",
+      "nemotron_ultra/jailbreak_engagement_with_disclaimer",
+      "nemotron_ultra/jailbreak_hard_refusal_no_redirection",
+      "nemotron_ultra/jailbreak_hard_refusal_with_helplines",
+      "nemotron_ultra/jailbreak_refusal_with_explanation",
+      "dormant/qa_browsecomp",
+      "dormant/qa_ruler",
+      "dormant/stem_llm_judge"
+    ],
+    "schema": [
+      "nemotron_ultra/structured_outputs_simple_agent",
+      "nemotron_ultra/structured_outputs_v3_simple_agent"
+    ],
+    "sqlite": [
+      "text2sql",
+      "text_to_sql"
+    ],
+    "typed-equality": [
+      "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
+      "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
+      "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent"
+    ]
+  },
+  "entries": [
+    {
+      "id": "aime",
+      "status": "implemented_validated",
+      "not_covered_reason": "Actual source dispatch calls verifyit and real recorded framework replay is validated.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "verifyit_cutover",
+      "native_fallback_in_cutover": false,
+      "contract_family": "arithmetic",
+      "existing_primitive_candidate": [
+        "math",
+        "exact"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping.",
+      "validation_gap": "Real replay validates normal arithmetic policy; strict-box subprofile remains source-test validated, not represented by the selected real traces.",
+      "source_contract": "Last 300 characters; final Answer line normalized; exact rational decimals/fractions/ratios; strict box compares literal last-100-char extraction. Correctness \u00b11. Separate token budget and length shaping.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/aime/verifier.py",
+        "sha256": "d88156b40e5914d216ab7cdcee19f6fe34ef98672a08bf885f2f7b1a3042124c",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/aime/verifier.py",
+        "dispatch": "aime"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#arithmetic",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/mcq-verifyit.patch",
+        "integrations/MarinSkyRL/arithmetic-verifyit.patch",
+        "integrations/MarinSkyRL/dependency-pin.patch",
+        "integrations/MarinSkyRL/client-boundaries.patch",
+        "tests/test_skyrl_adapter.py",
+        "tools/unification/skyrl_client_parity.py",
+        "evidence/e2e/skyrl/selection-full.json",
+        "evidence/e2e/skyrl/comparison-full.json",
+        "evidence/e2e/skyrl/runs/patched-full",
+        "evidence/e2e/skyrl/runs/baseline-full"
+      ],
+      "observed_verified_execution_links": 1783,
+      "actual_replayed_links": 33,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "gsm8k",
+      "status": "implemented_validated",
+      "not_covered_reason": "Actual source dispatch calls verifyit and real recorded framework replay is validated.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "verifyit_cutover",
+      "native_fallback_in_cutover": false,
+      "contract_family": "arithmetic",
+      "existing_primitive_candidate": [
+        "numeric"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping.",
+      "validation_gap": null,
+      "source_contract": "Strict first #### numeric marker, or flexible last numeric match, or standalone final #### line Decimal equality; env uses final_line.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/gsm8k/utils.py",
+        "sha256": "01ae9bc8110da5b5d360e5d6501432b3d12eb6c67e4cdc534b6dcf706bb604d1",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py",
+        "dispatch": "gsm8k"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#arithmetic",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/mcq-verifyit.patch",
+        "integrations/MarinSkyRL/arithmetic-verifyit.patch",
+        "integrations/MarinSkyRL/dependency-pin.patch",
+        "integrations/MarinSkyRL/client-boundaries.patch",
+        "tests/test_skyrl_adapter.py",
+        "tools/unification/skyrl_client_parity.py",
+        "evidence/e2e/skyrl/selection-full.json",
+        "evidence/e2e/skyrl/comparison-full.json",
+        "evidence/e2e/skyrl/runs/patched-full",
+        "evidence/e2e/skyrl/runs/baseline-full"
+      ],
+      "observed_verified_execution_links": 103,
+      "actual_replayed_links": 3,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "gsm8k_multi_turn",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "Source integration exists and has source/API tests; no eligible verified execution trace for this route was found in the complete artifact census.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "verifyit_cutover",
+      "native_fallback_in_cutover": false,
+      "contract_family": "arithmetic",
+      "existing_primitive_candidate": [
+        "numeric"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping.",
+      "validation_gap": "Real recorded framework replay unavailable: no eligible artifact; capability already implemented. Obtain real trace or run an existing candidate through actual source entrypoint.",
+      "source_contract": "Each turn uses GSM8K strict first #### marker: correct answer earns 1.0, well-formatted wrong answer earns 0.2/max_turns, missing marker earns 0.0. Stop on reward1.0 or configured max_turns; otherwise provide feedback and continue.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/gsm8k/multi_turn_env.py",
+        "sha256": "61e1e4681dc6ef9caec8ab1a3f4c8ddc9397b0e8e686edd178670cdc8f01310d",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/gsm8k/multi_turn_env.py",
+        "dispatch": "gsm8k_multi_turn"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#arithmetic",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/mcq-verifyit.patch",
+        "integrations/MarinSkyRL/arithmetic-verifyit.patch",
+        "integrations/MarinSkyRL/dependency-pin.patch",
+        "integrations/MarinSkyRL/client-boundaries.patch",
+        "tests/test_skyrl_adapter.py",
+        "tools/unification/skyrl_client_parity.py"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "text2sql",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "sqlite",
+      "existing_primitive_candidate": [
+        "script"
+      ],
+      "resolution_strategy": "task_harness",
+      "needed_change": "Script comparator must preserve set semantics and explicit -1 formatting reward projection; classify broken reference as unscored only with reviewed harness change.",
+      "validation_gap": null,
+      "source_contract": "Format invalid => -1; valid candidate/reference SQL return frozenset rows (duplicates/order discarded), equality => 1 else 0; reference/query errors become 0, rollback transaction; timeout 30 seconds.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/sql/utils.py",
+        "sha256": "3e24ebe7746883218fcc50e0bac3b15fc388ab5b6b2161d105ce05665d2e0f35",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/sql/utils.py",
+        "dispatch": "text2sql"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#sqlite",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "text_to_sql",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "sqlite",
+      "existing_primitive_candidate": [
+        "script"
+      ],
+      "resolution_strategy": "task_harness",
+      "needed_change": "Reusable executable SQL scorer script; broken seed/reference => invalid_task or infra_error; candidate query rejection => scored zero.",
+      "validation_gap": null,
+      "source_contract": "Read-only deterministic SQLite result equivalence on seeded and every-third-row-deleted database; ordered rows only if top-level ORDER BY; 6 decimal normalization; bounded rows/query.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/text_to_sql/scoring.py",
+        "sha256": "04b5b15dc7b9bb297d93a28ce7ae2ff03072df177a004137e8a7fda0d39c70ac",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/text_to_sql/scoring.py",
+        "dispatch": "text_to_sql"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#sqlite",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 3,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "search",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "Source integration exists and has source/API tests; no eligible verified execution trace for this route was found in the complete artifact census.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "verifyit_cutover",
+      "native_fallback_in_cutover": false,
+      "contract_family": "qa",
+      "existing_primitive_candidate": [
+        "exact"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping.",
+      "validation_gap": "Real recorded framework replay unavailable: no eligible artifact; capability already implemented. Obtain real trace or run an existing candidate through actual source entrypoint.",
+      "source_contract": "Last answer XML tag; lowercase, remove punctuation/articles, collapse whitespace; target alternatives; EM/subEM helpers.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/search/utils.py",
+        "sha256": "989d04655cd9441ee004c1f9c612d7ced21a96b71b88aecf7c7333978960da01",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/search/utils.py",
+        "dispatch": "search"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#qa",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/mcq-verifyit.patch",
+        "integrations/MarinSkyRL/arithmetic-verifyit.patch",
+        "integrations/MarinSkyRL/dependency-pin.patch",
+        "integrations/MarinSkyRL/client-boundaries.patch",
+        "tests/test_skyrl_adapter.py",
+        "tools/unification/skyrl_client_parity.py"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "lcb",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "code",
+      "existing_primitive_candidate": [
+        "stdio",
+        "pytest"
+      ],
+      "resolution_strategy": "task_harness",
+      "needed_change": "stdio handles stdin binary all-pass; function-call tests compile pytest harness. Fractional reward and numeric/line output comparator require adapter; preserve per-test result/error metadata.",
+      "validation_gap": null,
+      "source_contract": "Final fenced Python program; stdio or functional tests; binary all-pass or fractional pass ratio; memory and total/per-test deadlines.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/lcb/livecodebench.py",
+        "sha256": "0426a2b81ec67fe519027ac6245a64ee3edda15a5929d51dc75b2bf42e7b0c93",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/lcb/livecodebench.py",
+        "dispatch": "lcb"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#code",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 21,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "searchcode",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "Source integration exists and has source/API tests; no eligible verified execution trace for this route was found in the complete artifact census.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "verifyit_cutover",
+      "native_fallback_in_cutover": false,
+      "contract_family": "arithmetic",
+      "existing_primitive_candidate": [
+        "numeric"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping.",
+      "validation_gap": "Real recorded framework replay unavailable: no eligible artifact; capability already implemented. Obtain real trace or run an existing candidate through actual source entrypoint.",
+      "source_contract": "Terminal concatenated chat history scored by GSM8K strict marker extraction.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/searchcode/env.py",
+        "sha256": "4f8651b459cedc60652682acc9db50080d86c5581989d2ea42c8f8484e366b3c",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/searchcode/env.py",
+        "dispatch": "searchcode"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#arithmetic",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/mcq-verifyit.patch",
+        "integrations/MarinSkyRL/arithmetic-verifyit.patch",
+        "integrations/MarinSkyRL/dependency-pin.patch",
+        "integrations/MarinSkyRL/client-boundaries.patch",
+        "tests/test_skyrl_adapter.py",
+        "tools/unification/skyrl_client_parity.py"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "mcq",
+      "status": "implemented_validated",
+      "not_covered_reason": "Actual source dispatch calls verifyit and real recorded framework replay is validated.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "verifyit_cutover",
+      "native_fallback_in_cutover": false,
+      "contract_family": "mcq",
+      "existing_primitive_candidate": [
+        "mcq"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping.",
+      "validation_gap": null,
+      "source_contract": "First boxed A-Z/a-z letter uppercased; binary equality.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/mcq/utils.py",
+        "sha256": "64c9f175c6ddd53706b1e533c86d7a67c16357826ecf7817b98413ac81e3afd8",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/mcq/utils.py",
+        "dispatch": "mcq"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#mcq",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/mcq-verifyit.patch",
+        "integrations/MarinSkyRL/arithmetic-verifyit.patch",
+        "integrations/MarinSkyRL/dependency-pin.patch",
+        "integrations/MarinSkyRL/client-boundaries.patch",
+        "tests/test_skyrl_adapter.py",
+        "tools/unification/skyrl_client_parity.py",
+        "evidence/e2e/skyrl/selection-full.json",
+        "evidence/e2e/skyrl/comparison-full.json",
+        "evidence/e2e/skyrl/runs/patched-full",
+        "evidence/e2e/skyrl/runs/baseline-full"
+      ],
+      "observed_verified_execution_links": 218,
+      "actual_replayed_links": 6,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "ifeval",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing ifeval mode lacks verified equivalent source registry/constraint checkers for this contract; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "instruction",
+      "existing_primitive_candidate": [
+        "ifeval",
+        "script"
+      ],
+      "resolution_strategy": "existing_ifeval_extension",
+      "needed_change": "Translate each constraint only after checking checker equivalence; registry names/quantifiers are not interchangeable. Unknown or malformed task becomes invalid_task.",
+      "validation_gap": null,
+      "source_contract": "26 func_name registry entries (25 original plus frequency relation); fraction satisfied; malformed/checker errors currently zero.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/ifeval/utils.py",
+        "sha256": "09a1c07b2eb53f5e867d46746f169aab8e5199518c16cb3ca5240909ff7538d7",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/ifeval/utils.py",
+        "dispatch": "ifeval"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#instruction",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 6,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "reasoning_gym",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "reasoning-gym",
+      "existing_primitive_candidate": [
+        "reasoning-gym"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "Exact task/entry port plus source extraction; package version pin and scorer availability.",
+      "validation_gap": null,
+      "source_contract": "Complete task+entry metadata; text after last Answer: marker; task-native fractional scorer.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/reasoning_gym/scoring.py",
+        "sha256": "fdb9cd9a94c2d07f4e3ea43b2a90831520a711161939cc42a3fd05fc7446b03b",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/reasoning_gym/scoring.py",
+        "dispatch": "reasoning_gym"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#reasoning-gym",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 12,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "preference",
+      "status": "not_a_correctness_verifier",
+      "not_covered_reason": "Source terminal zero is a placeholder for an external training objective, not a correctness scorer.",
+      "active_in_pinned_dispatch": false,
+      "dormant": false,
+      "correctness_verifier": false,
+      "source_runtime": "external_objective",
+      "native_fallback_in_cutover": false,
+      "contract_family": "no-verifier",
+      "existing_primitive_candidate": [
+        "judge"
+      ],
+      "resolution_strategy": "external_objective",
+      "needed_change": "No deterministic verifier exists; retain external reward model hook, never interpret placeholder zero as verification.",
+      "validation_gap": null,
+      "source_contract": "Placeholder terminal zero; actual reward model supplied outside env.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/preference/env.py",
+        "sha256": "2cae3048d5bfc09a355435423cdf444b26a884494ec8391647da6a3171a1af71",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/preference/env.py",
+        "dispatch": "preference"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#no-verifier",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "prompt_only",
+      "status": "not_a_correctness_verifier",
+      "not_covered_reason": "Source terminal zero is a placeholder for an external training objective, not a correctness scorer.",
+      "active_in_pinned_dispatch": false,
+      "dormant": false,
+      "correctness_verifier": false,
+      "source_runtime": "external_objective",
+      "native_fallback_in_cutover": false,
+      "contract_family": "no-verifier",
+      "existing_primitive_candidate": [
+        "judge"
+      ],
+      "resolution_strategy": "external_objective",
+      "needed_change": "No correctness mapping; skipped/unavailable verification.",
+      "validation_gap": null,
+      "source_contract": "Terminal zero; objectives supplied outside verifier.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/prompt_only/env.py",
+        "sha256": "c4812963643ddaea46e5332a2fd141262af8a24c21cc33646277812daf65d060",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/prompt_only/env.py",
+        "dispatch": "prompt_only"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#no-verifier",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/ns_tools_simple_agent",
+      "status": "capability_gap",
+      "not_covered_reason": "Prepared math candidate API exists; source comparator policies and/or symmetric custom-prompt judge fallback are not available as the complete composed contract or wired into source.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "math-judge",
+      "existing_primitive_candidate": [
+        "math",
+        "judge",
+        "script"
+      ],
+      "resolution_strategy": "existing_math_judge_extension",
+      "needed_change": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness.",
+      "validation_gap": null,
+      "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_with_judge.py",
+        "sha256": "8afb94d1269c852eb64a1d1dff45908b5452dda54523c6d0b6a6e18c542f8930",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_with_judge.py",
+        "dispatch": "NemotronUltraEnv._step agent=ns_tools_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#math-judge",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 16,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/math_with_judge_simple_agent",
+      "status": "capability_gap",
+      "not_covered_reason": "Prepared math candidate API exists; source comparator policies and/or symmetric custom-prompt judge fallback are not available as the complete composed contract or wired into source.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "math-judge",
+      "existing_primitive_candidate": [
+        "math",
+        "judge",
+        "script"
+      ],
+      "resolution_strategy": "existing_math_judge_extension",
+      "needed_change": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness.",
+      "validation_gap": null,
+      "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_with_judge.py",
+        "sha256": "8afb94d1269c852eb64a1d1dff45908b5452dda54523c6d0b6a6e18c542f8930",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_with_judge.py",
+        "dispatch": "NemotronUltraEnv._step agent=math_with_judge_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#math-judge",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 278,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/math_formal_lean_refinement_agent",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "lean",
+      "existing_primitive_candidate": [
+        "script"
+      ],
+      "resolution_strategy": "task_harness",
+      "needed_change": "Compile source proof artifact in task environment; preserve correction prompt and unavailable intermediate verdict.",
+      "validation_gap": null,
+      "source_contract": "Lean proof compilation and up to three correction turns.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/lean.py",
+        "sha256": "ce7a8066c4fee512ff048731040259c5325bbf74d7eef1bff8d7c819a8a7fd7a",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/lean.py",
+        "dispatch": "NemotronUltraEnv._step agent=math_formal_lean_refinement_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#lean",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 12,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "typed-equality",
+      "existing_primitive_candidate": [
+        "exact",
+        "numeric"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
+      "validation_gap": null,
+      "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+        "sha256": "eb0f3d62b9ab32d51e860a52c68496f9d335e0917b11c6d30fae18c8af68bb54",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+        "dispatch": "NemotronUltraEnv._step agent=single_step_tool_use_with_argument_comparison_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#typed-equality",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 9,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "typed-equality",
+      "existing_primitive_candidate": [
+        "exact",
+        "numeric"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
+      "validation_gap": null,
+      "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+        "sha256": "eb0f3d62b9ab32d51e860a52c68496f9d335e0917b11c6d30fae18c8af68bb54",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+        "dispatch": "NemotronUltraEnv._step agent=swe_pivot_single_step_tool_use_with_argument_comparison_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#typed-equality",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "typed-equality",
+      "existing_primitive_candidate": [
+        "exact",
+        "numeric"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
+      "validation_gap": null,
+      "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+        "sha256": "eb0f3d62b9ab32d51e860a52c68496f9d335e0917b11c6d30fae18c8af68bb54",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+        "dispatch": "NemotronUltraEnv._step agent=toolcall_schema_single_step_tool_use_with_argument_comparison_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#typed-equality",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 9,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/calendar_simple_agent",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing ScriptSpec can execute a trusted deterministic calendar constraint harness; source-specific schedule extraction/validation and dispatch wiring are not implemented. No missing IFEval registry API is required.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "calendar",
+      "existing_primitive_candidate": [
+        "script"
+      ],
+      "resolution_strategy": "task_harness",
+      "needed_change": "Implement a task-owned schedule checker preserving source think-marker rejection, then empty-reference pass, first object-bearing JSON-list extraction, event-ID map cardinality, durations, min/max windows and before/after/between/at constraints; touching intervals are allowed. Preserve source duplicate-ID behavior or document an intentional tightening rather than assuming rejection. Return candidate wrong as scored0, malformed reference invalid_task0 and execution failure infra_error0 through ScriptSpec.verdict_file; wire grade_calendar and retain reason labels.",
+      "validation_gap": null,
+      "source_contract": "JSON event schedule exact IDs/count, durations, windows and pairwise conflicts; rejects think marker.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/calendar.py",
+        "sha256": "2fc03229fb6c76454b7bed3b7ff0ac417facead6169cec3d2fc5aa9f571c0f53",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/calendar.py",
+        "dispatch": "NemotronUltraEnv._step agent=calendar_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#calendar",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 214,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/citation_format_simple_agent",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing ifeval mode lacks verified equivalent source registry/constraint checkers for this contract; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "format",
+      "existing_primitive_candidate": [
+        "ifeval",
+        "script"
+      ],
+      "resolution_strategy": "existing_ifeval_extension",
+      "needed_change": "Source-compatible deterministic constraint script; not generic exact equality.",
+      "validation_gap": null,
+      "source_contract": "Regex/inline prose counts matching lines; string markers present with no spurious regex matches.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/format_verification.py",
+        "sha256": "0629283c54f1fa8af410cf7315c85b9f68d2abb971113ae49199f30daa2ab4a5",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/format_verification.py",
+        "dispatch": "NemotronUltraEnv._step agent=citation_format_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#format",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 9,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/freeform_formatting_simple_agent",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing ifeval mode lacks verified equivalent source registry/constraint checkers for this contract; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "format",
+      "existing_primitive_candidate": [
+        "ifeval",
+        "script"
+      ],
+      "resolution_strategy": "existing_ifeval_extension",
+      "needed_change": "Source-compatible deterministic constraint script; not generic exact equality.",
+      "validation_gap": null,
+      "source_contract": "Regex/inline prose counts matching lines; string markers present with no spurious regex matches.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/format_verification.py",
+        "sha256": "0629283c54f1fa8af410cf7315c85b9f68d2abb971113ae49199f30daa2ab4a5",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/format_verification.py",
+        "dispatch": "NemotronUltraEnv._step agent=freeform_formatting_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#format",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 9,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/mcqa_simple_agent",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "mcq",
+      "existing_primitive_candidate": [
+        "mcq"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "Source extraction precedes grade_mcq_candidate; options may be noncontiguous, so validate source allowed set explicitly.",
+      "validation_gap": null,
+      "source_contract": "Allowed options + strict/lenient boxed, option text, Answer colon/markdown, or template regex; Arabic/Bengali/fullwidth normalizations.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/mcqa.py",
+        "sha256": "9c1fc806447b83b3113609e99ad73bb02acb42cb34e66a7a0aa0b957d6ab3b0f",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/mcqa.py",
+        "dispatch": "NemotronUltraEnv._step agent=mcqa_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#mcq",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 408,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/structured_outputs_simple_agent",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing json-schema mode lacks the source OpenAPI validator policy and typed XML/CSV schema-directed decoding; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "schema",
+      "existing_primitive_candidate": [
+        "json-schema",
+        "script"
+      ],
+      "resolution_strategy": "existing_json_schema_extension",
+      "needed_change": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings.",
+      "validation_gap": null,
+      "source_contract": "OpenAPI schema; JSON/YAML/TOML/XML/CSV; XML/CSV schema-directed scalar coercion; one named tool payload.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/structured_outputs.py",
+        "sha256": "a92f84e3f5f3be11905295ef85bf8c060c92aae3da9109297fe59de762566a04",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/structured_outputs.py",
+        "dispatch": "NemotronUltraEnv._step agent=structured_outputs_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#schema",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 12,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/structured_outputs_v3_simple_agent",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing json-schema mode lacks the source OpenAPI validator policy and typed XML/CSV schema-directed decoding; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "schema",
+      "existing_primitive_candidate": [
+        "json-schema",
+        "script"
+      ],
+      "resolution_strategy": "existing_json_schema_extension",
+      "needed_change": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings.",
+      "validation_gap": null,
+      "source_contract": "OpenAPI schema; JSON/YAML/TOML/XML/CSV; XML/CSV schema-directed scalar coercion; one named tool payload.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/structured_outputs.py",
+        "sha256": "a92f84e3f5f3be11905295ef85bf8c060c92aae3da9109297fe59de762566a04",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/structured_outputs.py",
+        "dispatch": "NemotronUltraEnv._step agent=structured_outputs_v3_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#schema",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 9,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/rdkit_chemistry_agent",
+      "status": "implemented_validated",
+      "not_covered_reason": "Actual source dispatch calls verifyit and real recorded framework replay is validated.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "verifyit_cutover",
+      "native_fallback_in_cutover": false,
+      "contract_family": "rounded-scalar",
+      "existing_primitive_candidate": [
+        "numeric",
+        "script"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping.",
+      "validation_gap": null,
+      "source_contract": "Required box/double-parenthesis numeric extraction; Python round(predicted)==round(expected).",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/rdkit_chemistry.py",
+        "sha256": "8c41da86140963eae6eaa46ef12e3fcabbd5b14e79978a81096c1d4a0c98dc36",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/rdkit_chemistry.py",
+        "dispatch": "NemotronUltraEnv._step agent=rdkit_chemistry_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#rounded-scalar",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/mcq-verifyit.patch",
+        "integrations/MarinSkyRL/arithmetic-verifyit.patch",
+        "integrations/MarinSkyRL/dependency-pin.patch",
+        "integrations/MarinSkyRL/client-boundaries.patch",
+        "tests/test_skyrl_adapter.py",
+        "tools/unification/skyrl_client_parity.py",
+        "evidence/e2e/skyrl/selection-full.json",
+        "evidence/e2e/skyrl/comparison-full.json",
+        "evidence/e2e/skyrl/runs/patched-full",
+        "evidence/e2e/skyrl/runs/baseline-full"
+      ],
+      "observed_verified_execution_links": 461,
+      "actual_replayed_links": 6,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/nvarc_inductive_simple_agent",
+      "status": "implemented_validated",
+      "not_covered_reason": "Actual source dispatch calls verifyit and real recorded framework replay is validated.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "verifyit_cutover",
+      "native_fallback_in_cutover": false,
+      "contract_family": "grid",
+      "existing_primitive_candidate": [
+        "stdio",
+        "script"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping.",
+      "validation_gap": null,
+      "source_contract": "Extract fenced or unfenced transform with imports; execute on input; valid integer palette 0..9 rectangular grid; exact expected output.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/nvarc.py",
+        "sha256": "387448d4dbfa00f31730b96b4da8b796f8e0c9c9514e128ff222797059247659",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/nvarc.py",
+        "dispatch": "NemotronUltraEnv._step agent=nvarc_inductive_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#grid",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/mcq-verifyit.patch",
+        "integrations/MarinSkyRL/arithmetic-verifyit.patch",
+        "integrations/MarinSkyRL/dependency-pin.patch",
+        "integrations/MarinSkyRL/client-boundaries.patch",
+        "tests/test_skyrl_adapter.py",
+        "tools/unification/skyrl_client_parity.py",
+        "evidence/e2e/skyrl/selection-full.json",
+        "evidence/e2e/skyrl/comparison-full.json",
+        "evidence/e2e/skyrl/runs/patched-full",
+        "evidence/e2e/skyrl/runs/baseline-full"
+      ],
+      "observed_verified_execution_links": 477,
+      "actual_replayed_links": 9,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/nvarc_transductive_simple_agent",
+      "status": "implemented_validated",
+      "not_covered_reason": "Actual source dispatch calls verifyit and real recorded framework replay is validated.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "verifyit_cutover",
+      "native_fallback_in_cutover": false,
+      "contract_family": "grid",
+      "existing_primitive_candidate": [
+        "exact",
+        "script"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping.",
+      "validation_gap": null,
+      "source_contract": "JSON grid or digit rows; strict rectangular palette 0..9 integer grid equality.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/nvarc.py",
+        "sha256": "387448d4dbfa00f31730b96b4da8b796f8e0c9c9514e128ff222797059247659",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/nvarc.py",
+        "dispatch": "NemotronUltraEnv._step agent=nvarc_transductive_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#grid",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/mcq-verifyit.patch",
+        "integrations/MarinSkyRL/arithmetic-verifyit.patch",
+        "integrations/MarinSkyRL/dependency-pin.patch",
+        "integrations/MarinSkyRL/client-boundaries.patch",
+        "tests/test_skyrl_adapter.py",
+        "tools/unification/skyrl_client_parity.py",
+        "evidence/e2e/skyrl/selection-full.json",
+        "evidence/e2e/skyrl/comparison-full.json",
+        "evidence/e2e/skyrl/runs/patched-full",
+        "evidence/e2e/skyrl/runs/baseline-full"
+      ],
+      "observed_verified_execution_links": 657,
+      "actual_replayed_links": 9,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/code_gen_simple_agent",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "code",
+      "existing_primitive_candidate": [
+        "stdio",
+        "pytest"
+      ],
+      "resolution_strategy": "task_harness",
+      "needed_change": "Compile stdio/functional harness; preserve format penalty and per-test execution evidence.",
+      "validation_gap": null,
+      "source_contract": "Final fenced code, binary all-tests, short circuit failure, think-tag violation penalty.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/code_gen.py",
+        "sha256": "da243b691ba49cdea20bb313e6bd0d96af7d65dddc701b2fe65b6da4b4dd0fa3",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/code_gen.py",
+        "dispatch": "NemotronUltraEnv._step agent=code_gen_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#code",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 116,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/instruction_following_simple_agent",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing ifeval mode lacks verified equivalent source registry/constraint checkers for this contract; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "instruction",
+      "existing_primitive_candidate": [
+        "ifeval",
+        "script"
+      ],
+      "resolution_strategy": "existing_ifeval_extension",
+      "needed_change": "Registry checker equivalence audit required; pinned script scorer covers unmatched IDs without new category.",
+      "validation_gap": null,
+      "source_contract": "Pinned NVIDIA verifiable_instructions registry with instruction kwargs; binary or fraction aggregation.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_following.py",
+        "sha256": "82e55bcba81139627049cea2a832f0a9a5a9e9ee4c18ed224e3f8f56719fbcdf",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_following.py",
+        "dispatch": "NemotronUltraEnv._step agent=instruction_following_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#instruction",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 23,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/abstention_simple_agent",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "rubric",
+      "existing_primitive_candidate": [
+        "judge",
+        "script"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Custom three-label prompt parser and reward projection; binary judge cannot represent abstention directly.",
+      "validation_gap": null,
+      "source_contract": "Normalized IDK receives .5; judge A/B/C maps 1/0/.5; omniscience diagnostic.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_verifiers.py",
+        "sha256": "88e4591250dc23b0e4e4fc79b8897fa5608c7602ece716461040f6efd1528b1e",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_verifiers.py",
+        "dispatch": "NemotronUltraEnv._step agent=abstention_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#rubric",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 446,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/multichallenge_simple_agent",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "rubric",
+      "existing_primitive_candidate": [
+        "judge"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Preserve context/expected pass criteria per item and source prompt/verdict parser.",
+      "validation_gap": null,
+      "source_contract": "Per-rubric question YES/NO source prompt; average reward.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_verifiers.py",
+        "sha256": "88e4591250dc23b0e4e4fc79b8897fa5608c7602ece716461040f6efd1528b1e",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_verifiers.py",
+        "dispatch": "NemotronUltraEnv._step agent=multichallenge_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#rubric",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 14,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/jailbreak_engagement_with_disclaimer",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "rubric",
+      "existing_primitive_candidate": [
+        "judge",
+        "script"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "validation_gap": null,
+      "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+        "sha256": "15813697a336f906873318f14326c12c682494e40d50fd02661fdf4c945edbb4",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+        "dispatch": "NemotronUltraEnv._step agent=jailbreak_engagement_with_disclaimer"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#rubric",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 11,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/jailbreak_hard_refusal_no_redirection",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "rubric",
+      "existing_primitive_candidate": [
+        "judge",
+        "script"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "validation_gap": null,
+      "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+        "sha256": "15813697a336f906873318f14326c12c682494e40d50fd02661fdf4c945edbb4",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+        "dispatch": "NemotronUltraEnv._step agent=jailbreak_hard_refusal_no_redirection"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#rubric",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 8,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/jailbreak_hard_refusal_with_helplines",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "rubric",
+      "existing_primitive_candidate": [
+        "judge",
+        "script"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "validation_gap": null,
+      "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+        "sha256": "15813697a336f906873318f14326c12c682494e40d50fd02661fdf4c945edbb4",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+        "dispatch": "NemotronUltraEnv._step agent=jailbreak_hard_refusal_with_helplines"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#rubric",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 17,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/jailbreak_refusal_with_explanation",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "rubric",
+      "existing_primitive_candidate": [
+        "judge",
+        "script"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "validation_gap": null,
+      "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+        "sha256": "15813697a336f906873318f14326c12c682494e40d50fd02661fdf4c945edbb4",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+        "dispatch": "NemotronUltraEnv._step agent=jailbreak_refusal_with_explanation"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#rubric",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 86,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/reasoning_gym_simple_agent",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "reasoning-gym",
+      "existing_primitive_candidate": [
+        "reasoning-gym"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "Preserve final_answer_text and extraction ordering, full metadata.",
+      "validation_gap": null,
+      "source_contract": "Source_dataset task-native scorer; last answer tag, then last box, then text; complete entry.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py",
+        "sha256": "d1dbb6fc2a81d4194ff751abafc4430a39289859ea008cd06287ab1aa2a0be09",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py",
+        "dispatch": "NemotronUltraEnv._step agent=reasoning_gym_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#reasoning-gym",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 13,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "nemotron_ultra/genrm_simple_agent",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native. Source replaces the environment placeholder in the cohort runner; a per-candidate grade cannot reconstruct sibling comparison or optimization shaping.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "cohort",
+      "existing_primitive_candidate": [
+        "judge",
+        "script"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Batch/cohort adapter required; a single-output judge is not equivalent. Keep scorer external to per-candidate grade API.",
+      "validation_gap": null,
+      "source_contract": "Circular cohort pair comparisons, simple tiebreaker aggregate, reasoning/answer bonuses and group length penalties; placeholder replaced in runner.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/genrm.py",
+        "sha256": "27fab41f6cb0761de575d057060a519512b6fd3e8da73092666d8e8db6136e27",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/genrm.py",
+        "dispatch": "NemotronUltraEnv._step agent=genrm_simple_agent"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#cohort",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "nemotron_ultra/genrm_simple_agent_reasoning_off",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native. Source replaces the environment placeholder in the cohort runner; a per-candidate grade cannot reconstruct sibling comparison or optimization shaping.",
+      "active_in_pinned_dispatch": true,
+      "dormant": false,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "cohort",
+      "existing_primitive_candidate": [
+        "judge",
+        "script"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Batch/cohort adapter required; a single-output judge is not equivalent. Keep scorer external to per-candidate grade API.",
+      "validation_gap": null,
+      "source_contract": "Circular cohort pair comparisons, simple tiebreaker aggregate, reasoning/answer bonuses and group length penalties; placeholder replaced in runner.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/genrm.py",
+        "sha256": "27fab41f6cb0761de575d057060a519512b6fd3e8da73092666d8e8db6136e27",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/genrm.py",
+        "dispatch": "NemotronUltraEnv._step agent=genrm_simple_agent_reasoning_off"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#cohort",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "dormant/torl",
+      "status": "not_integrated",
+      "not_covered_reason": "Dormant source extraction/comparator and signed/format reward projection are not wired to existing exact/prepared-math APIs. Full source acceptance parity has not been tested; no specific missing core API is established.",
+      "active_in_pinned_dispatch": false,
+      "dormant": true,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "math-judge",
+      "existing_primitive_candidate": [
+        "exact",
+        "math"
+      ],
+      "resolution_strategy": "existing_math_judge_extension",
+      "needed_change": "Port source reward_type/extraction and prove prepared math comparator acceptance parity; add only demonstrated missing equality policy, then wire the dormant caller if activated.",
+      "validation_gap": null,
+      "source_contract": "Math extraction with reward_type and symbolic evaluator.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-agent/skyrl_agent/tasks/verifiers/torl/math_verify.py",
+        "sha256": "d71562160daca994685d1e75bf88ce184519ca01d0167575a9e492898efeb55c",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/torl/math_verify.py",
+        "dispatch": "GeneralReactTask.evaluate_result data_source=ToRL"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#math-judge",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "undetermined_comparator_parity_audit"
+    },
+    {
+      "id": "dormant/naive_dapo",
+      "status": "not_integrated",
+      "not_covered_reason": "Dormant source extraction/comparator and signed/format reward projection are not wired to existing exact/prepared-math APIs. Full source acceptance parity has not been tested; no specific missing core API is established.",
+      "active_in_pinned_dispatch": false,
+      "dormant": true,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "math-judge",
+      "existing_primitive_candidate": [
+        "exact",
+        "math"
+      ],
+      "resolution_strategy": "existing_math_judge_extension",
+      "needed_change": "Apply source independent approximate-pi substitutions and extraction before prepared math grading; prove source symbolic fallback parity before wiring dormant caller.",
+      "validation_gap": null,
+      "source_contract": "Extract answer; normalization then symbolic fallback including pi=3.14; binary score.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-agent/skyrl_agent/tasks/verifiers/naive_dapo.py",
+        "sha256": "c8c8ed10f5416f07d10d734238de9d62d4acb8855a6e7833f7b572358bf42e4d",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/naive_dapo.py",
+        "dispatch": "GeneralReactTask.evaluate_result data_source starts math"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#math-judge",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "undetermined_comparator_parity_audit"
+    },
+    {
+      "id": "dormant/coder1",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "active_in_pinned_dispatch": false,
+      "dormant": true,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "code",
+      "existing_primitive_candidate": [
+        "stdio",
+        "pytest",
+        "script"
+      ],
+      "resolution_strategy": "task_harness",
+      "needed_change": "Use appropriate execution primitive with source extraction/prefix; preserve custom comparator and scoring.",
+      "validation_gap": null,
+      "source_contract": "Ground truth pytest/functional/solution_file/stdin-out; prefix injection, fuzzy output, format+answer reward.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-agent/skyrl_agent/tasks/verifiers/coder1/__init__.py",
+        "sha256": "3f8e512310338ea274c5e7999922768c3171d8db469861704bd475679a3b52c6",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/coder1/__init__.py",
+        "dispatch": "GeneralReactTask.evaluate_result data_source starts codegen"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#code",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "dormant/qa_em",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "active_in_pinned_dispatch": false,
+      "dormant": true,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "qa",
+      "existing_primitive_candidate": [
+        "exact"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "Normalize both sides; explicit accepted alternatives.",
+      "validation_gap": null,
+      "source_contract": "Answer extraction and QA EM target normalization.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+        "sha256": "be108e93597326e53e2bb98400f29b79ab75a359427db8d41459fcea9b777af3",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+        "dispatch": "GeneralReactTask.evaluate_result seven QA datasets"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#qa",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "dormant/qa_browsecomp",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "active_in_pinned_dispatch": false,
+      "dormant": true,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "rubric",
+      "existing_primitive_candidate": [
+        "judge"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Source judge prompt and parser.",
+      "validation_gap": null,
+      "source_contract": "External LLM judge question+answer.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+        "sha256": "be108e93597326e53e2bb98400f29b79ab75a359427db8d41459fcea9b777af3",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+        "dispatch": "GeneralReactTask.evaluate_result starts browsecomp"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#rubric",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "dormant/qa_ruler",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "active_in_pinned_dispatch": false,
+      "dormant": true,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "rubric",
+      "existing_primitive_candidate": [
+        "judge"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Source judge prompt and parser.",
+      "validation_gap": null,
+      "source_contract": "External LLM judge long-context QA.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+        "sha256": "be108e93597326e53e2bb98400f29b79ab75a359427db8d41459fcea9b777af3",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+        "dispatch": "GeneralReactTask.evaluate_result starts ruler"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#rubric",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    },
+    {
+      "id": "dormant/qa_f1",
+      "status": "not_integrated",
+      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "active_in_pinned_dispatch": false,
+      "dormant": true,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "qa",
+      "existing_primitive_candidate": [
+        "exact (token leaves)",
+        "client overlap/F1 aggregation"
+      ],
+      "resolution_strategy": "client_composition",
+      "needed_change": "Fractional token scorer executable; no exact primitive equivalence.",
+      "validation_gap": null,
+      "source_contract": "Token overlap F1 after QA normalization.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+        "sha256": "be108e93597326e53e2bb98400f29b79ab75a359427db8d41459fcea9b777af3",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+        "dispatch": "Exported compute_score_f1; no production call found"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#qa",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "none_proposed"
+    },
+    {
+      "id": "dormant/prime_math",
+      "status": "not_integrated",
+      "not_covered_reason": "Dormant source extraction/comparator and signed/format reward projection are not wired to existing exact/prepared-math APIs. Full source acceptance parity has not been tested; no specific missing core API is established.",
+      "active_in_pinned_dispatch": false,
+      "dormant": true,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "math-judge",
+      "existing_primitive_candidate": [
+        "exact",
+        "math"
+      ],
+      "resolution_strategy": "existing_math_judge_extension",
+      "needed_change": "Compare source grade_answer/math_equal acceptance set against prepared MathSpec profiles using real source fixtures, implement missing comparator policy only if needed, then wire dormant caller.",
+      "validation_gap": null,
+      "source_contract": "Extract answer and grade_answer/math_equal fallback.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-agent/skyrl_agent/tasks/verifiers/prime_math/__init__.py",
+        "sha256": "8cf8a39ecc46662e2c4b8fba1f960bb2a738903c6423f0032714a2272f006684",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/prime_math/__init__.py",
+        "dispatch": "Library called through naive_dapo grader; exported compute_score has no production caller"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#math-judge",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "undetermined_comparator_parity_audit"
+    },
+    {
+      "id": "dormant/stem_llm_judge",
+      "status": "capability_gap",
+      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "active_in_pinned_dispatch": false,
+      "dormant": true,
+      "correctness_verifier": true,
+      "source_runtime": "native_only_unmigrated",
+      "native_fallback_in_cutover": false,
+      "contract_family": "rubric",
+      "existing_primitive_candidate": [
+        "judge"
+      ],
+      "resolution_strategy": "existing_judge_extension",
+      "needed_change": "Preserve prompt, parser and tuple transport.",
+      "validation_gap": null,
+      "source_contract": "External STEM reference judge.",
+      "source": {
+        "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+        "path": "skyrl-agent/skyrl_agent/tasks/verifiers/web_search/stem_llm_judge.py",
+        "sha256": "2e03b774d399226e435a88025e31ebe727bc360046a0784901c110af8b071fb3",
+        "url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/web_search/stem_llm_judge.py",
+        "dispatch": "WebResearchTask evaluate"
+      },
+      "evidence": [
+        "docs/unification/skyrl-adapter-specs.md#rubric",
+        "docs/unification/skyrl.json",
+        "evidence/e2e/skyrl/uncovered-routes.json"
+      ],
+      "observed_verified_execution_links": 0,
+      "actual_replayed_links": 0,
+      "core_extension_requirement": "specified_existing_class_behavior_missing"
+    }
+  ]
+}

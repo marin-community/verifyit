@@ -6,6 +6,13 @@ coverage when source failures expose gaps in the counterpart. No new verifier
 category is proposed. Source discovery, semantic mapping, implemented adaptation,
 and executable parity are separate kinds of evidence.
 
+The [coverage report](coverage-gaps.md) lists the remaining source routes and why
+they are not native integrations. Its [entity register](coverage-gaps.json)
+preserves the pinned source evidence and required change for each route. It
+distinguishes missing client integration, missing profiles within existing modes,
+implemented source fallbacks, and validation gaps. These counts apply only to the
+source revisions below.
+
 ## Pinned populations and mappings
 
 | Source snapshot | Enumerated population | Mapping and specification evidence |
@@ -30,7 +37,7 @@ orchestration rather than independent correctness scorers.
 | [Evalchemy patch](../../integrations/evalchemy/README.md) | Four clean integrations (GPQA, MMLU-Pro, AIW, GSM8KPerturbed); three boxed-math hybrids retain explicit missing-parse fallback. | 26 upstream extraction regressions and source exact/numeric parity cases pass. The other 35 custom benchmarks remain client/profile work. |
 | [Harness patch](../../integrations/lm-eval-harness/README.md) | Two native contracts cover 10,841 statically eligible task configurations: 8,061 likelihood-choice and 2,780 exact-match. Source aggregation remains. | Native scorer parity probes pass; eligibility is not execution of every dataset. Other 1,851 configurations remain compatibility/composition routes. |
 | [Harbor patch](../../integrations/harbor/README.md) | 52 primitive routes specified; one tau3 native-runtime bridge tested; 34 custom client bridges pending. All 87 use existing categories. | Generic dispatch/status tests and five tau3 result/runtime cases pass, including actual pinned-source boundary validation. Full native-runtime deployment parity is not claimed. |
-| [Task Trove integration](../../integrations/task-trove/README.md) | Explicit verifyit revision/dependency overlay, source converter migration, local Docker audit checkout, and task-owned archive script/setup namespace wrappers. | All rows' metadata scanned using bounded HTTP ranges;19 converter and 12 mode/helper drift matrix;8 local CLI integration cases; actual patched pipeline CLI and Dockerfile rewriting pass at scheduling/container I/O boundaries. |
+| [Task Trove integration](../../integrations/task-trove/README.md) | Explicit verifyit revision/dependency overlay, source converter migration, local Docker audit checkout, and task-owned archive script/setup namespace wrappers. | All rows' metadata scanned using bounded HTTP ranges; 19 converter and 12 mode/helper drift matrix; 8 local CLI integration cases; actual patched pipeline CLI and Dockerfile rewriting pass at scheduling/container I/O boundaries. |
 
 Integration dependency patches record the required immutable API checkpoint.
 They require a fetchable Git revision or the corresponding local checkout; an
@@ -38,6 +45,12 @@ unpushed local checkpoint does not establish published availability, updated
 fork lockfiles, or deployed integration.
 
 ## Hardening evidence
+
+The [replay report](e2e-replay.md) records 24 Evalchemy/harness runs matching
+63,360 samples, 66/66 SkyRL pinned-native and 65/66 archived results, and 1,101
+Harbor trials. Harbor's recovered zeros, infrastructure failures and database
+discrepancies remain explicit exceptions; these replays do not establish full
+dataset or deployment parity.
 
 [SkyRL's patch coverage matrix](skyrl.md#recent-patch-coverage) ties recent source
 changes to existing or added counterpart regressions and identifies adapter-only
