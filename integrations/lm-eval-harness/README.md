@@ -26,7 +26,7 @@ zero metric produces `scored`, never an infrastructure failure.
 
 
 The integration requires verifyit implementation commit
-`7e3aa30d5f9fd8f90dfe1c5a23162d5ec5a8c296`, including the AfroBench and corpus runtime APIs.
+`d3e3f5ac3c7bed328addc6d6011b8101b5bd71d7`, including the AfroBench and corpus runtime APIs.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -36,7 +36,7 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@7e3aa30d5f9fd8f90dfe1c5a23162d5ec5a8c296'
+uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@d3e3f5ac3c7bed328addc6d6011b8101b5bd71d7'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
@@ -156,3 +156,15 @@ were found, so archived replay is not claimed. The dependency pin above records 
 An isolated core-only Git install passed the English actual evaluator replay with
 32 calls and matching metrics; installed provenance and results are in campaign
 `evidence/e2e/wiring/harness-mc2/installed-english/`. The commit remains unpublished.
+
+Hendrycks literal math
+---------------------
+Apply `hendrycks-exact-verifyit.patch` after the base, AfroBench, corpus runtime,
+and TruthfulQA patches. Eight pinned task configurations use source boxed
+reference extraction and string normalization followed by strict ExactSpec
+grading. Profile drift, malformed references, and nonfinite values fail closed.
+The patch checks the filter before executing it. Evidence under
+`evidence/e2e/wiring/evalchemy-amc-math` includes all eight config guards and
+three selected full MATH500 response runs: all 1,500 scores match this fresh
+harness source comparator. Archived custom MATH500 scores use a different
+comparator and are not claimed to match.

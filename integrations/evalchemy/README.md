@@ -23,7 +23,7 @@ Further normalization/fallback contracts are described in
 
 
 The integration requires verifyit implementation commit
-`7e3aa30d5f9fd8f90dfe1c5a23162d5ec5a8c296`, including JEEBench primitive composition and `math_answer_text`.
+`d3e3f5ac3c7bed328addc6d6011b8101b5bd71d7`, including JEEBench primitive composition and `math_answer_text`.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -33,7 +33,7 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit[answer] @ git+file:///path/to/verifyit@7e3aa30d5f9fd8f90dfe1c5a23162d5ec5a8c296'
+uv pip install --python /path/to/environment/bin/python 'verifyit[answer] @ git+file:///path/to/verifyit@d3e3f5ac3c7bed328addc6d6011b8101b5bd71d7'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
@@ -93,3 +93,15 @@ and binary labels are graded inside verifyit. Native/source evaluator fixtures a
 an isolated installed-package replay match. Three saved run links are frozen in
 campaign `evidence/e2e/wiring/harness-mc2/truthfulqa-selection.json`; S3 access is
 currently unavailable, so no archived TruthfulQA replay is claimed.
+
+AMC23 literal normalization
+---------------------------
+Apply `amc23-verifyit.patch` to the pinned Evalchemy source. Enable the public
+constructor with `AMC23Benchmark(..., verifyit_enabled=True)`, or use
+`from eval.task import TaskManager` and
+`TaskManager(task_list=["AMC23"], verifyit_enabled=True)`. The manager forwards
+accepted benchmark kwargs; this is not a new CLI flag. Source extraction and
+ten repetition aggregates remain. Known normalization errors fail closed
+instead of using the original raw-equality fallback. Evidence is under
+`evidence/e2e/wiring/evalchemy-amc-math`; AMC23 validation uses source fixtures,
+with no matching archived AMC23 inputs found.
