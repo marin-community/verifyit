@@ -89,6 +89,19 @@ commit instead of the unpublished Git install. Full-size PDE data and matching
 saved model traces remain unvalidated. Evidence is in
 `evidence/e2e/wiring/harbor-codepde/`.
 
+Apply `replicationbench-pytest-verifyit.patch` after the Harbor dispatcher
+patch. Generated tasks use PytestSpec with the protected source comparator,
+preserving its binary all-tests policy and `/logs/comparison_result.json`.
+The task image pins verifyit `3f21d36306c86861e5fdff0718bd72029328e752`
+and uses a wheel from that exact local commit in the bounded image proof.
+Original `test.sh`, direct CLI and actual Harbor Verifier matched on nested
+passing, wrong and missing-result fixtures. The patched comparator scores a
+boolean-as-number candidate zero where the source awarded one. Trusted
+references and tolerance shapes are checked in setup: malformed task data is
+unscored, while explicit null remains valid. Broader task instances, scientific
+data and saved model traces remain unvalidated. Evidence is in
+`evidence/e2e/wiring/harbor-replicationbench/`.
+
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
 required by each task's `tests/verifier.toml` inside the verifier image. The
