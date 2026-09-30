@@ -1,0 +1,192 @@
+diff --git a/adapters/compilebench/README.md b/adapters/compilebench/README.md
+index 12edb4d..16bfe84 100644
+--- a/adapters/compilebench/README.md
++++ b/adapters/compilebench/README.md
+@@ -46,6 +46,13 @@ To generate all tasks:
+ uv run compilebench --task-ids all
+ ```
+ 
++To route the pinned pytest suites through verifyit, add `--verifyit-enabled`. The
++generated tasks include `tests/verifier.toml` and install the pinned verifier in
++the task image. Harbor then runs the unchanged protected pytest assertions and
++records a binary reward: every reported test must pass. The original task path
++remains the default. Pass `--overwrite` when switching an already fetched task
++to this route; existing task directories are otherwise skipped.
++
+ If you omit `--task-ids`, `uv run compilebench` now defaults to fetching all tasks.
+ 
+ To run the tasks:
+diff --git a/adapters/compilebench/src/compilebench/adapter.py b/adapters/compilebench/src/compilebench/adapter.py
+index 58fce20..c002ac6 100644
+--- a/adapters/compilebench/src/compilebench/adapter.py
++++ b/adapters/compilebench/src/compilebench/adapter.py
+@@ -8,6 +8,7 @@ This adapter provides utilities to fetch and manage CompileBench tasks.
+ 
+ from __future__ import annotations
+ 
++import hashlib
+ import json
+ import logging
+ import shutil
+@@ -20,6 +21,11 @@ logging.basicConfig(level=logging.INFO)
+ logger = logging.getLogger(__name__)
+ 
+ TASK_TEMPLATE_DIR = Path(__file__).resolve().parent / "task-template"
++VERIFYIT_REVISION = "eebc28fdb79fb66b800702715aa8dbecd5fbb3f0"
++SOURCE_TEST_HASHES = {
++    "1aab7905892d58d5ba119995f7af75f047b3bbbc8e231fa2547118e89e966689",
++    "b171dbfe8dc5d6fa561aedbd37debc4eb770d5a0ab5c87f542e64e714f2c6a51",
++}
+ 
+ 
+ class CompileBenchAdapter:
+@@ -47,9 +53,56 @@ class CompileBenchAdapter:
+         "jq-windows2",
+     ]
+ 
+-    def __init__(self, task_dir: Path):
++    def __init__(self, task_dir: Path, *, verifyit_enabled: bool = False):
+         self.task_dir = Path(task_dir)
+         self.template_dir = TASK_TEMPLATE_DIR
++        self.verifyit_enabled = verifyit_enabled
++
++    @staticmethod
++    def _enable_verifyit(task_dir: Path) -> None:
++        """Declare the pinned pytest contract for an upstream task image."""
++        script = task_dir / "tests/test.sh"
++        digest = hashlib.sha256(script.read_bytes()).hexdigest()
++        if digest not in SOURCE_TEST_HASHES:
++            raise ValueError(f"Unreviewed CompileBench test script: {script}")
++        dockerfile = task_dir / "environment/Dockerfile"
++        image = dockerfile.read_text(encoding="utf-8")
++        if not image.startswith("FROM --platform=linux/amd64 "):
++            raise ValueError(f"Unreviewed CompileBench image: {dockerfile}")
++        with (task_dir / "task.toml").open("rb") as task_file:
++            timeout = tomllib.load(task_file)["verifier"]["timeout_sec"]
++        if (
++            not isinstance(timeout, int | float)
++            or isinstance(timeout, bool)
++            or timeout <= 0
++        ):
++            raise ValueError(f"Invalid CompileBench verifier timeout: {timeout!r}")
++
++        (task_dir / "tests/verifier.toml").write_text(
++            'mode = "pytest"\n'
++            'paths = ["/tests/test_outputs.py"]\n'
++            'args = ["--ctrf", "/logs/verifier/ctrf.json", "-rA", "-s", "--tb=short"]\n'
++            'workspace = "/workdir"\n'
++            'python = "/opt/verifyit/bin/python"\n'
++            f"timeout = {timeout!r}\n",
++            encoding="utf-8",
++        )
++        dockerfile.write_text(
++            image
++            + "\n# The source pytest suite stays authoritative; verifyit records its binary verdict.\n"
++            + "RUN if grep -q '^ID=alpine' /etc/os-release; then apk add --no-cache git curl; "
++            + "else apt-get update && apt-get install -y --no-install-recommends git curl "
++            + "ca-certificates && rm -rf /var/lib/apt/lists/*; fi \\\n"
++            + "    && curl -LsSf https://astral.sh/uv/0.9.7/install.sh | sh \\\n"
++            + "    && /root/.local/bin/uv python install 3.11 \\\n"
++            + "    && /root/.local/bin/uv venv --python 3.11 /opt/verifyit \\\n"
++            + "    && /root/.local/bin/uv pip install --python /opt/verifyit/bin/python "
++            + "pytest==8.4.1 pytest-json-ctrf==0.3.5 pytest-json-report "
++            + f"'verifyit @ git+https://github.com/marin-community/verifyit@{VERIFYIT_REVISION}'\n"
++            + "RUN ln -s /opt/verifyit/bin/verifyit /usr/local/bin/verifyit\n"
++            + 'ENV PATH="/opt/verifyit/bin:$PATH"\n',
++            encoding="utf-8",
++        )
+ 
+     def list_available_tasks(self) -> List[str]:
+         """Return list of all available CompileBench tasks."""
+@@ -203,6 +256,8 @@ class CompileBenchAdapter:
+                 task_toml_path = dst / "task.toml"
+                 if task_toml_path.exists():
+                     self._rewrite_task_toml(task_toml_path, task)
++                if self.verifyit_enabled:
++                    self._enable_verifyit(dst)
+ 
+             logger.info(f"Successfully cloned {len(tasks)} tasks to {target_dir}")
+ 
+diff --git a/adapters/compilebench/src/compilebench/main.py b/adapters/compilebench/src/compilebench/main.py
+index fc70455..71a2bf6 100644
+--- a/adapters/compilebench/src/compilebench/main.py
++++ b/adapters/compilebench/src/compilebench/main.py
+@@ -52,11 +52,18 @@ def main() -> None:
+         action="store_true",
+         help="Overwrite existing fetched tasks",
+     )
++    parser.add_argument(
++        "--verifyit-enabled",
++        action="store_true",
++        help="Declare the pinned pytest suite for Harbor's verifyit verifier.",
++    )
+ 
+     args = parser.parse_args()
+ 
+     # Initialize adapter
+-    adapter = CompileBenchAdapter(task_dir=args.output_dir)
++    adapter = CompileBenchAdapter(
++        task_dir=args.output_dir, verifyit_enabled=args.verifyit_enabled
++    )
+ 
+     # List tasks if requested
+     if args.list_tasks:
+diff --git a/adapters/compilebench/tests/test_verifyit.py b/adapters/compilebench/tests/test_verifyit.py
+new file mode 100644
+index 0000000..a7caf90
+--- /dev/null
++++ b/adapters/compilebench/tests/test_verifyit.py
+@@ -0,0 +1,53 @@
++"""The optional verifier declaration stays bound to the reviewed upstream task."""
++
++import tomllib
++from hashlib import sha256
++from pathlib import Path
++
++import pytest
++
++from compilebench import adapter
++
++
++def make_task(tmp_path: Path) -> Path:
++    task = tmp_path / "cowsay"
++    (task / "tests").mkdir(parents=True)
++    (task / "environment").mkdir()
++    (task / "tests/test.sh").write_text("#!/bin/bash\npytest /tests/test_outputs.py\n")
++    (task / "environment/Dockerfile").write_text(
++        "FROM --platform=linux/amd64 ubuntu:22.04\nWORKDIR /workdir\n"
++    )
++    (task / "task.toml").write_text("[verifier]\ntimeout_sec = 900.0\n")
++    return task
++
++
++def test_reviewed_task_gets_binary_pytest_contract(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    task = make_task(tmp_path)
++    monkeypatch.setattr(
++        adapter,
++        "SOURCE_TEST_HASHES",
++        {sha256((task / "tests/test.sh").read_bytes()).hexdigest()},
++    )
++
++    adapter.CompileBenchAdapter._enable_verifyit(task)
++
++    with (task / "tests/verifier.toml").open("rb") as spec_file:
++        spec = tomllib.load(spec_file)
++    assert spec["mode"] == "pytest"
++    assert spec["paths"] == ["/tests/test_outputs.py"]
++    assert spec["args"][:2] == ["--ctrf", "/logs/verifier/ctrf.json"]
++    assert "must_pass" not in spec  # Whole-suite binary policy.
++    assert spec["timeout"] == 900.0
++    image = (task / "environment/Dockerfile").read_text()
++    assert f"verifyit@{adapter.VERIFYIT_REVISION}" in image
++
++
++def test_unreviewed_source_script_fails_before_wiring(tmp_path: Path) -> None:
++    task = make_task(tmp_path)
++
++    with pytest.raises(ValueError, match="Unreviewed CompileBench test script"):
++        adapter.CompileBenchAdapter._enable_verifyit(task)
++
++    assert not (task / "tests/verifier.toml").exists()

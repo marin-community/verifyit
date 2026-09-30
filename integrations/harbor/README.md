@@ -71,6 +71,23 @@ Harbor retained the artifact. Malformed protected-test collection remained
 unscored without a reward. No matching saved model trace was available. The
 image proof substituted an exact-commit wheel for the unpublished Git install.
 
+Apply `compilebench-pytest-verifyit.patch` after the Harbor dispatcher patch.
+With `--verifyit-enabled`, the adapter fetches the pinned 15 CompileBench tasks
+and declares each unchanged `/tests/test_outputs.py` suite to PytestSpec. Empty
+required-ID lists keep the source all-tests binary reward; the source CTRF
+artifact is retained. The Ubuntu and Alpine task images add a separate Python
+3.11 verifier environment while preserving their build runtimes. The image
+proof substituted a wheel from local verifyit commit
+`eebc28fdb79fb66b800702715aa8dbecd5fbb3f0` for its unpublished Git install.
+Generated cowsay and Alpine legacy-coreutils images matched the original
+`test.sh`, direct CLI and actual Harbor Verifier on passing and missing-result
+candidates. Malformed protected tests were unscored without a reward; an empty
+suite scored zero under the existing PytestSpec policy. Three candidate
+executable tamper probes did not produce a positive score. These are bounded
+fixtures, not a general same-UID isolation proof. The other 13 task images and
+matching saved model traces remain unvalidated. Evidence and exact replay
+commands are in `evidence/e2e/wiring/harbor-compilebench/`.
+
 Apply `codepde-pytest-verifyit.patch` after the Harbor dispatcher patch. Its
 generated tasks declare PytestSpec against a protected `/tests/verifyit/` copy
 of each upstream nRMSE evaluator. The original `test.sh` and evaluator remain

@@ -936,16 +936,24 @@
       "entity_id": "harbor:compilebench",
       "evidence": [
         "docs/unification/harbor_semantics.json#compilebench",
-        "docs/unification/harbor_inventory.json#compilebench"
+        "docs/unification/harbor_inventory.json#compilebench",
+        "integrations/harbor/compilebench-pytest-verifyit.patch",
+        "evidence/e2e/wiring/harbor-compilebench/all15-inventory.json",
+        "evidence/e2e/wiring/harbor-compilebench/cowsay-results-complete.json",
+        "evidence/e2e/wiring/harbor-compilebench/alpine-results-complete.json",
+        "evidence/e2e/wiring/harbor-compilebench/tamper-results-complete.json",
+        "evidence/e2e/wiring/harbor-compilebench/manager-cowsay-results.json",
+        "evidence/e2e/wiring/harbor-compilebench/manager-alpine-results.json",
+        "evidence/e2e/wiring/harbor-compilebench/manager-tamper-results.json"
       ],
-      "gap_kind": "pytest_task_client",
-      "implementation_present": false,
+      "gap_kind": "implemented_pytest_client",
+      "implementation_present": true,
       "name": "compilebench",
-      "needed_change": "Generate task-specific PytestSpec with pinned hidden tests, restore/setup/import paths and complete report IDs; preserve native all-pass binary policy instead of substituting partial pass fraction; test the native task environment.",
+      "needed_change": "Replay the other 13 task images and saved model rollouts before wider deployment; bounded executable tamper witnesses do not establish general same-UID candidate isolation.",
       "primitive_candidates": [
         "pytest"
       ],
-      "reason": "Pinned remote15-task suites invoke pytest test_outputs.py to inspect compiled artifacts, CLI behavior and platform/static-link constraints; preserve all assertions. Existing PytestSpec can execute preserved assertions, but no adapter emits the required setup/restore/report specification or native binary projection.",
+      "reason": "The pinned 15-task adapter now emits PytestSpec for each unchanged protected test_outputs.py suite. Empty required-ID lists preserve the source all-tests binary reward, and pytest arguments retain the CTRF artifact. Ubuntu and Alpine images provide a separate Python 3.11 verifier runtime while leaving source build targets intact.",
       "source_evidence": [
         {
           "functions": [],
@@ -959,8 +967,8 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "Generated Ubuntu cowsay and Alpine legacy-coreutils images matched source test.sh, direct CLI and actual Harbor Verifier on oracle and missing-result candidates with matching CTRF counts. Malformed protected tests were unscored; no collected tests scored zero under the existing PytestSpec policy. Three candidate executable tamper probes yielded zero or unscored. The other 13 images and saved model rollouts were not replayed; same-UID isolation is not established by these probes."
     },
     {
       "entity_id": "harbor:cooperbench",

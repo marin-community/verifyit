@@ -141,7 +141,7 @@ text += "\n\nThe two external objectives are not correctness verifiers:\n\n" + t
     "MarinSkyRL", {"not_a_correctness_verifier"}
 )
 text += (
-    "\n\n## Harbor\n\nThe HARBOR_PENDING_COUNT unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval, HumanEvalFix, BigCodeBench-Hard, AutoCodeBench, MMAU, CodePDE and ReplicationBench invoke the existing pytest route. BFCL, DABstep and tau3 retain source scorers behind structured ScriptSpec clients. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; HARBOR_NATIVE_COUNT primitive clients are now implemented.\n\n"
+    "\n\n## Harbor\n\nThe HARBOR_PENDING_COUNT unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval, HumanEvalFix, BigCodeBench-Hard, AutoCodeBench, MMAU, CodePDE, ReplicationBench and CompileBench invoke the existing pytest route. BFCL, DABstep and tau3 retain source scorers behind structured ScriptSpec clients. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; HARBOR_NATIVE_COUNT primitive clients are now implemented.\n\n"
     + table("harbor", {"not_integrated"})
 )
 text += "\n\n### Wired exact, MCQ and pytest clients\n\n" + table("harbor", {"native_route_available"})
