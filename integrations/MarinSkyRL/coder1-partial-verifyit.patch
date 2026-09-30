@@ -1,0 +1,1413 @@
+diff --git a/skyrl-agent/skyrl_agent/tasks/verifiers/coder1/__init__.py b/skyrl-agent/skyrl_agent/tasks/verifiers/coder1/__init__.py
+index ca3c9a6..dea3a3f 100644
+--- a/skyrl-agent/skyrl_agent/tasks/verifiers/coder1/__init__.py
++++ b/skyrl-agent/skyrl_agent/tasks/verifiers/coder1/__init__.py
+@@ -248,7 +248,41 @@ def _compute_score(solution_str, ground_truth, extra_info, format_reward=0.0, an
+     return format_reward + answer_reward, "\n".join(reward_log)
+ 
+ 
+-def compute_score(solution_str, ground_truth, extra_info, format_reward=0.0, answer_reward=1.0):
++def compute_score(
++    solution_str,
++    ground_truth,
++    extra_info,
++    format_reward=0.0,
++    answer_reward=1.0,
++    verifyit_enabled=False,
++    sandbox=None,
++    timeout=30,
++):
++    if verifyit_enabled:
++        try:
++            from .verifyit_runtime import execute_contract
++            from verifyit.grade import Status
++            import math
++
++            if any(
++                type(value) not in (int, float) or not math.isfinite(value) for value in (format_reward, answer_reward)
++            ):
++                return {"score": 0.0, "acc": 0.0}
++            if isinstance(extra_info, np.ndarray):
++                extra_info = extra_info.item()
++            tests = json.loads(ground_truth)
++            if not isinstance(tests, dict) or not isinstance(extra_info, dict):
++                return {"score": 0.0, "acc": 0.0}
++            code = extract_code_from_string(solution_str)
++            verdict = execute_contract(code, tests, prefix=extra_info.get("prefix"), sandbox=sandbox, timeout=timeout)
++            if verdict.status is not Status.SCORED or not code:
++                score = 0.0
++            else:
++                score = format_reward + (answer_reward if verdict.reward == 1 else 0.0)
++            return {"score": score, "acc": score}
++        except (ImportError, OSError, ValueError, TypeError, RuntimeError):
++            return {"score": 0.0, "acc": 0.0}
++
+     if isinstance(extra_info, np.ndarray):
+         extra_info = extra_info.item()
+     score, reward_log = _compute_score(
+diff --git a/skyrl-agent/skyrl_agent/tasks/verifiers/coder1/verifyit_runtime.py b/skyrl-agent/skyrl_agent/tasks/verifiers/coder1/verifyit_runtime.py
+new file mode 100644
+index 0000000..9c70e40
+--- /dev/null
++++ b/skyrl-agent/skyrl_agent/tasks/verifiers/coder1/verifyit_runtime.py
+@@ -0,0 +1,905 @@
++"""Coder1 trusted checker with candidate-only sandbox execution."""
++
++import ast
++import builtins
++import json
++import math
++import os
++import shlex
++import signal
++import subprocess
++import sys
++import time
++import uuid
++from pathlib import Path
++from tempfile import TemporaryDirectory
++
++from verifyit.grade import Status, infra_error, run
++from verifyit.modes.grade_exact import grade_exact_candidate
++from verifyit.modes.grade_math import grade_numeric_candidate
++from verifyit.spec import ExactSpec, NumericSpec, PytestSpec, ScriptSpec, render_spec
++
++
++_REMOTE = r"""
++import json, io, contextlib, sys, resource, operator
++_objects = {}
++_arguments = {}
++_namespace = {"__name__": "solution"}
++def _pack(value):
++    for ref, argument in _arguments.items():
++        if value is argument: return {"kind": "argref", "ref": ref}
++    if value is None or type(value) in (str, bool, int, float):
++        return {"kind": "value", "value": value}
++    if type(value) in (list, dict):
++        ref = "remote:" + str(id(value))
++        _arguments[ref] = value
++        return {"kind": "argref", "ref": ref}
++    if type(value) is tuple:
++        return {"kind": "tuple", "items": [_pack(v) for v in value]}
++    ref = str(id(value))
++    _objects[ref] = value
++    return {"kind": "ref", "ref": ref, "type": type(value).__name__}
++def _unpack(value):
++    kind = value["kind"]
++    if kind == "argref": return _arguments[value["ref"]]
++    if kind == "ref": return _objects[value["ref"]]
++    if kind == "value": return value["value"]
++    if kind in ("list", "tuple"):
++        values = [_unpack(v) for v in value["items"]]
++        return tuple(values) if kind == "tuple" else values
++    if kind == "dict": return {_unpack(k): _unpack(v) for k,v in value["items"]}
++    raise ValueError("unsupported transport")
++def _request(request):
++    nodes = request.get("argument_nodes", {})
++    for ref, node in nodes.items():
++        if ref not in _arguments:
++            _arguments[ref] = [] if node["kind"] == "list" else {}
++    for ref, node in nodes.items():
++        value = _arguments[ref]
++        if node["kind"] == "list": value[:] = [_unpack(v) for v in node["items"]]
++        else:
++            value.clear()
++            value.update((_unpack(k), _unpack(v)) for k, v in node["items"])
++    try:
++        with contextlib.redirect_stdout(io.StringIO()):
++            if request["op"] == "load":
++                _namespace["__name__"] = request["module_name"]
++                exec(request["code"], _namespace)
++                value = True
++            elif request["op"] == "name": value = _namespace[request["name"]]
++            elif request["op"] == "get": value = getattr(_objects[request["ref"]], request["name"])
++            elif request["op"] == "set":
++                setattr(_objects[request["ref"]], request["name"], _unpack(request["value"]))
++                value = None
++            elif request["op"] == "call":
++                value = _objects[request["ref"]](*[_unpack(v) for v in request["args"]], **{k:_unpack(v) for k,v in request["kwargs"].items()})
++            elif request["op"] == "special":
++                target = _objects[request["ref"]]
++                args = [_unpack(v) for v in request["args"]]
++                operations = {"bool": bool, "len": len, "iter": iter, "next": next,
++                              "eq": operator.eq, "ne": operator.ne, "getitem": operator.getitem,
++                              "setitem": operator.setitem, "delitem": operator.delitem,
++                              "contains": operator.contains, "str": str, "repr": repr}
++                value = operations[request["name"]](target, *args)
++            elif request["op"] == "names": value = [k for k in _namespace if not k.startswith("__")]
++            else: raise ValueError("unknown operation")
++        result = {"kind": "ok", "value": _pack(value)}
++    except (Exception, SystemExit) as error:
++        result = {"kind": "exception", "type": type(error).__name__, "message": str(error)}
++    result["argument_nodes"] = {}
++    while len(result["argument_nodes"]) != len(_arguments):
++        for ref, value in list(_arguments.items()):
++            if ref not in result["argument_nodes"]:
++                result["argument_nodes"][ref] = (
++                    {"kind": "list", "items": [_pack(v) for v in value]}
++                    if type(value) is list else
++                    {"kind": "dict", "items": [[_pack(k), _pack(v)] for k,v in value.items()]}
++                )
++    print("VERIFYIT_RPC:" + json.dumps(result, allow_nan=False))
++print("VERIFYIT_READY")
++"""
++
++
++class CandidateError(Exception):
++    pass
++
++
++class Runtime:
++    def __init__(self, config):
++        from skyrl_gym.envs.nemotron_ultra.sandbox import SandboxClient
++
++        self.client = SandboxClient(host=config["host"], port=config["port"])
++        self.session = config["session"]
++        self.timeout = config["timeout"]
++        self.deadline = config.get("deadline")
++        self.module_name = config.get("module_name", "solution")
++        self.failures = Path(config["failures"])
++        self.raw = []
++        self.arguments = {}
++        self.proxies = {}
++
++    def fail(self, status, reason):
++        self.failures.write_text(json.dumps({"status": status, "reason": reason}))
++        raise RuntimeError(reason)
++
++    def execute(self, code):
++        budget = self.timeout
++        if self.deadline is not None:
++            budget = min(budget, self.deadline - time.monotonic())
++            if budget <= 0:
++                self.fail("infra_error", "candidate execution budget exhausted")
++        try:
++            result = self.client.execute(
++                code,
++                language="ipython",
++                session_id=self.session,
++                timeout_seconds=budget,
++                max_output_characters=65536,
++            )
++        except Exception as error:
++            self.fail("infra_error", f"sandbox unavailable: {type(error).__name__}")
++        self.raw.append(result)
++        if result.get("process_status") != "completed" or result.get(
++            "output_truncated"
++        ):
++            self.fail("infra_error", "sandbox incomplete execution")
++        return result.get("stdout", "").strip()
++
++    def initialize(self, code):
++        if self.execute(_REMOTE) != "VERIFYIT_READY":
++            self.fail("infra_error", "sandbox setup failed")
++        limits = """
++for _kind in (resource.RLIMIT_AS, resource.RLIMIT_DATA):
++    _soft, _hard = resource.getrlimit(_kind)
++    _bound = 10 * 1024**3
++    if _soft != resource.RLIM_INFINITY: _bound = min(_bound, _soft)
++    if _hard != resource.RLIM_INFINITY: _bound = min(_bound, _hard)
++    resource.setrlimit(_kind, (_bound, _bound))
++print('VERIFYIT_LIMIT_READY')
++"""
++        if self.execute(limits) != "VERIFYIT_LIMIT_READY":
++            self.fail("infra_error", "sandbox memory limit failed")
++        self.deadline = time.monotonic() + self.timeout
++        try:
++            self.request({"op": "load", "code": code, "module_name": self.module_name})
++        except Exception as error:
++            if self.failures.exists():
++                raise
++            raise CandidateError("candidate initialization failed") from error
++
++    def request(self, request):
++        request["argument_nodes"] = {
++            ref: (
++                {"kind": "list", "items": [self.encode(v) for v in value]}
++                if type(value) is list
++                else {
++                    "kind": "dict",
++                    "items": [
++                        [self.encode(k), self.encode(v)] for k, v in value.items()
++                    ],
++                }
++            )
++            for ref, value in list(self.arguments.items())
++        }
++        # Encoding nested containers adds nodes; include the complete reachable graph.
++        while len(request["argument_nodes"]) != len(self.arguments):
++            request["argument_nodes"] = {
++                ref: (
++                    {"kind": "list", "items": [self.encode(v) for v in value]}
++                    if type(value) is list
++                    else {
++                        "kind": "dict",
++                        "items": [
++                            [self.encode(k), self.encode(v)] for k, v in value.items()
++                        ],
++                    }
++                )
++                for ref, value in list(self.arguments.items())
++            }
++        text = self.execute(
++            "_request(json.loads(" + repr(json.dumps(request, allow_nan=False)) + "))"
++        )
++        if not text.startswith("VERIFYIT_RPC:"):
++            self.fail("infra_error", "sandbox response malformed")
++        try:
++            value = json.loads(text[len("VERIFYIT_RPC:") :])
++        except ValueError:
++            self.fail("infra_error", "sandbox response malformed")
++        if not isinstance(value, dict):
++            self.fail("infra_error", "sandbox response malformed")
++        try:
++            self.apply_updates(value)
++        except (KeyError, TypeError, ValueError, RecursionError):
++            self.fail("infra_error", "mutable argument graph malformed")
++        if value.get("kind") == "exception":
++            if not isinstance(value.get("type"), str) or not isinstance(
++                value.get("message"), str
++            ):
++                self.fail("infra_error", "candidate exception packet malformed")
++            error_type = getattr(builtins, value.get("type", ""), CandidateError)
++            if not isinstance(error_type, type) or not issubclass(
++                error_type, Exception
++            ):
++                error_type = CandidateError
++            raise error_type(value.get("message", "candidate exception"))
++        if value.get("kind") != "ok":
++            self.fail("infra_error", "sandbox response malformed")
++        if "value" not in value:
++            self.fail("infra_error", "sandbox response malformed")
++        packet = value["value"]
++        if (
++            isinstance(packet, dict)
++            and packet.get("kind") == "ref"
++            and packet.get("type") == "module"
++        ):
++            self.fail("invalid_task", "remote module binding is unsupported")
++        try:
++            return self.decode(packet)
++        except (KeyError, TypeError, ValueError, RecursionError):
++            self.fail("infra_error", "candidate transport malformed")
++
++    def apply_updates(self, value):
++        updates = value.get("argument_nodes")
++        if not isinstance(updates, dict) or not set(self.arguments).issubset(updates):
++            self.fail("infra_error", "mutable argument graph malformed")
++        for ref, node in updates.items():
++            if ref not in self.arguments:
++                if (
++                    not isinstance(ref, str)
++                    or not ref.startswith("remote:")
++                    or not isinstance(node, dict)
++                    or node.get("kind") not in ("list", "dict")
++                ):
++                    self.fail("infra_error", "mutable argument graph malformed")
++                self.arguments[ref] = [] if node["kind"] == "list" else {}
++        decoded = {}
++        for ref, node in updates.items():
++            if (
++                not isinstance(node, dict)
++                or node.get("kind") != type(self.arguments[ref]).__name__
++            ):
++                self.fail("infra_error", "mutable argument graph malformed")
++            if not isinstance(node.get("items"), list):
++                self.fail("infra_error", "mutable argument graph malformed")
++            if node["kind"] == "list":
++                decoded[ref] = [self.decode(v) for v in node["items"]]
++            else:
++                decoded[ref] = [
++                    (self.decode(k), self.decode(v)) for k, v in node["items"]
++                ]
++        for ref, items in decoded.items():
++            target = self.arguments[ref]
++            if type(target) is list:
++                target[:] = items
++            else:
++                target.clear()
++                target.update(items)
++
++    def encode(self, value):
++        if isinstance(value, RemoteObject):
++            owner, ref = _PROXY_STATE[id(value)]
++            if owner is not self:
++                self.fail("invalid_task", "cross-runtime proxy argument")
++            return {"kind": "ref", "ref": ref}
++        if value is None or type(value) in (str, bool, int, float):
++            if isinstance(value, float) and not math.isfinite(value):
++                self.fail("invalid_task", "nonfinite test argument")
++            return {"kind": "value", "value": value}
++        if type(value) in (list, dict):
++            ref = next(
++                (ref for ref, item in self.arguments.items() if item is value),
++                str(id(value)),
++            )
++            self.arguments[ref] = value
++            return {"kind": "argref", "ref": ref}
++        if type(value) is tuple:
++            return {
++                "kind": type(value).__name__,
++                "items": [self.encode(v) for v in value],
++            }
++        self.fail("invalid_task", "unsupported test argument type")
++
++    def decode(self, value):
++        if not isinstance(value, dict):
++            self.fail("infra_error", "malformed candidate transport")
++        if value.get("kind") == "argref":
++            if value.get("ref") not in self.arguments:
++                self.fail("infra_error", "unknown mutable argument reference")
++            return self.arguments[value["ref"]]
++        if value["kind"] == "value":
++            result = value["value"]
++            if result is None or type(result) in (str, bool, int, float):
++                if isinstance(result, float) and not math.isfinite(result):
++                    self.fail("infra_error", "nonfinite candidate transport")
++                return result
++        if value["kind"] in ("list", "tuple"):
++            items = [self.decode(v) for v in value["items"]]
++            return tuple(items) if value["kind"] == "tuple" else items
++        if value["kind"] == "dict":
++            return {self.decode(k): self.decode(v) for k, v in value["items"]}
++        if value["kind"] == "ref" and isinstance(value.get("ref"), str):
++            ref = value["ref"]
++            if ref not in self.proxies:
++                self.proxies[ref] = RemoteObject(self, ref)
++            return self.proxies[ref]
++        self.fail("infra_error", "malformed candidate transport")
++
++
++_PROXY_STATE = {}
++
++
++def _special(proxy, name, *args):
++    runtime, ref = _PROXY_STATE[id(proxy)]
++    return runtime.request(
++        {
++            "op": "special",
++            "ref": ref,
++            "name": name,
++            "args": [runtime.encode(v) for v in args],
++        }
++    )
++
++
++class RemoteObject:
++    __slots__ = ()
++
++    def __init__(self, runtime, ref):
++        _PROXY_STATE[id(self)] = (runtime, ref)
++
++    def __getattribute__(self, name):
++        runtime, ref = _PROXY_STATE[id(self)]
++        return runtime.request({"op": "get", "ref": ref, "name": name})
++
++    def __setattr__(self, name, value):
++        runtime, ref = _PROXY_STATE[id(self)]
++        runtime.request(
++            {"op": "set", "ref": ref, "name": name, "value": runtime.encode(value)}
++        )
++
++    def __call__(self, *args, **kwargs):
++        runtime, ref = _PROXY_STATE[id(self)]
++        return runtime.request(
++            {
++                "op": "call",
++                "ref": ref,
++                "args": [runtime.encode(v) for v in args],
++                "kwargs": {k: runtime.encode(v) for k, v in kwargs.items()},
++            }
++        )
++
++    def __eq__(self, other):
++        if not isinstance(other, RemoteObject):
++            owner, _ = _PROXY_STATE[id(self)]
++            owner.fail(
++                "invalid_task", "rich-object comparison with trusted value unsupported"
++            )
++        return _special(self, "eq", other)
++
++    def __ne__(self, other):
++        if not isinstance(other, RemoteObject):
++            owner, _ = _PROXY_STATE[id(self)]
++            owner.fail(
++                "invalid_task", "rich-object comparison with trusted value unsupported"
++            )
++        return _special(self, "ne", other)
++
++    def __bool__(self):
++        return _special(self, "bool")
++
++    def __len__(self):
++        return _special(self, "len")
++
++    def __iter__(self):
++        return _special(self, "iter")
++
++    def __next__(self):
++        return _special(self, "next")
++
++    def __getitem__(self, key):
++        return _special(self, "getitem", key)
++
++    def __setitem__(self, key, value):
++        _special(self, "setitem", key, value)
++
++    def __delitem__(self, key):
++        _special(self, "delitem", key)
++
++    def __contains__(self, value):
++        return _special(self, "contains", value)
++
++    def __str__(self):
++        return _special(self, "str")
++
++    def __repr__(self):
++        return _special(self, "repr")
++
++
++def _unsupported_proxy_operation(proxy, *args, **kwargs):
++    owner, _ = _PROXY_STATE[id(proxy)]
++    owner.fail("invalid_task", "unsupported proxy operation")
++
++
++for _method in (
++    "__hash__",
++    "__format__",
++    "__int__",
++    "__float__",
++    "__index__",
++    "__bytes__",
++    "__add__",
++    "__radd__",
++    "__sub__",
++    "__rsub__",
++    "__mul__",
++    "__rmul__",
++    "__truediv__",
++    "__rtruediv__",
++    "__floordiv__",
++    "__rfloordiv__",
++    "__mod__",
++    "__rmod__",
++    "__pow__",
++    "__rpow__",
++    "__matmul__",
++    "__rmatmul__",
++    "__lt__",
++    "__le__",
++    "__gt__",
++    "__ge__",
++    "__neg__",
++    "__pos__",
++    "__abs__",
++    "__invert__",
++    "__and__",
++    "__rand__",
++    "__or__",
++    "__ror__",
++    "__xor__",
++    "__rxor__",
++    "__lshift__",
++    "__rlshift__",
++    "__rshift__",
++    "__rrshift__",
++    "__enter__",
++    "__exit__",
++    "__await__",
++    "__aiter__",
++    "__anext__",
++):
++    setattr(RemoteObject, _method, _unsupported_proxy_operation)
++
++
++_MODULE_STATE = {}
++
++
++def identity_compare(module, left, right, negate):
++    owner = _MODULE_STATE[id(module)]
++    if (
++        left is not None
++        and right is not None
++        and type(left) is not bool
++        and type(right) is not bool
++    ):
++        if type(left) in (str, int, float, tuple, bytes, frozenset) or type(right) in (
++            str,
++            int,
++            float,
++            tuple,
++            bytes,
++            frozenset,
++        ):
++            owner.fail("invalid_task", "scalar identity comparison unsupported")
++    return (left is not right) if negate else (left is right)
++
++
++def functional_namespace(module):
++    runtime = _MODULE_STATE[id(module)]
++    return {
++        name: runtime.request({"op": "name", "name": name})
++        for name in runtime.request({"op": "names"})
++    }
++
++
++def install_solution(config):
++    import types
++
++    runtime = Runtime(config)
++    runtime.client._sessions.add(runtime.session)
++
++    class CandidateModule(types.ModuleType):
++        def __getattribute__(self, name):
++            owner = _MODULE_STATE[id(self)]
++            if name == "__dict__":
++                owner.fail("invalid_task", "module namespace introspection unsupported")
++            try:
++                return owner.request({"op": "name", "name": name})
++            except KeyError as error:
++                raise AttributeError(name) from error
++
++    module = CandidateModule("solution")
++    _MODULE_STATE[id(module)] = runtime
++    sys.modules["solution"] = module
++    return runtime, module
++
++
++def compare_stdio(actual, expected):
++    left = actual.strip().replace("\r\n", "\n").split("\n")
++    right = expected.strip().replace("\r\n", "\n").split("\n")
++    if len(left) != len(right):
++        return False
++    for a, b in zip(left, right):
++        aa, bb = a.split(), b.split()
++        if len(aa) != len(bb):
++            return False
++        for x, y in zip(aa, bb):
++            try:
++                n, m = float(x), float(y)
++            except ValueError:
++                if x.lower() in ("yes", "no") and y.lower() in ("yes", "no"):
++                    x, y = x.lower(), y.lower()
++                verdict = grade_exact_candidate(
++                    ExactSpec(
++                        expected=(y,), ignore_case=False, ignore_whitespace=False
++                    ),
++                    x,
++                )
++            else:
++                if not math.isfinite(m):
++                    raise ValueError("nonfinite expected output")
++                if not math.isfinite(n):
++                    return False
++                verdict = grade_numeric_candidate(
++                    NumericSpec(expected=m, tolerance_abs=1e-6, tolerance_rel=0), n
++                )
++            if verdict.status is not Status.SCORED:
++                raise RuntimeError("stdio comparator unavailable")
++            if verdict.reward != 1:
++                return False
++    return True
++
++
++def _check(data, root):
++    ground = data["ground_truth"]
++    failures = root / "runtime-failure.json"
++    config = {**data["runtime"], "failures": str(failures)}
++    runtime = Runtime(config)
++    try:
++        if (
++            "inputs" in ground
++            and "outputs" in ground
++            and not any(k in ground for k in ("functional", "pytest", "solution_file"))
++        ):
++            inputs, outputs = ground["inputs"], ground["outputs"]
++            if (
++                not isinstance(inputs, list)
++                or not isinstance(outputs, list)
++                or len(inputs) != len(outputs)
++                or not inputs
++            ):
++                raise ValueError("misaligned or empty tests")
++            if not all(isinstance(v, str) for v in inputs + outputs):
++                raise ValueError("tests must contain strings")
++            # Validate all trusted outputs before any candidate execution or partial reward.
++            for expected in outputs:
++                compare_stdio(expected, expected)
++            for index, (stdin, expected) in enumerate(zip(inputs, outputs)):
++                runtime = Runtime(
++                    {**config, "session": data["runtime"]["stdio_sessions"][index]}
++                )
++                try:
++                    runtime.initialize("")
++                    command = (
++                        "_capture=io.StringIO()\n_old_stdin=sys.stdin\nsys.stdin=io.TextIOWrapper(io.BytesIO("
++                        + repr(stdin.encode())
++                        + "))\n"
++                        "try:\n    with contextlib.redirect_stdout(_capture):\n        exec("
++                        + repr(data["code"])
++                        + ', {"__name__":"__main__"})\n'
++                        '    _stdio_result={"kind":"ok","stdout":_capture.getvalue()}\n'
++                        'except SystemExit as error:\n    _stdio_result={"kind":"ok" if error.code in (None,0) else "exception","stdout":_capture.getvalue()}\n'
++                        'except Exception:\n    _stdio_result={"kind":"exception","stdout":_capture.getvalue()}\n'
++                        'finally:\n    sys.stdin=_old_stdin\nprint("VERIFYIT_STDIO:"+json.dumps(_stdio_result))'
++                    )
++                    text = runtime.execute(command)
++                    if not text.startswith("VERIFYIT_STDIO:"):
++                        runtime.fail("infra_error", "malformed stdio transport")
++                    value = json.loads(text[len("VERIFYIT_STDIO:") :])
++                    if value.get("kind") != "ok" or not compare_stdio(
++                        value["stdout"], expected
++                    ):
++                        return {
++                            "status": "scored",
++                            "reward": 0.0,
++                            "detail": {
++                                "reason": "wrong_answer",
++                                "runtime": runtime.raw,
++                            },
++                        }
++                finally:
++                    _close(runtime)
++            return {
++                "status": "scored",
++                "reward": 1.0,
++                "detail": {"runtime": runtime.raw},
++            }
++        mode = next(
++            (k for k in ("functional", "solution_file", "pytest") if k in ground), None
++        )
++        if mode is None or not isinstance(ground[mode], str):
++            raise ValueError("unknown test form")
++        compile(ground[mode], "<trusted tests>", "exec")
++        tree = ast.parse(ground[mode])
++        if any(
++            isinstance(node, ast.Name)
++            and node.id in ("type", "isinstance", "issubclass", "eval", "exec")
++            or isinstance(node, ast.Attribute)
++            and node.attr in ("__class__", "__getattribute__")
++            for node in ast.walk(tree)
++        ):
++            return {
++                "status": "invalid_task",
++                "reward": 0.0,
++                "detail": {"reason": "unsupported proxy type introspection"},
++            }
++        identity_name = "_verifyit_identity_" + uuid.uuid4().hex
++
++        class IdentityGuard(ast.NodeTransformer):
++            def visit_Compare(self, node):
++                node = self.generic_visit(node)
++                if any(isinstance(op, (ast.Is, ast.IsNot)) for op in node.ops):
++                    if len(node.ops) != 1:
++                        raise ValueError("chained identity comparison unsupported")
++                    return ast.copy_location(
++                        ast.Call(
++                            func=ast.Name(id=identity_name, ctx=ast.Load()),
++                            args=[
++                                node.left,
++                                node.comparators[0],
++                                ast.Constant(isinstance(node.ops[0], ast.IsNot)),
++                            ],
++                            keywords=[],
++                        ),
++                        node,
++                    )
++                return node
++
++        guarded_code = ast.unparse(
++            ast.fix_missing_locations(IdentityGuard().visit(tree))
++        )
++        code = data["code"]
++        prefix = data.get("prefix")
++        if mode == "functional" and prefix is not None:
++            if not isinstance(prefix, str):
++                raise ValueError("invalid trusted prefix")
++            # Apply the trusted prefix once; the pinned source applies it twice by accident.
++            code = prefix + "\n" + code
++        runtime.module_name = "__main__" if mode == "functional" else "solution"
++        runtime.initialize(code)
++        config["deadline"] = runtime.deadline
++        config_path = root / "proxy-config.json"
++        config_path.write_text(json.dumps(config))
++        solution = (
++            """import importlib.util, json
++from pathlib import Path
++_spec=importlib.util.spec_from_file_location("coder1_runtime", """
++            + repr(str(root / "checker.py"))
++            + """)
++_module=importlib.util.module_from_spec(_spec)
++import sys
++sys.modules["coder1_trusted_proxy_runtime"]=_module
++_spec.loader.exec_module(_module)
++_runtime,_solution=_module.install_solution(json.loads(Path("""
++            + repr(str(config_path))
++            + """).read_text()))
++def __getattr__(name):
++    return getattr(_solution,name)
++"""
++        )
++        (root / "solution.py").write_text(solution)
++        if mode == "pytest":
++            test_code = (
++                "import solution\nfrom coder1_trusted_proxy_runtime import identity_compare\n"
++                + identity_name
++                + "=lambda a,b,negate: identity_compare(solution,a,b,negate)\n"
++                + guarded_code
++            )
++        else:
++            namespace = "{}"
++            if mode == "functional":
++                namespace = "functional_namespace(solution)"
++            test_code = (
++                "import solution\nfrom coder1_trusted_proxy_runtime import functional_namespace, identity_compare\n\ndef test_contract():\n    _namespace="
++                + namespace
++                + "\n"
++                "    _namespace["
++                + repr(identity_name)
++                + "]=lambda a,b,negate: identity_compare(solution,a,b,negate)\n"
++                '    _namespace["__name__"]="__main__"\n    exec('
++                + repr(guarded_code)
++                + ",_namespace)\n"
++            )
++        (root / "test_solution.py").write_text(test_code)
++        interpreter = root / "pytest-python.sh"
++        interpreter.write_text(
++            '#!/bin/sh\numask 077\nprintf "%s\\n" "$$" > '
++            + shlex.quote(str(root / "pytest.pgid"))
++            + "\nexec "
++            + shlex.quote(sys.executable)
++            + ' "$@"\n'
++        )
++        interpreter.chmod(0o700)
++        (root / "pytest.toml").write_text(
++            render_spec(
++                PytestSpec(
++                    paths=(str(root / "test_solution.py"),),
++                    python=str(interpreter),
++                    timeout=max(0.001, runtime.deadline - time.monotonic()),
++                    workspace=str(root),
++                )
++            )
++        )
++        verdict = run(root / "pytest.toml", root)
++        if failures.exists():
++            fault = json.loads(failures.read_text())
++            return {"status": fault["status"], "reward": 0.0, "detail": fault}
++        return {
++            "status": verdict.status.value,
++            "reward": (
++                float(verdict.reward == 1) if verdict.status is Status.SCORED else 0.0
++            ),
++            "detail": {
++                "pytest": verdict.detail,
++                "runtime": runtime.raw,
++                "test_form": mode,
++            },
++        }
++    except (SyntaxError, ValueError, TypeError) as error:
++        return {
++            "status": "invalid_task",
++            "reward": 0.0,
++            "detail": {"reason": type(error).__name__},
++        }
++    except Exception as error:
++        if failures.exists():
++            fault = json.loads(failures.read_text())
++            return {"status": fault["status"], "reward": 0.0, "detail": fault}
++        return {
++            "status": "scored",
++            "reward": 0.0,
++            "detail": {
++                "reason": "candidate_exception",
++                "exception": type(error).__name__,
++            },
++        }
++    finally:
++        _close(runtime)
++
++
++def _close(runtime):
++    import requests
++
++    response = requests.delete(
++        f"http://{runtime.client.host}:{runtime.client.port}/sessions/{runtime.session}",
++        headers={"X-Session-ID": runtime.session},
++        timeout=runtime.timeout + 10,
++    )
++    if response.status_code != 404:
++        response.raise_for_status()
++    evidence = {"session": runtime.session, "http_status": response.status_code}
++    runtime.raw.append({"session_cleanup": evidence})
++    return evidence
++
++
++def _cleanup_pytest_group(root):
++    record = root / "pytest.pgid"
++    if not record.exists():
++        return {"state": "not_started"}
++    pid = int(record.read_text().strip())
++    if pid <= 1 or pid == os.getpgrp():
++        raise RuntimeError("invalid trusted pytest group")
++    process = subprocess.run(
++        ["ps", "-p", str(pid), "-o", "command="],
++        capture_output=True,
++        text=True,
++        timeout=5,
++    )
++    if process.returncode == 0 and str(root / "test_solution.py") not in process.stdout:
++        raise RuntimeError("pytest process identity changed before cleanup")
++    try:
++        os.killpg(pid, signal.SIGKILL)
++    except ProcessLookupError:
++        return {"state": "already_exited", "pgid": pid}
++    return {"state": "killed", "pgid": pid}
++
++
++def execute_contract(code, ground_truth, *, prefix=None, sandbox=None, timeout=30):
++    from skyrl_gym.envs.nemotron_ultra.sandbox import SandboxClient
++
++    client = SandboxClient() if sandbox is None else sandbox
++    session = str(uuid.uuid4())
++    with TemporaryDirectory(prefix="coder1-verifyit-") as directory:
++        root = Path(directory)
++        stdio_sessions = [str(uuid.uuid4()) for _ in ground_truth.get("inputs", [])]
++        config = {
++            "session": session,
++            "stdio_sessions": stdio_sessions,
++            "host": client.host,
++            "port": client.port,
++            "timeout": timeout,
++        }
++        (root / "checker.py").write_text(Path(__file__).read_text())
++        (root / "data.json").write_text(
++            json.dumps(
++                {
++                    "code": code,
++                    "ground_truth": ground_truth,
++                    "prefix": prefix,
++                    "runtime": config,
++                },
++                allow_nan=False,
++            )
++        )
++        (root / "checker.sh").write_text(
++            "#!/bin/sh\nexec "
++            + shlex.quote(sys.executable)
++            + " "
++            + shlex.quote(str(root / "checker.py"))
++            + "\n"
++        )
++        (root / "verifier.toml").write_text(
++            render_spec(
++                ScriptSpec(
++                    path="checker.sh",
++                    verdict_file="coder1-result.json",
++                    timeout=timeout * (len(ground_truth.get("inputs", [])) + 3),
++                )
++            )
++        )
++        cleanup = []
++        failed = False
++        try:
++            result = run(root / "verifier.toml", root)
++        finally:
++            import requests
++
++            try:
++                process_cleanup = _cleanup_pytest_group(root)
++            except (
++                OSError,
++                ValueError,
++                RuntimeError,
++                subprocess.TimeoutExpired,
++            ) as error:
++                failed = True
++                process_cleanup = {"state": "failed", "error": type(error).__name__}
++            for owned_session in [session, *stdio_sessions]:
++                try:
++                    cleanup.append(
++                        _close(
++                            Runtime(
++                                {
++                                    **config,
++                                    "session": owned_session,
++                                    "failures": str(root / "runtime-failure.json"),
++                                }
++                            )
++                        )
++                    )
++                except requests.RequestException as error:
++                    failed = True
++                    cleanup.append(
++                        {"session": owned_session, "error": type(error).__name__}
++                    )
++        if failed:
++            result = infra_error("sandbox cleanup failed")
++        result.detail["session_cleanup"] = cleanup
++        result.detail["pytest_process_cleanup"] = process_cleanup
++        return result
++
++
++if __name__ == "__main__":
++    root = Path(os.environ["VERIFYIT_TESTS_DIR"])
++    result = _check(json.loads((root / "data.json").read_text()), root)
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "coder1-result.json").write_text(
++        json.dumps(result, allow_nan=False)
++    )
+diff --git a/skyrl-agent/tests/test_coder1_verifyit.py b/skyrl-agent/tests/test_coder1_verifyit.py
+new file mode 100644
+index 0000000..c3b9d66
+--- /dev/null
++++ b/skyrl-agent/tests/test_coder1_verifyit.py
+@@ -0,0 +1,437 @@
++"""Coder1 source contract witnesses using the real isolated execution service."""
++
++import importlib
++import json
++import sys
++import types
++from pathlib import Path
++
++import pytest
++
++ROOT = Path(__file__).resolve().parents[1] / "skyrl_agent"
++for name, path in [
++    ("skyrl_agent", ROOT),
++    ("skyrl_agent.tasks", ROOT / "tasks"),
++    ("skyrl_agent.tasks.verifiers", ROOT / "tasks/verifiers"),
++]:
++    if name not in sys.modules:
++        module = types.ModuleType(name)
++        module.__path__ = [str(path)]
++        sys.modules[name] = module
++
++runtime = importlib.import_module("skyrl_agent.tasks.verifiers.coder1.verifyit_runtime")
++
++
++@pytest.mark.parametrize(
++    "code,tests,reward",
++    [
++        ("print(float(input())*2)", {"inputs": ["2"], "outputs": ["4.0000001"]}, 1),
++        ("def add(a,b): return a+b", {"functional": "assert add(2,3)==5"}, 1),
++        (
++            "def add(a,b): return a+b",
++            {"solution_file": "from solution import add\nassert add(2,3)==5"},
++            1,
++        ),
++        (
++            "def add(a,b): return a+b",
++            {
++                "pytest": "from solution import add\ndef test_add():\n    assert add(2,3)==5"
++            },
++            1,
++        ),
++        ('raise ValueError("candidate failure")', {"functional": "assert True"}, 0),
++        (
++            "class Counter:\n    def __init__(self): self.n=0\n    def add(self): self.n+=1; return self.n",
++            {
++                "functional": "c=Counter()\nassert c.add()==1\nassert c.add()==2\nassert c.n==2"
++            },
++            1,
++        ),
++    ],
++)
++def test_isolated_source_contracts(code, tests, reward):
++    result = runtime.execute_contract(code, tests, timeout=15)
++    assert result.status.value == "scored", result.detail
++    assert result.reward == reward, result.detail
++
++
++@pytest.mark.parametrize(
++    "code,tests",
++    [
++        ("print(int(input())*2)", {"inputs": ["2"], "outputs": ["4"]}),
++        ("def add(a,b): return a+b", {"functional": "assert add(2,3)==5"}),
++        (
++            "def add(a,b): return a+b",
++            {"solution_file": "from solution import add\nassert add(2,3)==5"},
++        ),
++        (
++            "def add(a,b): return a+b",
++            {
++                "pytest": "from solution import add\ndef test_add():\n    assert add(2,3)==5"
++            },
++        ),
++    ],
++)
++def test_actual_source_compute_score_dispatch(code, tests):
++    coder1 = importlib.import_module("skyrl_agent.tasks.verifiers.coder1")
++    result = coder1.compute_score(
++        "```python\n" + code + "\n```",
++        json.dumps(tests),
++        {},
++        format_reward=0.2,
++        answer_reward=0.8,
++        verifyit_enabled=True,
++        timeout=15,
++    )
++    assert result == {"score": 1.0, "acc": 1.0}
++
++
++@pytest.mark.parametrize(
++    "code,test_code,reward",
++    [
++        ("def change(a): a.clear()", "a=[1,2]\nchange(a)\nassert a==[1,2]", 0),
++        ("def change(a): a.append(3)", "a=[1,2]\nchange(a)\nassert a==[1,2,3]", 1),
++        (
++            "def change(a):\n    child=[]\n    a.extend([child,child])",
++            "a=[]\nchange(a)\nassert a[0] is not a[1]",
++            0,
++        ),
++        (
++            "def change(a):\n    child=[]\n    child.append(child)\n    a.append(child)",
++            "a=[]\nchange(a)\nassert a[0][0] is a[0]",
++            1,
++        ),
++        (
++            "def fresh():\n    child=[]\n    return [child,child]",
++            "a=fresh()\nassert a[0] is a[1]\na[0].append(3)\nassert a[1]==[3]",
++            1,
++        ),
++        ("def change(a): a.append([])", "a=[]\nchange(a)\nassert a==[[]]", 1),
++        ("def same(a,b): return a is b", "a=[]\nassert same(a,a)", 1),
++        (
++            "def change(a): a[0].append(3)",
++            "child=[1]\na=[child,child]\nchange(a)\nassert child==[1,3]\nassert a[0] is a[1]",
++            1,
++        ),
++        ("def same(a): return a[0] is a", "a=[]\na.append(a)\nassert same(a)", 1),
++        (
++            "def change(a): del a[0][:]",
++            "child=[1]\na=[child]\nchange(a)\nassert child==[]",
++            1,
++        ),
++        (
++            "def change(a): a.clear(); raise ValueError()",
++            "a=[1]\ntry: change(a)\nexcept ValueError: pass\nassert a==[]",
++            1,
++        ),
++    ],
++)
++def test_mutable_graph_preserves_mutation_and_aliases(code, test_code, reward):
++    result = runtime.execute_contract(code, {"functional": test_code}, timeout=15)
++    assert result.status.value == "scored", result.detail
++    assert result.reward == reward, result.detail
++
++
++@pytest.mark.parametrize(
++    "code,test_code,reward",
++    [
++        ("class C: pass\nc=C()\ndef f(): return c", "assert f() != f()", 0),
++        ("class C: pass\nc=C()\ndef f(): return c", "assert f() is f()", 1),
++        (
++            "class C:\n    def __bool__(self): return False\ndef f(): return C()",
++            "assert f()",
++            0,
++        ),
++        (
++            "class C:\n    def __bool__(self): return False\ndef f(): return C()",
++            "assert not f()",
++            1,
++        ),
++        (
++            "class C:\n    def __eq__(self, other): return True\ndef f(): return C()",
++            "assert f()==f()",
++            1,
++        ),
++        (
++            "class C:\n    def __len__(self): return 0\ndef f(): return C()",
++            "assert len(f())==0",
++            1,
++        ),
++        ("def f(): return iter([1,2])", "assert list(f())==[1,2]", 1),
++    ],
++)
++def test_remote_special_method_semantics(code, test_code, reward):
++    result = runtime.execute_contract(code, {"functional": test_code}, timeout=15)
++    assert result.status.value == "scored", result.detail
++    assert result.reward == reward, result.detail
++
++
++@pytest.mark.parametrize("attribute", ["runtime", "ref", "special", "_runtime", "_ref"])
++def test_candidate_attribute_never_resolves_proxy_metadata(attribute):
++    code = "class C: pass\nc=C()\nc." + attribute + "=False\ndef f(): return c"
++    result = runtime.execute_contract(
++        code, {"functional": "assert f()." + attribute}, timeout=15
++    )
++    assert result.status.value == "scored", result.detail
++    assert result.reward == 0, result.detail
++
++
++def test_candidate_dict_contains_only_candidate_attributes():
++    result = runtime.execute_contract(
++        "class C: pass\nc=C()\nc.marker=3\ndef f(): return c",
++        {"functional": 'assert getattr(f(),"__dict__")=={"marker":3}'},
++        timeout=15,
++    )
++    assert result.status.value == "scored", result.detail
++    assert result.reward == 1, result.detail
++
++
++@pytest.mark.parametrize("name", ["_runtime", "Path", "json", "_module", "_solution"])
++@pytest.mark.parametrize("form", ["functional", "solution_file", "pytest"])
++def test_candidate_module_symbols_never_resolve_host_names(name, form):
++    code = name + "=False"
++    assertion = (
++        "assert " + name
++        if form == "functional"
++        else "import solution\nassert solution." + name
++    )
++    if form == "pytest":
++        assertion = "import solution\ndef test_symbol():\n    assert solution." + name
++    result = runtime.execute_contract(code, {form: assertion}, timeout=15)
++    assert result.status.value == "scored", result.detail
++    assert result.reward == 0, result.detail
++
++
++@pytest.mark.parametrize("expression", ["f() is f()", "f() is not f()"])
++def test_scalar_identity_cannot_pass_through_value_transport(expression):
++    result = runtime.execute_contract(
++        'x=int("1000000")\ndef f(): return x',
++        {"functional": "assert " + expression},
++        timeout=15,
++    )
++    assert result.status.value == "invalid_task", result.detail
++    assert result.reward == 0, result.detail
++
++
++def test_nonfinite_transport_cannot_satisfy_expected_exception():
++    code = 'def f(): return float("nan")'
++    tests = "try:\n    f()\nexcept Exception:\n    raised=True\nelse:\n    raised=False\nassert raised"
++    result = runtime.execute_contract(code, {"functional": tests}, timeout=15)
++    assert result.status.value == "infra_error", result.detail
++    assert result.reward == 0, result.detail
++
++
++def test_permissive_nonfinite_packet_cannot_satisfy_expected_exception():
++    code = 'def f():\n import json\n original=json.dumps\n json.dumps=lambda obj, **kwargs: original(obj, allow_nan=True)\n return float("nan")'
++    tests = "try:\n f()\nexcept Exception:\n raised=True\nelse:\n raised=False\nassert raised"
++    result = runtime.execute_contract(code, {"functional": tests}, timeout=15)
++    assert result.status.value == "infra_error", result.detail
++    assert result.reward == 0, result.detail
++
++
++def test_candidate_initialization_and_calls_share_one_budget():
++    code = '__import__("time").sleep(1.5)\ndef f():\n    __import__("time").sleep(2.5)\n    return 1'
++    result = runtime.execute_contract(code, {"functional": "assert f()==1"}, timeout=3)
++    assert result.reward == 0, result.detail
++    if result.status.value == "scored":
++        assert result.detail["pytest"]["reason"] == "timeout"
++    else:
++        assert result.status.value == "infra_error", result.detail
++    assert all("http_status" in entry for entry in result.detail["session_cleanup"])
++
++
++def test_owning_host_cleans_session_when_checker_is_killed(monkeypatch):
++    import dataclasses
++    import uuid
++    from verifyit.spec import parse_spec
++    from skyrl_gym.envs.nemotron_ultra.sandbox import SandboxClient
++
++    session = uuid.uuid4()
++    client = SandboxClient()
++    client.execute(
++        'print("READY")', language="ipython", session_id=str(session), timeout_seconds=5
++    )
++    monkeypatch.setattr(runtime.uuid, "uuid4", lambda: session)
++    real_run = runtime.run
++
++    def deadline(path, *args, **kwargs):
++        if Path(path).name == "verifier.toml":
++            spec = parse_spec(Path(path).read_text())
++            Path(path).write_text(
++                runtime.render_spec(dataclasses.replace(spec, timeout=0.01))
++            )
++        return real_run(path, *args, **kwargs)
++
++    monkeypatch.setattr(runtime, "run", deadline)
++    result = runtime.execute_contract(
++        "def f(): return 1", {"functional": "assert f()==1"}, timeout=5
++    )
++    assert result.status.value == "infra_error", result.detail
++    assert result.reward == 0, result.detail
++    assert result.detail["session_cleanup"] == [
++        {"session": str(session), "http_status": 200}
++    ]
++
++
++@pytest.mark.parametrize(
++    "packet",
++    [
++        {
++            "kind": "ok",
++            "value": {"kind": "value", "value": True},
++            "argument_nodes": {"remote:1": {"kind": "list"}},
++        },
++        {
++            "kind": "ok",
++            "value": {"kind": "tuple", "items": "malformed"},
++            "argument_nodes": {},
++        },
++        {
++            "kind": "exception",
++            "type": ["ValueError"],
++            "message": "malformed",
++            "argument_nodes": {},
++        },
++    ],
++)
++def test_malformed_rpc_packet_is_fatal_verifier_error(packet):
++    import threading
++    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++    from skyrl_gym.envs.nemotron_ultra.sandbox import SandboxClient
++
++    class Handler(BaseHTTPRequestHandler):
++        def log_message(self, *args):
++            pass
++
++        def do_POST(self):
++            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
++            code = body["generated_code"]
++            if "_namespace = " in code:
++                stdout = "VERIFYIT_READY"
++            elif "VERIFYIT_LIMIT_READY" in code:
++                stdout = "VERIFYIT_LIMIT_READY"
++            else:
++                stdout = "VERIFYIT_RPC:" + json.dumps(packet)
++            payload = json.dumps(
++                {
++                    "process_status": "completed",
++                    "stdout": stdout,
++                    "stderr": "",
++                    "new_session_created": False,
++                }
++            ).encode()
++            self.send_response(200)
++            self.end_headers()
++            self.wfile.write(payload)
++
++        def do_DELETE(self):
++            self.send_response(200)
++            self.end_headers()
++
++    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
++    thread = threading.Thread(target=server.serve_forever, daemon=True)
++    thread.start()
++    try:
++        client = SandboxClient(host="127.0.0.1", port=server.server_port)
++        result = runtime.execute_contract(
++            "def f(): return 1",
++            {"functional": "assert f()==1"},
++            sandbox=client,
++            timeout=5,
++        )
++        assert result.status.value == "infra_error", result.detail
++        assert result.reward == 0, result.detail
++    finally:
++        server.shutdown()
++        server.server_close()
++        thread.join()
++
++
++@pytest.mark.parametrize(
++    "code,tests,reward",
++    [
++        ("def f(): return __name__", {"functional": 'assert f()=="__main__"'}, 1),
++        (
++            "def f(): return __name__",
++            {"solution_file": 'from solution import f\nassert f()=="solution"'},
++            1,
++        ),
++        (
++            'def f(): return 1\nif __name__=="__main__": raise ValueError()',
++            {"functional": "assert f()==1"},
++            0,
++        ),
++    ],
++)
++def test_source_execution_module_name(code, tests, reward):
++    result = runtime.execute_contract(code, tests, timeout=15)
++    assert result.status.value == "scored", result.detail
++    assert result.reward == reward, result.detail
++
++
++def test_rich_comparison_never_sends_trusted_expected_value():
++    code = "class C:\n    def __eq__(self,expected): return True\ndef f(): return C()"
++    result = runtime.execute_contract(
++        code, {"functional": "assert f()==982713548235"}, timeout=15
++    )
++    assert result.status.value == "invalid_task", result.detail
++    assert result.reward == 0, result.detail
++
++
++def test_owning_host_cleans_nested_pytest_group_after_checker_death(monkeypatch):
++    import os
++    import signal
++    import subprocess
++    import threading
++    import time
++
++    real_popen = subprocess.Popen
++    captured = {}
++
++    def observe_popen(*args, **kwargs):
++        process = real_popen(*args, **kwargs)
++        if "checker" not in captured:
++            captured["checker"] = process
++        return process
++
++    monkeypatch.setattr(subprocess, "Popen", observe_popen)
++    real_run = runtime.run
++
++    def kill_after_pytest_starts(path, *args, **kwargs):
++        root = Path(path).parent
++
++        def kill_checker():
++            deadline = time.monotonic() + 20
++            while time.monotonic() < deadline:
++                if (root / "pytest-started").exists():
++                    captured["pytest_pgid"] = int((root / "pytest.pgid").read_text())
++                    os.killpg(os.getpgid(captured["checker"].pid), signal.SIGKILL)
++                    return
++                time.sleep(0.02)
++
++        watcher = threading.Thread(target=kill_checker, daemon=True)
++        watcher.start()
++        try:
++            return real_run(path, *args, **kwargs)
++        finally:
++            watcher.join(timeout=21)
++
++    monkeypatch.setattr(runtime, "run", kill_after_pytest_starts)
++    tests = 'from pathlib import Path\nimport time\ndef test_wait():\n    Path("pytest-started").write_text("ready")\n    time.sleep(30)'
++    result = runtime.execute_contract(
++        "def f(): return 1", {"pytest": tests}, timeout=10
++    )
++    assert result.status.value == "infra_error", result.detail
++    assert result.reward == 0, result.detail
++    assert result.detail["pytest_process_cleanup"]["state"] == "killed", result.detail
++    assert captured["pytest_pgid"] == result.detail["pytest_process_cleanup"]["pgid"]
++    assert result.detail["session_cleanup"][0]["http_status"] == 200
++    deadline = time.monotonic() + 2
++    while time.monotonic() < deadline:
++        try:
++            os.killpg(captured["pytest_pgid"], 0)
++        except ProcessLookupError:
++            break
++        time.sleep(0.02)
++    else:
++        pytest.fail("owned pytest group remains after cleanup")
+diff --git a/skyrl-agent/skyrl_agent/tasks/general_react/utils.py b/skyrl-agent/skyrl_agent/tasks/general_react/utils.py
+--- a/skyrl-agent/skyrl_agent/tasks/general_react/utils.py
++++ b/skyrl-agent/skyrl_agent/tasks/general_react/utils.py
+@@ -128,7 +128,7 @@
+ 
+             # print(f"Getting result {result}")
+             print(f"Evaluating codegen task with data_source: {data_source}, got {result=}")
+-            res = coder1.compute_score(result, ground_truth, extra_info=extra_info)
++            res = coder1.compute_score(result, ground_truth, extra_info=extra_info, verifyit_enabled=verifyit_enabled)
+             print(f"Evaluated codegen task with data_source: {data_source}, got {res=}")
+             # print(f"Evaluating codegen task with data_source: {data_source}, got {score=} {extracted_model_output=}")
+             print(f"Evaluating codegen task with data_source: {data_source}, got {res['score']=}")
