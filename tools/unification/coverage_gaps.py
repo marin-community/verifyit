@@ -437,14 +437,20 @@ def harness_entities(root, sources):
             )
             or (isinstance(record.get("task"), str) and record["task"].startswith("ask_gec_p"))
             or ("/okapi/truthfulqa_multilingual/" in record["path"] and record["path"].endswith("_mc2.yaml"))
+            or ("/tasks/hendrycks_math/" in record["path"])
         ):
             route = record.get("native_route")
             if route is None:
                 config, _ = resolve_config(sources / "lm-eval-harness" / record["path"])
                 route = native_config_route(config)
-                assert route in {"afriqa_f1", "ner_span_f1", "pos_accuracy", "exact_match", "truthfulqa_mc2"}, record[
-                    "path"
-                ]
+                assert route in {
+                    "afriqa_f1",
+                    "ner_span_f1",
+                    "pos_accuracy",
+                    "exact_match",
+                    "truthfulqa_mc2",
+                    "hendrycks_literal_exact",
+                }, record["path"]
             entity.update(
                 status="native_route_available",
                 kind="task",
@@ -457,13 +463,21 @@ def harness_entities(root, sources):
                     )
                     if route == "truthfulqa_mc2"
                     else (
-                        "Resolved configuration matches an implemented guarded default scorer route; "
-                        "this is eligibility, not full dataset execution."
+                        (
+                            "Source extraction and pinned string normalization feed strict literal exact grading; "
+                            "Malformed/nonfinite references abort and known normalization errors "
+                            "never fall back to raw equality."
+                        )
+                        if route == "hendrycks_literal_exact"
+                        else (
+                            "Resolved configuration matches an implemented guarded default scorer route; "
+                            "this is eligibility, not full dataset execution."
+                        )
                     )
                 ),
                 primitive_candidates=(
                     ["exact"]
-                    if route == "truthfulqa_mc2"
+                    if route in {"truthfulqa_mc2", "hendrycks_literal_exact"}
                     else [record["existing_mode"]] if record["existing_mode"] != "script" else ["exact", "script"]
                 ),
                 needed_change="No known scorer change; validate task datasets/runtime before deployment.",
@@ -473,6 +487,19 @@ def harness_entities(root, sources):
                     else "configuration_eligible_not_dataset_validated"
                 ),
             )
+            if route == "hendrycks_literal_exact":
+                entity.update(
+                    evidence=[
+                        "integrations/lm-eval-harness/hendrycks-exact-verifyit.patch",
+                        "evidence/e2e/wiring/evalchemy-amc-math/guards/guard-audit.json",
+                        "evidence/e2e/wiring/evalchemy-amc-math/math500-comparison.json",
+                    ],
+                    validation_status=(
+                        "real_saved_responses_fresh_source_parity_different_producer_comparator"
+                        if record["task"] == "hendrycks_math500"
+                        else "registered_configuration_guard_and_source_evaluator_fixtures"
+                    ),
+                )
         else:
             config, _ = resolve_config(sources / "lm-eval-harness" / record["path"])
             runtime_profile = corpus_config_profile(config)
@@ -575,7 +602,7 @@ def evalchemy_entities(root):
         name = record["benchmark"]
         entity = base_entity("evalchemy-custom", record, inventory["revision"], name)
         entity["source_evidence"].extend(record["scoring_evidence"])
-        if record["classification"] == "adapter" or name == "JEEBench":
+        if record["classification"] == "adapter" or name in {"JEEBench", "AMC23"}:
             entity.update(
                 status="native_integrated",
                 reason_id="custom_native",
@@ -583,7 +610,11 @@ def evalchemy_entities(root):
                 primitive_candidates=(
                     ["exact", "numeric"]
                     if name == "JEEBench"
-                    else ["numeric" if name == "GSM8KPerturbed" else record["primitive_candidate"]]
+                    else (
+                        ["exact"]
+                        if name == "AMC23"
+                        else ["numeric" if name == "GSM8KPerturbed" else record["primitive_candidate"]]
+                    )
                 ),
                 needed_change="No known scorer change.",
                 validation_status=(
@@ -606,6 +637,23 @@ def evalchemy_entities(root):
                         "evidence/e2e/wiring/evalchemy-jee/source-roundtrip.json",
                     ],
                     validation_status="source_evaluator_fixtures_no_tracker_trace",
+                )
+            if name == "AMC23":
+                entity.update(
+                    reason=(
+                        "Pinned source normalization feeds strict exact equality; ten source repetitions "
+                        "and boxed extraction remain. Known normalization failures no longer fall back "
+                        "to raw equality."
+                    ),
+                    needed_change=(
+                        "Enable verifyit_enabled=True through AMC23Benchmark or TaskManager; "
+                        "no matching AMC23 archived inputs were found."
+                    ),
+                    evidence=[
+                        "integrations/evalchemy/amc23-verifyit.patch",
+                        "evidence/e2e/wiring/evalchemy-amc-math/guarded-amc/amc-roundtrip.json",
+                    ],
+                    validation_status="source_evaluator_fixtures_no_matching_archive",
                 )
         elif record["classification"] == "adapter-hybrid":
             entity.update(
@@ -829,9 +877,9 @@ def main():
             )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 592
+    assert len(harness_gaps) == 584
     assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 978
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11122
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11130
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {

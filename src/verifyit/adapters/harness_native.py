@@ -10,6 +10,7 @@ import string
 from collections.abc import Sequence
 from typing import Any, cast
 
+from verifyit.adapters.harness_math_literal import hendrycks_config_profile, hendrycks_task_metrics
 from verifyit.adapters.harness_probability import truthfulqa_mc2_profile, truthfulqa_task_metrics
 from verifyit.adapters.harness_profiles import generation_profile, profile_task_metrics
 from verifyit.grade import InvalidTask, Reward
@@ -97,6 +98,8 @@ def likelihood_choice(
 
 def native_config_route(config: dict) -> str | None:
     """Recognize implemented source branches; unknown options are not native coverage."""
+    if hendrycks_config_profile(config):
+        return "hendrycks_literal_exact"
     if truthfulqa_mc2_profile(config):
         return "truthfulqa_mc2"
     if config.get("process_results") or config.get("class"):
@@ -164,6 +167,9 @@ def native_task_metrics(task, doc, responses) -> dict | None:
         or getattr(method, "__qualname__", None) != "ConfigurableTask.process_results"
     ):
         return None
+    math_metrics = hendrycks_task_metrics(task, doc, responses)
+    if math_metrics is not None:
+        return math_metrics
     probability_metrics = truthfulqa_task_metrics(task, doc, responses)
     if probability_metrics is not None:
         return probability_metrics

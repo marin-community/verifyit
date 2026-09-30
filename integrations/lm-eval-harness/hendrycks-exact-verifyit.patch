@@ -1,0 +1,11 @@
+--- a/lm_eval/evaluator.py
++++ b/lm_eval/evaluator.py
+@@ -618,6 +618,8 @@
+             enable_corpus_runtime(task, task._verifyit_corpus_config)
+         from verifyit.adapters import harness_probability
+         harness_probability.validate_truthfulqa_task(task)
++        from verifyit.adapters import harness_math_literal
++        harness_math_literal.validate_hendrycks_task(task)
+         task.apply_filters()
+ 
+         ### Collect values of metrics on all datapoints ###

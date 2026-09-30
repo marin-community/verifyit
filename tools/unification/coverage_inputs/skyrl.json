@@ -1727,11 +1727,11 @@
     {
       "id": "dormant/coder1",
       "status": "not_integrated",
-      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "not_covered_reason": "Partial source integration now wires all four payload forms (stdio, functional, solution_file, pytest) through ScriptSpec; non-stdio trusted tests use PytestSpec outside the candidate sandbox. Whole-route coverage remains pending: arbitrary source-valid Python type/module introspection, arrays/sets/bytes or host user objects as arguments, scalar/tuple identity, arithmetic/conversion/hash/context-manager/async protocols are explicitly unsupported rather than equivalent. This exported implementation has no eligible archived verified traces in the full pinned census.",
       "active_in_pinned_dispatch": false,
       "dormant": true,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "isolated_sandbox_partial_integration",
       "native_fallback_in_cutover": false,
       "contract_family": "code",
       "existing_primitive_candidate": [
@@ -1740,8 +1740,8 @@
         "script"
       ],
       "resolution_strategy": "task_harness",
-      "needed_change": "Use appropriate execution primitive with source extraction/prefix; preserve custom comparator and scoring.",
-      "validation_gap": null,
+      "needed_change": "Complete or explicitly contract the remaining typed Python semantics while preserving candidate/grader isolation; validate strict malformed transport, total execution budgets and owning-host session cleanup. Keep source format/answer shaping only for genuine scored outcomes and preserve source extraction/prefix behavior. Export and apply-check the reviewed partial source patch before claiming deployable integration.",
+      "validation_gap": "Eight controlled actual GeneralReactTask positive/wrong pairs across the four forms match pinned native source, with manager independent before/after reruns; these are not archived trace replay. Whole-source arbitrary-Python equivalence and deployable patch validation remain incomplete.",
       "source_contract": "Ground truth pytest/functional/solution_file/stdin-out; prefix injection, fuzzy output, format+answer reward.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1753,11 +1753,27 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#code",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-coder1/native-provenance.json",
+        "evidence/e2e/wiring/skyrl-coder1/patched-dispatch.json",
+        "evidence/e2e/wiring/skyrl-coder1/manager-parity.json",
+        "evidence/e2e/wiring/skyrl-coder1/pending-contracts.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "partial_integration_forms": [
+        "stdio",
+        "functional",
+        "solution_file",
+        "pytest"
+      ],
+      "actual_primitive_calls": [
+        "script",
+        "pytest",
+        "exact",
+        "numeric"
+      ]
     },
     {
       "id": "dormant/qa_em",
