@@ -1,7 +1,7 @@
 # MarinSkyRL integration
 
 Source pin: `91c7a60e85e31b6933ab0ee732125b3338e82b89`. Apply the MCQ and
-arithmetic patches, then the dependency pin patch. The latter pins the local
+arithmetic and client-boundaries patches, then the dependency pin patch. The latter pins the local
 verifyit implementation checkpoint and raises the standalone gym Python floor
 to >=3.11. A later implementation checkpoint may be required when this campaign
 lands additional APIs; the source SHA must exist on the remote before external
@@ -10,7 +10,13 @@ branch. Regenerate fork locks in the fork's supported environment before use.
 
 The MCQ patch retains source strict first-box extraction and binary reward,
 and calls verifyit only for candidate correctness. Arithmetic patches retain
-source AIME rational equivalence, signed reward/length shaping, and GSM8K final-line equality;
-the multi-turn GSM8K adapter is specified separately and is not implemented by
-the final-line helper. Patched source regressions and verifyit API regression
+source AIME rational and strict-box equality, signed reward/length shaping, GSM8K final-line
+and strict-first-marker equality. The original multi-turn controller retains format reward,
+termination, and feedback. Client boundaries also route Search QA EM, rounded chemistry,
+and both ARC grid comparisons through exact after source extraction/execution.
+Malformed candidate grid cells retain rejection; invalid reference grids and nonfinite
+chemistry references now fail closed rather than exploiting Python equality or raising during rounding.
+The expanded patches require the forthcoming implementation checkpoint; the present dependency
+pin predates the new APIs and must be updated before external installation.
+Patched source regressions and verifyit API regression
 counts are recorded in [the mapping](../../docs/unification/skyrl.md).

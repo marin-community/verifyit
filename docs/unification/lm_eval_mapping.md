@@ -1,5 +1,43 @@
 # lm-eval-harness mapping
 
+## Implemented native routes
+
+Resolved configuration routing now recognizes **10,841 of 12,692 task configurations**:
+8,061 likelihood-choice configurations and 2,780 exact-match configurations. These
+are two scorer contracts, not 10,841 independent implementations. The generated
+[literal eligibility manifest](lm_eval_native_inventory.json) records every task;
+this is static eligibility, not execution of every dataset. The remaining 1,851
+contracts/configurations retain compatibility integration or require further
+client composition. No new verifier category is established as necessary.
+
+`verifyit.adapters.harness_native` routes filtered likelihoods through MCQ (or
+literal exact indices above 26 choices), preserving first-maximum ties and raw,
+character, and UTF-8 byte normalization. F1/MCC label pairs, greedy flags and raw
+likelihood tuples remain typed; source aggregation remains caller-owned. Known
+multiple-choice metric kwargs are inert in the pinned source branch and remain
+inert here. Unknown metric names/options fail native eligibility. The runtime
+route checks qualified scorer metadata and current metric configuration; custom
+scorers stay explicitly compatibility-only.
+
+Exact scoring retains ordered regex removal, NumPy fixed-width Unicode lowering,
+ASCII punctuation/digit removal, whitespace, and alternative-reference reduction,
+then calls strict `grade_exact_candidate`. NumPy lower differs from Python lower:
+U+0130 expansion may truncate. Empty string references are valid literal targets;
+missing reference lists are invalid. Source-configured normalization that erases
+text retains source behavior; the adapter adds no permissive transformations.
+
+Invalid target indices, malformed normalization flags, nonfinite likelihoods and
+empty normalized choices never receive positive reward. The evaluator integration
+aborts on an unscored native sample, rather than omitting it from an aggregate.
+Other source scoring failures propagate. Unknown routes never count as native
+coverage or as a successful default reward.
+
+Validation executes pinned scorer functions: six exact edge cases and twelve MCQ
+metric comparisons, including Unicode, ties, lengths, alternative labels and 30
+choices. Campaign evidence is `evidence/harness_native/parity.{py,json}`. The
+patch applies to the pinned checkout; source clones are unchanged.
+
+
 Evalchemy pins EleutherAI/lm-evaluation-harness v0.4.12 at
 `6d642546f4688648fced259eb3302efd36ece5af`.
 [The generated inventory](lm_eval_inventory.json) resolves every discovered YAML
@@ -27,10 +65,10 @@ record occupies one line. Omitted empty fields represent absent configuration.
 
 | Source contract | Existing primitive / integration | Required preservation |
 | --- | --- | --- |
-| `multiple_choice` | Metric bridge; bounded `acc` can become reward | Conditional likelihood tuples, greedy flags, character/byte normalization, optional unconditional likelihoods for mutual information, all configured metrics |
+| `multiple_choice` | Native MCQ/exact index composition for recognized default branch; compatibility otherwise | Conditional likelihood tuples, greedy flags, character/byte normalization, optional unconditional likelihoods for mutual information, all configured metrics |
 | `loglikelihood` | Metric bridge | Log likelihood and greedy correctness; perplexity is an aggregate, not a bounded reward |
 | `loglikelihood_rolling` | Metric bridge | `(loglikelihood, word/byte count)` values and weighted aggregates; preserve bits per byte |
-| Generation `exact_match` | `exact` candidate; normalization adapter unresolved | Raw whitespace, lower versus casefold, punctuation/number/regex removal, filter chains, multiple targets |
+| Generation `exact_match` | Native strict exact with source normalization for 2,780 configs | Raw whitespace, lower versus casefold, punctuation/number/regex removal, filter chains, multiple targets |
 | Hendrycks/Minerva/HRM math | `math` candidate; parity unresolved | Benchmark-specific box selection, string fallback equivalence, source parser anchors and answer cardinality |
 | IFEval | `ifeval` candidate; registry and aggregate parity unresolved | Strict/loose instruction and prompt metrics, original transform chain and instruction parameters |
 | Custom Python scorer / task class | Source metric bridge; primitive candidates recorded where known | Every source metric value and aggregator; benchmark semantics remain source-owned |
@@ -39,8 +77,8 @@ record occupies one line. Omitted empty fields represent absent configuration.
 The source of default scoring is `lm_eval.api.task.ConfigurableTask.process_results`.
 The bridge's [integration patch](../../integrations/lm-eval-harness/README.md)
 changes its evaluator call site to use verifyit while returning the same source
-metrics. This is an implemented compatibility bridge, not evidence that a source
-scorer has been replaced by an equivalent verifyit primitive.
+metrics. Recognized native routes use existing primitives; the remaining source delegation
+is compatibility-only and does not establish primitive equivalence.
 
 The reusable bridge contract is implemented without a new mode or core dependency:
 `score_task` processes already filtered responses, `aggregate_task` calls source
@@ -107,8 +145,8 @@ The current `score_task` / `aggregate_task` API implements the in-process metric
 preservation/projection portion. The evaluator patch calls this API with actual
 filtered responses. Declarative source identity validation, persisted typed
 artifacts and task-specific failure schemas remain specified work. This distinction
-is recorded per inventory row as `spec-needed`, rather than claiming the bridge
-has replaced each benchmark scorer.
+is recorded per remaining inventory row as `spec-needed`; 10,841 implemented
+route-eligible configurations are labeled `adapter`, not delegated source equivalence.
 
 Acceptance tests compare actual pinned `ConfigurableTask.process_results` for
 raw, character-normalized, byte-normalized and mutual-information choices,

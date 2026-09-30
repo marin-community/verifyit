@@ -79,3 +79,33 @@ Python equality accepts boolean grid cells as integers; a typed constant JSON
 schema covers the intended integer-grid contract, with a regression showing
 valid integers pass and booleans fail. This tightening is explicitly different
 from native permissive comparison.
+
+## Client reuse and tested boundaries
+
+All 87source contracts can use existing verifier categories; no unavoidable new
+category is identified. 52entries specify an answer/report/judge primitive route;
+35 retain custom native runtimes. Of those runtimes, tau3 has an executable
+status-preserving client bridge, while 34remain client migration proposals.
+The 19earlier extension proposals are client normalization/composition candidates,
+not 19new categories: rounded decimal answers can be normalized before Exact,
+CTRF can be converted to identity-preserving JUnit, and native judge/artifact
+runtimes can emit structured ScriptSpec verdicts. Those proposals are not
+claimed as tested implementations. Unbounded R2 cannot be projected without
+a declared benchmark policy.
+
+[Tau3's client patch](../../integrations/harbor/tau3-verifyit.patch) retains its
+native evaluator and emits the existing scored/invalid_task/infra_error schema
+through ScriptSpec.verdict_file. Valid zero remains scored; missing/invalid
+runtime logs and caught runtime failures remain unscored with reward 0. Native
+reward metadata is retained under detail.native. Five actual pinned-source
+CLI/boundary cases verify this projection; the local regression runs a separate
+native-result producer. No deployed tau2 runtime parity is claimed. Tau2's
+similar native error statuses and GDB's import/benchmark/evaluation-error zero
+paths remain explicit client status gaps in the semantic table.
+
+Current verifyit script producers fail closed on nonzero exits even when they
+write positive rewards. The structured verdict is authoritative and cannot be
+replaced by scalar stdout. JUnit report paths are declared outputs: existing
+matching files are removed before execution, after restore/setup, and paths
+resolving outside the workspace are rejected before deletion. Interrupted
+pytest and incomplete Go test/package streams cannot earn a positive reward.

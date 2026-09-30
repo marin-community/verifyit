@@ -40,7 +40,7 @@ completeness for identity-aware shaping; scalar scores alone do not supply this.
 | `aa86ee3` | ASDiv integer ratios | Source rational ratio normalization must occur before primitive call; `test_aime_normalized_answer_exact_rational_equivalence` covers equivalent/reversed ratios, zero denominators, huge decimals, and rejected candidate syntax; 17 arithmetic adapter cases pass. |
 | `5a7ede7` | standalone final GSM8K line | Numeric last-number extraction is different; `test_gsm8k_requires_exact_value_on_standalone_final_line` covers prose-tail, malformed comma, multiple markers, and exact huge decimals. |
 | `0cdccc9` | first boxed MCQ and options >4 | `test_mcq_fifth_option_is_gradable_when_declared` and candidate helper tests cover core range; patched source tests cover first-box extraction and options through Z; all 18 pass. |
-| `400f598` | JSON grid and unfenced transforms | Structural parsing/execution adapter required; generic exact mode cannot prove palette/rectangular validation. |
+| `400f598` | JSON grid and unfenced transforms | Source parser/execution retained; canonical grid exact adapter now implemented.41 actual source parity cases include JSON/digit grids and boolean/float/ragged rejection. Unfenced transform extraction remains source client code, not a new mode. |
 | `cdc6600` | truncated math judge retry with larger budget | Source two-call retry policy must remain explicit; real HTTP regressions now reject length/content-filtered SCORE replies as infra_error and remove stale rewards; existing once-only malformed-score retry retained. Source doubled-token retry remains a distinct adapter policy. |
 | `fc65842` | binary code short circuit | stdio stops at first failure and existing first_failure/passed tests cover counterpart; functional adapter and fractional mode still need tests. |
 | `196143f` | Snowball reasoning stripping, bounded chat output | Provider/harness evidence extraction remains outside string primitive; add boundary tests. |
@@ -58,8 +58,10 @@ review before changing it.
 
 `arithmetic-verifyit.patch` routes source-normalized AIME answers and GSM8K final-line
 answers through the exact rational adapter. Strict-box extraction and AIME reward
-shaping remain in the harness. All 40 source AIME/GSM8K tests pass after applying
-the patch to a disposable copy; both patches apply cleanly to the pinned revision.
+shaping remain in the harness; raw boxed contents now use strict exact options. The utility
+also delegates strict-first-marker GSM8K equality while retaining multi-turn source control.
+All106 source AIME/GSM8K/Search/MCQ tests pass on a disposable patched copy; arithmetic,
+MCQ and client-boundaries patches apply together cleanly to the pinned revision.
 
 The implementation commit is local and has not been published. After publication,
 regenerate both source lockfiles before frozen installation. The Git dependency
@@ -80,3 +82,39 @@ An isolated uv installation from the local Git repository at the exact pinned
 implementation SHA succeeded and graded real rational/MCQ candidates. This proves
 that commit packages the required helpers; it does not prove remote availability
 or resolve either complete SkyRL environment.
+
+## Client-first reassessment
+
+The48 entries comprise46 scoring routes across17 contract families and two external
+objectives.23 routes resolve through client extraction/canonicalization or task-owned
+executable harnesses using existing modes. The other23 require concrete extensions
+of four existing classes (math, json-schema, ifeval, judge), with source orchestration
+and metrics retained. No new mode category is proposed; a generic source callback
+behind script is only a runtime bridge. The disjoint plan is recorded per entry in
+`skyrl.json` and detailed in [the composition contracts](skyrl-adapter-specs.md).
+
+Nine routes now have source patches: AIME (normal and strict), GSM8K, GSM8K multi-turn,
+Search, SearchCode, MCQ, rounded chemistry, and inductive/transductive ARC.50 client
+boundary tests pass, and41 cases compare directly against unmodified source scorer
+files with checked hashes. Execute the reproducible source parity runner with:
+
+```sh
+uv run --with requests --with omegaconf --with func-timeout --with pandas \
+  python tools/unification/skyrl_client_parity.py /path/to/pinned/MarinSkyRL
+```
+
+Client grid validation matches source candidate parsing, including rejecting boolean
+and float cells. Invalid reference grids are now invalid tasks; this intentionally
+closes native Python bool/int equality on malformed references. Chemistry preserves
+Python banker rounding but rejects nonfinite candidates with zero and invalid
+nonfinite references as invalid tasks. Any required verifier failure suppresses
+source format/partial/optimization reward. Central Reward validation additionally
+rejects invalid scalars/status/details and clears stale verdict/reward artifacts.
+
+The current dependency pin predates these new APIs; repin to the next implementation
+checkpoint before installation. This tranche is source-validated, not deployed.
+
+GSM8K strict task references now must parse as finite decimals. Native ground truth `.`
+could previously match `#### .` and earn1; the adapter rejects that malformed task
+as invalid_task before applying format reward. For valid references, a source-formatted
+wrong marker still retains its declared per-turn format reward.

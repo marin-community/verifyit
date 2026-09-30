@@ -36,7 +36,7 @@
       "source_path": "lib/tasktrove-verify/src/tasktrove_verify/spec.py",
       "source_sha256": "d3f28347ed0c84b3409b032d0d70f2be69e1e28db81864b9648b716bfd052535",
       "current_path": "src/verifyit/spec.py",
-      "current_sha256": "94a341b5afcc8b8978cbc233e054e2d01ea60b87f23a1d118559289286b1e91c",
+      "current_sha256": "6a60179b24ab795e9bdcac53361a0e0571a55325ce520ca815071b93827d72d9",
       "identical_after_import_rename": false,
       "contract_or_change": "ScriptSpec reward_key appended without shifting previous positional fields; environment documentation renamed",
       "regression_tests": [
@@ -47,7 +47,7 @@
       "source_path": "lib/tasktrove-verify/src/tasktrove_verify/grade.py",
       "source_sha256": "46ec2c174cc480d512a0c0511a6bd24b581fb92d479b7efd17af91eaa5f72fa9",
       "current_path": "src/verifyit/grade.py",
-      "current_sha256": "c3eec6ca7df57b5e7a3424ff78413276f325671d3f52629968b6e454e1a32294",
+      "current_sha256": "0779d5d2c382cfb472378d58533d265b2b6224a293a1787f314b4d51e51f69fe",
       "identical_after_import_rename": false,
       "contract_or_change": "finite/nonnegative numeric tolerances validated; negative probe exceeds declared tolerance; unscored verdict removes stale scalar files",
       "regression_tests": [
@@ -60,9 +60,9 @@
       "source_path": "lib/tasktrove-verify/src/tasktrove_verify/modes/grade_gotest.py",
       "source_sha256": "1570d9514d6ae9daeb84fe2df936f4a063e3938dee1b5542fbae2fbde9758c02",
       "current_path": "src/verifyit/modes/grade_gotest.py",
-      "current_sha256": "fb7cd6b14172cb6b377f28f2046186c63a8ae054f46ab875dfa49ae426c19936",
+      "current_sha256": "6de2c7ec943d08d0a7fde9a413e3597eb32aaf9593dbe1fc48fb0457209ef3a5",
       "identical_after_import_rename": false,
-      "contract_or_change": "no dataset rows; duplicate observations merge by package+test with failure preserved",
+      "contract_or_change": "no dataset rows; duplicate observations merge by package+test; package/test completeness guards runner failures",
       "regression_tests": [
         "test_gotest.py::test_gotest_repeated_test_failure_is_not_erased"
       ]
@@ -71,9 +71,9 @@
       "source_path": "lib/tasktrove-verify/src/tasktrove_verify/modes/grade_junit.py",
       "source_sha256": "f7a0c3d7e6642b72dc1d5b3d7b0806b40ec7c5cb4a43f578f0d744fbce25f874",
       "current_path": "src/verifyit/modes/grade_junit.py",
-      "current_sha256": "7022d4b23bb124a2c97382c573c9dd612a77dddf3bb8c0cc3f5739ecd5671b4c",
+      "current_sha256": "2cea66eda4390fa70224aed527a9bab0a6de1d1dee7d7b0c6abef32118ace456",
       "identical_after_import_rename": false,
-      "contract_or_change": "no dataset rows; duplicate observations merge by classname+name with failure preserved",
+      "contract_or_change": "no dataset rows; duplicate observations merge by classname+name; report outputs must be fresh and inside workspace",
       "regression_tests": [
         "test_junit.py::test_junit_duplicate_failure_cannot_be_overwritten_by_later_pass"
       ]
@@ -527,7 +527,7 @@
       "source_path": "lib/tasktrove-verify/src/tasktrove_verify/modes/grade_exact.py",
       "source_sha256": "8a9e1a88bb6b60ea0d7413584542ad51d65b099dc72d06fead9dff2e831a694d",
       "current_path": "src/verifyit/modes/grade_exact.py",
-      "current_sha256": "225a09c16d7a35d334afdcb41d5103f5219092b451628ed7711b8719daf8a72e",
+      "current_sha256": "b9e7c1a4eb7bbaab5764651059076d1332cf63920438aa589858f9a88d360ff7",
       "identical_after_import_rename": false,
       "contract_or_change": "candidate API refactor preserves file-grader boxed/whole-answer fallback",
       "regression_tests": [
@@ -540,7 +540,7 @@
       "source_path": "lib/tasktrove-verify/src/tasktrove_verify/modes/grade_math.py",
       "source_sha256": "02e0892edff5a13add16e7dab49b8a0508599b6211c57b010b02e7ba44697794",
       "current_path": "src/verifyit/modes/grade_math.py",
-      "current_sha256": "3ae738edfee829a684b155a8131d3e72f2f50a6787f17dcb4fd62a89757a3767",
+      "current_sha256": "a80a4f0c0d4fa792a8a54bdd6b10c145812a658d597d240a0fef7a647b148ffc",
       "identical_after_import_rename": false,
       "contract_or_change": "malformed final boxes do not expose earlier answers; worker-thread timeout uses supported zero sentinel; numeric tolerances reject invalid tasks",
       "regression_tests": [
@@ -568,7 +568,7 @@
       "source_path": "lib/tasktrove-verify/src/tasktrove_verify/modes/grade_judge.py",
       "source_sha256": "406da1eeed4525172f0f2475fbeffd2e1ad6a63eb4ed6f77111eab6165736d4b",
       "current_path": "src/verifyit/modes/grade_judge.py",
-      "current_sha256": "35a5a6b48784c68bb79d79cbb40b7dfab23715f52372a62d4fcb0008106ca84c",
+      "current_sha256": "ba45cfca81ede453c44c3f320475a6f6ee9369eac79bb7b04e195bc125d4a41e",
       "identical_after_import_rename": false,
       "contract_or_change": "environment namespace migrated by executable wrapper; malformed/truncated replies become infra_error and remove stale rewards",
       "regression_tests": [
@@ -637,7 +637,7 @@
       "source_path": "lib/tasktrove-verify/src/tasktrove_verify/modes/grade_pytest.py",
       "source_sha256": "e2ff2836a5364811c7d9f074152e8a7bcc1d36a85942843c285f6b5087bfb004",
       "current_path": "src/verifyit/modes/grade_pytest.py",
-      "current_sha256": "1e235b92174af7a1373227c8d06031a88d1eefe8fa485f0d4861d4a53d61af94",
+      "current_sha256": "a2757ad065240c0debcb88dca1d060098ac5c17bb61d11538a867ee415a64ef5",
       "identical_after_import_rename": false,
       "contract_or_change": "duplicate passing report cannot erase required failure; required test completeness remains",
       "regression_tests": [
@@ -663,9 +663,9 @@
       "source_path": "lib/tasktrove-verify/src/tasktrove_verify/modes/grade_script.py",
       "source_sha256": "f802d8d6ff4cc71073a0b563eca61f662820b337632d3203d564899d9899eb99",
       "current_path": "src/verifyit/modes/grade_script.py",
-      "current_sha256": "bad0fe8a2032f290cf37f0c3672e74d6f8893a38fc20110fbc8ce2cbcef83d9b",
+      "current_sha256": "959398d33c79bd7fa8b5a355e5f01ca9221189d222d2800eb9bf55c384c23d33",
       "identical_after_import_rename": false,
-      "contract_or_change": "malformed authoritative numeric file cannot fall back to stdout; named numeric metric selection is explicit",
+      "contract_or_change": "nonzero producers cannot score positively; authoritative scalar/structured files never fall back; named metric selection is explicit",
       "regression_tests": [
         "test_script.py::test_invalid_authoritative_reward_cannot_be_replaced_by_stdout",
         "test_script.py::test_named_reward_survives_spec_roundtrip_and_preserves_metrics",

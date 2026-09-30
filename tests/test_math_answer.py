@@ -8,10 +8,12 @@ import pytest
 
 pytest.importorskip("math_verify", reason="math mode needs the `answer` extra")
 
-from verifyit.grade import Status
+import math_verify
+
+from verifyit.grade import InvalidTask, Status, run
 from verifyit.grade import grade as dispatch
 from verifyit.modes import grade_math
-from verifyit.spec import MathSpec, MathType
+from verifyit.spec import MathProfile, MathSpec, MathType
 
 
 def _answer(workspace: Path, text: str) -> None:
@@ -109,3 +111,36 @@ def test_math_grades_from_a_worker_thread(tmp_path):
     worker.start()
     worker.join()
     assert results[0].status == Status.SCORED and results[0].reward == 1.0
+
+
+@pytest.mark.parametrize(
+    "expected,candidate,reward", [("0.5", r"\frac{1}{2}", 1), ("2", "3", 0), ("red", "red", 1), ("2", "???", 0)]
+)
+def test_boxed_profile_preserves_source_expression_and_text_parsing(expected, candidate, reward):
+    result = grade_math.grade_math_candidate(MathSpec(expected, profile=MathProfile.BOXED), candidate)
+    assert result.reward == reward
+
+
+def test_boxed_profile_distinguishes_missing_parse_from_parsed_mismatch():
+    spec = MathSpec("2", profile=MathProfile.BOXED)
+    assert grade_math.grade_math_candidate(spec, "3").detail.get("reason") != "missing_parse"
+    assert grade_math.grade_math_candidate(spec, "").detail["reason"] == "missing_parse"
+
+
+def test_unknown_direct_math_profile_cannot_award_correct_answer():
+    with pytest.raises(InvalidTask, match="unknown"):
+        grade_math.grade_math_candidate(MathSpec("2", profile="unknown"), "2")
+
+
+@pytest.mark.parametrize("profile", ["anchored", "boxed"])
+def test_parser_failure_cannot_trigger_fallback_or_positive_reward(monkeypatch, tmp_path, profile):
+
+    def parser_failure(*args, **kwargs):
+        raise TimeoutError("parser budget exhausted")
+
+    monkeypatch.setattr(math_verify, "parse", parser_failure)
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(f'mode="math"\nexpected="2"\nprofile="{profile}"\n')
+    _answer(tmp_path, "2")
+    result = run(spec_path, tmp_path)
+    assert (result.status, result.reward) == (Status.INFRA_ERROR, 0.0)

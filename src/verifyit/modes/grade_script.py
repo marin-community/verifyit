@@ -10,6 +10,9 @@ this order: ``$VERIFYIT_LOGS_DIR/reward.json`` holding the finite numeric ``spec
 ``$VERIFYIT_LOGS_DIR/reward.txt`` holding a bare float, or a float on the last non-empty line of
 stdout. Named keys require reward.json. Numeric auxiliary metrics are retained in verdict detail.
 Malformed authoritative files and scripts reporting no reward produce infrastructure failures.
+Nonzero producers never score positively. Optional verdict_file declares an authoritative
+private-log JSON verdict with status, reward and detail; detail.script is reserved for execution
+diagnostics. Structured producers must finish successfully, including before their timeout.
 """
 
 import json
@@ -21,7 +24,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from verifyit.grade import REWARD_JSON, REWARD_TXT, InvalidTask, Reward, scored
+from verifyit.grade import REWARD_JSON, REWARD_TXT, InvalidTask, Reward, Status, scored
 from verifyit.modes.extract import last_line
 from verifyit.modes.run import STDERR_TAIL, run_command
 from verifyit.spec import DEFAULT_REWARD_KEY, DEFAULT_WORKSPACE, ScriptSpec, Spec
@@ -56,6 +59,12 @@ class Reported:
 
 def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
     assert isinstance(spec, ScriptSpec)
+    if spec.verdict_file is not None:
+        if not isinstance(spec.verdict_file, str):
+            raise InvalidTask("verdict_file must be a relative file path string")
+        declared = Path(spec.verdict_file)
+        if not spec.verdict_file or declared.is_absolute() or ".." in declared.parts or declared == Path("."):
+            raise InvalidTask("verdict_file must name a file within the private script logs directory")
     script = tests_dir / spec.path
     if not script.is_file():
         raise InvalidTask(f"script {spec.path!r} is missing from the tests directory")
@@ -73,6 +82,18 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
             "VERIFYIT_LOGS_DIR": str(logs_dir),
         }
         completion = _run(command, cwd, env, spec.timeout)
+        if spec.verdict_file is not None:
+            return _structured_verdict(logs_dir, spec.verdict_file, completion)
+        if completion.exit_code is not None and completion.exit_code != 0:
+            return Reward(
+                0.0,
+                Status.INFRA_ERROR,
+                {
+                    "error": "script producer failed",
+                    "exit_code": completion.exit_code,
+                    "stderr": completion.stderr[-STDERR_TAIL:],
+                },
+            )
         reported = _reported_reward(logs_dir, completion.stdout, spec.reward_key)
 
     detail: dict = {"exit_code": completion.exit_code, "stderr": completion.stderr[-STDERR_TAIL:]}
@@ -144,3 +165,47 @@ def _float(value: object) -> float | None:
         return float(value)
     except ValueError:
         return None
+
+
+def _structured_verdict(logs: Path, filename: str, completion: Completion) -> Reward:
+    execution = {"exit_code": completion.exit_code, "stderr": completion.stderr[-STDERR_TAIL:]}
+    if completion.exit_code != 0:
+        return Reward(
+            0.0,
+            Status.INFRA_ERROR,
+            {"error": "declared verdict producer did not complete successfully", "script": execution},
+        )
+    path = logs / filename
+    if not path.resolve().is_relative_to(logs.resolve()):
+        raise RuntimeError("declared script verdict escapes its private logs directory")
+    try:
+        payload = json.loads(path.read_text(), parse_constant=_reject_json_constant)
+    except (OSError, ValueError) as error:
+        return Reward(
+            0.0,
+            Status.INFRA_ERROR,
+            {"error": f"declared script verdict is missing or malformed: {error}", "script": execution},
+        )
+    if not isinstance(payload, dict):
+        raise RuntimeError("declared script verdict must be a JSON object")
+    try:
+        json.dumps(payload, allow_nan=False)
+    except ValueError as error:
+        raise RuntimeError("declared script verdict contains nonfinite JSON data") from error
+    try:
+        status = Status(payload["status"])
+        value = payload["reward"]
+        detail = payload["detail"]
+    except (KeyError, ValueError, TypeError) as error:
+        raise RuntimeError("declared script verdict requires status, reward and detail") from error
+    if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value):
+        raise RuntimeError("declared script verdict reward must be a finite number")
+    if not 0.0 <= value <= 1.0 or (status != Status.SCORED and value != 0):
+        raise RuntimeError("declared script verdict reward conflicts with its status or unit interval")
+    if not isinstance(detail, dict):
+        raise RuntimeError("declared script verdict detail must be an object")
+    return Reward(float(value), status, {**detail, "script": execution})
+
+
+def _reject_json_constant(value: str) -> None:
+    raise ValueError(f"nonfinite JSON constant {value}")

@@ -1,3 +1,9 @@
+Current working-tree native extensions require the next implementation checkpoint:
+`ExactSpec.strip_outer_whitespace`, `MathSpec.profile`, and native harness routing.
+The existing dependency-pin.patch records the earlier API checkpoint and must be
+updated to the actual new commit before distributing this expanded patch. Local
+validation currently uses the campaign working tree; no remote availability is claimed.
+
 The patch targets EleutherAI/lm-evaluation-harness v0.4.12,
 `6d642546f4688648fced259eb3302efd36ece5af`, which Evalchemy pins.
 Install the campaign verifyit package in the evaluation environment and apply
@@ -5,8 +11,9 @@ Install the campaign verifyit package in the evaluation environment and apply
 
 The evaluator calls `verifyit.adapters.lm_eval.score_task` after harness filters.
 It consumes `.metrics`, retaining every original metric value and the original
-harness aggregators. This is compatibility integration: the source scorer still
-owns benchmark semantics. No scalar reward is implicitly selected. No model or
+harness aggregators. Recognized default exact/likelihood-choice branches use
+verifyit primitives; other source scorers remain compatibility-only. Invalid native
+samples abort evaluation instead of disappearing from aggregates. No scalar reward is implicitly selected. No model or
 dataset download is needed to apply the patch.
 
 For external consumers, `score_task(task, doc, filtered_responses, reward_metric)`

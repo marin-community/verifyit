@@ -16,6 +16,7 @@ does not write around it and keeps a reordered answer wrong. Everything else is 
 Expected text that math-verify cannot parse raises ``InvalidTask``.
 """
 
+import math
 import re
 import threading
 from pathlib import Path
@@ -23,7 +24,7 @@ from typing import Any
 
 from verifyit.grade import InvalidTask, Reward, numeric_tolerance, read_output, scored
 from verifyit.modes.extract import BOXED, extract_boxed, last_line, strip_math_delimiters
-from verifyit.spec import MathSpec, MathType, NumericSpec
+from verifyit.spec import MathProfile, MathSpec, MathType, NumericSpec
 
 SET_TYPES = frozenset({MathType.SET, MathType.INTERVAL})
 
@@ -44,13 +45,21 @@ def _parse(text: str) -> list:
     from math_verify import parse  # noqa: PLC0415
 
     timeout = _timeout()
-    return parse(f"${strip_math_delimiters(text)}$", parsing_timeout=timeout) or parse(text, parsing_timeout=timeout)
+    return parse(f"${strip_math_delimiters(text)}$", parsing_timeout=timeout, raise_on_error=True) or parse(
+        text, parsing_timeout=timeout, raise_on_error=True
+    )
 
 
 def _verify(expected: Any, candidate: Any, allow_set_relation_comp: bool = False) -> bool:
     from math_verify import verify  # noqa: PLC0415
 
-    return verify(expected, candidate, allow_set_relation_comp=allow_set_relation_comp, timeout_seconds=_timeout())
+    return verify(
+        expected,
+        candidate,
+        allow_set_relation_comp=allow_set_relation_comp,
+        timeout_seconds=_timeout(),
+        raise_on_error=True,
+    )
 
 
 def _is_expression(parsed: list) -> bool:
@@ -97,17 +106,29 @@ def _members_match(expected: list[list], candidate: list[list]) -> bool:
     )
 
 
-def _grade_symbolic(spec: MathSpec, workspace: Path) -> Reward:
+def grade_math_candidate(spec: MathSpec, candidate: str) -> Reward:
+    """Score extracted math content without answer-file or last-line normalization."""
+    if not isinstance(spec.profile, MathProfile) or not isinstance(spec.math_type, MathType):
+        raise InvalidTask("unknown math parsing profile or math_type")
+    if spec.profile is MathProfile.BOXED:
+        from math_verify import parse, verify  # noqa: PLC0415
+
+        if spec.math_type is not MathType.SCALAR:
+            raise InvalidTask("boxed math profile requires scalar math_type")
+        expected = parse(f"\\boxed{{{spec.expected}}}", parsing_timeout=_timeout(), raise_on_error=True)
+        parsed = parse(f"\\boxed{{{candidate}}}", parsing_timeout=_timeout(), raise_on_error=True)
+        if not expected or not parsed:
+            return scored(0.0, reason="missing_parse", expected_parsed=bool(expected), candidate_parsed=bool(parsed))
+        return scored(
+            float(bool(verify(gold=expected, target=parsed, timeout_seconds=_timeout(), raise_on_error=True))),
+            extracted=candidate,
+            expected=spec.expected,
+        )
     is_list = spec.math_type is MathType.LIST
     expected = _parsed_members(spec.expected) if is_list else [_parse(spec.expected)]
     if not all(_is_expression(member) for member in expected):
         raise InvalidTask(f"math-verify cannot parse expected {spec.expected!r}")
 
-    text = read_output(spec, workspace)
-    if text is None:
-        return scored(0.0, reason="no_output")
-    boxed = extract_boxed(text)
-    candidate = (boxed or "") if BOXED in text else last_line(text) or ""
     parsed = _parsed_members(candidate) if is_list else [_parse(candidate)]
     if not any(parsed):
         return scored(0.0, reason="unparsable", extracted=candidate, expected=spec.expected)
@@ -117,6 +138,17 @@ def _grade_symbolic(spec: MathSpec, workspace: Path) -> Reward:
     else:
         match = _verify(expected[0], parsed[0], allow_set_relation_comp=spec.math_type in SET_TYPES)
     return scored(float(bool(match)), extracted=candidate, expected=spec.expected)
+
+
+def _grade_symbolic(spec: MathSpec, workspace: Path) -> Reward:
+    text = read_output(spec, workspace)
+    if text is None:
+        # Validate the reference even when no candidate was submitted.
+        grade_math_candidate(spec, "")
+        return scored(0.0, reason="no_output")
+    boxed = extract_boxed(text)
+    candidate = (boxed or "") if BOXED in text else last_line(text) or ""
+    return grade_math_candidate(spec, candidate)
 
 
 def _last_number(text: str) -> float | None:
@@ -132,6 +164,8 @@ def _last_number(text: str) -> float | None:
 def grade_numeric_candidate(spec: NumericSpec, value: float) -> Reward:
     """Score a numeric value after the caller extracts it from its submission format."""
     tolerance = numeric_tolerance(spec)
+    if not math.isfinite(value):
+        return scored(0.0, reason="nonfinite_candidate", expected=spec.expected)
     match = abs(value - spec.expected) <= tolerance
     return scored(float(match), extracted=value, expected=spec.expected, tolerance=tolerance)
 

@@ -1,8 +1,12 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
+import json
+
+import pytest
+
 from verifyit import grade as grade_module
-from verifyit.grade import InvalidTask, Status
+from verifyit.grade import InvalidTask, Reward, Status, run, write_reward
 from verifyit.spec import McqSpec, Mode
 
 
@@ -13,3 +17,80 @@ def test_invalid_task_becomes_invalid_task_reward(tmp_path, monkeypatch):
     monkeypatch.setitem(grade_module.GRADERS, Mode.MCQ, broken)
     reward = grade_module.grade(McqSpec("A"), tmp_path, tmp_path)
     assert reward.status == Status.INVALID_TASK and reward.detail == {"error": "no reference"}
+
+
+@pytest.mark.parametrize(
+    "verdict",
+    [
+        Reward(float("nan"), Status.SCORED),
+        Reward(float("inf"), Status.SCORED),
+        Reward(1.1, Status.SCORED),
+        Reward(True, Status.SCORED),
+        Reward(1.0, "scored"),
+        Reward(1.0, Status.INFRA_ERROR),
+    ],
+)
+def test_invalid_direct_grader_verdict_is_unscored_and_removes_stale_rewards(tmp_path, monkeypatch, verdict):
+    monkeypatch.setitem(grade_module.GRADERS, Mode.MCQ, lambda spec, tests_dir, workspace: verdict)
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text('mode="mcq"\nexpected="A"\n')
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "reward.json").write_text('{"reward":1.0}')
+    result = run(spec_path, tmp_path)
+    write_reward(logs, result)
+    assert (result.status, result.reward) == (Status.INFRA_ERROR, 0.0)
+    assert not (logs / "reward.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("verdict", "status", "reward"),
+    [
+        (Reward(float("nan"), Status.SCORED), "infra_error", None),
+        (Reward(1.0, "scored"), "infra_error", None),
+        (Reward(1.0, Status.INVALID_TASK), "infra_error", None),
+        (Reward(0.0, Status.SCORED), "scored", 0.0),
+        (Reward(0.5, Status.SCORED), "scored", 0.5),
+    ],
+)
+def test_direct_reward_persistence_rejects_invalid_verdicts_and_keeps_valid_zero(tmp_path, verdict, status, reward):
+    (tmp_path / "reward.json").write_text('{"reward":1.0}')
+    (tmp_path / "reward.txt").write_text("1.0")
+    write_reward(tmp_path, verdict)
+    persisted = json.loads((tmp_path / "verdict.json").read_text())
+    assert persisted["status"] == status
+    if reward is None:
+        assert persisted["reward"] == 0.0
+        assert not (tmp_path / "reward.json").exists()
+        assert not (tmp_path / "reward.txt").exists()
+    else:
+        assert json.loads((tmp_path / "reward.json").read_text()) == {"reward": reward}
+
+
+@pytest.mark.parametrize(
+    "verdict",
+    [
+        Reward(10**10000, Status.SCORED),
+        Reward(1.0, Status.SCORED, {"bad": object()}),
+        Reward(1.0, Status.SCORED, {"bad": float("nan")}),
+    ],
+)
+def test_invalid_persisted_verdict_overwrites_previous_positive_verdict(tmp_path, verdict):
+    (tmp_path / "verdict.json").write_text('{"reward":1.0,"status":"scored"}')
+    (tmp_path / "reward.json").write_text('{"reward":1.0}')
+    write_reward(tmp_path, verdict)
+    persisted = json.loads((tmp_path / "verdict.json").read_text())
+    assert (persisted["status"], persisted["reward"]) == ("infra_error", 0.0)
+    assert not (tmp_path / "reward.json").exists()
+
+
+def test_deeply_nested_detail_replaces_stale_positive_verdict(tmp_path):
+    detail = {}
+    for _ in range(10000):
+        detail = {"nested": detail}
+    (tmp_path / "verdict.json").write_text('{"reward":1.0,"status":"scored"}')
+    (tmp_path / "reward.json").write_text('{"reward":1.0}')
+    write_reward(tmp_path, Reward(1.0, Status.SCORED, detail))
+    verdict = json.loads((tmp_path / "verdict.json").read_text())
+    assert (verdict["status"], verdict["reward"]) == ("infra_error", 0.0)
+    assert not (tmp_path / "reward.json").exists()

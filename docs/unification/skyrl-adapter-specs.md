@@ -1,33 +1,36 @@
 # Reusable SkyRL adapter contracts
 
-These adapters use existing `script`, `pytest`, `stdio`, `exact`, `math`,
-`json-schema`, `ifeval`, `reasoning-gym`, and `judge` primitives. They do not add
-verifier categories. The implemented arithmetic and MCQ integrations are described
-in [skyrl.md](skyrl.md); this document specifies unimplemented semantic gaps.
+All46 scoring routes map to existing verifyit classes; no new mode category is
+proposed. The48 inventory entries also include two external-objective placeholders.
+The17 scorer-contract families are source behavior groupings, not mode categories.
 
-Each script adapter receives a task-owned JSON request and candidate evidence file.
-The request names a scorer, pinned scorer package/source revision, configuration,
-and expected data. Evidence contains final text, structured assistant message,
-finish status, and optional workspace artifact path. The Python adapter returns `Reward`: request/reference validation yields
-`invalid_task`; missing dependencies, unavailable sandbox/judge/compiler, and
-verifier execution faults yield `infra_error`; candidate errors yield `scored`
-zero. A task-image script transport cannot currently encode that distinction
-through reward files alone, so it must use a surrounding Python adapter to classify
-unscored outcomes. The script writes
-`reward.json` with a finite bounded `reward` and serializable diagnostics; malformed
-request/reference or unavailable execution raises without writing reward. Candidate
-parse/type/runtime failures write zero. The harness maps verifier errors to masked
-training outcomes and applies source-specific optimization shaping separately.
-For binary source scores, preserve verifyit 0/1; project AIME correctness to
-`2 * reward - 1` and legacy SQL format failure to -1 only in harness policy.
-GenRM remains a vector of source cohort scores, not bounded individual reward.
-Per-test evidence contains `id` (stable task identity), `passed`, exact `stdout`,
-`executed`, `total`, and `complete`; interrupted or short-circuited runs must mark
-`complete=false`. Harbor sibling alignment and identity-aware weighting remain
-harness policy and may not be reconstructed from a scalar reward.
+The route-level reassessment is disjoint:
 
-A generic source script that merely reports zero on exceptions does not meet this
-contract. Runtime dependencies belong in the task image or adapter extra.
+| Strategy | Routes | Contracts and concrete composition |
+|---|---:|---|
+| Client extraction and existing primitives | 17 | Arithmetic4, QA3, MCQ2, ReasoningGym2, ARC grids2, rounded chemistry1, typed tool equality3. Extract source evidence; canonicalize each side independently; exact/numeric compares values; source aggregation retains partial scores. |
+| Task-owned executable harness | 6 | Code3 compiles callable/stdin cases into pytest/stdio; SQLite2 executes trusted fixture/reference and candidate queries in isolated test harness; Lean1 compiles candidate proof through script. These are task harnesses, not a generic retained scorer callback claimed as primitive equivalence. |
+| Existing-class extensions | 23 | Math5, structured schema2, instruction/format/calendar5, rubric/cohort judge11. Extend four existing classes as specified below; keep source extraction, retries, orchestration and metrics in clients. |
+| External objective, no correctness verifier | 2 | Preference/prompt-only retain their external reward objectives. |
+
+Nine source routes now have executable integration patches: AIME normal/strict,
+GSM8K standalone/multi-turn, Search, SearchCode, MCQ, chemistry, and both ARC routes.
+The shared exact option `strip_outer_whitespace=False` removes the strict-literal
+gap. Source imports retained only for extraction, execution and metrics are client
+code; unchanged source scorer callbacks behind script remain runtime bridges only.
+
+For every composition, a malformed reference is `invalid_task`; unavailable or
+broken verifier infrastructure is `infra_error`; neither receives format or partial
+credit. All failures carry scalar zero and remove stale rewards. A valid wrong
+candidate may receive only its explicitly declared source partial/format score.
+Source AIME signed score and length shaping, cohort bonuses, and diagnostic vectors
+stay outside the bounded verifyit correctness scalar. Aggregation first checks all
+constituent statuses: any failed required verifier makes the whole result unscored
+zero before averaging, multiplying, selecting alternatives, or applying shaping.
+
+Per-test evidence retains stable `id`, `passed`, exact `stdout`, `executed`, `total`,
+and `complete`; partial execution sets `complete=false`. Clients cannot reconstruct
+identity-aware weighting or missing evidence from a scalar reward.
 
 | Reusable scorer | Request fields and consequential behavior | Required regression fixtures |
 |---|---|---|
@@ -52,45 +55,45 @@ contracts above with their own explicitly pinned extraction and comparator polic
 External user-registered environments remain open extension points and cannot be
 enumerated from this source snapshot.
 
-Only the implemented MCQ/arithmetic patches and stdio fixes have execution evidence
-in this campaign. The table specifies reviewable remaining adapters and their test
-requirements; it does not claim those adapters or fixtures are implemented.
+## Remaining extensions of existing classes
 
-## Proposed Python adapter API
+These are concrete extension specifications, not implemented APIs or new modes.
 
-The status-preserving transport is an explicit Python function:
-`grade_profile(request: Mapping[str, object], evidence: Mapping[str, object], *,
-tests_dir: Path, workspace: Path) -> verifyit.grade.Reward`. This API is a proposed
-extension, not implemented by the current script primitive. It consumes only
-necessary candidate fields; source rollout/tool control stays in the harness.
+- **math**: expose a prepared-candidate scorer; retain source extraction and symbolic
+  backend selection. Optional equality policy `up_to_constant` compares a derivative
+  of the expression difference with zero for declared indefinite integrals. Approximate
+  pi substitutions happen independently before grading. Clients compose symmetric
+  judge fallbacks and source retry limits; disagreement or failed required call is zero.
+- **json-schema**: accept an explicitly declared OpenAPI dialect/validator policy in
+  the existing schema mode. Client XML/CSV deserialization uses schema-directed coercion;
+  JSON/YAML/TOML remain native formats. Preserve nullable/union and array semantics;
+  invalid schema fails before candidate validation. No inference that OpenAPI and
+  JSON Schema acceptance sets are interchangeable.
+- **ifeval**: expose a prepared-text constraint scorer with a trusted, pinned checker
+  registry and explicit aggregation `all`/`mean`. Add line-regex, required/spurious
+  marker and structured-calendar constraint checkers. Clients retain JSON extraction,
+  kwargs, source registry lookup and calendar evidence; registry/configuration failures
+  cannot become satisfied constraints or partial credit. Existing check names keep
+  their default semantics.
+- **judge**: extend the existing class with task-owned prompt templates, complete
+  output-label grammar and a finite label-to-score table; labels must consume the final
+  source-defined verdict field, never a numeric prefix. Clients invoke this prepared
+  judge once per rubric/pair, retain source prompts and bounded retry policy, then
+  compute average/product/first or cohort metrics only from valid scored results.
+  No custom prompt uses reference exact-gating implicitly. Missing/malformed/incomplete
+  judge output is infra zero. Template/label configuration errors are invalid tasks.
 
-Validation completes before candidate execution. Unknown profile, absent required
-fields, invalid expected data, unrecognized schema/constraint, mismatched test
-IDs, and malformed expected queries/proofs yield `invalid_task(message)`.
-Dependencies unavailable after valid configuration, process launch failures,
-sandbox transport failures, compiler/judge unavailable, malformed judge output,
-and incomplete execution evidence yield `infra_error(message)`. A syntactically
-bad or incorrect candidate, a candidate subprocess nonzero exit, and an enforced
-candidate deadline yield `scored(0, ...)`. A verifier subprocess deadline yields
-`infra_error`; classify by which process timed out rather than its exit code.
-Successful candidate grading yields `scored(reward, profile=..., diagnostics=...)`.
-Source cohort/optimization policies return their separate harness values; they
-must not be forced into an individual bounded correctness reward.
-
-The caller receives the returned `Reward` directly, and calls verifyit's existing
-`write_reward` only after grading. That function writes `verdict.json`; only
-`scored` writes scalar reward artifacts, and an unscored result removes stale
-reward files. The adapter does not parse candidate-authored verdict/reward files:
-trusted profile code owns evaluation, and subprocess artifacts use a fresh
-verifier-owned temporary directory. Candidate stdout is evidence only. Thus a
-candidate cannot forge the profile's status by leaving files in its workspace.
-Retained legacy reward-file transports remain the current script mode and do not
-acquire this proposed API's validation classifications automatically.
+Typed tool equality needs no new class: compare key sets, list shape, type tags and
+string leaves with strict exact; numeric leaves with numeric. A source strict
+`abs(delta)<epsilon` is represented by inclusive tolerance
+`math.nextafter(epsilon, 0.0)` for finite binary floats. Preserve Python bool/int
+source policy explicitly instead of flattening values into JSON numbers. QA F1 is
+client token matching plus source overlap/precision/recall aggregation; it is not a
+new correctness category. These compositions are specified, not yet source-patched.
 
 <a id="arithmetic"></a>Implemented arithmetic profiles use
 `grade_aime_candidate` and `grade_gsm8k_final_line` in `verifyit.adapters.skyrl`.
-AIME source normalization and ±1 policy remain explicit. Strict-box mode is a
-spec-needed route: extract the last box from the source's last100-character tail
+AIME source normalization and ±1 policy remain explicit. Strict-box mode is implemented in the source patch: extract the last box from the source's last100-character tail
 and compare its raw content with the expected string using the shared
 [EXACT-HARNESS profile](evalchemy_mapping.md#exact-harness-exact-normalization-and-alternative-references).
 Use no stripping, lowercasing, punctuation/digit removal or regex substitutions;
@@ -101,14 +104,14 @@ remain significant, and an answer beyond the last100-character tail to fail.
 
 The implemented GSM8K helper covers the standalone final-line route only.
 `gsm8k_multi_turn` uses the first strict `####` marker each turn and literal
-ground-truth equality: correct earns1.0, formatted wrong earns0.2/max_turns,
+ground-truth equality after finite-decimal reference validation: correct earns1.0, formatted wrong earns0.2/max_turns,
 missing marker earns0.0. It stops at a correct response or max_turns and otherwise
-returns source feedback. Its proposed adapter must retain those per-turn results
+returns source feedback. The implemented source utility patch retains those per-turn results
 and harness policy; it must not call the standalone final-line helper. Acceptance
 fixtures require first-correct/last-wrong and first-wrong/last-correct marker pairs,
 a well-formatted wrong turn receiving0.2/max_turns, absent markers receiving0,
 a correct turn terminating immediately, and max-turn exhaustion terminating after
-its last scored attempt. This route is specified, not implemented.
+its last scored attempt. The original turn controller is unchanged; the patched strict utility performs comparison through exact.
 <a id="mcq"></a>Implemented MCQ uses source first-box extraction followed by
 `grade_mcq_candidate`; Ultra MCQA modes require their own source extraction.
 <a id="reasoning-gym"></a>Reasoning Gym uses complete pinned task/entry data and

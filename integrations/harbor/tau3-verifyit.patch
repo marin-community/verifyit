@@ -1,0 +1,147 @@
+--- a/adapters/tau3-bench/src/tau3_bench/adapter.py
++++ b/adapters/tau3-bench/src/tau3_bench/adapter.py
+@@ -67,6 +67,9 @@
+         task_ids: list[str] | None = None,
+         **kwargs,
+     ):
++        self.verifyit_ref = str(kwargs.get("verifyit_ref", ""))
++        if re.fullmatch(r"[0-9a-f]{40}", self.verifyit_ref) is None:
++            raise ValueError("verifyit_ref must be a full immutable verifyit Git SHA")
+         self.output_dir = output_dir
+         self.limit = limit
+         self.overwrite = overwrite
+@@ -369,7 +372,7 @@
+         ):
+             content = self._read_text(dockerfile)
+             dockerfile.write_text(
+-                content.replace("{tau2_bench_ref}", self._TAU2_BENCH_REF),
++                content.replace("{tau2_bench_ref}", self._TAU2_BENCH_REF).replace("{verifyit_ref}", self.verifyit_ref),
+                 encoding="utf-8",
+             )
+ 
+--- a/adapters/tau3-bench/src/tau3_bench/main.py
++++ b/adapters/tau3-bench/src/tau3_bench/main.py
+@@ -38,6 +38,7 @@
+         default=None,
+         help="Only generate these task IDs",
+     )
++    parser.add_argument("--verifyit-ref", required=True, help="Full immutable verifyit integration commit")
+     args = parser.parse_args()
+ 
+     adapter = Tau3BenchAdapter(
+@@ -45,6 +46,7 @@
+         overwrite=args.overwrite,
+         limit=args.limit,
+         task_ids=args.task_ids,
++        verifyit_ref=args.verifyit_ref,
+     )
+ 
+     adapter.run()
+--- a/adapters/tau3-bench/src/tau3_bench/task-template/environment/Dockerfile
++++ b/adapters/tau3-bench/src/tau3_bench/task-template/environment/Dockerfile
+@@ -16,3 +16,7 @@
+     && git -C "${TAU2_BENCH_ROOT}" checkout --detach FETCH_HEAD \
+     && pip install --no-cache-dir "${TAU2_BENCH_ROOT}[knowledge]" \
+     && rm -rf /var/lib/apt/lists/*
++
++# Supply the immutable verifyit integration commit when building this task.
++ARG VERIFYIT_REF="{verifyit_ref}"
++RUN test -n "$VERIFYIT_REF" && pip install --no-cache-dir "git+https://github.com/marin-community/verifyit@$VERIFYIT_REF"
+--- a/adapters/tau3-bench/src/tau3_bench/task-template/tests/test.sh
++++ b/adapters/tau3-bench/src/tau3_bench/task-template/tests/test.sh
+@@ -1,14 +1,5 @@
+ #!/bin/bash
+ set -euo pipefail
+-
+-LOG_DIR="/logs/verifier"
+-mkdir -p "${LOG_DIR}"
+-
+ export TAU2_BENCH_ROOT="${TAU2_BENCH_ROOT:-/opt/tau2-bench}"
+ export TAU2_DATA_DIR="${TAU2_DATA_DIR:-${TAU2_BENCH_ROOT}/data}"
+-
+-python3 /tests/evaluate.py \
+-  --config /tests/config.json \
+-  --runtime-log /logs/agent/tau3_runtime_state.json \
+-  --reward "${LOG_DIR}/reward.txt" \
+-  --result "${LOG_DIR}/result.json"
++exec verifyit /tests/verifier.toml
+--- /dev/null
++++ b/adapters/tau3-bench/src/tau3_bench/task-template/tests/verifier.toml
+@@ -0,0 +1,3 @@
++mode = "script"
++path = "tau3_bridge.py"
++verdict_file = "result.json"
+--- /dev/null
++++ b/adapters/tau3-bench/src/tau3_bench/task-template/tests/tau3_bridge.py
+@@ -0,0 +1,71 @@
++# Copyright The Marin Authors
++# SPDX-License-Identifier: Apache-2.0
++"""Run tau3's retained evaluator through ScriptSpec's explicit verdict channel."""
++
++import json
++import math
++import os
++import subprocess
++import sys
++from pathlib import Path
++
++
++def normalize(result: object) -> dict:
++    if not isinstance(result, dict):
++        raise ValueError("tau3 result must be an object")
++    status = result.get("status")
++    reward = result.get("reward")
++    if status in {"missing_runtime_log", "invalid_runtime_log", "tau2_runtime_log_error"}:
++        return {"status": "infra_error", "reward": 0.0, "detail": {"native": result}}
++    if status not in {"passed", "mismatch"}:
++        raise ValueError(f"unsupported tau3 result status {status!r}")
++    if isinstance(reward, bool) or not isinstance(reward, int | float) or not math.isfinite(reward):
++        raise ValueError("tau3 reward must be finite numeric data")
++    if not 0 <= reward <= 1:
++        raise ValueError("tau3 reward lies outside the declared unit interval")
++    return {"status": "scored", "reward": float(reward), "detail": {"native": result}}
++
++
++def main() -> None:
++    tests = Path(os.environ["VERIFYIT_TESTS_DIR"])
++    logs = Path(os.environ["VERIFYIT_LOGS_DIR"])
++    result_path = logs / "native-result.json"
++    config_path = tests / "config.json"
++    try:
++        config = json.loads(config_path.read_text())
++        if not isinstance(config, dict) or not isinstance(config.get("task"), dict):
++            raise ValueError("tau3 config requires a task object")
++        if config.get("domain") not in {"airline", "retail", "telecom", "banking_knowledge"}:
++            raise ValueError("tau3 config declares an unsupported domain")
++    except (OSError, ValueError) as error:
++        verdict = {"status": "invalid_task", "reward": 0.0, "detail": {"error": str(error)}}
++    else:
++        runtime = os.environ.get("TAU3_RUNTIME_STATE_PATH", "/logs/agent/tau3_runtime_state.json")
++        completed = subprocess.run(
++            [
++                sys.executable,
++                str(tests / "evaluate.py"),
++                "--config",
++                str(config_path),
++                "--runtime-log",
++                runtime,
++                "--reward",
++                str(logs / "native-reward.txt"),
++                "--result",
++                str(result_path),
++            ],
++            capture_output=True,
++            text=True,
++        )
++        try:
++            if completed.returncode:
++                raise RuntimeError(f"tau3 evaluator exited {completed.returncode}")
++            verdict = normalize(json.loads(result_path.read_text()))
++        except (OSError, ValueError, RuntimeError) as error:
++            verdict = {"status": "infra_error", "reward": 0.0, "detail": {"error": str(error)}}
++        verdict["detail"]["native_process"] = {"exit_code": completed.returncode, "stderr": completed.stderr[-2000:]}
++    (logs / "result.json").write_text(json.dumps(verdict, allow_nan=False))
++
++
++if __name__ == "__main__":
++    main()

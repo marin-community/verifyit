@@ -1,6 +1,7 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
+import json
 from pathlib import Path
 
 import pytest
@@ -92,3 +93,11 @@ def test_numeric_negative_candidate_exceeds_the_configured_tolerance(tmp_path):
     assert candidate is not None
     _answer(tmp_path, candidate)
     assert grade_math.grade(spec, tmp_path, tmp_path).reward == 0.0
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_nonfinite_numeric_candidate_is_wrong_with_serializable_detail(value):
+    result = grade_math.grade_numeric_candidate(NumericSpec(2), value)
+    assert result.reward == 0
+    assert result.detail["reason"] == "nonfinite_candidate"
+    json.dumps(result.detail, allow_nan=False)

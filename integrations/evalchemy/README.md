@@ -1,3 +1,9 @@
+Current working-tree native extensions require the next implementation checkpoint:
+`ExactSpec.strip_outer_whitespace`, `MathSpec.profile`, and native harness routing.
+The existing dependency-pin.patch records the earlier API checkpoint and must be
+updated to the actual new commit before distributing this expanded patch. Local
+validation currently uses the campaign working tree; no remote availability is claimed.
+
 The patch targets marin-community/evalchemy
 `e3f4a3d601896c437f37b0bd0a30e51651cce6d0`.
 Install verifyit in the evaluation environment and apply `verifyit.patch` from
@@ -15,8 +21,10 @@ box, while truncated reasoning-only output supplies no answer. Inline reasoning
 end markers are handled before benchmark box extraction. The patch retains the
 benchmark's own box parser and stop-sequence handling.
 
-This patch does not replace mathematical equivalence or judge prompts. Their
-normalization/fallback contracts require additional parity work described in
+The patch also routes AIW normalization through strict exact, GSM8KPerturbed
+through zero-tolerance numeric, and the shared AIME/MATH500 boxed comparison
+through math. Missing-parse Minerva fallback and judge prompts remain source-owned.
+Further normalization/fallback contracts are described in
 [the mapping](../../docs/unification/evalchemy_mapping.md).
 
 

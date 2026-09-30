@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from verifyit.grade import Status, run
 from verifyit.modes import grade_gotest
 from verifyit.spec import GotestSpec
 
@@ -120,7 +121,44 @@ def test_gotest_repeated_test_failure_is_not_erased(tmp_path, monkeypatch, actio
         "\n".join(f'{{"Action": "{action}", "Package": "one", "Test": "TestRepeated"}}' for action in actions)
         + '\n{"Action": "pass", "Package": "two", "Test": "TestRepeated"}\n'
     )
+    stream += '{"Action":"fail","Package":"one"}\n{"Action":"pass","Package":"two"}\n'
     workspace = _use_fake_go(monkeypatch, tmp_path, stream)
     reward = grade_gotest.grade(GotestSpec(must_not_break=("one.TestRepeated",)), tmp_path, workspace)
     assert (reward.reward, reward.detail["first_failure"]) == (0.0, "one.TestRepeated")
     assert grade_gotest.grade(GotestSpec(must_pass=("two.TestRepeated",)), tmp_path, workspace).reward == 1.0
+
+
+@pytest.mark.parametrize(
+    "suffix,exit_code",
+    [
+        ('{"Action":"fail","Package":"p"}\n', 1),
+        ("", 0),
+        ('{"Action":"pass","Package":"p"}\n', 2),
+        ('{"Action":"run","Package":"p","Test":"TestPending"}\n{"Action":"fail","Package":"p"}\n', 1),
+    ],
+)
+def test_gotest_failclosed_incomplete_or_crashed_runner_cannot_report_success(tmp_path, monkeypatch, suffix, exit_code):
+    stream = '{"Action":"pass","Package":"p","Test":"TestRequired"}\n' + suffix
+    workspace = _use_fake_go(monkeypatch, tmp_path, stream, exit_code=exit_code)
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "verifier.toml").write_text('mode="gotest"\nmust_pass=["p.TestRequired"]\n')
+    reward = run(tests / "verifier.toml", workspace)
+    assert reward.status == Status.INFRA_ERROR
+    assert reward.reward == 0
+
+
+def test_gotest_failclosed_one_package_error_is_not_hidden_by_another_packages_test_failure(tmp_path, monkeypatch):
+    stream = (
+        '{"Action":"pass","Package":"required","Test":"TestRequired"}\n'
+        '{"Action":"fail","Package":"required"}\n'
+        '{"Action":"fail","Package":"other","Test":"TestOther"}\n'
+        '{"Action":"fail","Package":"other"}\n'
+    )
+    workspace = _use_fake_go(monkeypatch, tmp_path, stream)
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "verifier.toml").write_text('mode="gotest"\nmust_pass=["required.TestRequired"]\n')
+    reward = run(tests / "verifier.toml", workspace)
+    assert reward.status == Status.INFRA_ERROR
+    assert reward.reward == 0

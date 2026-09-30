@@ -237,7 +237,7 @@ def test_checklist_without_criteria_is_an_invalid_task(tmp_path, unconfigured_ju
 
 
 @pytest.mark.parametrize("rubric", ["reference", "checklist"])
-@pytest.mark.parametrize("finish_reason", ["length", "content_filter"])
+@pytest.mark.parametrize("finish_reason", ["length", "content_filter", "tool_calls", "function_call", "unknown", None])
 def test_incomplete_judge_score_is_unscored_and_removes_stale_rewards(tmp_path, fake_judge, rubric, finish_reason):
     fake_judge.replies = ["SCORE: 1"]
     fake_judge.finish_reason = finish_reason
@@ -255,3 +255,27 @@ def test_incomplete_judge_score_is_unscored_and_removes_stale_rewards(tmp_path, 
     assert json.loads((logs / "verdict.json").read_text())["status"] == "infra_error"
     assert not (logs / "reward.json").exists()
     assert not (logs / "reward.txt").exists()
+
+
+@pytest.mark.parametrize(
+    ("rubric", "reply"),
+    [
+        ("reference", "SCORE: 1e-9"),
+        ("reference", "SCORE: 1garbage"),
+        ("reference", "SCORE: 0.7"),
+        ("checklist", "SCORE: 0.5"),
+        ("reference", "SCORE: 1\nActually unable to grade"),
+    ],
+)
+def test_malformed_final_judge_labels_never_award_reward(tmp_path, fake_judge, rubric, reply):
+    fake_judge.replies = [reply]
+    spec = JudgeSpec(rubric=rubric, references=(REFERENCE,), criteria=("Be correct",), exact_gate=False)
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(spec))
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "reward.json").write_text('{"reward":1.0}')
+    verdict = run(spec_path, _workspace(tmp_path, "a candidate paraphrase"))
+    write_reward(logs, verdict)
+    assert (verdict.status, verdict.reward) == (Status.INFRA_ERROR, 0.0)
+    assert not (logs / "reward.json").exists()

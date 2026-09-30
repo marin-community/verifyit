@@ -13,6 +13,8 @@ from pathlib import Path
 
 import yaml
 
+from verifyit.adapters.harness_native import native_config_route
+
 
 class SourceLoader(yaml.SafeLoader):
     pass
@@ -164,6 +166,7 @@ def harness_records(root, directory):
                         **(source_record(root, module_path) if module_path.exists() else {"external_module": module}),
                     }
                 )
+        native_route = native_config_route(config) if isinstance(task, str) else None
         records.append(
             {
                 **source_record(root, path),
@@ -176,13 +179,24 @@ def harness_records(root, directory):
                 "class": config.get("class"),
                 "metric_list": config.get("metric_list"),
                 "filters": config.get("filter_list"),
-                "mapping": mapping,
-                "reason": reason,
+                "mapping": native_route or mapping,
+                "native_route": native_route,
+                "reason": (
+                    "Native source-normalized exact/likelihood selection; filters and aggregators remain source-owned."
+                    if native_route
+                    else reason
+                ),
                 "primitive_candidates": candidates,
                 "callable_evidence": callable_evidence,
-                "classification": "orchestration" if not isinstance(task, str) else "spec-needed",
-                "required_specs": ([] if not isinstance(task, str) else ["metric", *candidates]),
-                "existing_mode": candidates[0] if candidates else "script",
+                "classification": (
+                    "orchestration" if not isinstance(task, str) else "adapter" if native_route else "spec-needed"
+                ),
+                "required_specs": ([] if not isinstance(task, str) or native_route else ["metric", *candidates]),
+                "existing_mode": (
+                    "mcq"
+                    if native_route == "likelihood_choice"
+                    else "exact" if native_route else candidates[0] if candidates else "script"
+                ),
                 "source_scorer": custom or config.get("class") or "lm_eval.api.task.ConfigurableTask.process_results",
             }
         )
@@ -311,16 +325,24 @@ def evalchemy_records(root):
                     "declared_metrics": metrics,
                     "primitive_candidate": PRIMITIVES.get(name),
                     "mapping": primitive,
-                    "classification": "adapter" if primitive == "mcq" else "spec-needed",
+                    "classification": (
+                        "adapter"
+                        if primitive == "mcq" or name in {"AIW", "GSM8KPerturbed"}
+                        else ("adapter-hybrid" if name in {"AIME24", "AIME25", "MATH500"} else "spec-needed")
+                    ),
                     "required_specs": (
                         []
-                        if primitive == "mcq"
+                        if primitive == "mcq" or name in {"AIW", "GSM8KPerturbed"}
                         else [
                             primitive if primitive in SPECIFICATIONS else "execution",
                             "metric",
                         ]
                     ),
-                    "clean_equivalence": primitive == "mcq",
+                    "clean_equivalence": primitive == "mcq" or name in {"AIW", "GSM8KPerturbed"},
+                    "native_profile": ("boxed" if name in {"AIME24", "AIME25", "MATH500"} else None),
+                    "source_retained_fallback": (
+                        "minerva-on-missing-parse" if name in {"AIME24", "AIME25", "MATH500"} else None
+                    ),
                     "scoring_evidence": evidence,
                     "contract": caveats[primitive],
                 }
@@ -418,6 +440,7 @@ def main():
     parser.add_argument("--runtime-index", type=Path, help="Verified TaskManager discovery JSON")
     parser.add_argument("--evidence", type=Path, help="Directory for transient full function graphs")
     args = parser.parse_args()
+    args.sources = args.sources.resolve()
 
     outputs = source_inventory(args.sources)
     if args.runtime_index is not None:
@@ -478,7 +501,12 @@ def main():
             for record in payload.get(key, [])
             if key == "benchmarks" or record["kind"] == "task"
         )
-        payload["coverage_counts"] = {"adapter": counts["adapter"], "spec-needed": counts["spec-needed"], "unknown": 0}
+        payload["coverage_counts"] = {
+            "adapter": counts["adapter"],
+            "adapter-hybrid": counts["adapter-hybrid"],
+            "spec-needed": counts["spec-needed"],
+            "unknown": 0,
+        }
         for records_key in ("benchmarks", "configs", "harness_overrides"):
             if records_key in payload:
                 population = Counter(record["classification"] for record in payload[records_key])

@@ -11,7 +11,8 @@ from dataclasses import dataclass
 from numbers import Real
 from typing import Any, Protocol
 
-from verifyit.grade import Reward, invalid_task, scored
+from verifyit.adapters.harness_native import native_task_metrics
+from verifyit.grade import InvalidTask, Reward, invalid_task, scored
 
 
 class Task(Protocol):
@@ -44,8 +45,14 @@ def project_metrics(metrics: Mapping[str, Any], reward_metric: str | None = None
 
 
 def score_task(task: Task, doc: Any, filtered_responses: Sequence[Any], reward_metric: str | None = None) -> TaskResult:
-    """Run the source scorer unchanged; scorer failures propagate to the caller."""
-    return project_metrics(task.process_results(doc, filtered_responses), reward_metric)
+    """Use recognized native routes; retain source compatibility for other contracts."""
+    try:
+        metrics = native_task_metrics(task, doc, filtered_responses)
+    except InvalidTask as error:
+        return TaskResult({}, invalid_task(str(error)))
+    if metrics is None:
+        metrics = task.process_results(doc, filtered_responses)
+    return project_metrics(metrics, reward_metric)
 
 
 def aggregate_task(task: Task, samples: Sequence[Mapping[str, Any]], reward_metric: str | None = None) -> TaskResult:

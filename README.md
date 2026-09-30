@@ -19,6 +19,11 @@ Statuses are `scored`, `invalid_task`, and `infra_error`. A scored result also w
 so the trial can be masked instead of recorded as a zero. Candidate output never causes a nonzero
 process exit after a verdict has been written.
 
+Rewards must be finite numbers in `[0, 1]`; malformed grader rewards or statuses become
+`infra_error` with reward zero. Persisting malformed verdict details also replaces any previous
+verdict with this failure and removes stale reward files. Source metrics and training reward
+shaping belong in the client rather than this bounded correctness scalar.
+
 ## Modes
 
 | mode | contract |
@@ -40,10 +45,26 @@ process exit after a verdict has been written.
 | `script` | legacy `test.sh` fallback with normalized reward files and fail-closed errors |
 
 For `judge`, a length-truncated or content-filtered judge response is an infrastructure
-error. A completed response with no parseable score is retried once; if the retry
+error. Only explicit `finish_reason="stop"` completes grading; tool requests and missing or
+unknown reasons also fail closed. A completed response with no parseable score is retried once; if the retry
 also fails, the verdict is `infra_error`. These failures write no reward files.
+The last nonempty response line must be a complete `SCORE: value` label: reference accepts
+`0`, `0.5`, or `1`; checklist accepts `0` or `1`. Numeric prefixes and other labels fail closed.
 
 For `stdio`, a candidate program that exits unsuccessfully scores zero even if its stdout matches.
+
+For `script`, a nonzero producer exit is an infrastructure error even when it writes a positive
+reward. Optional `verdict_file = "result.json"` declares an authoritative JSON verdict inside the
+private `VERIFYIT_LOGS_DIR`: `status`, finite `reward`, and object `detail`. Status is `scored`,
+`invalid_task`, or `infra_error`; unscored reward must be zero. Structured producers must complete
+successfully before their timeout. Missing/malformed verdicts never fall back to scalar reward
+files or stdout. Native metadata may be placed under `detail.native`; `detail.script` is reserved
+for process diagnostics. Scalar-only scripts keep their existing timeout-zero behavior.
+
+JUnit report globs declare output files: matching old files are removed before execution so stale
+passing reports cannot satisfy required tests. Report paths must remain inside the workspace.
+Interrupted pytest runs, collection errors and incomplete Go test/package event streams cannot
+earn positive rewards. Ordinary reported test failures retain required/protected test scoring.
 
 For the `math` and `numeric` grading modes, the last `\boxed{...}` occurrence determines the
 candidate when the output contains a box marker. Its braces must be balanced and its content must be

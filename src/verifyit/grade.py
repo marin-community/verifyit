@@ -56,7 +56,43 @@ class Reward:
 
 
 def scored(reward: float, **detail: object) -> Reward:
+    verdict = Reward(reward, Status.SCORED, dict(detail))
+    error = _reward_error(verdict)
+    if error is not None:
+        raise RuntimeError(error)
     return Reward(float(reward), Status.SCORED, dict(detail))
+
+
+def _reward_error(verdict: object) -> str | None:
+    if not isinstance(verdict, Reward):
+        return "grader did not return a Reward"
+    if not isinstance(verdict.status, Status):
+        return "grader returned an invalid verdict status"
+    value = verdict.reward
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int | float)
+        or not 0.0 <= value <= 1.0
+        or not math.isfinite(value)
+    ):
+        return "grader reward must be a finite number in [0, 1]"
+    if verdict.status != Status.SCORED and value != 0.0:
+        return "unscored verdict must have zero reward"
+    if not isinstance(verdict.detail, dict):
+        return "grader verdict detail must be an object"
+    try:
+        json.dumps(verdict.detail, allow_nan=False)
+    except (TypeError, ValueError, OverflowError, RecursionError):
+        return "grader verdict detail is not valid JSON"
+    return None
+
+
+def _validated_reward(verdict: object) -> Reward:
+    error = _reward_error(verdict)
+    if error is not None:
+        return infra_error(error)
+    assert isinstance(verdict, Reward)
+    return verdict
 
 
 def invalid_task(message: str) -> Reward:
@@ -83,10 +119,16 @@ def infra_error(message: str) -> Reward:
 def write_reward(logs_dir: Path, reward: Reward) -> None:
     """Write a verdict and, for a scored grade, Harbor's reward files."""
     logs_dir.mkdir(parents=True, exist_ok=True)
-    for name in (REWARD_JSON, REWARD_TXT):
+    for name in (REWARD_JSON, REWARD_TXT, VERDICT_JSON):
         (logs_dir / name).unlink(missing_ok=True)
+    reward = _validated_reward(reward)
     verdict = {"reward": reward.reward, "status": reward.status.value, "detail": reward.detail}
-    (logs_dir / VERDICT_JSON).write_text(json.dumps(verdict) + "\n")
+    try:
+        serialized = json.dumps(verdict, allow_nan=False)
+    except (TypeError, ValueError, OverflowError, RecursionError):
+        reward = infra_error("grader verdict detail is not valid JSON")
+        serialized = json.dumps({"reward": reward.reward, "status": reward.status.value, "detail": reward.detail})
+    (logs_dir / VERDICT_JSON).write_text(serialized + "\n")
     if reward.status != Status.SCORED:
         return
     (logs_dir / REWARD_JSON).write_text(json.dumps({"reward": reward.reward}) + "\n")
@@ -196,7 +238,7 @@ def run(spec_path: Path, workspace: Path) -> Reward:
     except (OSError, ValueError, KeyError) as error:
         return invalid_task(f"cannot read verifier spec {spec_path}: {error}")
     try:
-        return grade(spec, tests_dir=spec_path.parent, workspace=workspace)
+        return _validated_reward(grade(spec, tests_dir=spec_path.parent, workspace=workspace))
     except Exception as error:
         logger.error("grader crashed: %s", traceback.format_exc())
         return infra_error(f"{type(error).__name__}: {error}")

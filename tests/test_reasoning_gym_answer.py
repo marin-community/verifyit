@@ -5,9 +5,9 @@ import json
 
 import pytest
 
-from verifyit.grade import InvalidTask, Status
+from verifyit.grade import InvalidTask, Status, run, write_reward
 from verifyit.modes import grade_reasoning_gym
-from verifyit.spec import ReasoningGymSpec
+from verifyit.spec import ReasoningGymSpec, render_spec
 
 NEEDLE_ENTRY = {
     "question": "Who savors playing the accordion? Reply only with a name.",
@@ -114,3 +114,20 @@ def test_unusable_entry_file_is_an_invalid_task(tmp_path, workspace, entry_text,
     answer(workspace, "Richard")
     with pytest.raises(InvalidTask, match=message):
         grade(tests_dir, workspace)
+
+
+@pytest.mark.parametrize("score", [float("nan"), float("inf"), -0.1, 1.1])
+def test_broken_external_scorer_cannot_persist_an_invalid_reward(tests_dir, workspace, monkeypatch, score):
+    monkeypatch.setattr(
+        grade_reasoning_gym.reasoning_gym, "get_score_answer_fn", lambda name: lambda response, entry: score
+    )
+    answer(workspace, "Richard")
+    spec_path = tests_dir / "verifier.toml"
+    spec_path.write_text(render_spec(ReasoningGymSpec(dataset="needle_haystack")))
+    logs = workspace / "logs"
+    logs.mkdir()
+    (logs / "reward.json").write_text('{"reward":1.0}')
+    verdict = run(spec_path, workspace)
+    write_reward(logs, verdict)
+    assert (verdict.status, verdict.reward) == (Status.INFRA_ERROR, 0.0)
+    assert not (logs / "reward.json").exists()

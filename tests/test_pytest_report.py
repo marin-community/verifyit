@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from verifyit.grade import Status, run
 from verifyit.modes import grade_pytest
 from verifyit.spec import PytestSpec
 
@@ -176,7 +177,51 @@ def test_pytest_report_repeated_pass_does_not_erase_required_failure(tmp_path):
         "def pytest_json_modifyreport(json_report):\n"
         '    failed = next(test for test in json_report["tests"] if test["outcome"] == "failed")\n'
         '    json_report["tests"].append({**failed, "outcome": "passed"})\n'
+        '    json_report["summary"]["total"] += 1\n'
+        '    json_report["summary"]["passed"] += 1\n'
     )
     reward = grade_pytest.grade(_spec(must_not_break=(REGRESSION,)), tmp_path, workspace)
     assert (reward.reward, reward.detail["first_failure"]) == (0.0, REGRESSION)
     assert grade_pytest.grade(_spec(must_pass=(PASSING,)), tmp_path, workspace).reward == 1.0
+
+
+def test_pytest_failclosed_interrupted_runner_cannot_report_success(tmp_path):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "test_candidate.py").write_text("def test_required():\n assert True\n")
+    (workspace / "conftest.py").write_text("def pytest_sessionfinish(session,exitstatus):\n session.exitstatus=2\n")
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "verifier.toml").write_text('mode="pytest"\nmust_pass=["test_candidate.py::test_required"]\n')
+    reward = run(tests / "verifier.toml", workspace)
+    assert reward.status == Status.INFRA_ERROR
+    assert reward.reward == 0
+
+
+def test_pytest_failclosed_collection_error_cannot_be_hidden_by_passing_required_test(tmp_path):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "test_candidate.py").write_text("def test_required():\n assert True\n")
+    (workspace / "test_bad.py").write_text("def malformed(\n")
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "verifier.toml").write_text(
+        'mode="pytest"\nargs=["--continue-on-collection-errors"]\nmust_pass=["test_candidate.py::test_required"]\n'
+    )
+    reward = run(tests / "verifier.toml", workspace)
+    assert reward.status == Status.INFRA_ERROR
+    assert reward.reward == 0
+
+
+def test_pytest_failclosed_summary_cannot_hide_a_missing_failed_record(tmp_path):
+    workspace = _project(tmp_path, BROKEN)
+    (workspace / "conftest.py").write_text(
+        "def pytest_json_modifyreport(json_report):\n"
+        ' json_report["tests"] = [test for test in json_report["tests"] if test["outcome"] == "passed"]\n'
+    )
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "verifier.toml").write_text('mode="pytest"\nmust_pass=["tests/test_calc.py::test_add_positive"]\n')
+    reward = run(tests / "verifier.toml", workspace)
+    assert reward.status == Status.INFRA_ERROR
+    assert reward.reward == 0

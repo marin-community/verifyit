@@ -8,6 +8,7 @@ from verifyit.spec import (
     Constraint,
     ExactSpec,
     IfevalSpec,
+    MathProfile,
     MathSpec,
     MathType,
     McqSpec,
@@ -22,8 +23,9 @@ def test_round_trip_every_field_kind():
     specs = [
         McqSpec(expected="C", options=5),
         MathSpec(expected="(1, 2)", math_type=MathType.TUPLE),
+        MathSpec(expected="0.5", profile=MathProfile.BOXED),
         NumericSpec(expected=42.0, tolerance_abs=0.1, tolerance_rel=0.01),
-        ExactSpec(expected=("a", "b"), ordered=False),
+        ExactSpec(expected=("a", "b"), ordered=False, strip_outer_whitespace=False),
         IfevalSpec(constraints=(Constraint("last_word:last_word_answer", {"last_word": "contest"}),)),
         StdioSpec(command="python3 /app/main.py", compare=Compare.FLOAT, special_judge="judge.py", min_cases=3),
     ]

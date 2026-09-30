@@ -26,6 +26,16 @@ def inventory(source: Path) -> dict:
     contracts = {record["adapter"]: record for record in semantics["adapters"]}
     if semantics["revision"] != revision or set(contracts) != set(adapter_names):
         raise ValueError("curated semantics do not cover the pinned adapter population")
+    counts = semantics["capability_counts"]
+    runtime_routes = sum(record["primitives"] == ["script"] for record in contracts.values())
+    tested = sum(record["reuse_kind"] == "native-runtime-bridge-tested" for record in contracts.values())
+    if (
+        counts["adapters"],
+        counts["native_primitive_routes_specified"],
+        counts["native_runtime_bridges_tested"],
+        counts["native_runtime_bridges_pending"],
+    ) != (len(contracts), len(contracts) - runtime_routes, tested, runtime_routes - tested):
+        raise ValueError("capability counts do not reconcile source routes")
     records = []
     for name in adapter_names:
         adapter_files = [path for path in files if path.startswith(f"adapters/{name}/")]
@@ -76,6 +86,10 @@ def inventory(source: Path) -> dict:
                 "evidence": evidence,
                 "primitives": contracts[name]["primitives"],
                 "classification": contracts[name]["classification"],
+                "reuse_kind": contracts[name]["reuse_kind"],
+                "execution_evidence": contracts[name]["execution_evidence"],
+                "client_patch": contracts[name].get("client_patch"),
+                "status_gap": contracts[name].get("status_gap"),
                 "contract": contracts[name]["contract"],
                 "specification": contracts[name].get("specification"),
                 "requirements": [
@@ -97,6 +111,7 @@ def inventory(source: Path) -> dict:
         "revision": revision,
         "scope": "curated semantic routes for every adapter; per-task execution parity not yet established",
         "adapters": len(records),
+        "capability_counts": semantics["capability_counts"],
         "tracked_task_configs": len(configs),
         "tracked_test_entrypoints": len(scripts),
         "task_configs": configs,

@@ -99,11 +99,11 @@ def test_reward_outside_the_unit_interval_scores_zero(tmp_path):
     assert reward.detail["reported"] == 7.0
 
 
-def test_failing_script_that_still_reported_a_reward_is_scored(tmp_path):
+def test_failing_script_cannot_report_a_positive_reward(tmp_path):
     body = '#!/bin/bash\nprintf \'{"reward": 0.5}\' > "$VERIFYIT_LOGS_DIR/reward.json"\necho boom >&2\nexit 3\n'
     tests = _tests_dir(tmp_path, body, "test.sh")
     reward = grade_script.grade(ScriptSpec(path="test.sh"), tests, _workspace(tmp_path))
-    assert (reward.reward, reward.status) == (0.5, Status.SCORED)
+    assert (reward.reward, reward.status) == (0.0, Status.INFRA_ERROR)
     assert reward.detail["exit_code"] == 3
     assert "boom" in reward.detail["stderr"]
 
@@ -111,8 +111,9 @@ def test_failing_script_that_still_reported_a_reward_is_scored(tmp_path):
 def test_failing_script_without_a_reward_is_an_infra_error(tmp_path):
     body = "#!/bin/bash\necho 'no toolchain' >&2\nexit 2\n"
     tests = _tests_dir(tmp_path, body, "test.sh")
-    with pytest.raises(RuntimeError, match="no toolchain"):
-        grade_script.grade(ScriptSpec(path="test.sh"), tests, _workspace(tmp_path))
+    reward = grade_script.grade(ScriptSpec(path="test.sh"), tests, _workspace(tmp_path))
+    assert reward.status == Status.INFRA_ERROR
+    assert "no toolchain" in reward.detail["stderr"]
 
 
 def test_missing_script_is_an_invalid_task(tmp_path):
@@ -184,3 +185,96 @@ def test_named_reward_cannot_be_replaced_by_scalar_channel(tmp_path):
     (tests / "verifier.toml").write_text(render_spec(ScriptSpec(path="test.sh", reward_key="accuracy")))
     reward = run(tests / "verifier.toml", _workspace(tmp_path))
     assert reward.status == Status.INFRA_ERROR
+
+
+@pytest.mark.parametrize(
+    "status,reward_value", [("scored", 0.0), ("scored", 1.0), ("infra_error", 0.0), ("invalid_task", 0.0)]
+)
+def test_declared_script_verdict_preserves_status_and_native_metadata(tmp_path, status, reward_value):
+    payload = {
+        "status": status,
+        "reward": reward_value,
+        "detail": {"native": {"reward_basis": ["state", "nl"], "info": {"runtime": False}}},
+    }
+    body = (
+        "import os\nfrom pathlib import Path\n"
+        + f"(Path(os.environ['VERIFYIT_LOGS_DIR'])/'result.json').write_text({json.dumps(payload)!r})\nprint(1)\n"
+    )
+    tests = _tests_dir(tmp_path, body, "grade.py")
+    (tests / "verifier.toml").write_text('mode="script"\npath="grade.py"\nverdict_file="result.json"\n')
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "reward.json").write_text('{"reward":1}')
+    (logs / "reward.txt").write_text("1")
+    reward = run(tests / "verifier.toml", _workspace(tmp_path))
+    write_reward(logs, reward)
+    assert reward.status.value == status
+    assert reward.reward == reward_value
+    assert reward.detail["native"] == payload["detail"]["native"]
+    if status == "scored":
+        assert json.loads((logs / "reward.json").read_text())["reward"] == reward_value
+    else:
+        assert not (logs / "reward.json").exists()
+        assert not (logs / "reward.txt").exists()
+
+
+@pytest.mark.parametrize(
+    "payload,ending",
+    [(None, "print(1)"), ("{broken", "print(1)"), ('{"status":"scored","reward":1,"detail":{}}', "raise SystemExit(3)")],
+)
+def test_declared_script_failure_cannot_be_replaced_by_success(tmp_path, payload, ending):
+    body = "import os\nfrom pathlib import Path\n"
+    if payload is not None:
+        body += f"(Path(os.environ['VERIFYIT_LOGS_DIR'])/'result.json').write_text({payload!r})\n"
+    body += ending + "\n"
+    tests = _tests_dir(tmp_path, body, "grade.py")
+    (tests / "verifier.toml").write_text('mode="script"\npath="grade.py"\nverdict_file="result.json"\n')
+    reward = run(tests / "verifier.toml", _workspace(tmp_path))
+    assert reward.status == Status.INFRA_ERROR
+
+
+@pytest.mark.parametrize("filename", ["../result.json", "/tmp/result.json", "", "."])
+def test_declared_verdict_path_cannot_escape_private_logs(tmp_path, filename):
+    tests = _tests_dir(tmp_path, "print(1)\n", "grade.py")
+    (tests / "verifier.toml").write_text(render_spec(ScriptSpec(path="grade.py", verdict_file=filename)))
+    assert run(tests / "verifier.toml", _workspace(tmp_path)).status == Status.INVALID_TASK
+
+
+def test_declared_producer_timeout_does_not_accept_written_success(tmp_path):
+    tests = _tests_dir(
+        tmp_path,
+        (
+            "import os,time\n"
+            "from pathlib import Path\n"
+            '(Path(os.environ["VERIFYIT_LOGS_DIR"])/"result.json").write_text(\'{"status"'
+            ':"scored","reward":1,"detail":{}}\')\n'
+            "time.sleep(120)\n"
+        ),
+        "grade.py",
+    )
+    (tests / "verifier.toml").write_text(
+        render_spec(ScriptSpec(path="grade.py", timeout=0.2, verdict_file="result.json"))
+    )
+    reward = run(tests / "verifier.toml", _workspace(tmp_path))
+    assert reward.status == Status.INFRA_ERROR
+    assert reward.detail["script"]["exit_code"] is None
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        '{"status":"scored","reward":2,"detail":{}}',
+        '{"status":"scored","reward":true,"detail":{}}',
+        '{"status":"unknown","reward":0,"detail":{}}',
+        '{"status":"infra_error","reward":1,"detail":{}}',
+    ],
+)
+def test_declared_verdict_malformed_contract_is_infrastructure_failure(tmp_path, payload):
+    tests = _tests_dir(
+        tmp_path,
+        "import os\nfrom pathlib import Path\n"
+        + f'(Path(os.environ["VERIFYIT_LOGS_DIR"])/"result.json").write_text({payload!r})\nprint(1)\n',
+        "grade.py",
+    )
+    (tests / "verifier.toml").write_text(render_spec(ScriptSpec(path="grade.py", verdict_file="result.json")))
+    assert run(tests / "verifier.toml", _workspace(tmp_path)).status == Status.INFRA_ERROR

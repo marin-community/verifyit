@@ -11,8 +11,8 @@ list: it is split on newlines and commas, empty items are dropped, and the items
 expected entries in order when ``ordered``, otherwise as a multiset.
 
 ``ignore_case`` casefolds both sides. ``ignore_whitespace`` collapses every run of whitespace to a
-single space; the candidate's outer whitespace is stripped either way, so a trailing newline in the
-answer file never decides the reward.
+single space. Outer whitespace is stripped by default; set ``strip_outer_whitespace=False``
+with ``ignore_whitespace=False`` for literal boundary comparison.
 """
 
 import re
@@ -20,7 +20,7 @@ from collections import Counter
 from pathlib import Path
 
 from verifyit.grade import InvalidTask, Reward, read_output, scored
-from verifyit.modes.extract import collapse_whitespace, extract_boxed
+from verifyit.modes.extract import extract_boxed
 from verifyit.spec import ExactSpec
 
 ITEM_SEPARATOR = re.compile(r"[\n,]")
@@ -28,7 +28,9 @@ MAX_DETAIL_CHARS = 400
 
 
 def _normalize(text: str, spec: ExactSpec) -> str:
-    value = collapse_whitespace(text) if spec.ignore_whitespace else text.strip()
+    value = text.strip() if spec.strip_outer_whitespace else text
+    if spec.ignore_whitespace:
+        value = re.sub(r"\s+", " ", value)
     return value.casefold() if spec.ignore_case else value
 
 
@@ -49,8 +51,13 @@ def _matches(candidate: str, spec: ExactSpec) -> bool:
 
 def grade_exact_candidate(spec: ExactSpec, candidate: str) -> Reward:
     """Score answer content after the caller extracts it from its submission format."""
-    if not spec.expected:
+    if not spec.expected or any(not isinstance(value, str) for value in spec.expected):
         raise InvalidTask("exact expects at least one expected string")
+    if any(
+        type(value) is not bool
+        for value in (spec.ignore_case, spec.ignore_whitespace, spec.ordered, spec.strip_outer_whitespace)
+    ):
+        raise InvalidTask("exact normalization flags must be booleans")
     return scored(
         float(_matches(candidate, spec)),
         extracted=candidate.strip()[:MAX_DETAIL_CHARS],

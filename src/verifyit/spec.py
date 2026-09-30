@@ -48,6 +48,11 @@ class MathType(StrEnum):
     EQUATION = "equation"
 
 
+class MathProfile(StrEnum):
+    ANCHORED = "anchored"
+    BOXED = "boxed"
+
+
 class SchemaFormat(StrEnum):
     JSON = "json"
     YAML = "yaml"
@@ -72,6 +77,7 @@ class MathSpec:
     expected: str
     math_type: MathType = MathType.SCALAR
     output: str = DEFAULT_OUTPUT
+    profile: MathProfile = MathProfile.ANCHORED
 
 
 @dataclass(frozen=True)
@@ -89,6 +95,7 @@ class ExactSpec:
     ignore_whitespace: bool = True
     ordered: bool = True
     output: str = DEFAULT_OUTPUT
+    strip_outer_whitespace: bool = True
 
 
 @dataclass(frozen=True)
@@ -231,6 +238,7 @@ class ScriptSpec:
     timeout: float = 600.0
     workspace: str = DEFAULT_WORKSPACE
     reward_key: str = DEFAULT_REWARD_KEY
+    verdict_file: str | None = None
 
 
 Spec = (

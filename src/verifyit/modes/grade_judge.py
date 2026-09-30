@@ -72,7 +72,7 @@ Give at most 25 words of reasoning, then end with a final line of exactly this f
 SCORE: <0|1>
 """
 
-SCORE_PATTERN = re.compile(r"score\s*[:=]\s*\**\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
+SCORE_PATTERN = re.compile(r"score\s*:\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +161,7 @@ def _judge_reference(spec: JudgeSpec, references: tuple[str, ...], candidate: st
         references="\n".join(f"- {reference}" for reference in references),
         candidate=candidate.strip(),
     )
-    score, reply = _ask(client, model, prompt, spec.request_timeout)
+    score, reply = _ask(client, model, prompt, spec.request_timeout, allowed_scores=(0.0, 0.5, 1.0))
     return scored(score, model=model, reasoning=_reasoning(reply))
 
 
@@ -173,18 +173,20 @@ def _judge_checklist(spec: JudgeSpec, criteria: tuple[str, ...], context: str, c
         prompt = CHECKLIST_PROMPT.format(
             context=context_block, question=_question(spec), candidate=candidate.strip(), criterion=criterion.strip()
         )
-        score, reply = _ask(client, model, prompt, spec.request_timeout)
+        score, reply = _ask(client, model, prompt, spec.request_timeout, allowed_scores=(0.0, 1.0))
         results.append({"criterion": criterion, "passed": score >= 1.0, "reasoning": _reasoning(reply)})
     passed = sum(1 for result in results if result["passed"])
     return scored(passed / len(results), model=model, passed=passed, total=len(results), criteria=results)
 
 
-def _ask(client: openai.OpenAI, model: str, prompt: str, timeout: float) -> tuple[float, str]:
+def _ask(
+    client: openai.OpenAI, model: str, prompt: str, timeout: float, *, allowed_scores: tuple[float, ...]
+) -> tuple[float, str]:
     """The parsed score and raw reply, retrying once when the model leaves out the SCORE line."""
     reply = ""
     for attempt in range(1, ATTEMPTS + 1):
         reply = _complete(client, model, prompt, timeout)
-        score = _score(reply)
+        score = _score(reply, allowed_scores)
         if score is not None:
             return score, reply
         logger.warning("judge %s returned no SCORE line on attempt %d", model, attempt)
@@ -199,18 +201,19 @@ def _complete(client: openai.OpenAI, model: str, prompt: str, timeout: float) ->
         timeout=timeout,
     )
     choice = response.choices[0]
-    if choice.finish_reason in {"length", "content_filter"}:
+    if choice.finish_reason != "stop":
         raise RuntimeError(f"judge response is incomplete: finish_reason={choice.finish_reason!r}")
     return choice.message.content or ""
 
 
-def _score(reply: str) -> float | None:
-    """The last ``SCORE: <value>`` in the reply, when it is a value the rubric allows."""
-    matches = SCORE_PATTERN.findall(reply)
-    if not matches:
+def _score(reply: str, allowed_scores: tuple[float, ...]) -> float | None:
+    """Accept a complete final score line with a value allowed by this rubric."""
+    lines = reply.strip().splitlines()
+    match = SCORE_PATTERN.fullmatch(lines[-1].strip()) if lines else None
+    if match is None:
         return None
-    score = float(matches[-1])
-    return score if 0.0 <= score <= 1.0 else None
+    score = float(match.group(1))
+    return score if score in allowed_scores else None
 
 
 def _reasoning(reply: str) -> str:

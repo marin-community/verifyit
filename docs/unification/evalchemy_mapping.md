@@ -1,5 +1,37 @@
 # Evalchemy mapping
 
+## Implemented reassessment
+
+The 42 custom benchmarks now have four clean primitive integrations: GPQA and
+MMLU-Pro use MCQ; AIW retains its source normalization and uses strict exact;
+GSM8KPerturbed retains extraction/sanitization and uses numeric with zero tolerance.
+Three benchmarks (AIME24, AIME25, MATH500) share a hybrid integration: native boxed
+math parsing/comparison, with source Minerva retained only when parsing extracts
+nothing. Parsed non-equivalence never invokes fallback. Parser/verification errors
+and timeouts propagate with `raise_on_error=True`, preventing successful fallback
+on infrastructure failure. This is a deliberate conservative change from the
+source parser's exception-to-empty behavior.
+
+The remaining 35 custom benchmarks can be reframed around existing math, judge,
+IFEval, stdio or script modes; implementation/parity remains outstanding. These
+are integration/profile gaps, not evidence that 35 new verifier categories are
+needed. In particular source-specific judge prompts and instruction registries
+need client profiles, while execution/structured metrics need an execution bridge.
+Generic delegation remains compatibility-only.
+
+`MathSpec.profile="boxed"` is optional; anchored parsing remains the default.
+Boxed missing extraction scores zero with `reason="missing_parse"`, letting the
+client explicitly decide its fallback. Anchored invalid references still raise
+InvalidTask. `grade_math_candidate` accepts extracted content without imposing
+answer-file/last-line extraction. `ExactSpec.strip_outer_whitespace=false` enables
+literal source equality without changing existing defaults or sequence semantics.
+
+Five AIW and five numeric source cases passed parity, alongside all 26 real
+upstream AIME/MATH500/MMLU extraction regressions. Evidence resides in
+`evidence/harness_native/evalchemy_exact_parity.{py,json}` and the patched
+validation tree. Both integration patches apply to their pinned checkouts.
+
+
 Source: marin-community/evalchemy
 `e3f4a3d601896c437f37b0bd0a30e51651cce6d0`.
 [The generated inventory](evalchemy_inventory.json) covers all 42 custom benchmark
@@ -17,7 +49,7 @@ dynamic dispatch still requires runtime verification.
 | GPQADiamond, MMLUPro | `mcq` after source extraction | Implemented patch calls `grade_mcq_candidate`; preserve source option shuffle, categories, repeat vectors and standard errors |
 | AIME24, AIME25, AMC23, HMMT, MATH500, JEEBench | `math` | Box extraction and anchors/fallback equivalence need parity; JEE includes mixed numeric responses |
 | OlympiadBench, OlympiadBenchFull, OlympiadBenchDeterministic | `math`, with source judge policy | Preserve deterministic versus judge-fallback distinctions and units; do not add a judge to deterministic variant |
-| GSM8KPerturbed, AIW | `exact` with source normalization | Strict extraction differs from raw verifyit file normalization; unresolved parity |
+| GSM8KPerturbed, AIW | `numeric`, `exact` with source normalization | Implemented zero-tolerance numeric and literal exact; five source parity cases each |
 | IFEval | `ifeval` | Preserve strict/loose prompt and instruction aggregates; instruction registry parity unresolved |
 | IFBench | `script` with original registry | Expanded instruction catalog should remain data/plugin orchestration until shared checker equivalence is shown |
 | CodeForces, CodeElo | `stdio` candidate | Preserve case aggregation, tolerances, compilation outcomes, timeouts and contest orchestration |
@@ -238,8 +270,8 @@ explicit original aggregation, not approximate numeric/exact comparisons.
 ## Coverage classification
 
 A clean native mapping requires source-scoring equivalence plus the required
-extraction/configuration adapter. `adapter` currently identifies the two
-implemented MCQ benchmark integrations. `spec-needed` identifies a non-clean
+extraction/configuration adapter. `adapter` identifies four clean custom integrations; `adapter-hybrid` identifies
+three boxed-math integrations with explicitly retained Minerva fallback. `spec-needed` identifies a non-clean
 mapping covered by a concrete existing-mode profile/contract above; it does not
 claim that profile is implemented. Groups/templates remain orchestration. The
 inventory generator fails on unknown custom benchmark names and unknown native
@@ -247,8 +279,7 @@ output types. Its per-record specification anchors and aggregated counts are the
 coverage evidence; discovering a source record alone is not semantic validation.
 
 
-The current classified population is 42 custom benchmarks: two implemented MCQ
-adapters and 40 explicit existing-mode specifications, with zero unknown
-benchmarks. Local harness overrides add 21 task configurations covered by the
-same profiles and one orchestration group. Native harness population and inline
+The current classified population is 42 custom benchmarks: four clean adapters, three hybrid integrations,
+and 35 remaining explicit existing-mode specifications, with zero unknown
+benchmarks. Local harness overrides add 21 task configurations (two native exact routes and 19 remaining profiles) and one orchestration group. Native harness population and inline
 group definitions are counted separately in the harness manifest.

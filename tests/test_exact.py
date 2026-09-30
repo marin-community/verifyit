@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from verifyit.grade import Status
+from verifyit.grade import InvalidTask, Status
 from verifyit.grade import grade as dispatch
 from verifyit.modes import grade_exact
 from verifyit.spec import ExactSpec
@@ -72,3 +72,16 @@ def test_exact_reward_detail_carries_the_extracted_candidate(tmp_path):
 def test_exact_without_an_expected_string_is_an_invalid_task(tmp_path):
     _answer(tmp_path, "Paris\n")
     assert dispatch(ExactSpec(expected=()), tmp_path, tmp_path).status == Status.INVALID_TASK
+
+
+@pytest.mark.parametrize(
+    "candidate, expected, reward", [("42 ", "42", 0), (" 42", "42", 0), ("42\n", "42", 0), (" 42", " 42", 1)]
+)
+def test_exact_literal_boundary_preserves_whitespace(candidate, expected, reward):
+    spec = ExactSpec((expected,), ignore_case=False, ignore_whitespace=False, strip_outer_whitespace=False)
+    assert grade_exact.grade_exact_candidate(spec, candidate).reward == reward
+
+
+def test_invalid_direct_normalization_flag_cannot_award_correct_answer():
+    with pytest.raises(InvalidTask, match="booleans"):
+        grade_exact.grade_exact_candidate(ExactSpec(("2",), ignore_case="false"), "2")

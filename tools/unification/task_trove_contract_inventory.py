@@ -76,7 +76,10 @@ COVERAGE = {
         ],
     ),
     "script": (
-        "malformed authoritative numeric file cannot fall back to stdout; named numeric metric selection is explicit",
+        (
+            "nonzero producers cannot score positively; authoritative scalar/structured "
+            "files never fall back; named metric selection is explicit"
+        ),
         [
             "test_script.py::test_invalid_authoritative_reward_cannot_be_replaced_by_stdout",
             "test_script.py::test_named_reward_survives_spec_roundtrip_and_preserves_metrics",
@@ -169,8 +172,8 @@ def inventory(source: Path, repo: Path) -> dict:
             [
                 "test_pytest_report.py::test_setup_runs_in_the_workspace_before_the_tests",
                 (
-                    ""
-                    "test_task_trove_integration.py::test_existing_script_migration_uses_dynamic_workspace_and_transient_logs"
+                    "test_task_trove_integration.py::test_existing_script_migration_uses_dynamic"
+                    "_workspace_and_transient_logs"
                 ),
             ],
         ),
@@ -193,11 +196,17 @@ def inventory(source: Path, repo: Path) -> dict:
             ],
         ),
         "modes/grade_gotest.py": (
-            "no dataset rows; duplicate observations merge by package+test with failure preserved",
+            (
+                "no dataset rows; duplicate observations merge by package+test; package/test"
+                " completeness guards runner failures"
+            ),
             ["test_gotest.py::test_gotest_repeated_test_failure_is_not_erased"],
         ),
         "modes/grade_junit.py": (
-            "no dataset rows; duplicate observations merge by classname+name with failure preserved",
+            (
+                "no dataset rows; duplicate observations merge by classname+name; report out"
+                "puts must be fresh and inside workspace"
+            ),
             ["test_junit.py::test_junit_duplicate_failure_cannot_be_overwritten_by_later_pass"],
         ),
     }

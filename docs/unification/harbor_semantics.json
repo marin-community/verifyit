@@ -7,10 +7,13 @@
       "primitives": [
         "judge"
       ],
-      "contract": "Binary semantic equivalence judge; retain original prompt and CORRECT/INCORRECT parser, model and answer-file discovery. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "Binary semantic equivalence judge; retain original prompt and CORRECT/INCORRECT parser, model and answer-file discovery. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#judge-profile"
+      "specification": "harbor_specs.md#judge-profile",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "abc-bench",
@@ -20,7 +23,9 @@
       ],
       "contract": "Fetches original Terminal-Bench tasks; preserve per-task test harness and docker-compose sidecars. Pytest tasks map to pytest, arbitrary scripts retain script.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "ace-bench",
@@ -29,7 +34,9 @@
       ],
       "contract": "checker.py implements tool-call AST correctness; exact text/schema validation cannot replace semantic function argument checks.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "adebench",
@@ -38,7 +45,9 @@
       ],
       "contract": "Runs dbt singular tests; requires every parsed test pass and actual test count >= declared included_count. Preserve warehouse fixtures/setup and count guard.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "aider_polyglot",
@@ -50,7 +59,9 @@
       ],
       "contract": "Generated language-specific test commands and test-source merge; Python pytest, Go tests and XML-reporting Java suites map to their primitives; Rust/native custom exits retain script.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "aime",
@@ -59,7 +70,9 @@
       ],
       "contract": "Strip complete /app/answer.txt and compare literal expected integer string; call exact candidate API without permissive boxed extraction. Set ExactSpec(ignore_case=False, ignore_whitespace=False); whole stripped source text only.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "algotune",
@@ -69,7 +82,9 @@
       ],
       "contract": "Pytest asserts optimization speedup plus correctness; retain device/runtime benchmark and reward emitted by test, not generic pass fraction.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "arc_agi_2",
@@ -78,7 +93,9 @@
       ],
       "contract": "JSON output grid structural equality maps to schema const expected grid. Declare integer cell types to reject bool-as-int upstream equality loophole; preserve output/expected paths.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "autocodebench",
@@ -87,7 +104,9 @@
       ],
       "contract": "Binary all-pass pytest test_outputs.py; restore generated tests and retain environment dependencies.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "bfcl",
@@ -96,7 +115,9 @@
       ],
       "contract": "Generated evaluate.py uses official BFCL AST/function-call evaluator; preserve execution/multi-turn task-type routing and native correctness result.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "bigcodebench_hard",
@@ -105,7 +126,9 @@
       ],
       "contract": "Binary all-pass pytest test_outputs.py running generated functional assertions; keep solution import setup and hidden tests.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "bird_bench",
@@ -114,17 +137,22 @@
       ],
       "contract": "Execute predicted and ground-truth SQL against task database and compare result sets; retain SQL progress timeout and database state.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "bixbench",
       "primitives": [
         "judge"
       ],
-      "contract": "Binary OpenAI semantic question/target/prediction judge; retain prompts and existing answer discovery. Missing capability must be infra error. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "Binary OpenAI semantic question/target/prediction judge; retain prompts and existing answer discovery. Missing capability must be infra error. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#judge-profile"
+      "specification": "harbor_specs.md#judge-profile",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "bixbench-verified-50",
@@ -132,20 +160,26 @@
         "numeric",
         "judge"
       ],
-      "contract": "Declared precision_policy selects deterministic rounded numeric comparison or semantic judge. Numeric rounding to fixed decimal places needs precision adapter, not ordinary abs tolerance. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "Declared precision_policy selects deterministic rounded numeric comparison or semantic judge. Numeric rounding to fixed decimal places needs precision adapter, not ordinary abs tolerance. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#precision-rounding"
+      "specification": "harbor_specs.md#precision-rounding",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "clbench",
       "primitives": [
         "judge"
       ],
-      "contract": "Rubric judge parsed/normalized into binary score; retain rubric prompt/response interpretation. Current source catches API errors as zero; fork should preserve infra error instead. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "Rubric judge parsed/normalized into binary score; retain rubric prompt/response interpretation. Current source catches API errors as zero; fork should preserve infra error instead. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#judge-profile"
+      "specification": "harbor_specs.md#judge-profile",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "codepde",
@@ -154,7 +188,9 @@
       ],
       "contract": "Single pytest test_nrmse_accuracy invokes PDE solver evaluator and asserts nRMSE <0.05; keep numerical inputs, GPU/runtime and threshold.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "compilebench",
@@ -163,7 +199,9 @@
       ],
       "contract": "Pinned remote15-task suites invoke pytest test_outputs.py to inspect compiled artifacts, CLI behavior and platform/static-link constraints; preserve all assertions.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "cooperbench",
@@ -172,7 +210,9 @@
       ],
       "contract": "Merge two agent patches, filter test edits, run both feature harnesses; reward is conjunction of feature passes and successful merge, with strategy metadata.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "crmarena",
@@ -182,7 +222,9 @@
       ],
       "contract": "reward_metric routes normalized exact answer, token F1 fuzzy answer or privacy checks. Preserve task parser/normalizer; fuzzy/privacy routes retain script metric logic.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "crustbench",
@@ -191,7 +233,9 @@
       ],
       "contract": "Cargo release build plus cargo release test, binary conjunction; Rust test-report support absent, retain explicit compile/test commands.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "cybergym",
@@ -200,7 +244,9 @@
       ],
       "contract": "Any submitted PoC must crash vulnerable binary and not patched binary; preserve crash signal classification, paired executions and infra timeout/OOM errors.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "dabstep",
@@ -211,7 +257,9 @@
       ],
       "contract": "question_scorer routes numeric tolerances/percent extraction, ordered lists and fuzzy strings; exact/numeric only after original type normalization, fuzzy remains script.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "dacode",
@@ -220,7 +268,9 @@
       ],
       "contract": "Official data-science evaluator grades output artifacts including plots/tables and returns total_score; preserve artifact postprocessing and native score scale.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "deepswe_litecontainer",
@@ -233,7 +283,10 @@
       "contract": "Pinned113 remote tasks retain original verifier bodies; storage change only. Route each task by actual test command/report and protected test identities, not language name.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#structured-report"
+      "specification": "harbor_specs.md#structured-report",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "deepsynth",
@@ -241,10 +294,13 @@
         "script",
         "judge"
       ],
-      "contract": "Flattened JSON key/value precision-recall F1, upgraded to1 if semantic judge accepts; schema validity cannot replace soft F1. Preserve optional judge failure policy. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "Flattened JSON key/value precision-recall F1, upgraded to1 if semantic judge accepts; schema validity cannot replace soft F1. Preserve optional judge failure policy. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#judge-profile"
+      "specification": "harbor_specs.md#judge-profile",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "deveval",
@@ -255,7 +311,9 @@
       ],
       "contract": "Implementation and generated-test variants compare agent/reference test outputs (oracle test); retain phase-specific test generation/coverage contract, not plain answer score.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "devopsgym",
@@ -264,7 +322,9 @@
       ],
       "contract": "Task-specific executable test script binary exit outcome; retain services, runtime state and per-task checks.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "dolci",
@@ -276,7 +336,9 @@
       ],
       "contract": "grade.py routes dataset domain math equivalence, function assertions, stdin/stdout cases and extended IFEval registry; preserve extraction and extension constraint IDs.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "ds1000",
@@ -285,7 +347,9 @@
       ],
       "contract": "run_test.py executes task-provided test harness for Python data-science code after completion extraction; retain context and library-specific semantic tests.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "evoeval",
@@ -294,7 +358,9 @@
       ],
       "contract": "Binary all-pass generated pytest assertions; preserve solution extraction/imports and evolving hidden input cases.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "featbench",
@@ -304,7 +370,9 @@
       ],
       "contract": "SWE-bench-style generated eval script plus original test-output parser and protected FAIL_TO_PASS/PASS_TO_PASS; pytest route when node IDs/report available, parser fallback script.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "featurebench",
@@ -314,17 +382,22 @@
       ],
       "contract": "Requires non-test code changes and restored lv1/lv2 test files then original parser; preserve patch guard and protected suites outside pytest primitive.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "financeagent",
       "primitives": [
         "judge"
       ],
-      "contract": "Exact-answer short circuit followed by model judge; retain question/expected prompt and configured judge. Require capability errors to remain infra failures. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "Exact-answer short circuit followed by model judge; retain question/expected prompt and configured judge. Require capability errors to remain infra failures. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#judge-profile"
+      "specification": "harbor_specs.md#judge-profile",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "frontier-cs-algorithm",
@@ -333,7 +406,9 @@
       ],
       "contract": "Official algorithm judge evaluates solution.cpp; reward=score/100. Preserve judge dependencies, resource limits and special-judge semantics.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "gaia",
@@ -342,7 +417,9 @@
       ],
       "contract": "Strip newlines, trim and lowercase both answer files; exact candidate API after original ASCII normalization, no boxed extraction. Set ExactSpec(ignore_case=False, ignore_whitespace=False) after source ASCII lower/newline removal.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "gaia2",
@@ -351,7 +428,9 @@
       ],
       "contract": "Reads official environment result success or parity reward; task completion depends on interactive runtime state, not text comparison.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "gdb",
@@ -361,7 +440,11 @@
       "contract": "Official graphics/design metric map, primary metric selection and NIMA /10 transform; preserve multimodal artifacts and all finite auxiliary metrics.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#artifact-judge"
+      "specification": "harbor_specs.md#artifact-judge",
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented",
+      "status_gap": "Native evaluate.py writes reward0 for import_failed, unknown_benchmark and evaluate_failed; status-preserving client projection is still required. no_output remains valid candidate0; unbounded metrics need explicit source policy."
     },
     {
       "adapter": "gpqa-diamond",
@@ -370,7 +453,9 @@
       ],
       "contract": "Strip all whitespace, uppercase, require entire answer in A-D; retain strict single-option extraction before candidate scoring.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "gso",
@@ -379,17 +464,22 @@
       ],
       "contract": "Patch execution plus original performance evaluator; retain optimization-commit requirement, runtime benchmark and primary metric transformation.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "hle",
       "primitives": [
         "judge"
       ],
-      "contract": "Binary reference judge after agent-log extraction; source deliberately raises on API failure rather than scoring zero. Preserve this error contract. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "Binary reference judge after agent-log extraction; source deliberately raises on API failure rather than scoring zero. Preserve this error contract. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#judge-profile"
+      "specification": "harbor_specs.md#judge-profile",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "humanevalfix",
@@ -398,7 +488,9 @@
       ],
       "contract": "Binary all-pass restored pytest assertions; preserve bug-fix function import contract and test paths.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "ineqmath",
@@ -406,10 +498,13 @@
         "judge",
         "exact"
       ],
-      "contract": "Relation/bound extraction uses model plus literal comparison; rewards include -1 infra/failure sentinel. Translate errors into infra_error and choose explicit native-score transform rather than silently clamp. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "Relation/bound extraction uses model plus literal comparison; rewards include -1 infra/failure sentinel. Translate errors into infra_error and choose explicit native-score transform rather than silently clamp. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#native-score"
+      "specification": "harbor_specs.md#native-score",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "kramabench",
@@ -418,7 +513,9 @@
       ],
       "contract": "Source-specific official evaluator with typed int/float/string/list answer conversion; preserve evaluator score, no name-based exact/numeric substitution.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "kumo",
@@ -427,7 +524,9 @@
       ],
       "contract": "Compare first nonempty answer line to valid_truth; actions_used/relative_action_count are auxiliary metrics. Source JSON lacks reward and includes nonnumeric metadata; explicit scalar adapter required. Set ExactSpec(ignore_case=False, ignore_whitespace=False) after first-line extraction to retain literal casing.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "labbench",
@@ -437,7 +536,9 @@
       ],
       "contract": "Subtask-specific setup/file discovery and extraction, followed by stripped answer equality; preserve extraction variants and failure classification.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "lawbench",
@@ -446,7 +547,9 @@
       ],
       "contract": "Official per-subtask evaluation returns score (classification/QA/ROUGE-style variants); preserve task index/evaluator instead of treating all answers as exact.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "livecodebench",
@@ -456,7 +559,9 @@
       ],
       "contract": "Functional cases call function entrypoint, stdin cases run subprocess; preserve case decoding/import injection, all-case conjunction and per-case timeout.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "llmsr_bench",
@@ -466,7 +571,10 @@
       "contract": "Fit symbolic equation parameters on training CSV and compute test R2; near-oracle R2 rounded to1. Native R2 may be negative, explicit scalar transform needed.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#native-score"
+      "specification": "harbor_specs.md#native-score",
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "medagentbench",
@@ -475,7 +583,9 @@
       ],
       "contract": "Official task-state validators over FHIR runtime actions; preserve state/service setup, not response text scoring.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "ml_dev_bench",
@@ -484,7 +594,9 @@
       ],
       "contract": "Dedicated ML-Dev validator checks submitted task artifacts; preserve original task ID routing and validation environment.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "mlgym-bench",
@@ -494,7 +606,10 @@
       "contract": "Official evaluate.py returns continuous task metrics; generated reward_calculation selects native metric with possible default penalty. Explicit score-domain policy required.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#native-score"
+      "specification": "harbor_specs.md#native-score",
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "mmau",
@@ -503,7 +618,9 @@
       ],
       "contract": "Generated pytest suite for multimodal answer validation; retain audio/artifact dependencies, test outcomes and hidden fixture paths.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "mmmlu",
@@ -512,7 +629,9 @@
       ],
       "contract": "Multilingual answer markers plus Arabic/Bengali/fullwidth label normalization; first marker in registry order wins. Preserve extraction adapter before MCQ scoring.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "multi-swe-bench",
@@ -524,7 +643,9 @@
       ],
       "contract": "Original language-specific runner parses required FAIL_TO_PASS/PASS_TO_PASS; route structured reports to corresponding primitive and retain custom parser for others.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "omnimath",
@@ -533,10 +654,13 @@
         "numeric",
         "judge"
       ],
-      "contract": "eval_mode routes string normalization, numeric range matching or hosted semantic judge; preserve interval/range policy and model parser rather than default math extraction. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "eval_mode routes string normalization, numeric range matching or hosted semantic judge; preserve interval/range policy and model parser rather than default math extraction. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#judge-profile"
+      "specification": "harbor_specs.md#judge-profile",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "pixiu",
@@ -545,7 +669,9 @@
       ],
       "contract": "Per-task classification, QA, NER, relation extraction and sentiment metrics; continuous F1/RMSE-to-reward transforms. Pytest merely emits metrics and cannot replace them with pass/fail.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "qcircuitbench",
@@ -554,7 +680,9 @@
       ],
       "contract": "Quantum circuit fidelity and optimization metric evaluation with task-specific clamp01; preserve simulator, solution execution and full metric dictionary.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "quixbugs",
@@ -564,7 +692,9 @@
       ],
       "contract": "Adapter generates Python pytest or Java suite based on task language; restore original buggy/fixed reference fixtures and capture per-test identities.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "reasoning-gym",
@@ -573,7 +703,9 @@
       ],
       "contract": "Dataset.score_answer(answer,entry) produces native partial credit; retain generator config/dataset identity and complete stored entry.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "refav",
@@ -582,7 +714,9 @@
       ],
       "contract": "Run submitted scenario-mining program then official AV2 HOTA-Temporal evaluation; preserve data artifacts, benchmark runtime limits and metric scale.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "replicationbench",
@@ -591,7 +725,9 @@
       ],
       "contract": "Binary all-pass pytest replication assertions; preserve task dependencies, scientific data and test restoration.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "research-code-bench",
@@ -600,7 +736,9 @@
       ],
       "contract": "Insert submitted snippet then execute specified pytest entrypoint; reward binary plus code_lines auxiliary weighting. Preserve snippet insertion and auxiliary metric separately.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "rexbench",
@@ -609,7 +747,9 @@
       ],
       "contract": "Run nested container simulation then numerical_eval over configured result artifacts; preserve task-specific tolerance and result path discovery.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "satbench",
@@ -618,7 +758,9 @@
       ],
       "contract": "Extract last literal [SAT] or [UNSAT] marker then compare expected label; no mathematical solver validation, preserve marker order/case.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "scicode",
@@ -628,7 +770,9 @@
       ],
       "contract": "Generated function harness compares nested numeric/symbolic/sparse outputs with SciCode comparators; use pytest wrapper around unchanged assertions or retain script execution.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "scienceagentbench",
@@ -637,7 +781,9 @@
       ],
       "contract": "Execute submitted research program in instance environment then official eval_runner (including visual judge categories); preserve datasets/artifact semantics and category-specific evaluators.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "seal0",
@@ -645,20 +791,26 @@
         "exact",
         "judge"
       ],
-      "contract": "Normalized substring heuristic falls back to binary hosted judge when available; retain permissive normalization or tighten explicitly with source-side parity decision. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "Normalized substring heuristic falls back to binary hosted judge when available; retain permissive normalization or tighten explicitly with source-side parity decision. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#judge-profile"
+      "specification": "harbor_specs.md#judge-profile",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "simpleqa",
       "primitives": [
         "judge"
       ],
-      "contract": "SimpleQA reference judge labels answer correctness; preserve prompt/schema and answer log extraction. Judge capability failure must be infra error. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "SimpleQA reference judge labels answer correctness; preserve prompt/schema and answer log extraction. Judge capability failure must be infra error. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#judge-profile"
+      "specification": "harbor_specs.md#judge-profile",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "sldbench",
@@ -668,7 +820,10 @@
       "contract": "Execute supplied symbolic-law function and compute finite-prediction R2 over hidden data; unbounded negative score needs explicit native-score handling.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#native-score"
+      "specification": "harbor_specs.md#native-score",
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "sotopia",
@@ -677,7 +832,9 @@
       ],
       "contract": "Official social-environment judge yields normalized multi-axis score map; scalar reward=sotopia_goal. Preserve all axes and trajectory/participant indexing.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "spider2-dbt",
@@ -686,7 +843,9 @@
       ],
       "contract": "Official database/dbt evaluator checks result tables and project changes; preserve warehouse fixtures and table comparison semantics.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "spreadsheetbench-verified",
@@ -695,7 +854,9 @@
       ],
       "contract": "Compare declared workbook cell ranges across multiple testcases; reward=passing-case fraction and auxiliary hard reward; keep datetime/value normalization.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "strongreject",
@@ -703,10 +864,13 @@
         "judge",
         "script"
       ],
-      "contract": "Hosted rubric score combines refusal and harmfulness dimensions; Harbor reward=1-strongreject_score. Preserve parsed dimensions and explicit inversion beyond generic binary judge. Native prompt/label parsing requires an explicit judge profile; retain script until profile parity is verified.",
+      "contract": "Hosted rubric score combines refusal and harmfulness dimensions; Harbor reward=1-strongreject_score. Preserve parsed dimensions and explicit inversion beyond generic binary judge. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#judge-profile"
+      "specification": "harbor_specs.md#judge-profile",
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "swebench",
@@ -716,7 +880,9 @@
       ],
       "contract": "FAIL_TO_PASS/PASS_TO_PASS via official SWE-bench parser; pytest tasks map with protected IDs, non-pytest parser-based tasks retain script.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "swebench_multilingual",
@@ -728,7 +894,9 @@
       ],
       "contract": "Language-specific official eval/parser; route supported structured test reports to primitives, preserve protected ID sets and multilingual parser behavior.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "swebenchpro",
@@ -740,7 +908,9 @@
       ],
       "contract": "Restore gold tests then parser.py outcomes; binary every FAIL_TO_PASS and PASS_TO_PASS. Preserve parser adapters/required test completeness.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "swegym",
@@ -749,7 +919,9 @@
       ],
       "contract": "Source parser fuzzy-matches truncated/non-ASCII node IDs and only forbids recorded PASS_TO_PASS failures. Verifyit requires exact stable IDs and missing protected tests cannot pass; fork must tighten identity/completeness. This is a deliberate semantic hardening correction, not native fuzzy-parser parity.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "swelancer",
@@ -760,7 +932,9 @@
       ],
       "contract": "SWE route scores any successful execution over N test runs, manager route exact selected_proposal_id; retain repeated-run disjunction and infra exit classification.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "swesmith",
@@ -769,7 +943,9 @@
       ],
       "contract": "Generated pytest test_state verifies original required suite; use restored hidden tests and protected passing IDs rather than candidate-edited tests.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "swtbench",
@@ -779,7 +955,9 @@
       ],
       "contract": "Generate tests from candidate patch then official SWE-bench trace/parser correctness; requires test-quality oracle relation, not ordinary candidate-code pass fraction.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "tau2-bench",
@@ -788,16 +966,26 @@
       ],
       "contract": "Official evaluate_simulation validates runtime state, tool actions, rewards and natural-language assertions; preserve reward basis and error flags.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": [],
+      "status_gap": "Native verify.py uses the same missing/invalid/runtime-error zero statuses as tau3; no executable tau2 client bridge is included."
     },
     {
       "adapter": "tau3-bench",
       "primitives": [
         "script"
       ],
-      "contract": "Official runtime-state/trajectory evaluation over configured environment constructor and assertions; preserve participant/task routing, reward basis and replay metadata.",
+      "contract": "Retain tau2 runtime trajectory evaluation and all reward_info metadata. Client bridge maps missing_runtime_log, invalid_runtime_log and tau2_runtime_log_error to infra_error0; valid mismatch0 and passed1 remain scored. Malformed config becomes invalid_task0; malformed/unknown native results or failed producer become infra_error0. Native reward basis, model/domain/seed and stop semantics stay in the retained evaluator; not a native state-comparison primitive.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-bridge-tested",
+      "execution_evidence": [
+        "tests/test_harbor_tau3.py::test_tau3_bridge_preserves_zero_and_masks_native_runtime_errors",
+        "tests/test_script.py::test_declared_script_verdict_preserves_status_and_native_metadata"
+      ],
+      "client_patch": "integrations/harbor/tau3-verifyit.patch",
+      "boundary_verified": true
     },
     {
       "adapter": "textarena",
@@ -807,7 +995,10 @@
       "contract": "Environment/game terminal rewards include -1 losses and0 draws; explicit affine transform for signed domain plus native reward preservation required.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#native-score"
+      "specification": "harbor_specs.md#native-score",
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "theagentcompany",
@@ -816,7 +1007,9 @@
       ],
       "contract": "Decrypt/run official eval.py and divide earned score by total, clamped[0,1]; retain enterprise services, artifacts and graded checkpoints.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     },
     {
       "adapter": "usaco",
@@ -826,7 +1019,9 @@
       ],
       "contract": "Generated pytest orchestrates compiled program stdin/stdout hidden cases; move execution cases to stdio preserving file-based I/O and all-case policy, or retain unchanged pytest wrapper.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "primitive-route-specified",
+      "execution_evidence": []
     },
     {
       "adapter": "webgen_bench",
@@ -836,7 +1031,10 @@
       "contract": "WebVoyager/browser multimodal UI judge writes reward; preserve interactive browser artifacts and model evaluation prompts, cannot reduce to file schema.",
       "classification": "spec-needed",
       "parity_verified": false,
-      "specification": "harbor_specs.md#artifact-judge"
+      "specification": "harbor_specs.md#artifact-judge",
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": [],
+      "extension_requirement": "client normalization/composition can avoid a new category; reusable native-mode profile remains optional and unimplemented"
     },
     {
       "adapter": "widesearch",
@@ -845,7 +1043,21 @@
       ],
       "contract": "Table matching uses per-cell exact/URL/numeric/date/model comparators and row/item F1; primary reward=f1_by_item with named metrics JSON, explicit reward_key required.",
       "classification": "adapter",
-      "parity_verified": false
+      "parity_verified": false,
+      "reuse_kind": "native-runtime-client-needed",
+      "execution_evidence": []
     }
-  ]
+  ],
+  "capability_counts": {
+    "adapters": 87,
+    "existing_category_routes": 87,
+    "native_primitive_routes_specified": 52,
+    "native_runtime_bridges_tested": 1,
+    "native_runtime_bridges_pending": 34,
+    "client_normalization_proposals": 19,
+    "new_categories_required": 0,
+    "existing_class_extensions_implemented": [
+      "ScriptSpec.verdict_file"
+    ]
+  }
 }

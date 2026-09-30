@@ -12,6 +12,7 @@ not a failed attempt, so it raises instead of scoring zero.
 import json
 import os
 import tempfile
+from collections import Counter
 from dataclasses import replace
 from pathlib import Path
 
@@ -49,11 +50,23 @@ def grade(spec: PytestSpec, tests_dir: Path, workspace: Path) -> Reward:
         result = run_command(argv, directory, spec.timeout)
         if result.timed_out:
             return scored(0.0, reason="timeout", passed=0, total=0)
+        if result.returncode not in (0, 1, 5):
+            raise RuntimeError(
+                f"pytest producer failed before a usable json report (exit {result.returncode}): "
+                f"{_tail(result.stderr or result.stdout)}"
+            )
         if not report_path.is_file():
             output = _tail(result.stderr or result.stdout)
             raise RuntimeError(f"pytest wrote no json report (exit {result.returncode}): {output}")
         report = json.loads(report_path.read_text())
+    if result.returncode == 5:
+        return scored(0.0, reason="no_tests", passed=0, total=0, exit_code=5)
+    if any(collector.get("outcome") == "failed" for collector in report.get("collectors", [])):
+        raise RuntimeError("pytest report contains collection failures")
+    _validate_summary(report)
     outcomes = _outcomes(report, directory)
+    if result.returncode == 1 and outcomes and all(outcomes.values()):
+        raise RuntimeError("pytest producer failed without reporting a failing test")
     reward = check_ids(outcomes, spec.must_pass, spec.must_not_break, exit_code=result.returncode)
     if reward.reward < 1.0:
         output = _tail(result.stdout + result.stderr, STDERR_TAIL)
@@ -87,3 +100,21 @@ def _rebase(nodeid: str, root: Path, workspace: Path) -> str:
 
 def _tail(text: str, limit: int = 500) -> str:
     return text.strip()[-limit:]
+
+
+def _validate_summary(report: dict) -> None:
+    tests = report.get("tests", [])
+    counts = Counter(test.get("outcome") for test in tests)
+    allowed = PASS_OUTCOMES | FAIL_OUTCOMES | {"skipped", "xfailed"}
+    if set(counts) - allowed:
+        raise RuntimeError("pytest report contains unsupported test outcomes")
+    summary = report.get("summary", {})
+    if not isinstance(summary, dict):
+        raise RuntimeError("pytest report summary must be an object")
+    expected = {"total": len(tests), **{name: counts[name] for name in allowed}}
+    for field, observed in expected.items():
+        if field not in summary:
+            continue
+        declared = summary[field]
+        if isinstance(declared, bool) or not isinstance(declared, int) or declared != observed:
+            raise RuntimeError(f"incomplete pytest report: declared {field}={declared}, observed {observed}")

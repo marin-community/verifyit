@@ -26,18 +26,16 @@ orchestration rather than independent correctness scorers.
 
 | Integration | Implemented behavior | Verification evidence |
 |---|---|---|
-| [SkyRL patches](skyrl.md) | Source first-box MCQ calls verifyit candidate scoring; normalized AIME rational and GSM8K final-line answers use exact arithmetic boundaries. Source strict-box extraction, ±1 reward and length shaping remain explicit. | Patches apply to pinned source; 18 patched MCQ source tests and 40 patched arithmetic source tests pass; 17 verifyit arithmetic regression cases. |
-| [Evalchemy patch](../../integrations/evalchemy/README.md) | GPQA/MMLU extracted choices call verifyit; completion boundary preserves final-content precedence and completed reasoning-only math policy. Source box parsers/stops and aggregation remain. | Source scoring before/after parity probes; 26 upstream AIME24/AIME25, MATH500 and MMLU-Pro tests pass against patched validation tree. |
-| [Harness patch](../../integrations/lm-eval-harness/README.md) | Filtered native responses call `score_task`; source metrics and aggregators remain intact. Explicit scalar projection is optional. | Structured weighted-perplexity and optional metric bridge tests; pinned loader parity covers configuration includes. This proves compatibility, not replacement by native primitive equivalents. |
-| [Harbor patch](../../integrations/harbor/verifyit.patch) | Tasks shipping `tests/verifier.toml` invoke verifyit; unscored verdicts reject stale scalar reward artifacts. Legacy task harnesses remain supported. | Three real-verifier/local-CLI integration regressions and 12 existing verifier tests pass; container execution remains unverified. |
+| [SkyRL patches](skyrl.md) | Nine clients compose existing MCQ, Exact, Numeric and Math classes with source extraction/reward shaping retained. | 106 patched upstream cases, 41 hash-pinned source parity cases, and 50 client regressions pass. |
+| [Evalchemy patch](../../integrations/evalchemy/README.md) | Four clean integrations (GPQA, MMLU-Pro, AIW, GSM8KPerturbed); three boxed-math hybrids retain explicit missing-parse fallback. | 26 upstream extraction regressions and source exact/numeric parity cases pass. The other 35 custom benchmarks remain client/profile work. |
+| [Harness patch](../../integrations/lm-eval-harness/README.md) | Two native contracts cover 10,841 statically eligible task configurations: 8,061 likelihood-choice and 2,780 exact-match. Source aggregation remains. | Native scorer parity probes pass; eligibility is not execution of every dataset. Other 1,851 configurations remain compatibility/composition routes. |
+| [Harbor patch](../../integrations/harbor/README.md) | 52 primitive routes specified; one tau3 native-runtime bridge tested; 34 custom client bridges pending. All 87 use existing categories. | Generic dispatch/status tests and five tau3 result/runtime cases pass, including actual pinned-source boundary validation. Full native-runtime deployment parity is not claimed. |
 | [Task Trove integration](../../integrations/task-trove/README.md) | Explicit verifyit revision/dependency overlay, source converter migration, local Docker audit checkout, and task-owned archive script/setup namespace wrappers. | All rows' metadata scanned using bounded HTTP ranges;19 converter and 12 mode/helper drift matrix;8 local CLI integration cases; actual patched pipeline CLI and Dockerfile rewriting pass at scheduling/container I/O boundaries. |
 
-The current implementation checkpoint is local commit
-`2781eb0d3dae1c9a1486f4074eb47398edc643c8` on `codex/verifier-unification`.
-SkyRL's dependency patch pins this commit and raises its standalone gym Python
-floor to >=3.11, as required by verifyit. An isolated local Git installation at
-that SHA passed real helper grading. This checkpoint includes the completion/judge/MCQ refinements. Nothing here establishes a published
-GitHub dependency, updated frozen fork locks, or deployed integration.
+Integration dependency patches record the required immutable API checkpoint.
+They require a fetchable Git revision or the corresponding local checkout; an
+unpushed local checkpoint does not establish published availability, updated
+fork lockfiles, or deployed integration.
 
 ## Hardening evidence
 
@@ -52,7 +50,11 @@ Concrete regression fixes include correct stdout followed by candidate crash,
 MCQ word prefixes mistakenly accepted as option letters, exact large-number and
 ratio boundaries, malformed authoritative reward files replaced by stdout,
 repeated passing test observations erasing previous failures, and incomplete or
-malformed judge replies counted as candidate outcomes. Judge failures now become
+malformed judge replies counted as candidate outcomes. Declared report counts,
+fresh JUnit output and completed test/package events prevent partial evidence
+from awarding success. The central scalar/status/detail boundary rejects malformed
+or nonfinite verdicts; only an explicit completed judge stop can award a score.
+Judge failures now become
 `infra_error`; valid judge zero remains a scored candidate. Candidate failure,
 invalid task and infrastructure failure remain distinct, and unscored verdicts
 remove scalar reward artifacts. Relevant tests exercise real subprocesses, local
@@ -64,8 +66,9 @@ Most custom source semantics require adapters even when the execution primitive
 exists. The linked specifications define request fields, comparison/aggregation,
 status mapping, resource boundaries and regression fixtures. A `script` route
 retaining the original scorer is an adapter mapping, not native equivalence.
-Proposed Python profile APIs and mode profiles are not implemented merely because
-they are specified.
+Client composition and extensions of existing classes avoid new categories.
+Unimplemented client routes and optional native-mode profiles remain explicit;
+a contract specification is not executable parity.
 
 A concrete reusable specification supplies the mapping when no clean primitive
 mapping exists. The linked unimplemented profiles fulfill that mapping/specification role;
