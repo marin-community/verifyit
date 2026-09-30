@@ -1,14 +1,15 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
+import json
 import textwrap
 from pathlib import Path
 
 import pytest
 
-from verifyit.grade import InvalidTask, Status
+from verifyit.grade import InvalidTask, Status, run, write_reward
 from verifyit.modes import grade_script
-from verifyit.spec import ScriptSpec
+from verifyit.spec import ScriptSpec, parse_spec, render_spec
 
 # The grading script is handed the workspace as its cwd and the three VERIFYIT_* variables.
 BASH_REWARD_JSON = """\
@@ -143,3 +144,43 @@ def test_explicit_spec_workspace_overrides_the_workspace_argument(tmp_path):
     reward = grade_script.grade(ScriptSpec(path="test.sh", workspace=str(elsewhere)), tests, _workspace(tmp_path))
     assert reward.reward == 1.0
     assert (elsewhere / "ran-here").is_file()
+
+
+@pytest.mark.parametrize("channel,payload", [("reward.json", '{"reward": "broken"}'), ("reward.txt", "broken")])
+def test_invalid_authoritative_reward_cannot_be_replaced_by_stdout(tmp_path, channel, payload):
+    body = (
+        "import os\nfrom pathlib import Path\n"
+        f'(Path(os.environ["VERIFYIT_LOGS_DIR"]) / {channel!r}).write_text({payload!r})\n'
+        "print(1.0)\n"
+    )
+    tests = _tests_dir(tmp_path, body, "grade.py")
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "reward.json").write_text('{"reward": 1.0}')
+    (logs / "reward.txt").write_text("1.0")
+    reward = run(tests / "verifier.toml", _workspace(tmp_path))
+    write_reward(logs, reward)
+    assert reward.status == Status.INFRA_ERROR
+    assert json.loads((logs / "verdict.json").read_text())["status"] == "infra_error"
+    assert not (logs / "reward.json").exists()
+    assert not (logs / "reward.txt").exists()
+
+
+def test_named_reward_survives_spec_roundtrip_and_preserves_metrics(tmp_path):
+    spec = parse_spec(render_spec(ScriptSpec(path="grade.py", reward_key="accuracy")))
+    body = (
+        "import os\nfrom pathlib import Path\n"
+        '(Path(os.environ["VERIFYIT_LOGS_DIR"]) / "reward.json").write_text('
+        '\'{"accuracy": 0.75, "loss": 4.0, "reward": 0.0}\')\n'
+    )
+    tests = _tests_dir(tmp_path, body, "grade.py")
+    reward = grade_script.grade(spec, tests, _workspace(tmp_path))
+    assert (reward.reward, reward.status) == (0.75, Status.SCORED)
+    assert reward.detail["metrics"] == {"accuracy": 0.75, "loss": 4.0, "reward": 0.0}
+
+
+def test_named_reward_cannot_be_replaced_by_scalar_channel(tmp_path):
+    tests = _tests_dir(tmp_path, '#!/bin/bash\nprintf 1 > "$VERIFYIT_LOGS_DIR/reward.txt"\necho 1\n', "test.sh")
+    (tests / "verifier.toml").write_text(render_spec(ScriptSpec(path="test.sh", reward_key="accuracy")))
+    reward = run(tests / "verifier.toml", _workspace(tmp_path))
+    assert reward.status == Status.INFRA_ERROR

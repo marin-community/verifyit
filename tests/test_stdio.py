@@ -146,3 +146,20 @@ def test_stdio_crashing_special_judge_rejects_instead_of_falling_back(tmp_path):
     (tests_dir / "cases" / "output_0.txt").write_text("3 1 2\n")
     spec = StdioSpec(command=f"{sys.executable} solution.py", special_judge="judge.py", min_cases=1)
     assert grade_stdio.grade(spec, tests_dir, workspace).reward == 0.0
+
+
+def test_stdio_binary_stdin_program_scores_correct_output(tmp_path):
+    program = "import sys\nfor line in sys.stdin.buffer:\n    print(int(line.strip()) * 2)\n"
+    tests_dir, workspace = _task(tmp_path, program)
+    verdict = grade(_spec(), tests_dir, workspace)
+    assert (verdict.reward, verdict.status) == (1.0, Status.SCORED)
+
+
+@pytest.mark.parametrize("special_judge", [None, "judge.py"])
+def test_stdio_correct_output_before_candidate_crash_scores_zero(tmp_path, special_judge):
+    tests_dir, workspace = _task(tmp_path, DOUBLE + "raise SystemExit(7)\n")
+    if special_judge:
+        (tests_dir / special_judge).write_text("print('1')\n")
+    verdict = grade(_spec(special_judge=special_judge), tests_dir, workspace)
+    assert (verdict.reward, verdict.status) == (0.0, Status.SCORED)
+    assert verdict.detail["passed"] == 0

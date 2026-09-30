@@ -1,0 +1,770 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/marin-community/MarinSkyRL",
+  "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+  "registered_env_count": 14,
+  "nemotron_agent_count": 26,
+  "entries": [
+    {
+      "id": "aime",
+      "source_file": "skyrl-gym/skyrl_gym/envs/aime/verifier.py",
+      "source_sha256": "d88156b40e5914d216ab7cdcee19f6fe34ef98672a08bf885f2f7b1a3042124c",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/aime/verifier.py",
+      "dispatch": "aime",
+      "verifyit_modes": [
+        "math",
+        "exact"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Last 300 characters; final Answer line normalized; exact rational decimals/fractions/ratios; strict box compares literal last-100-char extraction. Correctness \u00b11. Separate token budget and length shaping.",
+      "adapter_requirements": "Use source extraction plus exact rational normalization; transform 0/1 to 2r-1 only in SkyRL reward policy. Preserve token/stop evidence. math symbolic equivalence is broader than rational-only."
+    },
+    {
+      "id": "gsm8k",
+      "source_file": "skyrl-gym/skyrl_gym/envs/gsm8k/utils.py",
+      "source_sha256": "01ae9bc8110da5b5d360e5d6501432b3d12eb6c67e4cdc534b6dcf706bb604d1",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py",
+      "dispatch": "gsm8k",
+      "verifyit_modes": [
+        "numeric"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Strict first #### numeric marker, or flexible last numeric match, or standalone final #### line Decimal equality; env uses final_line.",
+      "adapter_requirements": "Preserve chosen extraction and Decimal equality (numeric float conversion may lose precision); validate prepared ground_truth."
+    },
+    {
+      "id": "gsm8k_multi_turn",
+      "source_file": "skyrl-gym/skyrl_gym/envs/gsm8k/multi_turn_env.py",
+      "source_sha256": "61e1e4681dc6ef9caec8ab1a3f4c8ddc9397b0e8e686edd178670cdc8f01310d",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/gsm8k/multi_turn_env.py",
+      "dispatch": "gsm8k_multi_turn",
+      "verifyit_modes": [
+        "numeric"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "GSM8K rewards per terminal attempt with turn feedback.",
+      "adapter_requirements": "Keep turn state/feedback in harness; score extracted answer only; inspect policy before projection."
+    },
+    {
+      "id": "text2sql",
+      "source_file": "skyrl-gym/skyrl_gym/envs/sql/utils.py",
+      "source_sha256": "3e24ebe7746883218fcc50e0bac3b15fc388ab5b6b2161d105ce05665d2e0f35",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/sql/utils.py",
+      "dispatch": "text2sql",
+      "verifyit_modes": [
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Format invalid => -1; valid candidate/reference SQL return frozenset rows (duplicates/order discarded), equality => 1 else 0; reference/query errors become 0, rollback transaction; timeout 30 seconds.",
+      "adapter_requirements": "Script comparator must preserve set semantics and explicit -1 formatting reward projection; classify broken reference as unscored only with reviewed harness change."
+    },
+    {
+      "id": "text_to_sql",
+      "source_file": "skyrl-gym/skyrl_gym/envs/text_to_sql/scoring.py",
+      "source_sha256": "04b5b15dc7b9bb297d93a28ce7ae2ff03072df177a004137e8a7fda0d39c70ac",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/text_to_sql/scoring.py",
+      "dispatch": "text_to_sql",
+      "verifyit_modes": [
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Read-only deterministic SQLite result equivalence on seeded and every-third-row-deleted database; ordered rows only if top-level ORDER BY; 6 decimal normalization; bounded rows/query.",
+      "adapter_requirements": "Reusable executable SQL scorer script; broken seed/reference => invalid_task or infra_error; candidate query rejection => scored zero."
+    },
+    {
+      "id": "search",
+      "source_file": "skyrl-gym/skyrl_gym/envs/search/utils.py",
+      "source_sha256": "989d04655cd9441ee004c1f9c612d7ced21a96b71b88aecf7c7333978960da01",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/search/utils.py",
+      "dispatch": "search",
+      "verifyit_modes": [
+        "exact"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Last answer XML tag; lowercase, remove punctuation/articles, collapse whitespace; target alternatives; EM/subEM helpers.",
+      "adapter_requirements": "Normalize both sides with source QA rules; exact spec alternatives cannot be encoded as list (that means multiset); preserve substring route separately."
+    },
+    {
+      "id": "lcb",
+      "source_file": "skyrl-gym/skyrl_gym/envs/lcb/livecodebench.py",
+      "source_sha256": "0426a2b81ec67fe519027ac6245a64ee3edda15a5929d51dc75b2bf42e7b0c93",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/lcb/livecodebench.py",
+      "dispatch": "lcb",
+      "verifyit_modes": [
+        "stdio",
+        "pytest"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Final fenced Python program; stdio or functional tests; binary all-pass or fractional pass ratio; memory and total/per-test deadlines.",
+      "adapter_requirements": "stdio handles stdin binary all-pass; function-call tests compile pytest harness. Fractional reward and numeric/line output comparator require adapter; preserve per-test result/error metadata."
+    },
+    {
+      "id": "searchcode",
+      "source_file": "skyrl-gym/skyrl_gym/envs/searchcode/env.py",
+      "source_sha256": "4f8651b459cedc60652682acc9db50080d86c5581989d2ea42c8f8484e366b3c",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/searchcode/env.py",
+      "dispatch": "searchcode",
+      "verifyit_modes": [
+        "numeric"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Terminal concatenated chat history scored by GSM8K strict marker extraction.",
+      "adapter_requirements": "Harness owns search/Python tools and transcript; preserve first #### extraction."
+    },
+    {
+      "id": "mcq",
+      "source_file": "skyrl-gym/skyrl_gym/envs/mcq/utils.py",
+      "source_sha256": "64c9f175c6ddd53706b1e533c86d7a67c16357826ecf7817b98413ac81e3afd8",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/mcq/utils.py",
+      "dispatch": "mcq",
+      "verifyit_modes": [
+        "mcq"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "First boxed A-Z/a-z letter uppercased; binary equality.",
+      "adapter_requirements": "Call grade_mcq_candidate with source extraction and options=26; preserve first-box policy."
+    },
+    {
+      "id": "ifeval",
+      "source_file": "skyrl-gym/skyrl_gym/envs/ifeval/utils.py",
+      "source_sha256": "09a1c07b2eb53f5e867d46746f169aab8e5199518c16cb3ca5240909ff7538d7",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/ifeval/utils.py",
+      "dispatch": "ifeval",
+      "verifyit_modes": [
+        "ifeval",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "26 func_name registry entries (25 original plus frequency relation); fraction satisfied; malformed/checker errors currently zero.",
+      "adapter_requirements": "Translate each constraint only after checking checker equivalence; registry names/quantifiers are not interchangeable. Unknown or malformed task becomes invalid_task."
+    },
+    {
+      "id": "reasoning_gym",
+      "source_file": "skyrl-gym/skyrl_gym/envs/reasoning_gym/scoring.py",
+      "source_sha256": "fdb9cd9a94c2d07f4e3ea43b2a90831520a711161939cc42a3fd05fc7446b03b",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/reasoning_gym/scoring.py",
+      "dispatch": "reasoning_gym",
+      "verifyit_modes": [
+        "reasoning-gym"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Complete task+entry metadata; text after last Answer: marker; task-native fractional scorer.",
+      "adapter_requirements": "Exact task/entry port plus source extraction; package version pin and scorer availability."
+    },
+    {
+      "id": "preference",
+      "source_file": "skyrl-gym/skyrl_gym/envs/preference/env.py",
+      "source_sha256": "2cae3048d5bfc09a355435423cdf444b26a884494ec8391647da6a3171a1af71",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/preference/env.py",
+      "dispatch": "preference",
+      "verifyit_modes": [
+        "judge"
+      ],
+      "mapping_status": "not_a_verifier",
+      "source_contract": "Placeholder terminal zero; actual reward model supplied outside env.",
+      "adapter_requirements": "No deterministic verifier exists; retain external reward model hook, never interpret placeholder zero as verification."
+    },
+    {
+      "id": "prompt_only",
+      "source_file": "skyrl-gym/skyrl_gym/envs/prompt_only/env.py",
+      "source_sha256": "c4812963643ddaea46e5332a2fd141262af8a24c21cc33646277812daf65d060",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/prompt_only/env.py",
+      "dispatch": "prompt_only",
+      "verifyit_modes": [
+        "judge"
+      ],
+      "mapping_status": "not_a_verifier",
+      "source_contract": "Terminal zero; objectives supplied outside verifier.",
+      "adapter_requirements": "No correctness mapping; skipped/unavailable verification."
+    },
+    {
+      "id": "nemotron_ultra/ns_tools_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_with_judge.py",
+      "source_sha256": "8afb94d1269c852eb64a1d1dff45908b5452dda54523c6d0b6a6e18c542f8930",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_with_judge.py",
+      "dispatch": "NemotronUltraEnv._step agent=ns_tools_simple_agent",
+      "verifyit_modes": [
+        "math",
+        "judge",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
+      "adapter_requirements": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness."
+    },
+    {
+      "id": "nemotron_ultra/math_with_judge_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_with_judge.py",
+      "source_sha256": "8afb94d1269c852eb64a1d1dff45908b5452dda54523c6d0b6a6e18c542f8930",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_with_judge.py",
+      "dispatch": "NemotronUltraEnv._step agent=math_with_judge_simple_agent",
+      "verifyit_modes": [
+        "math",
+        "judge",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
+      "adapter_requirements": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness."
+    },
+    {
+      "id": "nemotron_ultra/math_formal_lean_refinement_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/lean.py",
+      "source_sha256": "ce7a8066c4fee512ff048731040259c5325bbf74d7eef1bff8d7c819a8a7fd7a",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/lean.py",
+      "dispatch": "NemotronUltraEnv._step agent=math_formal_lean_refinement_agent",
+      "verifyit_modes": [
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Lean proof compilation and up to three correction turns.",
+      "adapter_requirements": "Compile source proof artifact in task environment; preserve correction prompt and unavailable intermediate verdict."
+    },
+    {
+      "id": "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+      "source_sha256": "eb0f3d62b9ab32d51e860a52c68496f9d335e0917b11c6d30fae18c8af68bb54",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+      "dispatch": "NemotronUltraEnv._step agent=single_step_tool_use_with_argument_comparison_agent",
+      "verifyit_modes": [
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
+      "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances."
+    },
+    {
+      "id": "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+      "source_sha256": "eb0f3d62b9ab32d51e860a52c68496f9d335e0917b11c6d30fae18c8af68bb54",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+      "dispatch": "NemotronUltraEnv._step agent=swe_pivot_single_step_tool_use_with_argument_comparison_agent",
+      "verifyit_modes": [
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
+      "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances."
+    },
+    {
+      "id": "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+      "source_sha256": "eb0f3d62b9ab32d51e860a52c68496f9d335e0917b11c6d30fae18c8af68bb54",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/tool_call.py",
+      "dispatch": "NemotronUltraEnv._step agent=toolcall_schema_single_step_tool_use_with_argument_comparison_agent",
+      "verifyit_modes": [
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
+      "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances."
+    },
+    {
+      "id": "nemotron_ultra/calendar_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/calendar.py",
+      "source_sha256": "2fc03229fb6c76454b7bed3b7ff0ac417facead6169cec3d2fc5aa9f571c0f53",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/calendar.py",
+      "dispatch": "NemotronUltraEnv._step agent=calendar_simple_agent",
+      "verifyit_modes": [
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "JSON event schedule exact IDs/count, durations, windows and pairwise conflicts; rejects think marker.",
+      "adapter_requirements": "Executable schedule constraints; schema validation alone insufficient."
+    },
+    {
+      "id": "nemotron_ultra/citation_format_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/format_verification.py",
+      "source_sha256": "0629283c54f1fa8af410cf7315c85b9f68d2abb971113ae49199f30daa2ab4a5",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/format_verification.py",
+      "dispatch": "NemotronUltraEnv._step agent=citation_format_simple_agent",
+      "verifyit_modes": [
+        "ifeval",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Regex/inline prose counts matching lines; string markers present with no spurious regex matches.",
+      "adapter_requirements": "Source-compatible deterministic constraint script; not generic exact equality."
+    },
+    {
+      "id": "nemotron_ultra/freeform_formatting_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/format_verification.py",
+      "source_sha256": "0629283c54f1fa8af410cf7315c85b9f68d2abb971113ae49199f30daa2ab4a5",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/format_verification.py",
+      "dispatch": "NemotronUltraEnv._step agent=freeform_formatting_simple_agent",
+      "verifyit_modes": [
+        "ifeval",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Regex/inline prose counts matching lines; string markers present with no spurious regex matches.",
+      "adapter_requirements": "Source-compatible deterministic constraint script; not generic exact equality."
+    },
+    {
+      "id": "nemotron_ultra/mcqa_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/mcqa.py",
+      "source_sha256": "9c1fc806447b83b3113609e99ad73bb02acb42cb34e66a7a0aa0b957d6ab3b0f",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/mcqa.py",
+      "dispatch": "NemotronUltraEnv._step agent=mcqa_simple_agent",
+      "verifyit_modes": [
+        "mcq"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Allowed options + strict/lenient boxed, option text, Answer colon/markdown, or template regex; Arabic/Bengali/fullwidth normalizations.",
+      "adapter_requirements": "Source extraction precedes grade_mcq_candidate; options may be noncontiguous, so validate source allowed set explicitly."
+    },
+    {
+      "id": "nemotron_ultra/structured_outputs_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/structured_outputs.py",
+      "source_sha256": "a92f84e3f5f3be11905295ef85bf8c060c92aae3da9109297fe59de762566a04",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/structured_outputs.py",
+      "dispatch": "NemotronUltraEnv._step agent=structured_outputs_simple_agent",
+      "verifyit_modes": [
+        "json-schema",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "OpenAPI schema; JSON/YAML/TOML/XML/CSV; XML/CSV schema-directed scalar coercion; one named tool payload.",
+      "adapter_requirements": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings."
+    },
+    {
+      "id": "nemotron_ultra/structured_outputs_v3_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/structured_outputs.py",
+      "source_sha256": "a92f84e3f5f3be11905295ef85bf8c060c92aae3da9109297fe59de762566a04",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/structured_outputs.py",
+      "dispatch": "NemotronUltraEnv._step agent=structured_outputs_v3_simple_agent",
+      "verifyit_modes": [
+        "json-schema",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "OpenAPI schema; JSON/YAML/TOML/XML/CSV; XML/CSV schema-directed scalar coercion; one named tool payload.",
+      "adapter_requirements": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings."
+    },
+    {
+      "id": "nemotron_ultra/rdkit_chemistry_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/rdkit_chemistry.py",
+      "source_sha256": "8c41da86140963eae6eaa46ef12e3fcabbd5b14e79978a81096c1d4a0c98dc36",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/rdkit_chemistry.py",
+      "dispatch": "NemotronUltraEnv._step agent=rdkit_chemistry_agent",
+      "verifyit_modes": [
+        "numeric",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Required box/double-parenthesis numeric extraction; Python round(predicted)==round(expected).",
+      "adapter_requirements": "Use source rounding adapter; numeric tolerance interval is not equivalent at banker-round boundaries."
+    },
+    {
+      "id": "nemotron_ultra/nvarc_inductive_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/nvarc.py",
+      "source_sha256": "387448d4dbfa00f31730b96b4da8b796f8e0c9c9514e128ff222797059247659",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/nvarc.py",
+      "dispatch": "NemotronUltraEnv._step agent=nvarc_inductive_simple_agent",
+      "verifyit_modes": [
+        "stdio",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Extract fenced or unfenced transform with imports; execute on input; valid integer palette 0..9 rectangular grid; exact expected output.",
+      "adapter_requirements": "Python transform harness and structural validation, sandbox status distinguished from bad code."
+    },
+    {
+      "id": "nemotron_ultra/nvarc_transductive_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/nvarc.py",
+      "source_sha256": "387448d4dbfa00f31730b96b4da8b796f8e0c9c9514e128ff222797059247659",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/nvarc.py",
+      "dispatch": "NemotronUltraEnv._step agent=nvarc_transductive_simple_agent",
+      "verifyit_modes": [
+        "exact",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "JSON grid or digit rows; strict rectangular palette 0..9 integer grid equality.",
+      "adapter_requirements": "Parse/validate source grid then canonical JSON exact match; schema alone would not equal expected grid."
+    },
+    {
+      "id": "nemotron_ultra/code_gen_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/code_gen.py",
+      "source_sha256": "da243b691ba49cdea20bb313e6bd0d96af7d65dddc701b2fe65b6da4b4dd0fa3",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/code_gen.py",
+      "dispatch": "NemotronUltraEnv._step agent=code_gen_simple_agent",
+      "verifyit_modes": [
+        "stdio",
+        "pytest"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Final fenced code, binary all-tests, short circuit failure, think-tag violation penalty.",
+      "adapter_requirements": "Compile stdio/functional harness; preserve format penalty and per-test execution evidence."
+    },
+    {
+      "id": "nemotron_ultra/instruction_following_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_following.py",
+      "source_sha256": "82e55bcba81139627049cea2a832f0a9a5a9e9ee4c18ed224e3f8f56719fbcdf",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_following.py",
+      "dispatch": "NemotronUltraEnv._step agent=instruction_following_simple_agent",
+      "verifyit_modes": [
+        "ifeval",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Pinned NVIDIA verifiable_instructions registry with instruction kwargs; binary or fraction aggregation.",
+      "adapter_requirements": "Registry checker equivalence audit required; pinned script scorer covers unmatched IDs without new category."
+    },
+    {
+      "id": "nemotron_ultra/abstention_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_verifiers.py",
+      "source_sha256": "88e4591250dc23b0e4e4fc79b8897fa5608c7602ece716461040f6efd1528b1e",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_verifiers.py",
+      "dispatch": "NemotronUltraEnv._step agent=abstention_simple_agent",
+      "verifyit_modes": [
+        "judge",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Normalized IDK receives .5; judge A/B/C maps 1/0/.5; omniscience diagnostic.",
+      "adapter_requirements": "Custom three-label prompt parser and reward projection; binary judge cannot represent abstention directly."
+    },
+    {
+      "id": "nemotron_ultra/multichallenge_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_verifiers.py",
+      "source_sha256": "88e4591250dc23b0e4e4fc79b8897fa5608c7602ece716461040f6efd1528b1e",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_verifiers.py",
+      "dispatch": "NemotronUltraEnv._step agent=multichallenge_simple_agent",
+      "verifyit_modes": [
+        "judge"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Per-rubric question YES/NO source prompt; average reward.",
+      "adapter_requirements": "Preserve context/expected pass criteria per item and source prompt/verdict parser."
+    },
+    {
+      "id": "nemotron_ultra/jailbreak_engagement_with_disclaimer",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+      "source_sha256": "15813697a336f906873318f14326c12c682494e40d50fd02661fdf4c945edbb4",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+      "dispatch": "NemotronUltraEnv._step agent=jailbreak_engagement_with_disclaimer",
+      "verifyit_modes": [
+        "judge",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
+      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product."
+    },
+    {
+      "id": "nemotron_ultra/jailbreak_hard_refusal_no_redirection",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+      "source_sha256": "15813697a336f906873318f14326c12c682494e40d50fd02661fdf4c945edbb4",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+      "dispatch": "NemotronUltraEnv._step agent=jailbreak_hard_refusal_no_redirection",
+      "verifyit_modes": [
+        "judge",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
+      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product."
+    },
+    {
+      "id": "nemotron_ultra/jailbreak_hard_refusal_with_helplines",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+      "source_sha256": "15813697a336f906873318f14326c12c682494e40d50fd02661fdf4c945edbb4",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+      "dispatch": "NemotronUltraEnv._step agent=jailbreak_hard_refusal_with_helplines",
+      "verifyit_modes": [
+        "judge",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
+      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product."
+    },
+    {
+      "id": "nemotron_ultra/jailbreak_refusal_with_explanation",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+      "source_sha256": "15813697a336f906873318f14326c12c682494e40d50fd02661fdf4c945edbb4",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/jailbreak.py",
+      "dispatch": "NemotronUltraEnv._step agent=jailbreak_refusal_with_explanation",
+      "verifyit_modes": [
+        "judge",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
+      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product."
+    },
+    {
+      "id": "nemotron_ultra/reasoning_gym_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py",
+      "source_sha256": "d1dbb6fc2a81d4194ff751abafc4430a39289859ea008cd06287ab1aa2a0be09",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py",
+      "dispatch": "NemotronUltraEnv._step agent=reasoning_gym_simple_agent",
+      "verifyit_modes": [
+        "reasoning-gym"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Source_dataset task-native scorer; last answer tag, then last box, then text; complete entry.",
+      "adapter_requirements": "Preserve final_answer_text and extraction ordering, full metadata."
+    },
+    {
+      "id": "nemotron_ultra/genrm_simple_agent",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/genrm.py",
+      "source_sha256": "27fab41f6cb0761de575d057060a519512b6fd3e8da73092666d8e8db6136e27",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/genrm.py",
+      "dispatch": "NemotronUltraEnv._step agent=genrm_simple_agent",
+      "verifyit_modes": [
+        "judge",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Circular cohort pair comparisons, simple tiebreaker aggregate, reasoning/answer bonuses and group length penalties; placeholder replaced in runner.",
+      "adapter_requirements": "Batch/cohort adapter required; a single-output judge is not equivalent. Keep scorer external to per-candidate grade API."
+    },
+    {
+      "id": "nemotron_ultra/genrm_simple_agent_reasoning_off",
+      "source_file": "skyrl-gym/skyrl_gym/envs/nemotron_ultra/genrm.py",
+      "source_sha256": "27fab41f6cb0761de575d057060a519512b6fd3e8da73092666d8e8db6136e27",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/genrm.py",
+      "dispatch": "NemotronUltraEnv._step agent=genrm_simple_agent_reasoning_off",
+      "verifyit_modes": [
+        "judge",
+        "script"
+      ],
+      "mapping_status": "adapter_required",
+      "source_contract": "Circular cohort pair comparisons, simple tiebreaker aggregate, reasoning/answer bonuses and group length penalties; placeholder replaced in runner.",
+      "adapter_requirements": "Batch/cohort adapter required; a single-output judge is not equivalent. Keep scorer external to per-candidate grade API."
+    },
+    {
+      "id": "dormant/torl",
+      "source_file": "skyrl-agent/skyrl_agent/tasks/verifiers/torl/math_verify.py",
+      "source_sha256": "d71562160daca994685d1e75bf88ce184519ca01d0167575a9e492898efeb55c",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/torl/math_verify.py",
+      "dispatch": "GeneralReactTask.evaluate_result data_source=ToRL",
+      "verifyit_modes": [
+        "math"
+      ],
+      "mapping_status": "dormant_adapter_required",
+      "source_contract": "Math extraction with reward_type and symbolic evaluator.",
+      "adapter_requirements": "Preserve source extraction and reward_type."
+    },
+    {
+      "id": "dormant/naive_dapo",
+      "source_file": "skyrl-agent/skyrl_agent/tasks/verifiers/naive_dapo.py",
+      "source_sha256": "c8c8ed10f5416f07d10d734238de9d62d4acb8855a6e7833f7b572358bf42e4d",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/naive_dapo.py",
+      "dispatch": "GeneralReactTask.evaluate_result data_source starts math",
+      "verifyit_modes": [
+        "math"
+      ],
+      "mapping_status": "dormant_adapter_required",
+      "source_contract": "Extract answer; normalization then symbolic fallback including pi=3.14; binary score.",
+      "adapter_requirements": "Approximate pi policy differs from math-verify, use explicit adapter."
+    },
+    {
+      "id": "dormant/coder1",
+      "source_file": "skyrl-agent/skyrl_agent/tasks/verifiers/coder1/__init__.py",
+      "source_sha256": "3f8e512310338ea274c5e7999922768c3171d8db469861704bd475679a3b52c6",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/coder1/__init__.py",
+      "dispatch": "GeneralReactTask.evaluate_result data_source starts codegen",
+      "verifyit_modes": [
+        "stdio",
+        "pytest",
+        "script"
+      ],
+      "mapping_status": "dormant_adapter_required",
+      "source_contract": "Ground truth pytest/functional/solution_file/stdin-out; prefix injection, fuzzy output, format+answer reward.",
+      "adapter_requirements": "Use appropriate execution primitive with source extraction/prefix; preserve custom comparator and scoring."
+    },
+    {
+      "id": "dormant/qa_em",
+      "source_file": "skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+      "source_sha256": "be108e93597326e53e2bb98400f29b79ab75a359427db8d41459fcea9b777af3",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+      "dispatch": "GeneralReactTask.evaluate_result seven QA datasets",
+      "verifyit_modes": [
+        "exact"
+      ],
+      "mapping_status": "dormant_adapter_required",
+      "source_contract": "Answer extraction and QA EM target normalization.",
+      "adapter_requirements": "Normalize both sides; explicit accepted alternatives."
+    },
+    {
+      "id": "dormant/qa_browsecomp",
+      "source_file": "skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+      "source_sha256": "be108e93597326e53e2bb98400f29b79ab75a359427db8d41459fcea9b777af3",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+      "dispatch": "GeneralReactTask.evaluate_result starts browsecomp",
+      "verifyit_modes": [
+        "judge"
+      ],
+      "mapping_status": "dormant_adapter_required",
+      "source_contract": "External LLM judge question+answer.",
+      "adapter_requirements": "Source judge prompt and parser."
+    },
+    {
+      "id": "dormant/qa_ruler",
+      "source_file": "skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+      "source_sha256": "be108e93597326e53e2bb98400f29b79ab75a359427db8d41459fcea9b777af3",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+      "dispatch": "GeneralReactTask.evaluate_result starts ruler",
+      "verifyit_modes": [
+        "judge"
+      ],
+      "mapping_status": "dormant_adapter_required",
+      "source_contract": "External LLM judge long-context QA.",
+      "adapter_requirements": "Source judge prompt and parser."
+    },
+    {
+      "id": "dormant/qa_f1",
+      "source_file": "skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+      "source_sha256": "be108e93597326e53e2bb98400f29b79ab75a359427db8d41459fcea9b777af3",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py",
+      "dispatch": "Exported compute_score_f1; no production call found",
+      "verifyit_modes": [
+        "script"
+      ],
+      "mapping_status": "dormant_adapter_required",
+      "source_contract": "Token overlap F1 after QA normalization.",
+      "adapter_requirements": "Fractional token scorer executable; no exact primitive equivalence."
+    },
+    {
+      "id": "dormant/prime_math",
+      "source_file": "skyrl-agent/skyrl_agent/tasks/verifiers/prime_math/__init__.py",
+      "source_sha256": "8cf8a39ecc46662e2c4b8fba1f960bb2a738903c6423f0032714a2272f006684",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/prime_math/__init__.py",
+      "dispatch": "Library called through naive_dapo grader; exported compute_score has no production caller",
+      "verifyit_modes": [
+        "math"
+      ],
+      "mapping_status": "dormant_adapter_required",
+      "source_contract": "Extract answer and grade_answer/math_equal fallback.",
+      "adapter_requirements": "Source extraction and equivalence policies differ."
+    },
+    {
+      "id": "dormant/stem_llm_judge",
+      "source_file": "skyrl-agent/skyrl_agent/tasks/verifiers/web_search/stem_llm_judge.py",
+      "source_sha256": "2e03b774d399226e435a88025e31ebe727bc360046a0784901c110af8b071fb3",
+      "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/web_search/stem_llm_judge.py",
+      "dispatch": "WebResearchTask evaluate",
+      "verifyit_modes": [
+        "judge"
+      ],
+      "mapping_status": "dormant_adapter_required",
+      "source_contract": "External STEM reference judge.",
+      "adapter_requirements": "Preserve prompt, parser and tuple transport."
+    }
+  ],
+  "ifeval_func_names": [
+    "verify_keywords",
+    "verify_keyword_frequency",
+    "verify_keyword_frequency_relation",
+    "validate_forbidden_words",
+    "verify_letter_frequency",
+    "validate_response_language",
+    "verify_paragraph_count",
+    "validate_word_constraint",
+    "verify_sentence_constraint",
+    "validate_paragraphs",
+    "verify_postscript",
+    "validate_placeholders",
+    "verify_bullet_points",
+    "validate_title",
+    "validate_choice",
+    "validate_highlighted_sections",
+    "validate_sections",
+    "validate_json_format",
+    "validate_repeat_prompt",
+    "validate_two_responses",
+    "validate_uppercase",
+    "validate_lowercase",
+    "validate_frequency_capital_words",
+    "validate_end",
+    "validate_quotation",
+    "validate_no_commas"
+  ],
+  "recent_patches": [
+    {
+      "commit": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+      "subject": "Construct GSM8K and preference rows from prepared reward_model extras"
+    },
+    {
+      "commit": "aa86ee36070887b588b4ff2345dfe6df7c04ec34",
+      "subject": "Accept ASDiv ratio answers and verify equivalent ratios"
+    },
+    {
+      "commit": "22e5bc0660cb670552936a28c4c519df032ac11b",
+      "subject": "Verify AIME answers by exact rational value"
+    },
+    {
+      "commit": "cdc6600b4b5ef78e322c95f61a5401448d55c15e",
+      "subject": "Retry the math judge once with a larger output budget"
+    },
+    {
+      "commit": "400f598ef629e09e04475e37e81b5ce30ebd06c2",
+      "subject": "Grade NVARC JSON grids and unfenced transforms"
+    },
+    {
+      "commit": "00fcf63e255b49cd5685829ad23ccf98192cc12a",
+      "subject": "Let stdin programs read sys.stdin.buffer in the LCB runner"
+    },
+    {
+      "commit": "5beb28cde69c9621e2fd8ea81d3a2ef6740545ad",
+      "subject": "Align jailbreak judge examples with the verdict format"
+    },
+    {
+      "commit": "d8b6e8c163def3660e9d3072c1c174226a1709fa",
+      "subject": "[skyrl-gym] [MOPD] Let pure OPD runs skip Nemotron Ultra grading (#763)"
+    },
+    {
+      "commit": "5a7ede7c55696547d36f7323f76270fc9d9c3394",
+      "subject": "Score completed GSM8K answers from an explicit final line (#800)"
+    },
+    {
+      "commit": "0cdccc9229f47c8eadff90aa2033a5b4604266aa",
+      "subject": "Repair the OpenScience MCQ source and verifier (#824)"
+    },
+    {
+      "commit": "fc658428cf76ab8dfaaff5e836b6038b39f6fef4",
+      "subject": "Short circuit binary Ultra code grading after a failed test (#806)"
+    },
+    {
+      "commit": "196143ffaed8ad95bebc754f87debbb40a27a70f",
+      "subject": "Strip Snowball reasoning from grader inputs and bound chat output (#804)"
+    },
+    {
+      "commit": "a5df36454457c5b9b75301fe116df068ea52ea21",
+      "subject": "Repair Ultra grading and retain verifier failure evidence (#803)"
+    },
+    {
+      "commit": "24d567f6434a511d79de77b1d8947676c1632a0d",
+      "subject": "[skyrl-gym] Bound the LiveCodeBench verifier child (#683)"
+    },
+    {
+      "commit": "68f24ca04ef95271630a90a394fde8ae6cc65c9a",
+      "subject": "[rl] Train EAGLE drafts from verified rollouts (#550)"
+    }
+  ],
+  "coverage": "All built-in gym registrations; all Nemotron _step agent branches; dormant GeneralReactTask/WebResearchTask dispatch and exported unused scorers. External user-registered gym envs are open extension points, not enumerable repository verifiers.",
+  "metadata_contract": "Do not collapse VerificationResult verified/error/skipped/unavailable, AIME RewardResult channels, or Harbor per-test evidence IDs/stdout fragments/completeness. Preserve raw/unshaped versus optimization reward. Invalid task and infrastructure are masked, never scored-zero candidates.",
+  "validation": {
+    "stdio_tests": 19,
+    "mcq_source_tests": 18,
+    "arithmetic_adapter_tests": 17,
+    "arithmetic_source_tests": 40,
+    "patch_apply_checks": "Both patches apply cleanly to pinned source; source clone unchanged",
+    "dependency_pin": "Pending implementation checkpoint commit"
+  },
+  "implementation": {
+    "module": "src/verifyit/adapters/skyrl.py",
+    "patches": [
+      "patches/MarinSkyRL/mcq-verifyit.patch",
+      "patches/MarinSkyRL/arithmetic-verifyit.patch"
+    ],
+    "covered_routes": [
+      "mcq",
+      "aime normalized rational equality",
+      "gsm8k final_line"
+    ]
+  }
+}

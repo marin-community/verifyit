@@ -39,6 +39,8 @@ process exit after a verdict has been written.
 | `judge` | reference-answer or checklist rubric through a configured model endpoint |
 | `script` | legacy `test.sh` fallback with normalized reward files and fail-closed errors |
 
+For `stdio`, a candidate program that exits unsuccessfully scores zero even if its stdout matches.
+
 For the `math` and `numeric` grading modes, the last `\boxed{...}` occurrence determines the
 candidate when the output contains a box marker. Its braces must be balanced and its content must be
 nonempty. Otherwise, the candidate receives reward `0.0`, even when an earlier marker contains the

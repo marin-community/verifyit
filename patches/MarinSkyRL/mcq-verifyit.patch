@@ -1,0 +1,43 @@
+--- a/skyrl-gym/skyrl_gym/envs/mcq/env.py
++++ b/skyrl-gym/skyrl_gym/envs/mcq/env.py
+@@ -1,4 +1,7 @@
+ from typing import Any
++
++from verifyit.modes.grade_mcq import grade_mcq_candidate
++from verifyit.spec import McqSpec
+ 
+ from omegaconf import DictConfig
+ 
+@@ -23,5 +26,6 @@
+ 
+     def step(self, action: str) -> BaseTextEnvStepOutput:
+         answer = extract_mcq_answer(action)
+-        reward = 1.0 if answer is not None and answer == self.ground_truth else 0.0
++        verdict = grade_mcq_candidate(McqSpec(expected=self.ground_truth, options=26), answer or "")
++        reward = verdict.reward
+         return BaseTextEnvStepOutput(observations=[], reward=reward, done=True, metadata={})
+--- a/skyrl-gym/tests/test_mcq.py
++++ b/skyrl-gym/tests/test_mcq.py
+@@ -54,3 +54,22 @@
+     expected = 1.0 if contract.is_correct(response, ground_truth) else 0.0
+ 
+     assert _env(ground_truth).step(response)["reward"] == expected
++
++
++@pytest.mark.parametrize(
++    ("response", "expected_reward"),
++    [
++        (r"\boxed{A} revised to \boxed{B}", 1.0),
++        (r"\boxed{B} revised to \boxed{A}", 0.0),
++        (r"\boxed{a}", 1.0),
++        (r"\boxed{AA}", 0.0),
++        (r"\boxed{A", 0.0),
++        ("Answer: A", 0.0),
++    ],
++)
++def test_env_preserves_first_box_extraction(response, expected_reward):
++    assert _env("A").step(response)["reward"] == expected_reward
++
++
++def test_env_rewards_last_alphabet_option():
++    assert _env("Z").step(r"\boxed{Z}")["reward"] == 1.0

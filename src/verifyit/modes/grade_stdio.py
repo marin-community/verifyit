@@ -46,6 +46,16 @@ def grade(spec: StdioSpec, tests_dir: Path, workspace: Path) -> Reward:
                 return scored(0.0, reason="command_failed", error=str(error), passed=0, total=len(cases))
             if result.timed_out:
                 return scored(0.0, reason="timeout", passed=index, total=len(cases), first_failure=number)
+            if result.returncode != 0:
+                return scored(
+                    0.0,
+                    reason="runtime_error",
+                    returncode=result.returncode,
+                    stderr=result.stderr[-STDERR_TAIL:],
+                    passed=index,
+                    total=len(cases),
+                    first_failure=number,
+                )
             expected = expected_path.read_text(errors="replace")
             if judge is None:
                 accepted = _matches(result.stdout, expected, spec)

@@ -1,0 +1,46 @@
+--- a/skyrl-gym/skyrl_gym/envs/aime/utils.py
++++ b/skyrl-gym/skyrl_gym/envs/aime/utils.py
+@@ -13,6 +13,8 @@
+ # limitations under the License.
+ # Adapted from https://github.com/EleutherAI/lm-evaluation-harness/blob/main/lm_eval/tasks/hendrycks_math/utils.py
+ # https://github.com/volcengine/verl/blob/1a62568f801ba35ac1f5387e27232a2df7eac488/verl/utils/reward_score/math_dapo.py
++
++from verifyit.adapters.skyrl import grade_aime_candidate
+ 
+ import math
+ import re
+@@ -221,11 +223,7 @@
+     else:
+         gt = normalize_final_answer(gt)
+ 
+-    if pred == gt:
+-        return True, pred
+-    pred_value = rational_value(pred)
+-    gt_value = rational_value(gt)
+-    return pred_value is not None and pred_value == gt_value, pred
++    return grade_aime_candidate(gt, pred).reward == 1.0, pred
+ 
+ 
+ def is_correct_strict_box(
+--- a/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py
++++ b/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py
+@@ -12,8 +12,9 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
++from verifyit.adapters.skyrl import grade_gsm8k_final_line
++
+ import re
+-from decimal import Decimal
+ 
+ FINAL_ANSWER = re.compile(r"#### (-?(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)(?:\.[0-9]+)?)")
+ 
+@@ -66,7 +67,7 @@
+     if answer is None:
+         return 0
+     if method == "final_line":
+-        return score if Decimal(answer) == Decimal(ground_truth) else format_score
++        return score if grade_gsm8k_final_line(ground_truth, solution_str).reward == 1.0 else format_score
+     else:
+         if answer == ground_truth:
+             return score

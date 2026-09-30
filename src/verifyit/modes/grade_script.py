@@ -13,6 +13,7 @@ stdout. A script that exits without reporting a reward returns an infrastructure
 
 import json
 import logging
+import math
 import os
 import tempfile
 from dataclasses import dataclass
@@ -49,6 +50,7 @@ class Completion:
 class Reported:
     value: float
     channel: Channel
+    metrics: dict[str, float] | None = None
 
 
 def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
@@ -70,7 +72,7 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
             "VERIFYIT_LOGS_DIR": str(logs_dir),
         }
         completion = _run(command, cwd, env, spec.timeout)
-        reported = _reported_reward(logs_dir, completion.stdout)
+        reported = _reported_reward(logs_dir, completion.stdout, spec.reward_key)
 
     detail: dict = {"exit_code": completion.exit_code, "stderr": completion.stderr[-STDERR_TAIL:]}
     if completion.exit_code is None:
@@ -81,6 +83,8 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
             f"stderr tail: {completion.stderr[-STDERR_TAIL:]!r}"
         )
     detail["channel"] = reported.channel.value
+    if reported.metrics is not None:
+        detail["metrics"] = reported.metrics
     if not 0.0 <= reported.value <= 1.0:
         return scored(0.0, reason="reward_out_of_range", reported=reported.value, **detail)
     return scored(reported.value, **detail)
@@ -94,25 +98,42 @@ def _run(command: list[str], cwd: Path, env: dict[str, str], timeout: float) -> 
     return Completion(completed.returncode, completed.stdout, completed.stderr)
 
 
-def _reported_reward(logs_dir: Path, stdout: str) -> Reported | None:
-    value = _json_reward(logs_dir / REWARD_JSON)
-    if value is not None:
-        return Reported(value, Channel.REWARD_JSON)
-    value = _float((logs_dir / REWARD_TXT).read_text(errors="replace")) if (logs_dir / REWARD_TXT).is_file() else None
-    if value is not None:
+def _reported_reward(logs_dir: Path, stdout: str, reward_key: str) -> Reported | None:
+    json_path = logs_dir / REWARD_JSON
+    if json_path.is_file():
+        return _json_reward(json_path, reward_key)
+    if reward_key != "reward":
+        raise RuntimeError(f"named reward {reward_key!r} requires reward.json")
+    text_path = logs_dir / REWARD_TXT
+    if text_path.is_file():
+        value = _float(text_path.read_text(errors="replace"))
+        if value is None or not math.isfinite(value):
+            raise RuntimeError(f"{text_path} does not contain a finite numeric reward")
         return Reported(value, Channel.REWARD_TXT)
     value = _float(last_line(stdout))
+    if value is not None and not math.isfinite(value):
+        raise RuntimeError("script stdout does not contain a finite numeric reward")
     return Reported(value, Channel.STDOUT) if value is not None else None
 
 
-def _json_reward(path: Path) -> float | None:
-    if not path.is_file():
-        return None
+def _json_reward(path: Path, reward_key: str) -> Reported:
     try:
         payload = json.loads(path.read_text(errors="replace"))
     except ValueError as error:
         raise RuntimeError(f"{path} is not valid JSON: {error}") from error
-    return _float(payload.get("reward")) if isinstance(payload, dict) else None
+    if not isinstance(payload, dict) or reward_key not in payload:
+        raise RuntimeError(f"{path} must contain the selected reward {reward_key!r}")
+    value = _float(payload[reward_key])
+    if value is None or not math.isfinite(value):
+        raise RuntimeError(f"{path} does not contain a finite numeric reward {reward_key!r}")
+    metrics = {}
+    for key, raw_value in payload.items():
+        metric = _float(raw_value)
+        if metric is not None:
+            if not math.isfinite(metric):
+                raise RuntimeError(f"{path} contains nonfinite metric {key!r}")
+            metrics[key] = metric
+    return Reported(value, Channel.REWARD_JSON, metrics)
 
 
 def _float(value: object) -> float | None:

@@ -229,6 +229,7 @@ class ScriptSpec:
     args: tuple[str, ...] = ()
     timeout: float = 600.0
     workspace: str = DEFAULT_WORKSPACE
+    reward_key: str = "reward"
 
 
 Spec = (
