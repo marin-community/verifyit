@@ -4,7 +4,7 @@
  ]
  
  dependencies = [
-+    "verifyit[answer] @ git+https://github.com/marin-community/verifyit@d3e3f5ac3c7bed328addc6d6011b8101b5bd71d7",
++    "verifyit[answer] @ git+https://github.com/marin-community/verifyit@97147e2388e01fb9734f1c16e7d44b312094b0af",
      # Lean core: everything `python -m eval.eval` needs to evaluate a *served*
      # OpenAI-compatible endpoint (--model local-completions / curator) and grade the
      # requested benchmarks. Per-benchmark and GPU/accelerator deps live in the extras

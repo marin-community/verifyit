@@ -23,7 +23,7 @@ Further normalization/fallback contracts are described in
 
 
 The integration requires verifyit implementation commit
-`d3e3f5ac3c7bed328addc6d6011b8101b5bd71d7`, including JEEBench primitive composition and `math_answer_text`.
+`97147e2388e01fb9734f1c16e7d44b312094b0af`, including JEEBench primitive composition and `math_answer_text`.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -33,7 +33,7 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit[answer] @ git+file:///path/to/verifyit@d3e3f5ac3c7bed328addc6d6011b8101b5bd71d7'
+uv pip install --python /path/to/environment/bin/python 'verifyit[answer] @ git+file:///path/to/verifyit@97147e2388e01fb9734f1c16e7d44b312094b0af'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
