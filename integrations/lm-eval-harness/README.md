@@ -26,7 +26,7 @@ zero metric produces `scored`, never an infrastructure failure.
 
 
 The integration requires verifyit implementation commit
-`a4b0602a2f03b7864f7d7da35d374b7007b348f1`, including the AfroBench and corpus runtime APIs.
+`028025729bf9e9cd4ba19b16a59347c8710a36e3`, including the AfroBench and corpus runtime APIs.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -36,7 +36,7 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@a4b0602a2f03b7864f7d7da35d374b7007b348f1'
+uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@028025729bf9e9cd4ba19b16a59347c8710a36e3'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
@@ -89,5 +89,5 @@ Fixture evidence is in campaign `evidence/e2e/wiring/harness-likelihood/`.
 No matching model-run links were found in the tracker. Named local ASDiv artifacts
 include SkyRL generation traces; those do not supply harness likelihood response
 pairs. This is source fixture validation, not archived model-run replay.
-The likelihood extension's implementation pin must follow its API checkpoint;
-the earlier pin above supports only the preceding corpus profiles.
+The dependency pin above includes the likelihood extension at its actual API
+checkpoint; it remains local and unpublished.
