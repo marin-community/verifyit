@@ -1,0 +1,229 @@
+diff --git a/adapters/arc_agi_2/README.md b/adapters/arc_agi_2/README.md
+index 041e3f4..cbbc6fe 100644
+--- a/adapters/arc_agi_2/README.md
++++ b/adapters/arc_agi_2/README.md
+@@ -133,6 +133,15 @@ uv run arc_agi_2 score -r /path/to/result.json
+ 
+ Tasks are written to `datasets/arc_agi_2/` with one directory per task. Each task follows the structure shown in ["Generated Task Structure"](#generated-task-structure) above.
+ 
++To use the typed grid verifier, add `--verifyit-enabled` when generating tasks.
++The generated task selects Harbor's separate verifier environment. Harbor
++transfers `/testbed/output.json` from the agent container, then grades it in a
++new image with the expected grid baked under `/tests`. The generated verifier
++image installs verifyit with the `schema` extra at a fixed Git revision. The
++agent image and default generation route stay unchanged. This route rejects
++Boolean, float, nonfinite, empty and ragged grids, including Python-equal
++Boolean/integer values that the original `verify.py` accepts.
++
+ ## Comparison with Original Benchmark (Parity)
+ To ensure our implementation is valid, i.e., **running the benchmark inside harbor using the adapter is equivalent to running it using the original harness**, we run parity experiments on both sides to see if the achieved scores are comparable with the same set of agents+ models. The closely aligned scores across both comparisons confirm that this adapter successfully replicates the ARC-AGI-2 benchmark within the Harbor harness. For individual run scores, please refer to [parity_experiment.json](./parity_experiment.json) for more details.
+ 
+diff --git a/adapters/arc_agi_2/src/arc_agi_2/adapter.py b/adapters/arc_agi_2/src/arc_agi_2/adapter.py
+index 3736748..ac52825 100644
+--- a/adapters/arc_agi_2/src/arc_agi_2/adapter.py
++++ b/adapters/arc_agi_2/src/arc_agi_2/adapter.py
+@@ -3,6 +3,7 @@
+ 
+ from __future__ import annotations
+ 
++import hashlib
+ import json
+ import shutil
+ from dataclasses import dataclass
+@@ -18,6 +19,12 @@ from .utils import (
+     render_literal,
+ )
+ 
++VERIFYIT_REVISION = "2475a92bee1484c4db5fa35b1ff3efd7f2292bfe"
++SOURCE_TEST_HASH = "fb3671f00642f96f614d2b9d774d33f824303af4e760b657a93325b48c2172ca"
++SOURCE_DOCKERFILE_HASH = (
++    "b00491492d12db494176a822f08fe81b26956b7b46133ae51dcb8e6ee6d22580"
++)
++
+ 
+ @dataclass
+ class ARCAGIRecord:
+@@ -158,6 +165,7 @@ class ARCAGI2Adapter:
+         template_dir: Optional[Path] = None,
+         agent_timeout_sec: float = 600.0,
+         verifier_timeout_sec: float = 60.0,
++        verifyit_enabled: bool = False,
+     ) -> None:
+         self.out_root = Path(harbor_tasks_root)
+         self.out_root.mkdir(parents=True, exist_ok=True)
+@@ -176,6 +184,7 @@ class ARCAGI2Adapter:
+ 
+         self.agent_timeout = float(agent_timeout_sec)
+         self.verifier_timeout = float(verifier_timeout_sec)
++        self.verifyit_enabled = verifyit_enabled
+ 
+         # Load dataset
+         self.loader = ARCAGILoader()
+@@ -242,8 +251,59 @@ class ARCAGI2Adapter:
+         # solution/expected.json - for oracle to copy
+         paths.solution_expected_path.write_text(json.dumps(record.test_output))
+ 
++        if self.verifyit_enabled:
++            self._enable_verifyit(paths)
++
+         return paths.task_dir
+ 
++    @staticmethod
++    def _enable_verifyit(paths: HarborTaskPaths) -> None:
++        """Opt into the pinned typed-grid route for the reviewed task template."""
++        script = paths.test_sh_path.read_bytes()
++        dockerfile = paths.dockerfile_path.read_bytes()
++        if hashlib.sha256(script).hexdigest() != SOURCE_TEST_HASH:
++            raise ValueError("Unreviewed ARC-AGI-2 test script")
++        if hashlib.sha256(dockerfile).hexdigest() != SOURCE_DOCKERFILE_HASH:
++            raise ValueError("Unreviewed ARC-AGI-2 Dockerfile")
++        task_config = paths.config_path.read_text()
++        if not task_config.startswith('schema_version = "1.0"\n'):
++            raise ValueError("Unreviewed ARC-AGI-2 task config")
++        if task_config.count("[verifier]\n") != 1:
++            raise ValueError("Unreviewed ARC-AGI-2 verifier config")
++        paths.config_path.write_text(
++            'artifacts = ["/testbed/output.json"]\n'
++            + task_config.replace(
++                "[verifier]\n",
++                '[verifier]\nenvironment_mode = "separate"\n',
++                1,
++            )
++            + "\n[verifier.environment]\n"
++            + "build_timeout_sec = 300.0\n"
++            + "cpus = 1\n"
++            + "memory_mb = 1024\n"
++            + "storage_mb = 2048\n"
++            + "gpus = 0\n"
++            + "allow_internet = false\n"
++        )
++        paths.test_sh_path.write_text(
++            "#!/bin/bash\n"
++            "exec /opt/verifyit/bin/python -m verifyit.adapters.harbor_arc_agi_2 "
++            "/tests/expected.json /testbed/output.json --logs-dir /logs/verifier\n"
++        )
++        (paths.tests_dir / "Dockerfile").write_text(
++            "FROM python:3.11-slim\n"
++            "WORKDIR /testbed\n"
++            "RUN apt-get update && apt-get install -y --no-install-recommends git curl "
++            "&& rm -rf /var/lib/apt/lists/* \\\n"
++            "    && curl -LsSf https://astral.sh/uv/0.7.13/install.sh | sh \\\n"
++            "    && /root/.local/bin/uv venv --python python3.11 /opt/verifyit \\\n"
++            "    && /root/.local/bin/uv pip install --python /opt/verifyit/bin/python "
++            f"'verifyit[schema] @ git+https://github.com/marin-community/verifyit@{VERIFYIT_REVISION}'\n"
++            "COPY expected.json /tests/expected.json\n"
++            "COPY test.sh /tests/test.sh\n"
++            "RUN chmod 0444 /tests/expected.json && chmod 0555 /tests/test.sh\n"
++        )
++
+     def generate_split(
+         self,
+         split: str,
+diff --git a/adapters/arc_agi_2/src/arc_agi_2/main.py b/adapters/arc_agi_2/src/arc_agi_2/main.py
+index 1fff36a..c9f56f8 100644
+--- a/adapters/arc_agi_2/src/arc_agi_2/main.py
++++ b/adapters/arc_agi_2/src/arc_agi_2/main.py
+@@ -19,6 +19,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
+         template_dir=args.template_dir,
+         agent_timeout_sec=args.agent_timeout,
+         verifier_timeout_sec=args.verifier_timeout,
++        verifyit_enabled=args.verifyit_enabled,
+     )
+ 
+     requested_task_ids: list[str] = []
+@@ -137,6 +138,11 @@ def main() -> None:
+         default=None,
+         help="Override template directory (defaults to ./task-template)",
+     )
++    gen_parser.add_argument(
++        "--verifyit-enabled",
++        action="store_true",
++        help="Route generated tasks through the pinned typed-grid verifier",
++    )
+     gen_parser.add_argument(
+         "--overwrite",
+         action="store_true",
+diff --git a/adapters/arc_agi_2/tests/test_verifyit.py b/adapters/arc_agi_2/tests/test_verifyit.py
+new file mode 100644
+index 0000000..619dbac
+--- /dev/null
++++ b/adapters/arc_agi_2/tests/test_verifyit.py
+@@ -0,0 +1,78 @@
++"""The ARC adapter's opt-in route only changes reviewed generated tasks."""
++
++import hashlib
++import tomllib
++from pathlib import Path
++
++import pytest
++
++from arc_agi_2 import adapter
++from arc_agi_2.adapter import ARCAGI2Adapter, ARCAGIRecord
++
++TEMPLATE_DIR = Path(adapter.__file__).parent / "task-template"
++
++
++def make_converter(tmp_path: Path, enabled: bool) -> ARCAGI2Adapter:
++    converter = object.__new__(ARCAGI2Adapter)
++    converter.out_root = tmp_path
++    converter.template_dir = TEMPLATE_DIR
++    converter.t_instruction = TEMPLATE_DIR / "instruction.md"
++    converter.t_config = TEMPLATE_DIR / "task.toml"
++    converter.t_dockerfile = TEMPLATE_DIR / "environment/Dockerfile"
++    converter.t_test_sh = TEMPLATE_DIR / "tests/test.sh"
++    converter.t_verify_py = TEMPLATE_DIR / "tests/verify.py"
++    converter.t_solve_sh = TEMPLATE_DIR / "solution/solve.sh"
++    converter.agent_timeout = 600.0
++    converter.verifier_timeout = 60.0
++    converter.verifyit_enabled = enabled
++    return converter
++
++
++def record() -> ARCAGIRecord:
++    return ARCAGIRecord(
++        task_id="sample",
++        test_index=0,
++        train_inputs=[[[0]]],
++        train_outputs=[[[1]]],
++        test_input=[[2]],
++        test_output=[[3]],
++    )
++
++
++def test_opt_in_generated_task_keeps_one_pair_and_uses_pinned_verifier(
++    tmp_path: Path,
++) -> None:
++    task = make_converter(tmp_path, True).generate_task(record())
++    assert (task / "tests/expected.json").read_text() == "[[3]]"
++    script = (task / "tests/test.sh").read_text()
++    assert "verifyit.adapters.harbor_arc_agi_2" in script
++    verifier_image = (task / "tests/Dockerfile").read_text()
++    assert "verifyit[schema]" in verifier_image
++    assert "COPY expected.json /tests/expected.json" in verifier_image
++    assert "/opt/verifyit" in verifier_image
++    assert hashlib.sha256(
++        (task / "environment/Dockerfile").read_bytes()
++    ).hexdigest() == (
++        "b00491492d12db494176a822f08fe81b26956b7b46133ae51dcb8e6ee6d22580"
++    )
++    with (task / "task.toml").open("rb") as task_file:
++        config = tomllib.load(task_file)
++    assert config["artifacts"] == ["/testbed/output.json"]
++    assert config["verifier"]["environment_mode"] == "separate"
++    assert config["verifier"]["environment"]["allow_internet"] is False
++
++
++def test_default_generator_keeps_source_script(tmp_path: Path) -> None:
++    task = make_converter(tmp_path, False).generate_task(record())
++    assert hashlib.sha256((task / "tests/test.sh").read_bytes()).hexdigest() == (
++        "fb3671f00642f96f614d2b9d774d33f824303af4e760b657a93325b48c2172ca"
++    )
++
++
++def test_unreviewed_source_script_refuses_opt_in(tmp_path: Path) -> None:
++    converter = make_converter(tmp_path, True)
++    script = tmp_path / "changed-test.sh"
++    script.write_text("#!/bin/bash\necho 1\n")
++    converter.t_test_sh = script
++    with pytest.raises(ValueError, match="Unreviewed ARC-AGI-2 test script"):
++        converter.generate_task(record())

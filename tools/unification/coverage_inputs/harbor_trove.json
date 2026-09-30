@@ -392,16 +392,27 @@
       "entity_id": "harbor:arc_agi_2",
       "evidence": [
         "docs/unification/harbor_semantics.json#arc_agi_2",
-        "docs/unification/harbor_inventory.json#arc_agi_2"
+        "docs/unification/harbor_inventory.json#arc_agi_2",
+        "integrations/harbor/arc-agi-2-separate-verifyit.patch",
+        "evidence/e2e/wiring/harbor-arc-agi-2/selection-separate.json",
+        "evidence/e2e/wiring/harbor-arc-agi-2/direct-3ad05f52_0.json",
+        "evidence/e2e/wiring/harbor-arc-agi-2/trial-3ad05f52_0-positive.json",
+        "evidence/e2e/wiring/harbor-arc-agi-2/trial-3ad05f52_0-wrong.json",
+        "evidence/e2e/wiring/harbor-arc-agi-2/primitive-call-final.json",
+        "evidence/e2e/wiring/harbor-arc-agi-2/reference-mutation-before.json",
+        "evidence/e2e/wiring/harbor-arc-agi-2/trial-attack.json",
+        "evidence/e2e/wiring/harbor-arc-agi-2/trial-attack-checkpoint.json",
+        "evidence/e2e/wiring/harbor-arc-agi-2/final-reconciliation.json",
+        "evidence/e2e/wiring/harbor-arc-agi-2/pin-equivalence.json"
       ],
-      "gap_kind": "deliberate_boolean_cell_hardening",
-      "implementation_present": false,
+      "gap_kind": "implemented_schema_client",
+      "implementation_present": true,
       "name": "arc_agi_2",
-      "needed_change": "Generate schema const plus integer cell types from the exact expected grid; provide the task file discovery/configuration. Core schema regression already rejects boolean cells, but no Harbor converter patch emits that schema/spec.",
+      "needed_change": "Replay saved model traces and broader task images before deployment; publish the pinned verifyit revision for remote image builds.",
       "primitive_candidates": [
         "json-schema"
       ],
-      "reason": "JSON output grid structural equality maps to schema const expected grid. Declare integer cell types to reject bool-as-int upstream equality loophole; preserve output/expected paths. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "The opt-in Harbor adapter transfers only the candidate grid to a separate verifier image, where the protected reference is graded with the existing JSON-schema const primitive. Rectangular integer cells reject source boolean and integral-float false positives; invalid references are unscored.",
       "source_evidence": [
         {
           "functions": [
@@ -436,8 +447,8 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "Three seeded source-generated test pairs matched original source, direct verifyit CLI and actual Harbor Trial positive/wrong scores. A shared-container reference mutation falsely scored one before isolation and scored zero in the separate verifier; symlink, missing output, invalid reference and typed-cell cases were exercised. The installed verifier executed the JSON-schema primitive. These are bounded fixtures, not archived model rollouts or full benchmark accuracy validation."
     },
     {
       "entity_id": "harbor:autocodebench",

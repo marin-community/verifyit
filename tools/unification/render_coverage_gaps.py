@@ -141,10 +141,10 @@ text += "\n\nThe two external objectives are not correctness verifiers:\n\n" + t
     "MarinSkyRL", {"not_a_correctness_verifier"}
 )
 text += (
-    "\n\n## Harbor\n\nThe HARBOR_PENDING_COUNT unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval, HumanEvalFix, BigCodeBench-Hard, AutoCodeBench, MMAU, CodePDE, ReplicationBench and CompileBench invoke the existing pytest route. BFCL, DABstep and tau3 retain source scorers behind structured ScriptSpec clients. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; HARBOR_NATIVE_COUNT primitive clients are now implemented.\n\n"
+    "\n\n## Harbor\n\nThe HARBOR_PENDING_COUNT unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval, HumanEvalFix, BigCodeBench-Hard, AutoCodeBench, MMAU, CodePDE, ReplicationBench and CompileBench invoke the existing pytest route. ARC-AGI-2 grades the output grid with JSON-schema const in a separate verifier image. BFCL, DABstep and tau3 retain source scorers behind structured ScriptSpec clients. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; HARBOR_NATIVE_COUNT primitive clients are now implemented.\n\n"
     + table("harbor", {"not_integrated"})
 )
-text += "\n\n### Wired exact, MCQ and pytest clients\n\n" + table("harbor", {"native_route_available"})
+text += "\n\n### Wired primitive clients\n\n" + table("harbor", {"native_route_available"})
 text += "\n\n### Retained source evaluators\n\n" + table("harbor", {"native_fallback"})
 text += (
     "\n\n### Additional tracker replay requirements\n\nThese seven tracker datasets are separate from the 87 adapter census. Missing workspaces/provenance are artifact gaps, not unsupported verifier modes.\n\n"
@@ -261,7 +261,7 @@ assert harbor_total == 87
 assert harbor_native + harbor_pending + harbor_fallback == harbor_total
 text = text.replace(
     "HARBOR_SUMMARY_ROW",
-    f"| Harbor {harbor_total} adapters | {harbor_native} exact/MCQ/pytest clients + "
+    f"| Harbor {harbor_total} adapters | {harbor_native} native primitive clients + "
     f"{harbor_fallback} structured source-runtime bridges | {harbor_pending} not integrated; "
     "BFCL, DABstep and tau3 retain source evaluators |",
 )

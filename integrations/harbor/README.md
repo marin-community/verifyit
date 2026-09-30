@@ -13,6 +13,24 @@ unpublished remote install in that image. The other three task images and
 matching saved model traces have not been validated. See
 `evidence/e2e/wiring/harbor-answers/` for commands, hashes and verdicts.
 
+Apply `arc-agi-2-separate-verifyit.patch` to the pinned Harbor source and pass
+`--verifyit-enabled` when generating ARC-AGI-2 tasks. The agent image retains
+the original task environment but contains no expected grid. Harbor transfers
+only `/testbed/output.json` to a separate verifier image, which holds the
+protected reference and calls verifyit's JSON-schema const grader. Rectangular
+integer-grid checks reject source false positives from boolean and integral
+float cells; invalid references remain unscored. Three seeded source-generated
+test pairs matched original source, direct CLI and actual Harbor Trial positive
+and wrong scores. A candidate background copier changed the shared-container
+reference and falsely scored one before isolation; the same attack scored zero
+with the separate verifier. Symlink and missing output, malformed reference,
+and typed-cell cases were also checked. These are bounded fixtures, not saved
+model rollouts or full benchmark accuracy validation. The generated verifier
+Dockerfile pins local verifyit commit `2475a92bee1484c4db5fa35b1ff3efd7f2292bfe`;
+the proof substituted an attested local wheel because the Git pin is not
+published. Exact commands and hashes are in
+`evidence/e2e/wiring/harbor-arc-agi-2/README.md`.
+
 Apply `evoeval-pytest-verifyit.patch` after the Harbor dispatcher patch. The
 generated EvoEval task declares `PytestSpec` over its protected test file;
 verifyit's existing all-suite rule matches the source binary pytest result.
