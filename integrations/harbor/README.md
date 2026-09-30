@@ -71,6 +71,24 @@ Harbor retained the artifact. Malformed protected-test collection remained
 unscored without a reward. No matching saved model trace was available. The
 image proof substituted an exact-commit wheel for the unpublished Git install.
 
+Apply `codepde-pytest-verifyit.patch` after the Harbor dispatcher patch. Its
+generated tasks declare PytestSpec against a protected `/tests/verifyit/` copy
+of each upstream nRMSE evaluator. The original `test.sh` and evaluator remain
+separate, so source grading keeps its existing import path. The patched image
+pins verifyit `3f21d36306c86861e5fdff0718bd72029328e752` and preflights
+Linux Landlock before scoring. An unprivileged candidate child receives public
+initial inputs but cannot read the reference HDF5 or write reward files;
+trusted code checks exact array shapes and finite values before the unchanged
+upstream evaluator applies its binary nRMSE threshold. The evaluator reaps
+detached children before consuming output. All five PDE variants matched
+source `test.sh`, direct CLI and Harbor Verifier for reference and wrong solvers
+in a generated image using bounded HDF5 fixtures. Seven adversarial cases
+cover forged stdout, reference reads, reward writes, malformed arrays, and
+missing or empty solvers. The image used a wheel from the exact local API
+commit instead of the unpublished Git install. Full-size PDE data and matching
+saved model traces remain unvalidated. Evidence is in
+`evidence/e2e/wiring/harbor-codepde/`.
+
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
 required by each task's `tests/verifier.toml` inside the verifier image. The
