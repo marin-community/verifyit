@@ -9,8 +9,9 @@ import pytest
 pytest.importorskip("math_verify", reason="math mode needs the `answer` extra")
 
 import math_verify
+from math_verify.errors import TimeoutException
 
-from verifyit.grade import InvalidTask, Status, run
+from verifyit.grade import InvalidTask, Status, run, write_reward
 from verifyit.grade import grade as dispatch
 from verifyit.modes import grade_math
 from verifyit.spec import MathProfile, MathSpec, MathType
@@ -144,3 +145,25 @@ def test_parser_failure_cannot_trigger_fallback_or_positive_reward(monkeypatch, 
     _answer(tmp_path, "2")
     result = run(spec_path, tmp_path)
     assert (result.status, result.reward) == (Status.INFRA_ERROR, 0.0)
+
+
+@pytest.mark.parametrize("operation", ["parse", "verify"])
+def test_backend_timeout_removes_prior_positive_reward(monkeypatch, tmp_path, operation):
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text('mode="math"\nexpected="2"\n')
+    _answer(tmp_path, "2")
+    logs = tmp_path / "logs"
+    positive = run(spec_path, tmp_path)
+    assert (positive.status, positive.reward) == (Status.SCORED, 1.0)
+    write_reward(logs, positive)
+
+    def expired(*args, **kwargs):
+        raise TimeoutException("backend deadline exhausted")
+
+    monkeypatch.setattr(math_verify, operation, expired)
+    result = run(spec_path, tmp_path)
+    assert (result.status, result.reward) == (Status.INFRA_ERROR, 0.0)
+    write_reward(logs, result)
+    assert not (logs / "reward.txt").exists()
+    assert not (logs / "reward.json").exists()
+    assert '"status": "infra_error"' in (logs / "verdict.json").read_text()

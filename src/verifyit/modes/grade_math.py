@@ -107,9 +107,19 @@ def _members_match(expected: list[list], candidate: list[list]) -> bool:
 
 
 def grade_math_candidate(spec: MathSpec, candidate: str) -> Reward:
-    """Score extracted math content without answer-file or last-line normalization."""
+    """Score extracted math content; backend deadlines become infrastructure failures."""
     if not isinstance(spec.profile, MathProfile) or not isinstance(spec.math_type, MathType):
         raise InvalidTask("unknown math parsing profile or math_type")
+    from math_verify.errors import TimeoutException  # noqa: PLC0415
+
+    try:
+        return _grade_math_candidate(spec, candidate)
+    except TimeoutException as error:
+        # This backend exception inherits BaseException, unlike Python's TimeoutError.
+        raise RuntimeError("math verifier deadline exhausted") from error
+
+
+def _grade_math_candidate(spec: MathSpec, candidate: str) -> Reward:
     if spec.profile is MathProfile.BOXED:
         from math_verify import parse, verify  # noqa: PLC0415
 
