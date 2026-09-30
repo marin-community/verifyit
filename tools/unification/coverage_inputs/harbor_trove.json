@@ -443,16 +443,19 @@
       "entity_id": "harbor:autocodebench",
       "evidence": [
         "docs/unification/harbor_semantics.json#autocodebench",
-        "docs/unification/harbor_inventory.json#autocodebench"
+        "docs/unification/harbor_inventory.json#autocodebench",
+        "integrations/harbor/autocodebench-pytest-verifyit.patch",
+        "evidence/e2e/wiring/harbor-autocodebench/image-results-corrected.json",
+        "evidence/e2e/wiring/harbor-autocodebench/manager-fresh-image-results.json"
       ],
-      "gap_kind": "pytest_task_client",
-      "implementation_present": false,
+      "gap_kind": "implemented_pytest_client",
+      "implementation_present": true,
       "name": "autocodebench",
-      "needed_change": "Generate task-specific PytestSpec with pinned hidden tests, restore/setup/import paths and complete report IDs; preserve native all-pass binary policy instead of substituting partial pass fraction; test the native task environment.",
+      "needed_change": "Validate saved model traces and more generated task instances before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
-      "reason": "Binary all-pass pytest test_outputs.py; restore generated tests and retain environment dependencies. Existing PytestSpec can execute preserved assertions, but no adapter emits the required setup/restore/report specification or native binary projection.",
+      "reason": "The generated PytestSpec executes protected /tests/test_outputs.py in the same uv-managed task interpreter as the source script. Its all-suite policy preserves binary reward, and task-owned dependency/setup failures are unscored.",
       "source_evidence": [
         {
           "functions": [
@@ -479,8 +482,8 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "The base task image lacked uv, so the patched image installs pinned uv 0.7.13 for both source and verifyit paths. A generated image matched source test.sh, CLI and Harbor Verifier on passing and failing candidates; wheel-install failure produced no source reward and verifyit infra_error without stale reward. Malformed protected-test collection was unscored. No matching saved model trace was found."
     },
     {
       "entity_id": "harbor:bfcl",

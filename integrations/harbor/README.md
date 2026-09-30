@@ -45,6 +45,20 @@ was available. The image proof substituted a wheel built from the pinned local
 `1dd6292b54dd1c2525a1c1354d49940ba5ba6dbf` commit for the unpublished
 remote Git install; the benchmark dependency layers were unchanged.
 
+Apply `autocodebench-pytest-verifyit.patch` after the Harbor dispatcher patch.
+The pinned base image lacks `uv`, which its original test.sh already requires;
+the patched task image installs uv 0.7.13 for both the original script and
+verifyit. Its generated `PytestSpec` runs protected `/tests/test_outputs.py` in
+the task's uv-managed `/app/.venv` Python. Task-owned setup failures use
+`setup_failure_is_infra = true`, supplied by verifyit commit
+`3f21d36306c86861e5fdff0718bd72029328e752`. A generated image matched
+original test.sh, direct CLI and Harbor Verifier for passing and failing
+candidates. A wheel-install failure left no source reward and produced an
+unscored verifyit verdict with no stale reward; malformed protected-test
+collection also remained unscored. No matching saved model trace was available.
+The image proof substituted a wheel from the exact local API commit for its
+unpublished remote Git install.
+
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
 required by each task's `tests/verifier.toml` inside the verifier image. The
