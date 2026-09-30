@@ -89,7 +89,7 @@ The48 entries comprise46 scoring routes across17 contract families and two exter
 objectives. Calendar joins the client/task-harness group, bringing it to 24 routes.
 The other 22 retain existing-class profile or comparator-parity requirements; three
 dormant math variants are audits, not proven missing APIs. The current register
-separates 18 implemented routes, six client/harness routes still unwired, three
+separates 20 implemented routes, four client/harness routes still unwired, three
 dormant parity audits and 19 concrete existing-class behavior gaps. Source
 orchestration and metrics stay in clients. No new mode category is proposed; a generic source callback
 behind script is only a runtime bridge. The disjoint plan is recorded per entry in
@@ -163,7 +163,7 @@ current pinned-source labels are reported separately.
 Eighteen source routes now have integration patches. Nine later cutovers use
 `verifyit_enabled` for Reasoning Gym, Nemotron MCQA and typed tool comparison,
 explicit QA entrypoints, and the calendar constraint harness. The source-pinned
-register separates these implementations from the remaining 28 routes.
+register separates these implementations from the remaining 26 routes.
 
 The calendar patch applies after `reasoning-mcq-verifyit.patch`. It retains source
 JSON extraction and executes trusted duration, window, ordering and overlap checks
@@ -178,3 +178,11 @@ constraints are checked before candidate window short circuits. Zero-duration in
 remain valid because the source permits them; touching intervals remain nonconflicting.
 Evidence, raw actual framework calls and the frozen selection are under the campaign's
 `evidence/e2e/wiring/skyrl-calendar`.
+
+The SQL patch wires both SQL source environments through a trusted ScriptSpec
+SQLite runtime and strict exact result comparison. Nine source fixture tests pass;
+three selected real `text_to_sql` traces match pinned-native and recorded results.
+Legacy `text2sql` has no eligible real trace and remains fixture-validated only.
+Read-only candidate execution and malformed/nonfinite reference rejection intentionally
+tighten legacy behavior; infrastructure errors never earn signed format rewards.
+Evidence is under `evidence/e2e/wiring/skyrl-sql`, including the independent manager replay.

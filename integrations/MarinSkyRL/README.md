@@ -45,3 +45,19 @@ calendar task harness with `verifyit_enabled = true` in Nemotron environment con
 Its trusted ScriptSpec checker preserves valid source schedule semantics and rejects
 malformed candidates/tasks with zero. Twelve source tests and three selected real
 framework replays pass; evidence is under `evidence/e2e/wiring/skyrl-calendar`.
+
+Apply `sqlite-verifyit.patch` to enable both SQL environments with
+`verifyit_enabled = true`. A trusted ScriptSpec checker executes candidate and
+reference queries in SQLite, then uses strict exact comparison of independently
+canonicalized results. Seeded SQL retains duplicate rows, optional ordering,
+six-decimal normalization and the perturbed-database check. Legacy SQL retains
+set equality and the source's signed formatting reward. Verifier failures produce
+zero before formatting rewards; malformed references are unscored. Both routes
+execute candidate queries read-only, an intentional tightening of the legacy
+rollback behavior. The checker launches the framework's Python interpreter.
+
+Nine source fixture tests pass. Three randomly selected real `text_to_sql` traces
+match recorded and pinned-native results through the registered environment and
+verifyit. The complete census contains no eligible legacy `text2sql` trace, so that
+route has fixture coverage but no real-trace validation. Inputs, hashes, commands
+and results are in `evidence/e2e/wiring/skyrl-sql`.

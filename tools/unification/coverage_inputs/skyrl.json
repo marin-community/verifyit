@@ -8,20 +8,20 @@
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 18,
-    "pending_scoring_routes": 28,
-    "pending_active_scoring_routes": 21,
+    "source_patched_routes": 20,
+    "pending_scoring_routes": 26,
+    "pending_active_scoring_routes": 19,
     "pending_dormant_scoring_routes": 7,
-    "zero_core_extension_unwired_routes": 6,
+    "zero_core_extension_unwired_routes": 4,
     "existing_class_behavior_gap_routes": 19,
-    "real_replayed_source_routes": 12,
-    "implemented_routes_missing_real_traces": 6,
+    "real_replayed_source_routes": 13,
+    "implemented_routes_missing_real_traces": 7,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 12,
-      "implemented_not_validated": 6,
-      "not_integrated": 9,
+      "implemented_validated": 13,
+      "implemented_not_validated": 7,
+      "not_integrated": 7,
       "capability_gap": 19,
       "not_a_correctness_verifier": 2
     },
@@ -263,20 +263,21 @@
     },
     {
       "id": "text2sql",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "No eligible verified legacy SQL trace exists in the complete census; actual source SQLite fixtures pass.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_trusted_execution_harness",
       "native_fallback_in_cutover": false,
       "contract_family": "sqlite",
       "existing_primitive_candidate": [
-        "script"
+        "script",
+        "exact"
       ],
       "resolution_strategy": "task_harness",
-      "needed_change": "Script comparator must preserve set semantics and explicit -1 formatting reward projection; classify broken reference as unscored only with reviewed harness change.",
-      "validation_gap": null,
+      "needed_change": "Validate genuine legacy SQL traces when available; no additional primitive is needed.",
+      "validation_gap": "Real-trace source replay is unavailable; fixture validation only.",
       "source_contract": "Format invalid => -1; valid candidate/reference SQL return frozenset rows (duplicates/order discarded), equality => 1 else 0; reference/query errors become 0, rollback transaction; timeout 30 seconds.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -288,27 +289,32 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#sqlite",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/sqlite-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-sql/checkpoint-summary.json",
+        "evidence/e2e/wiring/manager-sql/summary.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "intentional_tightening": "Read-only candidate SQL and invalid/nonfinite reference rejection precede signed format projection; failed verifier never earns formatting reward."
     },
     {
       "id": "text_to_sql",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_trusted_execution_harness",
       "native_fallback_in_cutover": false,
       "contract_family": "sqlite",
       "existing_primitive_candidate": [
-        "script"
+        "script",
+        "exact"
       ],
       "resolution_strategy": "task_harness",
-      "needed_change": "Reusable executable SQL scorer script; broken seed/reference => invalid_task or infra_error; candidate query rejection => scored zero.",
+      "needed_change": "No remaining implementation change for this route.",
       "validation_gap": null,
       "source_contract": "Read-only deterministic SQLite result equivalence on seeded and every-third-row-deleted database; ordered rows only if top-level ORDER BY; 6 decimal normalization; bounded rows/query.",
       "source": {
@@ -321,11 +327,15 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#sqlite",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/sqlite-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-sql/checkpoint-summary.json",
+        "evidence/e2e/wiring/manager-sql/summary.json"
       ],
       "observed_verified_execution_links": 3,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "actual_replayed_links": 3,
+      "core_extension_requirement": "none_proposed",
+      "intentional_tightening": "Read-only candidate SQL and invalid/nonfinite reference rejection precede signed format projection; failed verifier never earns formatting reward."
     },
     {
       "id": "search",

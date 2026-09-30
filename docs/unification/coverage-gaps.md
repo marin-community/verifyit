@@ -106,12 +106,10 @@ The 35 remaining custom benchmarks are named below. Script/stdio/pytest candidat
 
 ## SkyRL
 
-The 28 pending scoring routes comprise 21 active routes and 7 dormant implementations. Three dormant math variants are parity audits, not claims of a missing math API. Nineteen rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
+The 26 pending scoring routes comprise 19 active routes and 7 dormant implementations. Three dormant math variants are parity audits, not claims of a missing math API. Nineteen rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
-| text2sql | not_integrated | script | Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented. Script comparator must preserve set semantics and explicit -1 formatting reward projection; classify broken reference as unscored only with reviewed harness change. |
-| text_to_sql | not_integrated | script | Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented. Reusable executable SQL scorer script; broken seed/reference => invalid_task or infra_error; candidate query rejection => scored zero. |
 | lcb | not_integrated | stdio, pytest | Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented. stdio handles stdin binary all-pass; function-call tests compile pytest harness. |
 | ifeval | capability_gap | ifeval, script | Existing ifeval mode lacks verified equivalent source registry/constraint checkers for this contract; source dispatch remains native. Translate each constraint only after checking checker equivalence; registry names/quantifiers are not interchangeable. |
 | nemotron_ultra/ns_tools_simple_agent | capability_gap | math, judge, script | Prepared math candidate API exists; source comparator policies and/or symmetric custom-prompt judge fallback are not available as the complete composed contract or wired into source. Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. |
@@ -268,6 +266,7 @@ SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofil
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
 | gsm8k_multi_turn | implemented_not_validated | exact | Source integration exists and has source/API tests; no eligible verified execution trace for this route was found in the complete artifact census. None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping. |
+| text2sql | implemented_not_validated | exact | No eligible verified legacy SQL trace exists in the complete census; actual source SQLite fixtures pass. Validate genuine legacy SQL traces when available; no additional primitive is needed. |
 | search | implemented_not_validated | exact | Source integration exists and has source/API tests; no eligible verified execution trace for this route was found in the complete artifact census. None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping. |
 | searchcode | implemented_not_validated | exact | Source integration exists and has source/API tests; no eligible verified execution trace for this route was found in the complete artifact census. None for implemented source cutover; retain source-owned extraction, orchestration and reward shaping. |
 | nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent | implemented_not_validated | exact | Implemented verifyit client route; no eligible saved framework execution validates this route. Run an eligible genuine task through the cutover and compare the source result. |
