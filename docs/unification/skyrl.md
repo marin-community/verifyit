@@ -89,8 +89,8 @@ The48 entries comprise46 scoring routes across17 contract families and two exter
 objectives. Calendar joins the client/task-harness group, bringing it to 24 routes.
 The other 22 retain existing-class profile or comparator-parity requirements; three
 dormant math variants are audits, not proven missing APIs. The current register
-separates 30 implemented routes, one partially wired client/harness route still pending and
-15 concrete existing-class behavior gaps. Three dormant math routes now have source integrations and fixture evidence. Source
+separates 31 implemented routes, two partially wired routes still pending and
+13 concrete existing-class behavior gaps. Three dormant math routes now have source integrations and fixture evidence. Source
 orchestration and metrics stay in clients. No new mode category is proposed; a generic source callback
 behind script is only a runtime bridge. The disjoint plan is recorded per entry in
 `skyrl.json` and detailed in [the composition contracts](skyrl-adapter-specs.md).
@@ -232,3 +232,15 @@ are retained. Twenty-nine source tests and twelve frozen real links pass against
 native/archive; manager before/after witnesses prove empty-policy rejection and
 bounded catastrophic-regex failure. Evidence is in
 `evidence/e2e/wiring/skyrl-format/`.
+
+Standalone IFEval now wires its 26 named source predicates through existing IFEval
+registry execution under one total ScriptSpec deadline. NVIDIA instruction following
+is partially wired and remains in the pending list: `keywords:exclude_word_harder`
+randomizes its hidden forbidden word during reference construction, and is rejected.
+The 54-class source registry is audited, but full-registry execution parity is not
+claimed. Missing/default-random, vacuous and malformed reference configurations
+fail closed; checker and language-detector errors discard the entire fraction.
+Fifteen frozen real links across five groups match recorded/native rewards; these
+validate the implemented deterministic subset, not the remaining stochastic contract.
+Sixty exported-source tests pass. See the integration README and
+`evidence/e2e/wiring/skyrl-instructions/` for registry, replay and patch evidence.

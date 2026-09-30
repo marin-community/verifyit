@@ -135,3 +135,30 @@ verified links across four groups; three selected per group give 12 native/archi
 matches, with an actual child IFEval verdict for every item. The manager independently
 replayed both sides and verified before/after vacuous-policy and catastrophic-regex
 failures. Evidence is in `evidence/e2e/wiring/skyrl-format/`.
+
+Apply `instructions-verifyit.patch` after `format-verifyit.patch`. The standalone
+IFEval route and Nemotron instruction agent register named source-owned predicates
+in existing IFEval. ScriptSpec bounds the entire construction/checking operation,
+including resource initialization; source clients compose the fraction or binary
+reward and retain per-constraint feedback. This is a client registry extension,
+not built-in comparator coverage or delegation to a precomputed source score.
+
+The standalone registry has 26 predicates. NVIDIA's 54-class registry is pinned
+to `f46a5ac87b1400a4f8973039844b6be9b56e3faf`, with retained NLTK and language
+detection dependencies. Predicate results must be actual booleans. Checker,
+detector, dependency and deadline failures invalidate the full result rather than
+retain partial credit. Malformed, empty, vacuous positive-minimum and randomized
+reference construction fails closed. In particular, `keywords:exclude_word_harder`
+randomizes its hidden forbidden word even with explicit kwargs and is rejected;
+this integration does not claim faithful replay of stochastic references. Meaningful
+exact-zero prohibitions remain supported. JSON-format constraints use existing
+JSON-schema candidate grading and reject nonfinite JSON.
+
+Sixty source tests cover normalization, predicate parity, binary/fraction rewards
+and failure boundaries. The full eligible population contains 29 links in five
+benchmark groups; three frozen random links per group yield 15 actual Env replays.
+All match recorded and pinned-native scores/rewards (nine ones, five zeros and
+one half). Manager replays independently confirm both lanes and actual child
+IFEval grading. The final worker replay includes the conservative guards above;
+full-registry golden replay is not claimed. Evidence and rerun driver are in
+`evidence/e2e/wiring/skyrl-instructions/`.

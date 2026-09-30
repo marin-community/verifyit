@@ -168,10 +168,11 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "26 func_name registry entries (25 original plus frequency relation); fraction satisfied; malformed/checker errors currently zero.",
-      "adapter_requirements": "Translate each constraint only after checking checker equivalence; registry names/quantifiers are not interchangeable. Unknown or malformed task becomes invalid_task.",
+      "adapter_requirements": "Named source predicates execute through IFEval under a total ScriptSpec deadline; strict bool and fail-closed reference/checker guards. All26 standalone predicates wired; source fraction and feedback retained.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#instruction",
-      "resolution_strategy": "existing_ifeval_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "resolution_strategy": "existing_ifeval_client_registry_extension",
+      "runtime_migration": "source_patch_implemented",
+      "integration_patch": "integrations/MarinSkyRL/instructions-verifyit.patch"
     },
     {
       "id": "reasoning_gym",
@@ -505,10 +506,11 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Pinned NVIDIA verifiable_instructions registry with instruction kwargs; binary or fraction aggregation.",
-      "adapter_requirements": "Registry checker equivalence audit required; pinned script scorer covers unmatched IDs without new category.",
+      "adapter_requirements": "Named source predicates execute through IFEval under a total ScriptSpec deadline; strict bool and fail-closed reference/checker guards. Stochastic exclude_word_harder reference remains unsupported; whole route pending.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#instruction",
-      "resolution_strategy": "existing_ifeval_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "resolution_strategy": "existing_ifeval_client_registry_extension",
+      "runtime_migration": "partial_source_patch_implemented",
+      "integration_patch": "integrations/MarinSkyRL/instructions-verifyit.patch"
     },
     {
       "id": "nemotron_ultra/abstention_simple_agent",
@@ -1033,35 +1035,44 @@
       "aime",
       "gsm8k",
       "gsm8k_multi_turn",
+      "text2sql",
+      "text_to_sql",
       "search",
+      "lcb",
       "searchcode",
       "mcq",
+      "ifeval",
       "reasoning_gym",
+      "nemotron_ultra/math_formal_lean_refinement_agent",
       "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
       "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
       "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent",
       "nemotron_ultra/calendar_simple_agent",
+      "nemotron_ultra/citation_format_simple_agent",
+      "nemotron_ultra/freeform_formatting_simple_agent",
       "nemotron_ultra/mcqa_simple_agent",
+      "nemotron_ultra/structured_outputs_simple_agent",
+      "nemotron_ultra/structured_outputs_v3_simple_agent",
       "nemotron_ultra/rdkit_chemistry_agent",
       "nemotron_ultra/nvarc_inductive_simple_agent",
       "nemotron_ultra/nvarc_transductive_simple_agent",
+      "nemotron_ultra/code_gen_simple_agent",
       "nemotron_ultra/reasoning_gym_simple_agent",
+      "dormant/torl",
+      "dormant/naive_dapo",
       "dormant/qa_em",
       "dormant/qa_f1",
-      "text2sql",
-      "text_to_sql",
-      "nemotron_ultra/math_formal_lean_refinement_agent",
-      "lcb",
-      "nemotron_ultra/code_gen_simple_agent",
-      "dormant/naive_dapo",
-      "dormant/prime_math",
-      "dormant/torl"
+      "dormant/prime_math"
     ],
-    "implemented_source_patch_route_count": 26,
+    "implemented_source_patch_route_count": 31,
     "notes": "Disjoint route populations; proposed composition is mapping, not deployed migration. A generic retained source callback is only runtime bridge, not primitive parity.",
     "intentional_tightening": "Invalid GSM8K expected decimals, nonfinite chemistry references and malformed reference grids are invalid_task0 rather than exploiting literal/Python equality; valid wrong source format reward retained.",
-    "pending_concrete_existing_class_behavior_gaps": 19,
+    "pending_concrete_existing_class_behavior_gaps": 13,
     "pending_dormant_math_parity_audits": 0,
-    "pending_client_or_harness_wiring_routes": 1
+    "pending_client_or_harness_wiring_routes": 2,
+    "partial_source_patch_routes": [
+      "dormant/coder1",
+      "nemotron_ultra/instruction_following_simple_agent"
+    ]
   }
 }
