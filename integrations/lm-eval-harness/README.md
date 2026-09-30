@@ -26,7 +26,7 @@ zero metric produces `scored`, never an infrastructure failure.
 
 
 The integration requires verifyit implementation commit
-`028025729bf9e9cd4ba19b16a59347c8710a36e3`, including the AfroBench and corpus runtime APIs.
+`767816a40bb687280f0076e8645032e3476dc9cc`, including the AfroBench and corpus runtime APIs.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -36,7 +36,7 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@028025729bf9e9cd4ba19b16a59347c8710a36e3'
+uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@767816a40bb687280f0076e8645032e3476dc9cc'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
@@ -105,4 +105,5 @@ Malformed references abort the complete evaluation without an aggregate.
 Actual evaluator and all six registered-source guard fixtures pass, including
 source-hash mutation rejection. No named tracker/model artifacts were found for
 these tasks; evidence is campaign `evidence/e2e/wiring/harness-code-text/`.
-This extension requires its forthcoming actual API checkpoint dependency pin.
+The dependency pin records the actual CodeXGLUE API checkpoint above; it remains
+local and unpublished.
