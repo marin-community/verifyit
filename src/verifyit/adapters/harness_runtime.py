@@ -8,6 +8,7 @@ The script returns every sample observation and corpus point metric; its zero
 reward deliberately does not reinterpret unbounded or differently scaled metrics.
 """
 
+import hashlib
 import json
 import math
 import sys
@@ -28,6 +29,56 @@ class BatchResult:
     verdict: Reward
 
 
+def _code_text_function(value: object, symbol: str, digest: str) -> bool:
+    module, name = symbol.split(".")
+    if isinstance(value, Mapping):
+        if (
+            set(value) != {"tag", "value", "source_dir"}
+            or value.get("tag") != "function"
+            or value.get("value") != symbol
+        ):
+            return False
+        directory = value.get("source_dir")
+        if not isinstance(directory, str):
+            return False
+        path = Path(directory) / f"{module}.py"
+    elif callable(value) and getattr(value, "__name__", None) == name:
+        code = getattr(value, "__code__", None)
+        if code is None:
+            return False
+        path = Path(code.co_filename)
+    else:
+        return False
+    return (
+        path.as_posix().endswith(f"/lm_eval/tasks/code_x_glue/code-text/{module}.py")
+        and path.is_file()
+        and hashlib.sha256(path.read_bytes()).hexdigest() == digest
+    )
+
+
+def _code_text_profile(config: Mapping[str, Any]) -> bool:
+    definitions = config.get("metric_list")
+    if config.get("output_type") != "generate_until" or not isinstance(definitions, list) or len(definitions) != 1:
+        return False
+    metric = definitions[0]
+    if not isinstance(metric, Mapping) or set(metric) != {"metric", "aggregation", "higher_is_better"}:
+        return False
+    if metric.get("aggregation") != "mean" or metric.get("higher_is_better") is not True:
+        return False
+    if config.get("doc_to_choice") is not None:
+        return False
+    utility_hash = "06dd12019f0eaee28b622302654a35a53551b28fbbf7277b2e0e66370ceaba4a"
+    return (
+        _code_text_function(
+            metric.get("metric"),
+            "bleu.smoothed_bleu_4",
+            "6c60882bf795ccdf764a75ef157644b7d629027b6fa547027a000d5c50fcbea6",
+        )
+        and _code_text_function(config.get("doc_to_text"), "utils.doc_to_text", utility_hash)
+        and _code_text_function(config.get("doc_to_target"), "utils.doc_to_target", utility_hash)
+    )
+
+
 def corpus_config_profile(config: Mapping[str, Any]) -> str | None:
     """Recognize the narrow retained-runtime profile without importing harness.
 
@@ -36,6 +87,8 @@ def corpus_config_profile(config: Mapping[str, Any]) -> str | None:
     """
     if config.get("class") is not None or config.get("process_results") is not None:
         return None
+    if _code_text_profile(config):
+        return "code_text_smoothed_bleu"
     output = config.get("output_type")
     allowed = (
         {"bleu", "chrf", "ter"}

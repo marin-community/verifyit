@@ -91,3 +91,18 @@ include SkyRL generation traces; those do not supply harness likelihood response
 pairs. This is source fixture validation, not archived model-run replay.
 The dependency pin above includes the likelihood extension at its actual API
 checkpoint; it remains local and unpublished.
+
+## Source-pinned CodeXGLUE metric
+
+The six code-to-text tasks opt in through the same factory metadata. The guard
+requires the original BLEU/utils file hashes, exact source callable configuration
+and registered mean aggregation; arbitrary callbacks and modified implementations
+remain unsupported. The source metric keeps its 100-point scale and its lowercase,
+punctuation and add-one smoothing semantics for nonempty output. Empty or
+whitespace-only output deliberately scores zero because source smoothing grants
+it positive credit. These zero samples remain in the corpus denominator.
+Malformed references abort the complete evaluation without an aggregate.
+Actual evaluator and all six registered-source guard fixtures pass, including
+source-hash mutation rejection. No named tracker/model artifacts were found for
+these tasks; evidence is campaign `evidence/e2e/wiring/harness-code-text/`.
+This extension requires its forthcoming actual API checkpoint dependency pin.
