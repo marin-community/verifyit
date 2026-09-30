@@ -59,6 +59,18 @@ collection also remained unscored. No matching saved model trace was available.
 The image proof substituted a wheel from the exact local API commit for its
 unpublished remote Git install.
 
+Apply `mmau-pytest-verifyit.patch` after the Harbor dispatcher patch. The
+generated task runs protected `/tests/test_outputs.py` in its uv-managed
+`/app/.venv` Python; PytestSpec also passes source `--workdir /tests` and writes
+the original `/logs/verifier/ctrf.json` alongside verifyit's JSON report.
+The task image pins uv 0.7.13 and verifyit
+`3f21d36306c86861e5fdff0718bd72029328e752`. A generated image matched
+the pinned source script, direct CLI and actual Harbor Verifier on passing and
+failing candidates. Source and verifyit CTRF pass/fail counts matched, and
+Harbor retained the artifact. Malformed protected-test collection remained
+unscored without a reward. No matching saved model trace was available. The
+image proof substituted an exact-commit wheel for the unpublished Git install.
+
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
 required by each task's `tests/verifier.toml` inside the verifier image. The
