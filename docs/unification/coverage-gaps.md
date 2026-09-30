@@ -4,7 +4,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 
 | Source population | Implemented / available | Remaining coverage |
 | --- | --- | --- |
-| Harness 12,692 indexed task configs | 10,841 guarded native routes available | 1,851 configs retain source scoring; breakdown below |
+| Harness 12,692 indexed task configs | 11,091 guarded native routes available | 1,601 configs retain source scoring; breakdown below |
 | Evalchemy 42 custom benchmarks | 4 native integrations + 3 math hybrids | 35 not integrated (24 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 GSM hybrid | 18 not integrated; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 18 source-patched (12 with selected real traces, 6 without eligible real traces) | 9 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
@@ -13,26 +13,22 @@ The remaining work is primarily client integration, source-specific comparison/j
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
 
-## Harness: 1,851 non-native indexed configurations
+## Harness: 1,601 non-native indexed configurations
 
-The groups below are mutually exclusive. The exhaustive [register](coverage-gaps.json) contains every indexed config's name/path/hash, resolved metric options, source callable/hash/call evidence, status and coverage-contract reference. It also contains the 10,841 eligible records so counts can be audited; availability does not assert full dataset execution.
+The groups below are mutually exclusive. The exhaustive [register](coverage-gaps.json) contains every indexed config's name/path/hash, resolved metric options, source callable/hash/call evidence, status and coverage-contract reference. It also contains the 11,091 eligible records so counts can be audited; availability does not assert full dataset execution. The new 250 include 45 AfriQA exact/F1, 100 MasakhaNER span-F1, 100 MasakhaPOS token-accuracy and five ASK-GEC implicit-exact configurations; source API and evaluator fixtures pass, but no matching saved model traces were available.
 
 | Reason group | Configs | Why | Needed change |
 | --- | ---: | --- | --- |
 | callable_generation_metric | 94 | A single configured metric callable owns its scorer semantics. | Translate the named callable contract or execute its trusted script; evidence is per config. |
 | custom_scorer | 515 | Custom process_results overrides the default scorer. | Wire the concrete source function/input/metric contract; use existing modes by proven composition or a structured trusted script. |
-| exact_plus_f1 | 45 | Exact equality is reusable; simultaneous token/span F1 is not implemented. | Compose exact with the source F1 profile and preserve both outputs. |
-| generation_accuracy | 100 | Generation accuracy is outside the exact-only whitelist. | Audit target types/source comparison, then add an explicit client route. |
-| generation_f1 | 100 | Token/span overlap gives partial credit. | Wire the configured F1 function/normalizer and aggregation. |
-| implicit_exact_default | 5 | Five ASK-GEC prompts inherit exact_match from the source registry. | Recognize this valid implicit default in the eligibility guard; existing exact already fits. |
 | likelihood_aggregate | 68 | Raw likelihood, weighted perplexity and bits statistics are not bounded correctness rewards. | Retain raw observations and corpus aggregation through a metric/script adapter. |
 | mixed_callable_metrics | 26 | Mixed callable metrics need every named result and aggregator. | Implement the entire metric profile rather than scalar projection. |
 | python_class | 30 | Python task classes own scoring/request construction. | Patch the actual class scorer, not only ConfigurableTask. |
 | translation_metrics | 868 | BLEU/CHRF/TER score translation overlap and require corpus tuples. | Keep all translation metrics with original corpus aggregators. |
 
-The 5 implicit-default configs are `ask_gec_p0`, `ask_gec_p1`, `ask_gec_p2`, `ask_gec_p3`, `ask_gec_p4`. They are valid source tasks, not missing metrics or unsupported scoring.
+The 5 implicit-default configs `ask_gec_p0` through `ask_gec_p4` now use the guarded exact route.
 
-The source population additionally has 834 groups and 456 templates (1,290 orchestration records). Runtime discovery matched all indexed tasks. Its 64 inline group members are separate: 60 declare include-based contracts whose includes the pinned source factory does not resolve, and 4 reference unknown task names. Seven malformed group members are retained as source configuration failures; these counts are not added to the indexed 1,851 gaps. Their complete names/configurations and failures are in the register.
+The source population additionally has 834 groups and 456 templates (1,290 orchestration records). Runtime discovery matched all indexed tasks. Its 64 inline group members are separate: 60 declare include-based contracts whose includes the pinned source factory does not resolve, and 4 reference unknown task names. Seven malformed group members are retained as source configuration failures; these counts are not added to the indexed 1,601 gaps. Their complete names/configurations and failures are in the register.
 
 ## Evalchemy custom benchmarks
 
@@ -265,7 +261,7 @@ These seven tracker datasets are separate from the 87 adapter census. Missing wo
 
 ## Implemented but not validated
 
-Harness 10,841 static-eligible configurations have implemented guards and representative source parity, but only PIQA/Winogrande/BoolQ have full selected real-run replays. Evalchemy MMLUPro/GPQADiamond and AIME24/MATH500/GSM override have real replay evidence. AIW/GSM8KPerturbed/AIME25 have source parity but no validated tracker links. NQ-Open/TriviaQA source exact routes lack full dataset replay.
+Harness 11,091 static-eligible configurations have implemented guards and representative source parity, but only PIQA/Winogrande/BoolQ have full selected real-run replays. The new 250 have source API and evaluator fixture validation without matching saved model traces. Evalchemy MMLUPro/GPQADiamond and AIME24/MATH500/GSM override have real replay evidence. AIW/GSM8KPerturbed/AIME25 have source parity but no validated tracker links. NQ-Open/TriviaQA source exact routes lack full dataset replay.
 
 SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Six patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, and two dormant QA APIs. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
 
@@ -328,7 +324,7 @@ TaskTrove's 81 cohorts below account for 861,848 metadata rows, 43 sources and 6
 
 ## Scope, evidence and regeneration
 
-The register covers pinned snapshots only, not future revisions or external plugins. Source revisions and exact evidence are stored per entity. Reconciliation is automatic: indexed harness 13,982 = 12,692 tasks + 834 groups + 456 templates; tasks 12,692 = 10,841 available + 1,851 remaining; Evalchemy 42 custom + 22 override configs; SkyRL 48 entries; Harbor 87 adapters; TaskTrove 81 cohorts with 861,848 rows plus 19 converter, 12 mode and 7 helper contracts. Seven Harbor tracker datasets and 64 harness inline definitions are separate populations and must not be added to those source denominators.
+The register covers pinned snapshots only, not future revisions or external plugins. Source revisions and exact evidence are stored per entity. Reconciliation is automatic: indexed harness 13,982 = 12,692 tasks + 834 groups + 456 templates; tasks 12,692 = 11,091 available + 1,601 remaining; Evalchemy 42 custom + 22 override configs; SkyRL 48 entries; Harbor 87 adapters; TaskTrove 81 cohorts with 861,848 rows plus 19 converter, 12 mode and 7 helper contracts. Seven Harbor tracker datasets and 64 harness inline definitions are separate populations and must not be added to those source denominators.
 
 The [replay report](e2e-replay.md) records the earlier campaign baseline and exceptions: Evalchemy/harness 24 runs matched 63,360 samples; SkyRL 66/66 pinned-native and 65/66 archived results; Harbor 1,101 trials preserve 37 recovered zeros, 10 infrastructure failures and 3 database discrepancies. Later opt-in SkyRL cutovers add 18 selected real-trace matches under campaign `evidence/e2e/wiring/`; Reasoning Gym rejects boolean scorer results, and typed tool comparison rejects a boolean argument for an integer reference. Calendar rejects invalid clock values, boolean/negative/nonfinite durations and malformed reference constraints; zero durations retain source behavior. Full archived parity remains unvalidated.
 

@@ -10,6 +10,7 @@ import string
 from collections.abc import Sequence
 from typing import Any, cast
 
+from verifyit.adapters.harness_profiles import generation_profile, profile_task_metrics
 from verifyit.grade import InvalidTask, Reward
 from verifyit.modes.grade_exact import grade_exact_candidate
 from verifyit.modes.grade_mcq import grade_mcq_candidate
@@ -97,10 +98,17 @@ def native_config_route(config: dict) -> str | None:
     """Recognize implemented source branches; unknown options are not native coverage."""
     if config.get("process_results") or config.get("class"):
         return None
+    profile = generation_profile(config)
+    if profile is not None:
+        return profile
     output = config.get("output_type", "generate_until")
     metrics = config.get("metric_list")
     if metrics is None:
-        metrics = [{"metric": "acc"}, {"metric": "acc_norm"}] if output == "multiple_choice" else []
+        metrics = (
+            [{"metric": "acc"}, {"metric": "acc_norm"}]
+            if output == "multiple_choice"
+            else [{"metric": "exact_match"}] if output == "generate_until" else []
+        )
     if not isinstance(metrics, list) or not metrics:
         return None
     metadata = {"metric", "aggregation", "higher_is_better"}
@@ -155,6 +163,9 @@ def native_task_metrics(task, doc, responses) -> dict | None:
         return None
     if task.config.process_results is not None:
         return None
+    profile_metrics = profile_task_metrics(task, doc, responses, exact_match)
+    if profile_metrics is not None:
+        return profile_metrics
     config = {
         "output_type": task.OUTPUT_TYPE,
         "metric_list": [{"metric": metric, **task._metric_fn_kwargs.get(metric, {})} for metric in task._metric_fn_list],

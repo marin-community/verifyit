@@ -62,6 +62,39 @@ def test_decoded_candidate_uses_same_schema_contract_as_file_grade(tests_dir, wo
         )
 
 
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf")])
+def test_nonfinite_json_number_cannot_bypass_numeric_bounds(tests_dir, workspace, value):
+    schema = {"type": "object", "properties": {"quantity": {"type": "number", "minimum": 0, "maximum": 10}}}
+    (tests_dir / "schema.json").write_text(json.dumps(schema))
+    candidate = {"quantity": value}
+    answer(workspace, json.dumps(candidate))
+    direct = grade_json_schema.grade_json_schema_candidate(schema, candidate)
+    from_file = grade_json_schema.grade(JsonSchemaSpec(), tests_dir, workspace)
+    assert (direct.reward, direct.status, direct.detail) == (0.0, Status.SCORED, {"reason": "nonfinite_number"})
+    assert (direct.reward, direct.status, direct.detail) == (
+        from_file.reward,
+        from_file.status,
+        from_file.detail,
+    )
+
+
+def test_nonfinite_nested_candidate_scores_zero(tests_dir, workspace):
+    schema = {"type": "object", "properties": {"values": {"type": "array", "items": {"type": "number"}}}}
+    (tests_dir / "schema.json").write_text(json.dumps(schema))
+    answer(workspace, '{"values": [1, NaN]}')
+    assert grade_json_schema.grade(JsonSchemaSpec(), tests_dir, workspace).detail == {"reason": "nonfinite_number"}
+
+
+def test_nonfinite_schema_bound_is_invalid_task(tests_dir, workspace):
+    schema = {"type": "number", "minimum": float("nan")}
+    (tests_dir / "schema.json").write_text(json.dumps(schema))
+    answer(workspace, "1")
+    with pytest.raises(InvalidTask, match="nonfinite"):
+        grade_json_schema.grade(JsonSchemaSpec(), tests_dir, workspace)
+    with pytest.raises(InvalidTask, match="nonfinite"):
+        grade_json_schema.grade_json_schema_candidate(schema, 1)
+
+
 def test_document_inside_a_code_fence_is_unwrapped(tests_dir, workspace):
     answer(workspace, f"Here is the order:\n\n```json\n{json.dumps(ORDER)}\n```\n")
     assert grade_json_schema.grade(JsonSchemaSpec(), tests_dir, workspace).reward == 1.0

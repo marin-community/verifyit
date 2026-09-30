@@ -11,6 +11,7 @@ validation error in the detail.
 
 import datetime
 import json
+import math
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -35,6 +36,17 @@ def stringify_dates(node: Any) -> Any:
     return node
 
 
+def has_nonfinite_number(node: Any) -> bool:
+    """JSON numbers must be finite, including inside nested candidate values."""
+    if isinstance(node, float):
+        return not math.isfinite(node)
+    if isinstance(node, dict):
+        return any(has_nonfinite_number(value) for value in node.values())
+    if isinstance(node, list):
+        return any(has_nonfinite_number(value) for value in node)
+    return False
+
+
 def load_schema(path: Path) -> dict:
     """The JSON Schema at ``path``. Raises ``InvalidTask`` when it is absent or not a schema."""
     if not path.is_file():
@@ -45,6 +57,8 @@ def load_schema(path: Path) -> dict:
         raise InvalidTask(f"schema file {path} is not JSON: {error}") from error
     if not isinstance(schema, dict):
         raise InvalidTask(f"schema file {path} must hold a JSON object")
+    if has_nonfinite_number(schema):
+        raise InvalidTask(f"schema file {path} contains a nonfinite number")
     try:
         validator_for(schema).check_schema(schema)
     except SchemaError as error:
@@ -66,10 +80,14 @@ def parse_candidate(text: str, candidate_format: SchemaFormat) -> Any:
 
 def grade_json_schema_candidate(schema: dict, instance: Any) -> Reward:
     """Validate an already decoded candidate against a JSON Schema."""
+    if has_nonfinite_number(schema):
+        raise InvalidTask("schema contains a nonfinite number")
     try:
         validator_for(schema).check_schema(schema)
     except SchemaError as error:
         raise InvalidTask(f"invalid JSON Schema: {error.message}") from error
+    if has_nonfinite_number(instance):
+        return scored(0.0, reason="nonfinite_number")
     validator_class = validator_for(schema)
     # pyrefly: ignore[bad-instantiation, missing-argument]  # validator_for returns a concrete validator.
     validator = validator_class(schema)

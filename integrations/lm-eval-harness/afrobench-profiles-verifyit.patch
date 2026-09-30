@@ -1,0 +1,375 @@
+diff --git a/lm_eval/tasks/afrobench/afriqa/prompt_1/utils.py b/lm_eval/tasks/afrobench/afriqa/prompt_1/utils.py
+index eae1d88..c71b9c8 100644
+--- a/lm_eval/tasks/afrobench/afriqa/prompt_1/utils.py
++++ b/lm_eval/tasks/afrobench/afriqa/prompt_1/utils.py
+@@ -1,6 +1,6 @@
+ import re
+ import string
+-from collections import Counter
++from verifyit.adapters.harness_profiles import token_f1
+ 
+ 
+ def normalize_answer(s):
+@@ -39,14 +39,7 @@ def f1(items):
+     for i in range(len(golds)):
+         prediction_tokens = normalize_answer(preds[i]).split()
+         references_tokens = normalize_answer(golds[i]).split()
+-        common = Counter(prediction_tokens) & Counter(references_tokens)
+-        num_same = sum(common.values())
+-        if num_same == 0:
+-            f1_score = 0
+-        else:
+-            precision = 1.0 * num_same / len(prediction_tokens)
+-            recall = 1.0 * num_same / len(references_tokens)
+-            f1_score = (2 * precision * recall) / (precision + recall)
++        f1_score = token_f1(prediction_tokens, references_tokens).reward
+ 
+         f1_list.append(f1_score)
+ 
+diff --git a/lm_eval/tasks/afrobench/afriqa/prompt_2/utils.py b/lm_eval/tasks/afrobench/afriqa/prompt_2/utils.py
+index eae1d88..c71b9c8 100644
+--- a/lm_eval/tasks/afrobench/afriqa/prompt_2/utils.py
++++ b/lm_eval/tasks/afrobench/afriqa/prompt_2/utils.py
+@@ -1,6 +1,6 @@
+ import re
+ import string
+-from collections import Counter
++from verifyit.adapters.harness_profiles import token_f1
+ 
+ 
+ def normalize_answer(s):
+@@ -39,14 +39,7 @@ def f1(items):
+     for i in range(len(golds)):
+         prediction_tokens = normalize_answer(preds[i]).split()
+         references_tokens = normalize_answer(golds[i]).split()
+-        common = Counter(prediction_tokens) & Counter(references_tokens)
+-        num_same = sum(common.values())
+-        if num_same == 0:
+-            f1_score = 0
+-        else:
+-            precision = 1.0 * num_same / len(prediction_tokens)
+-            recall = 1.0 * num_same / len(references_tokens)
+-            f1_score = (2 * precision * recall) / (precision + recall)
++        f1_score = token_f1(prediction_tokens, references_tokens).reward
+ 
+         f1_list.append(f1_score)
+ 
+diff --git a/lm_eval/tasks/afrobench/afriqa/prompt_3/utils.py b/lm_eval/tasks/afrobench/afriqa/prompt_3/utils.py
+index eae1d88..c71b9c8 100644
+--- a/lm_eval/tasks/afrobench/afriqa/prompt_3/utils.py
++++ b/lm_eval/tasks/afrobench/afriqa/prompt_3/utils.py
+@@ -1,6 +1,6 @@
+ import re
+ import string
+-from collections import Counter
++from verifyit.adapters.harness_profiles import token_f1
+ 
+ 
+ def normalize_answer(s):
+@@ -39,14 +39,7 @@ def f1(items):
+     for i in range(len(golds)):
+         prediction_tokens = normalize_answer(preds[i]).split()
+         references_tokens = normalize_answer(golds[i]).split()
+-        common = Counter(prediction_tokens) & Counter(references_tokens)
+-        num_same = sum(common.values())
+-        if num_same == 0:
+-            f1_score = 0
+-        else:
+-            precision = 1.0 * num_same / len(prediction_tokens)
+-            recall = 1.0 * num_same / len(references_tokens)
+-            f1_score = (2 * precision * recall) / (precision + recall)
++        f1_score = token_f1(prediction_tokens, references_tokens).reward
+ 
+         f1_list.append(f1_score)
+ 
+diff --git a/lm_eval/tasks/afrobench/afriqa/prompt_4/utils.py b/lm_eval/tasks/afrobench/afriqa/prompt_4/utils.py
+index eae1d88..c71b9c8 100644
+--- a/lm_eval/tasks/afrobench/afriqa/prompt_4/utils.py
++++ b/lm_eval/tasks/afrobench/afriqa/prompt_4/utils.py
+@@ -1,6 +1,6 @@
+ import re
+ import string
+-from collections import Counter
++from verifyit.adapters.harness_profiles import token_f1
+ 
+ 
+ def normalize_answer(s):
+@@ -39,14 +39,7 @@ def f1(items):
+     for i in range(len(golds)):
+         prediction_tokens = normalize_answer(preds[i]).split()
+         references_tokens = normalize_answer(golds[i]).split()
+-        common = Counter(prediction_tokens) & Counter(references_tokens)
+-        num_same = sum(common.values())
+-        if num_same == 0:
+-            f1_score = 0
+-        else:
+-            precision = 1.0 * num_same / len(prediction_tokens)
+-            recall = 1.0 * num_same / len(references_tokens)
+-            f1_score = (2 * precision * recall) / (precision + recall)
++        f1_score = token_f1(prediction_tokens, references_tokens).reward
+ 
+         f1_list.append(f1_score)
+ 
+diff --git a/lm_eval/tasks/afrobench/afriqa/prompt_5/utils.py b/lm_eval/tasks/afrobench/afriqa/prompt_5/utils.py
+index eae1d88..c71b9c8 100644
+--- a/lm_eval/tasks/afrobench/afriqa/prompt_5/utils.py
++++ b/lm_eval/tasks/afrobench/afriqa/prompt_5/utils.py
+@@ -1,6 +1,6 @@
+ import re
+ import string
+-from collections import Counter
++from verifyit.adapters.harness_profiles import token_f1
+ 
+ 
+ def normalize_answer(s):
+@@ -39,14 +39,7 @@ def f1(items):
+     for i in range(len(golds)):
+         prediction_tokens = normalize_answer(preds[i]).split()
+         references_tokens = normalize_answer(golds[i]).split()
+-        common = Counter(prediction_tokens) & Counter(references_tokens)
+-        num_same = sum(common.values())
+-        if num_same == 0:
+-            f1_score = 0
+-        else:
+-            precision = 1.0 * num_same / len(prediction_tokens)
+-            recall = 1.0 * num_same / len(references_tokens)
+-            f1_score = (2 * precision * recall) / (precision + recall)
++        f1_score = token_f1(prediction_tokens, references_tokens).reward
+ 
+         f1_list.append(f1_score)
+ 
+diff --git a/lm_eval/tasks/afrobench/masakhaner/prompt_1/utils.py b/lm_eval/tasks/afrobench/masakhaner/prompt_1/utils.py
+index 9d2db70..4ce9afc 100644
+--- a/lm_eval/tasks/afrobench/masakhaner/prompt_1/utils.py
++++ b/lm_eval/tasks/afrobench/masakhaner/prompt_1/utils.py
+@@ -1,7 +1,7 @@
+ import collections
+ import re
+ 
+-from lm_eval.utils import weighted_f1_score
++from verifyit.adapters.harness_profiles import span_equal
+ 
+ 
+ def doc_to_target(doc):
+@@ -129,9 +129,10 @@ def span_f1_agg(items):
+         predicted_spans = tags_to_spans(pred)
+ 
+         for span in predicted_spans:
+-            if span in gold_spans:
++            matched = next((gold for gold in gold_spans if span_equal(span, gold).reward), None)
++            if matched is not None:
+                 true_positives[span[0]] += 1
+-                gold_spans.remove(span)
++                gold_spans.remove(matched)
+             else:
+                 false_positives[span[0]] += 1
+         # These spans weren't predicted.
+diff --git a/lm_eval/tasks/afrobench/masakhaner/prompt_2/utils.py b/lm_eval/tasks/afrobench/masakhaner/prompt_2/utils.py
+index 9d2db70..4ce9afc 100644
+--- a/lm_eval/tasks/afrobench/masakhaner/prompt_2/utils.py
++++ b/lm_eval/tasks/afrobench/masakhaner/prompt_2/utils.py
+@@ -1,7 +1,7 @@
+ import collections
+ import re
+ 
+-from lm_eval.utils import weighted_f1_score
++from verifyit.adapters.harness_profiles import span_equal
+ 
+ 
+ def doc_to_target(doc):
+@@ -129,9 +129,10 @@ def span_f1_agg(items):
+         predicted_spans = tags_to_spans(pred)
+ 
+         for span in predicted_spans:
+-            if span in gold_spans:
++            matched = next((gold for gold in gold_spans if span_equal(span, gold).reward), None)
++            if matched is not None:
+                 true_positives[span[0]] += 1
+-                gold_spans.remove(span)
++                gold_spans.remove(matched)
+             else:
+                 false_positives[span[0]] += 1
+         # These spans weren't predicted.
+diff --git a/lm_eval/tasks/afrobench/masakhaner/prompt_3/utils.py b/lm_eval/tasks/afrobench/masakhaner/prompt_3/utils.py
+index 9d2db70..4ce9afc 100644
+--- a/lm_eval/tasks/afrobench/masakhaner/prompt_3/utils.py
++++ b/lm_eval/tasks/afrobench/masakhaner/prompt_3/utils.py
+@@ -1,7 +1,7 @@
+ import collections
+ import re
+ 
+-from lm_eval.utils import weighted_f1_score
++from verifyit.adapters.harness_profiles import span_equal
+ 
+ 
+ def doc_to_target(doc):
+@@ -129,9 +129,10 @@ def span_f1_agg(items):
+         predicted_spans = tags_to_spans(pred)
+ 
+         for span in predicted_spans:
+-            if span in gold_spans:
++            matched = next((gold for gold in gold_spans if span_equal(span, gold).reward), None)
++            if matched is not None:
+                 true_positives[span[0]] += 1
+-                gold_spans.remove(span)
++                gold_spans.remove(matched)
+             else:
+                 false_positives[span[0]] += 1
+         # These spans weren't predicted.
+diff --git a/lm_eval/tasks/afrobench/masakhaner/prompt_4/utils.py b/lm_eval/tasks/afrobench/masakhaner/prompt_4/utils.py
+index 9d2db70..4ce9afc 100644
+--- a/lm_eval/tasks/afrobench/masakhaner/prompt_4/utils.py
++++ b/lm_eval/tasks/afrobench/masakhaner/prompt_4/utils.py
+@@ -1,7 +1,7 @@
+ import collections
+ import re
+ 
+-from lm_eval.utils import weighted_f1_score
++from verifyit.adapters.harness_profiles import span_equal
+ 
+ 
+ def doc_to_target(doc):
+@@ -129,9 +129,10 @@ def span_f1_agg(items):
+         predicted_spans = tags_to_spans(pred)
+ 
+         for span in predicted_spans:
+-            if span in gold_spans:
++            matched = next((gold for gold in gold_spans if span_equal(span, gold).reward), None)
++            if matched is not None:
+                 true_positives[span[0]] += 1
+-                gold_spans.remove(span)
++                gold_spans.remove(matched)
+             else:
+                 false_positives[span[0]] += 1
+         # These spans weren't predicted.
+diff --git a/lm_eval/tasks/afrobench/masakhaner/prompt_5/utils.py b/lm_eval/tasks/afrobench/masakhaner/prompt_5/utils.py
+index 9d2db70..4ce9afc 100644
+--- a/lm_eval/tasks/afrobench/masakhaner/prompt_5/utils.py
++++ b/lm_eval/tasks/afrobench/masakhaner/prompt_5/utils.py
+@@ -1,7 +1,7 @@
+ import collections
+ import re
+ 
+-from lm_eval.utils import weighted_f1_score
++from verifyit.adapters.harness_profiles import span_equal
+ 
+ 
+ def doc_to_target(doc):
+@@ -129,9 +129,10 @@ def span_f1_agg(items):
+         predicted_spans = tags_to_spans(pred)
+ 
+         for span in predicted_spans:
+-            if span in gold_spans:
++            matched = next((gold for gold in gold_spans if span_equal(span, gold).reward), None)
++            if matched is not None:
+                 true_positives[span[0]] += 1
+-                gold_spans.remove(span)
++                gold_spans.remove(matched)
+             else:
+                 false_positives[span[0]] += 1
+         # These spans weren't predicted.
+diff --git a/lm_eval/tasks/afrobench/masakhapos/prompt_1/utils.py b/lm_eval/tasks/afrobench/masakhapos/prompt_1/utils.py
+index 4ccc66d..36aaa21 100644
+--- a/lm_eval/tasks/afrobench/masakhapos/prompt_1/utils.py
++++ b/lm_eval/tasks/afrobench/masakhapos/prompt_1/utils.py
+@@ -1,6 +1,6 @@
+ from itertools import chain
+ 
+-from sklearn.metrics import accuracy_score
++from verifyit.adapters.harness_profiles import token_accuracy
+ 
+ from lm_eval.utils import weighted_f1_score
+ 
+@@ -46,7 +46,7 @@ def acc_score(items):
+         pred = pred[:min_length]
+ 
+         # Calculate accuracy for the current pair and add to the list
+-        accuracy = accuracy_score(gold, pred)
++        accuracy = token_accuracy(pred, gold).reward
+         accuracy_scores.append(accuracy)
+ 
+     mean_accuracy = (
+diff --git a/lm_eval/tasks/afrobench/masakhapos/prompt_2/utils.py b/lm_eval/tasks/afrobench/masakhapos/prompt_2/utils.py
+index 4ccc66d..36aaa21 100644
+--- a/lm_eval/tasks/afrobench/masakhapos/prompt_2/utils.py
++++ b/lm_eval/tasks/afrobench/masakhapos/prompt_2/utils.py
+@@ -1,6 +1,6 @@
+ from itertools import chain
+ 
+-from sklearn.metrics import accuracy_score
++from verifyit.adapters.harness_profiles import token_accuracy
+ 
+ from lm_eval.utils import weighted_f1_score
+ 
+@@ -46,7 +46,7 @@ def acc_score(items):
+         pred = pred[:min_length]
+ 
+         # Calculate accuracy for the current pair and add to the list
+-        accuracy = accuracy_score(gold, pred)
++        accuracy = token_accuracy(pred, gold).reward
+         accuracy_scores.append(accuracy)
+ 
+     mean_accuracy = (
+diff --git a/lm_eval/tasks/afrobench/masakhapos/prompt_3/utils.py b/lm_eval/tasks/afrobench/masakhapos/prompt_3/utils.py
+index 4ccc66d..36aaa21 100644
+--- a/lm_eval/tasks/afrobench/masakhapos/prompt_3/utils.py
++++ b/lm_eval/tasks/afrobench/masakhapos/prompt_3/utils.py
+@@ -1,6 +1,6 @@
+ from itertools import chain
+ 
+-from sklearn.metrics import accuracy_score
++from verifyit.adapters.harness_profiles import token_accuracy
+ 
+ from lm_eval.utils import weighted_f1_score
+ 
+@@ -46,7 +46,7 @@ def acc_score(items):
+         pred = pred[:min_length]
+ 
+         # Calculate accuracy for the current pair and add to the list
+-        accuracy = accuracy_score(gold, pred)
++        accuracy = token_accuracy(pred, gold).reward
+         accuracy_scores.append(accuracy)
+ 
+     mean_accuracy = (
+diff --git a/lm_eval/tasks/afrobench/masakhapos/prompt_4/utils.py b/lm_eval/tasks/afrobench/masakhapos/prompt_4/utils.py
+index 4ccc66d..36aaa21 100644
+--- a/lm_eval/tasks/afrobench/masakhapos/prompt_4/utils.py
++++ b/lm_eval/tasks/afrobench/masakhapos/prompt_4/utils.py
+@@ -1,6 +1,6 @@
+ from itertools import chain
+ 
+-from sklearn.metrics import accuracy_score
++from verifyit.adapters.harness_profiles import token_accuracy
+ 
+ from lm_eval.utils import weighted_f1_score
+ 
+@@ -46,7 +46,7 @@ def acc_score(items):
+         pred = pred[:min_length]
+ 
+         # Calculate accuracy for the current pair and add to the list
+-        accuracy = accuracy_score(gold, pred)
++        accuracy = token_accuracy(pred, gold).reward
+         accuracy_scores.append(accuracy)
+ 
+     mean_accuracy = (
+diff --git a/lm_eval/tasks/afrobench/masakhapos/prompt_5/utils.py b/lm_eval/tasks/afrobench/masakhapos/prompt_5/utils.py
+index 4ccc66d..36aaa21 100644
+--- a/lm_eval/tasks/afrobench/masakhapos/prompt_5/utils.py
++++ b/lm_eval/tasks/afrobench/masakhapos/prompt_5/utils.py
+@@ -1,6 +1,6 @@
+ from itertools import chain
+ 
+-from sklearn.metrics import accuracy_score
++from verifyit.adapters.harness_profiles import token_accuracy
+ 
+ from lm_eval.utils import weighted_f1_score
+ 
+@@ -46,7 +46,7 @@ def acc_score(items):
+         pred = pred[:min_length]
+ 
+         # Calculate accuracy for the current pair and add to the list
+-        accuracy = accuracy_score(gold, pred)
++        accuracy = token_accuracy(pred, gold).reward
+         accuracy_scores.append(accuracy)
+ 
+     mean_accuracy = (

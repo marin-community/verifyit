@@ -1,8 +1,9 @@
-Current working-tree native extensions require the next implementation checkpoint:
-`ExactSpec.strip_outer_whitespace`, `MathSpec.profile`, and native harness routing.
-The existing dependency-pin.patch records the earlier API checkpoint and must be
-updated to the actual new commit before distributing this expanded patch. Local
-validation currently uses the campaign working tree; no remote availability is claimed.
+The AfroBench profile patch adds 45 AfriQA exact/F1, 100 MasakhaNER span-F1,
+100 MasakhaPOS token-accuracy and five ASK-GEC implicit exact configurations.
+The three AfroBench families passed source API and evaluator fixture comparisons;
+no matching saved model-run traces were available. Apply
+`afrobench-profiles-verifyit.patch` after `verifyit.patch`. The profile API
+dependency must be pinned to its implementation commit before deployment.
 
 The patch targets EleutherAI/lm-evaluation-harness v0.4.12,
 `6d642546f4688648fced259eb3302efd36ece5af`, which Evalchemy pins.

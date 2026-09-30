@@ -9,6 +9,8 @@ from pathlib import Path
 
 from eval_inventory import resolve_config
 
+from verifyit.adapters.harness_native import native_config_route
+
 CUSTOM = {
     "AMC23": (
         "math",
@@ -425,16 +427,31 @@ def harness_entities(root, sources):
                 needed_change="No separate verifier integration; validate referenced tasks.",
                 validation_status="source_population_audit",
             )
-        elif record.get("native_route"):
+        elif record.get("native_route") or (
+            (
+                "/afrobench/" in record["path"]
+                and any(
+                    f"/afrobench/{family}/prompt_" in record["path"] for family in ("afriqa", "masakhaner", "masakhapos")
+                )
+            )
+            or (isinstance(record.get("task"), str) and record["task"].startswith("ask_gec_p"))
+        ):
+            route = record.get("native_route")
+            if route is None:
+                config, _ = resolve_config(sources / "lm-eval-harness" / record["path"])
+                route = native_config_route(config)
+                assert route in {"afriqa_f1", "ner_span_f1", "pos_accuracy", "exact_match"}, record["path"]
             entity.update(
                 status="native_route_available",
                 kind="task",
-                reason_id=record["native_route"],
+                reason_id=route,
                 reason=(
                     "Resolved configuration matches an implemented guarded default scorer route; "
                     "this is eligibility, not full dataset execution."
                 ),
-                primitive_candidates=[record["existing_mode"]],
+                primitive_candidates=(
+                    [record["existing_mode"]] if record["existing_mode"] != "script" else ["exact", "script"]
+                ),
                 needed_change="No known scorer change; validate task datasets/runtime before deployment.",
                 validation_status=(
                     "real_trace"
@@ -721,8 +738,8 @@ def main():
             )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 1851
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 10841
+    assert len(harness_gaps) == 1601
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11091
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {
