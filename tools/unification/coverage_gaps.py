@@ -685,7 +685,7 @@ def evalchemy_entities(root):
         name = record["benchmark"]
         entity = base_entity("evalchemy-custom", record, inventory["revision"], name)
         entity["source_evidence"].extend(record["scoring_evidence"])
-        if record["classification"] == "adapter" or name in {"JEEBench", "AMC23"}:
+        if record["classification"] == "adapter" or name in {"JEEBench", "AMC23", "NUPA-Loose", "NUPA5K-Loose"}:
             entity.update(
                 status="native_integrated",
                 reason_id="custom_native",
@@ -721,6 +721,42 @@ def evalchemy_entities(root):
                     ],
                     validation_status="source_evaluator_fixtures_no_tracker_trace",
                 )
+            if name in {"NUPA-Loose", "NUPA5K-Loose"}:
+                entity.update(
+                    primitive_candidates=["exact"],
+                    reason=(
+                        "Source extraction prepares full digit-component tuples and aligned digits; "
+                        "strict exact grading inside verifyit computes exact_match and digit_match. "
+                        "All five metrics and source task/length/cross-bucket denominators remain. "
+                        "Malformed reference representations abort mixed batches. Source preparation "
+                        "omits signs, including scientific exponent signs: these are component metrics, "
+                        "not mathematical numeric equivalence."
+                    ),
+                    needed_change=(
+                        "Enable verifyit_enabled=True on the benchmark constructor. "
+                        + (
+                            "Three frozen saved model runs replay all 15,000 records with exact metric parity."
+                            if name == "NUPA5K-Loose"
+                            else "Shared scorer has source evaluator fixtures; no separate NUPA-Loose archive replay."
+                        )
+                    ),
+                    evidence=[
+                        "integrations/evalchemy/nupa-exact-verifyit.patch",
+                        "evidence/e2e/wiring/evalchemy-nupa/final-cutover/source-roundtrip.json",
+                        "evidence/e2e/wiring/evalchemy-nupa/source-reference/source-reference-positive.json",
+                        "evidence/e2e/wiring/evalchemy-nupa/selection.json",
+                        "evidence/e2e/wiring/evalchemy-nupa/implementation-provenance.json",
+                    ],
+                    validation_status=(
+                        "three_full_saved_runs_15000_records_all_named_and_bucket_metrics_match"
+                        if name == "NUPA5K-Loose"
+                        else "source_evaluator_fixtures_shared_scorer_no_separate_archive"
+                    ),
+                )
+                if name == "NUPA5K-Loose":
+                    entity["evidence"].extend(
+                        f"evidence/e2e/wiring/evalchemy-nupa/replay-{index}/replay.json" for index in range(3)
+                    )
             if name == "AMC23":
                 entity.update(
                     reason=(

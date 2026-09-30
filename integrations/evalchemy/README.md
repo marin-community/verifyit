@@ -105,3 +105,40 @@ ten repetition aggregates remain. Known normalization errors fail closed
 instead of using the original raw-equality fallback. Evidence is under
 `evidence/e2e/wiring/evalchemy-amc-math`; AMC23 validation uses source fixtures,
 with no matching archived AMC23 inputs found.
+
+## NUPA component metrics
+
+Apply `nupa-exact-verifyit.patch` after the existing Evalchemy patches. Opt in
+through the public benchmark constructor:
+
+```python
+from importlib import import_module
+
+Benchmark = import_module("eval.chat_benchmarks.NUPA5K-Loose.eval_instruct").NUPA5KLooseBenchmark
+benchmark = Benchmark(verifyit_enabled=True)
+```
+
+Use `NUPA-Loose` and `NUPALooseBenchmark` for the other variant. Default source
+execution remains available. The adapter calls strict exact grading for the full
+digit-component tuple and each source-aligned digit comparison. It retains
+`exact_match`, `digit_match`, `dlength`, `format_valid_rate` and `no_answer_rate`,
+including all task, length-bucket and combined group denominators. This is not
+numeric tolerance: `1.00` and `1.0` are different component representations.
+Source preparation removes signs, including scientific exponent signs; the
+source-defined component metric consequently treats `1.23e-5` and `1.23e5`
+alike. That limitation is retained explicitly rather than described as numerical
+equivalence.
+
+References must match the complete declared format and contain valid nonempty
+digit components. A malformed reference such as `abc123` formerly scored one
+against output `123`; the opt-in evaluator now aborts the entire mixed batch.
+Unexpected extraction failures propagate, so no partial aggregate is returned.
+
+Three seeded NUPA5K tracker links replay all 15,000 saved responses. Every sample
+matches the archive across all five metrics, and all aggregate/bucket metrics
+match precisely. The untouched source additionally matches the first complete
+run. NUPA-Loose shares this scorer but has source evaluator fixtures only.
+Evidence and independent rerun commands are under
+`evidence/e2e/wiring/evalchemy-nupa`. Downloads comprise only active sample and
+configuration/result shards (86,065,656 bytes), with archive checksums verified;
+no model regeneration or dataset download is needed for replay.
