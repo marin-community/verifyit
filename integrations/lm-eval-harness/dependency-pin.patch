@@ -4,7 +4,7 @@
  requires-python = ">=3.10"
  license = { text = "MIT" }
  dependencies = [
-+    "verifyit @ git+https://github.com/marin-community/verifyit@edd279dee01ffaa0ed257ddac81b2479e4c0de9b",
++    "verifyit @ git+https://github.com/marin-community/verifyit@d58fdb2aa184b581379bc167b86db595220ce10f",
      "datasets>=2.16.0",
      "numpy",
      "evaluate>=0.4.0",

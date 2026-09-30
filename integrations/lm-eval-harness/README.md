@@ -26,7 +26,7 @@ zero metric produces `scored`, never an infrastructure failure.
 
 
 The integration requires verifyit implementation commit
-`edd279dee01ffaa0ed257ddac81b2479e4c0de9b`, including the AfroBench and corpus runtime APIs.
+`d58fdb2aa184b581379bc167b86db595220ce10f`, including the AfroBench and corpus runtime APIs.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -36,7 +36,7 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@edd279dee01ffaa0ed257ddac81b2479e4c0de9b'
+uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@d58fdb2aa184b581379bc167b86db595220ce10f'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
