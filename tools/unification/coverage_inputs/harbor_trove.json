@@ -261,16 +261,19 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#aime",
         "docs/unification/harbor_inventory.json#aime",
-        "integrations/harbor/answer-routes.patch",
         "tests/test_harbor_answers.py",
         "evidence/e2e/wiring/harbor-answers/boundary-source-comparison.json",
         "evidence/e2e/wiring/harbor-answers/generated-image-results.json",
-        "evidence/e2e/wiring/harbor-answers/trace-census.json"
+        "evidence/e2e/wiring/harbor-answers/trace-census.json",
+        "integrations/harbor/answer-isolation-verifyit.patch",
+        "evidence/e2e/wiring/harbor-answers/final-pin-manifest.json",
+        "evidence/e2e/wiring/harbor-answers/manager-final-aime-positive.json",
+        "evidence/e2e/wiring/harbor-answers/manager-final-aime-wrong.json"
       ],
       "gap_kind": "implemented_exact_client",
       "implementation_present": true,
       "name": "aime",
-      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing client integration; validate model-run traces and each task image before wider deployment.",
+      "needed_change": "Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available.",
       "primitive_candidates": [
         "exact"
       ],
@@ -304,11 +307,11 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "validation_limit": "The cumulative pinned Harbor patch places /tests/expected_answer.txt and test.sh in a separate verifier image and transfers only the candidate artifact. Source-generated positive/wrong fixtures (42/43) scored 1/0 through actual Harbor Trial and independent manager replay. The original source scoring semantics and earlier direct-CLI parity remain documented. No matching saved model rollout was found; wider task images remain unvalidated.",
       "boundary_hardening": {
-        "status": "shared_candidate_reachable",
-        "trusted_assets": "/tests/expected_answer.txt and test.sh",
-        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+        "status": "separate_verifier_validated",
+        "trusted_assets": "/tests/expected_answer.txt and test.sh in the separate verifier image only",
+        "needed_change": "Validate additional source-generated tasks and archived model rollouts when matching traces become available."
       }
     },
     {
@@ -1276,14 +1279,18 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#dabstep",
         "docs/unification/harbor_inventory.json#dabstep",
-        "integrations/harbor/dabstep-script-verifyit.patch",
         "evidence/e2e/wiring/harbor-dabstep/image-results-branches.json",
-        "evidence/e2e/wiring/harbor-dabstep/manager-image-results-branches.json"
+        "evidence/e2e/wiring/harbor-dabstep/manager-image-results-branches.json",
+        "integrations/harbor/dabstep-isolation-verifyit.patch",
+        "evidence/e2e/wiring/harbor-answers/final-pin-manifest.json",
+        "evidence/e2e/wiring/harbor-answers/manager-final-dabstep-positive.json",
+        "evidence/e2e/wiring/harbor-answers/manager-final-dabstep-wrong.json",
+        "evidence/e2e/wiring/harbor-answers/dabstep-isolation-manifest.json"
       ],
       "gap_kind": "implemented_native_runtime_bridge",
       "implementation_present": true,
       "name": "dabstep",
-      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate broader generated tasks and archived model-run workspaces before deployment; the fuzzy and list branches retain the source scorer rather than using a native exact/numeric comparator.",
+      "needed_change": "Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available.",
       "primitive_candidates": [
         "numeric",
         "exact",
@@ -1312,11 +1319,11 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_fallback",
-      "validation_limit": "Eleven bounded generated-image cases ran pinned original test.sh, direct verifyit CLI and actual Harbor Verifier: numeric, text and list positives and negatives plus missing/blank candidates matched; overflowing trusted numbers, malformed protected scorer and punctuation-only trusted references became unscored without a reward. Broader task instances and saved model-run workspaces remain unvalidated. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "validation_limit": "The cumulative pinned Harbor patch places /tests/scorer.py and expected_answer.txt in a separate verifier image and transfers only the candidate artifact. Source-generated positive/wrong fixtures (1,000/2,000) scored 1/0 through actual Harbor Trial and independent manager replay. A wrong-answer reference mutation scored zero after isolation. The original source scoring semantics and earlier direct-CLI parity remain documented. No matching saved model rollout was found; wider task images remain unvalidated.",
       "boundary_hardening": {
-        "status": "shared_candidate_reachable",
-        "trusted_assets": "/tests/scorer.py and expected_answer.txt",
-        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+        "status": "separate_verifier_validated",
+        "trusted_assets": "/tests/scorer.py and expected_answer.txt in the separate verifier image only",
+        "needed_change": "Validate additional source-generated tasks and archived model rollouts when matching traces become available."
       }
     },
     {
@@ -2199,17 +2206,21 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#gaia",
         "docs/unification/harbor_inventory.json#gaia",
-        "integrations/harbor/answer-routes.patch",
         "tests/test_harbor_answers.py",
         "evidence/e2e/wiring/harbor-answers/boundary-source-comparison.json",
         "evidence/e2e/wiring/harbor-answers/generated-image-results.json",
         "evidence/e2e/wiring/harbor-answers/trace-census.json",
-        "evidence/e2e/wiring/harbor-answers/gaia-shared-reference-before.json"
+        "evidence/e2e/wiring/harbor-answers/gaia-shared-reference-before.json",
+        "integrations/harbor/answer-isolation-verifyit.patch",
+        "evidence/e2e/wiring/harbor-answers/final-pin-manifest.json",
+        "evidence/e2e/wiring/harbor-answers/gaia-pinned-positive.json",
+        "evidence/e2e/wiring/harbor-answers/manager-final-gaia-attack.json",
+        "evidence/e2e/wiring/harbor-answers/manager-gaia-invalid-final.json"
       ],
       "gap_kind": "implemented_exact_client",
       "implementation_present": true,
       "name": "gaia",
-      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing client integration; validate model-run traces and each task image before wider deployment.",
+      "needed_change": "Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available.",
       "primitive_candidates": [
         "exact"
       ],
@@ -2236,11 +2247,11 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "validation_limit": "The cumulative pinned Harbor patch places /tests/expected_answer.txt and test.sh in a separate verifier image and transfers only the candidate artifact. Source-generated positive/wrong fixtures (New York/Boston) scored 1/0 through actual Harbor Trial and independent manager replay. A wrong-answer reference mutation scored zero after isolation; malformed trusted reference with redirected candidate was invalid_task with no reward in the final pinned image. The original source scoring semantics and earlier direct-CLI parity remain documented. No matching saved model rollout was found; wider task images remain unvalidated.",
       "boundary_hardening": {
-        "status": "shared_candidate_reachable",
-        "trusted_assets": "/tests/expected_answer.txt and test.sh",
-        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+        "status": "separate_verifier_validated",
+        "trusted_assets": "/tests/expected_answer.txt and test.sh in the separate verifier image only",
+        "needed_change": "Validate additional source-generated tasks and archived model rollouts when matching traces become available."
       }
     },
     {
@@ -2430,16 +2441,19 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#gpqa-diamond",
         "docs/unification/harbor_inventory.json#gpqa-diamond",
-        "integrations/harbor/answer-routes.patch",
         "tests/test_harbor_answers.py",
         "evidence/e2e/wiring/harbor-answers/boundary-source-comparison.json",
         "evidence/e2e/wiring/harbor-answers/generated-image-results.json",
-        "evidence/e2e/wiring/harbor-answers/trace-census.json"
+        "evidence/e2e/wiring/harbor-answers/trace-census.json",
+        "integrations/harbor/answer-isolation-verifyit.patch",
+        "evidence/e2e/wiring/harbor-answers/final-pin-manifest.json",
+        "evidence/e2e/wiring/harbor-answers/manager-final-gpqa-positive.json",
+        "evidence/e2e/wiring/harbor-answers/manager-final-gpqa-wrong.json"
       ],
       "gap_kind": "implemented_mcq_client",
       "implementation_present": true,
       "name": "gpqa-diamond",
-      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing client integration; validate model-run traces and each task image before wider deployment.",
+      "needed_change": "Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available.",
       "primitive_candidates": [
         "mcq"
       ],
@@ -2464,11 +2478,11 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "validation_limit": "The cumulative pinned Harbor patch places /tests/expected_answer.txt and test.sh in a separate verifier image and transfers only the candidate artifact. Source-generated positive/wrong fixtures (D/A) scored 1/0 through actual Harbor Trial and independent manager replay. The original source scoring semantics and earlier direct-CLI parity remain documented. No matching saved model rollout was found; wider task images remain unvalidated.",
       "boundary_hardening": {
-        "status": "shared_candidate_reachable",
-        "trusted_assets": "/tests/expected_answer.txt and test.sh",
-        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+        "status": "separate_verifier_validated",
+        "trusted_assets": "/tests/expected_answer.txt and test.sh in the separate verifier image only",
+        "needed_change": "Validate additional source-generated tasks and archived model rollouts when matching traces become available."
       }
     },
     {
@@ -3978,16 +3992,19 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#satbench",
         "docs/unification/harbor_inventory.json#satbench",
-        "integrations/harbor/answer-routes.patch",
         "tests/test_harbor_answers.py",
         "evidence/e2e/wiring/harbor-answers/boundary-source-comparison.json",
         "evidence/e2e/wiring/harbor-answers/generated-image-results.json",
-        "evidence/e2e/wiring/harbor-answers/trace-census.json"
+        "evidence/e2e/wiring/harbor-answers/trace-census.json",
+        "integrations/harbor/answer-isolation-verifyit.patch",
+        "evidence/e2e/wiring/harbor-answers/final-pin-manifest.json",
+        "evidence/e2e/wiring/harbor-answers/manager-final-sat-positive.json",
+        "evidence/e2e/wiring/harbor-answers/manager-final-sat-wrong.json"
       ],
       "gap_kind": "implemented_exact_client",
       "implementation_present": true,
       "name": "satbench",
-      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing client integration; validate model-run traces and each task image before wider deployment.",
+      "needed_change": "Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available.",
       "primitive_candidates": [
         "exact"
       ],
@@ -4004,11 +4021,11 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "validation_limit": "The cumulative pinned Harbor patch places /tests/ground_truth.json and test.sh in a separate verifier image and transfers only the candidate artifact. Source-generated positive/wrong fixtures ([SAT]/[UNSAT]) scored 1/0 through actual Harbor Trial and independent manager replay. The original source scoring semantics and earlier direct-CLI parity remain documented. No matching saved model rollout was found; wider task images remain unvalidated.",
       "boundary_hardening": {
-        "status": "shared_candidate_reachable",
-        "trusted_assets": "/tests/ground_truth.json and test.sh",
-        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+        "status": "separate_verifier_validated",
+        "trusted_assets": "/tests/ground_truth.json and test.sh in the separate verifier image only",
+        "needed_change": "Validate additional source-generated tasks and archived model rollouts when matching traces become available."
       }
     },
     {
@@ -9198,7 +9215,7 @@
         "stdio"
       ],
       "rows": 5116,
-      "source_contract": "TACO stdin/stdout problems with oracle solutions.\n\nEvery task ships one file the template varies: ``solution/solution.py``, run against\n``tests/inputs/input_<n>.txt`` / ``tests/outputs/output_<n>.txt`` pairs by the old grader\n(``python3 /app/solution.py < input_n.txt``, output compared after squashing whitespace). That\nmaps directly onto ``stdio``, token comparison matching the old grader's whitespace squash, except\nfor the rare prompt that promises a numeric tolerance instead of an exact match.\n\nA meaningful slice of TACO (LeetCode- and Codewars-derived problems) is written as a bare function\ndefinition \u2014 ``class Solution: def foo(self, ...)`` or a top-level ``def foo(...)`` with no driver\nthat reads stdin or prints a result. The old grader ran those against stdin fixtures anyway, so\ntheir stdout was always empty; they cannot be graded by ``stdio`` and are rejected rather than\nconverted.",
+      "source_contract": "TACO stdin/stdout problems with oracle solutions.\n\nEvery task ships one file the template varies: ``solution/solution.py``, run against\n``tests/inputs/input_<n>.txt`` / ``tests/outputs/output_<n>.txt`` pairs by the old grader\n(``python3 /app/solution.py < input_n.txt``, output compared after squashing whitespace). That\nmaps directly onto ``stdio``, token comparison matching the old grader's whitespace squash, except\nfor the rare prompt that promises a numeric tolerance instead of an exact match.\n\nA meaningful slice of TACO (LeetCode- and Codewars-derived problems) is written as a bare function\ndefinition — ``class Solution: def foo(self, ...)`` or a top-level ``def foo(...)`` with no driver\nthat reads stdin or prints a result. The old grader ran those against stdin fixtures anyway, so\ntheir stdout was always empty; they cannot be graded by ``stdio`` and are rejected rather than\nconverted.",
       "source_path": "experiments/post_training/tasktrove/converters/taco.py",
       "source_sha256": "7ea128ef059343fe0b2417b1266c392ea912123fab16023323eadd3110018321"
     }
@@ -9478,11 +9495,11 @@
       ],
       "gap_kind": "client_wiring_and_replay_artifact_requirements",
       "name": "ot-tblite-recovery",
-      "needed_change": "Candidate filesystem/workspace changes plus task\u2019s original pytest assertions and service state. Emit and validate the corresponding client spec/structured native-runtime bridge; recover genuine saved workspace/artifacts before selecting full model-run replays.",
+      "needed_change": "Candidate filesystem/workspace changes plus task’s original pytest assertions and service state. Emit and validate the corresponding client spec/structured native-runtime bridge; recover genuine saved workspace/artifacts before selecting full model-run replays.",
       "primitive_candidates": [
         "pytest"
       ],
-      "reason": "not implemented in current client patch Representative artifact listing/manifest does not include a full candidate workspace snapshot. Candidate filesystem/workspace changes plus task\u2019s original pytest assertions and service state.",
+      "reason": "not implemented in current client patch Representative artifact listing/manifest does not include a full candidate workspace snapshot. Candidate filesystem/workspace changes plus task’s original pytest assertions and service state.",
       "source_evidence": {
         "download_dir": null,
         "git_commit_id": "f075e463472c7790b85793b392dff1fff20cc0e3",

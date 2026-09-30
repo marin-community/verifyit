@@ -160,8 +160,9 @@ text += (
     "can modify them. A generated GAIA task reproduced a wrong answer scoring one after its "
     "uploaded reference changed. This establishes the shared-container failure mode, not a "
     "per-route exploit for every row. These routes have client wiring but require a protected "
-    "verifier environment before deployment. ARC-AGI-2 uses a separate verifier and passed "
-    "the corresponding mutation replay.\n\n"
+    "verifier environment before deployment. ARC-AGI-2, AIME, GAIA, GPQA Diamond, "
+    "SATBench and DABstep now use separate verifier images on bounded generated "
+    "fixtures; GAIA and DABstep passed a corresponding mutation replay.\n\n"
     "| Wired route | Candidate-reachable trusted assets |\n"
     "| --- | --- |\n"
 )

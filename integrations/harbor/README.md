@@ -1,29 +1,35 @@
 # Harbor integration
 
-The coverage register identifies a shared-verifier boundary gap in 15 wired
+The coverage register identifies a shared-verifier boundary gap in ten wired
 Harbor routes. Harbor uploads their protected tests or references into the live
 agent container before grading; a surviving candidate process can modify them.
 A generated GAIA task reproduced the failure: the wrong answer `Boston` scored
-one after the candidate changed the uploaded `New York` reference. Existing
-source/CLI and generated-image parity cases establish grader behavior on bounded
-fixtures, not protected-reference isolation. ARC-AGI-2 uses a separate verifier
-image; the other wired routes require the boundary changes listed in the
+one after the candidate changed the uploaded `New York` reference. ARC-AGI-2,
+AIME, GAIA, GPQA Diamond, SATBench and DABstep now use separate verifier
+images on bounded generated tasks. The ten remaining routes require the
+boundary changes listed in the
 [coverage report](../../docs/unification/coverage-gaps.md#shared-verifier-boundary)
 before deployment. The GAIA reproduction is in
 `evidence/e2e/wiring/harbor-answers/gaia-shared-reference-before.json`.
 
-Apply `answer-routes.patch` to the pinned Harbor source for AIME, GAIA, GPQA
-Diamond and SATBench. Their generated task scripts call the installed verifyit
-answer client with source-specific extraction followed by exact or MCQ grading.
-The four generated Dockerfiles pin verifyit
-`08c14eaf912a940fc4e0401698f95b85250b0006`; this commit is local and must
-be published before the remote Git install can resolve. All 12 original versus
-patched task-script fixtures match when the pinned original runs in Docker.
-One generated GAIA image was built with a wheel from the exact local commit and
-ran positive and negative CLI cases. The local wheel replaced only the
-unpublished remote install in that image. The other three task images and
-matching saved model traces have not been validated. See
-`evidence/e2e/wiring/harbor-answers/` for commands, hashes and verdicts.
+`answer-isolation-verifyit.patch` is a cumulative replacement for
+`answer-routes.patch` against the same pinned Harbor revision. It generates a
+separate verifier image for each of the four answer routes. Only the candidate
+answer artifact crosses from the agent image; the trusted reference stays in
+the verifier image. A generated GAIA task's wrong answer scored one when a
+surviving candidate process changed the shared reference, and zero with the
+separate verifier. Bounded source-generated Harbor trials scored correct/wrong
+answers 1/0 for GAIA, AIME, GPQA Diamond, and SATBench; redirected and missing
+GAIA artifacts scored zero. The patch pins verifyit `ca7fce7c50f61a3b4b26fe1f9609853effadb87c`.
+Because that revision is local, the proof images substituted a wheel built from
+its Git archive. The earlier 12 original-script versus patched-CLI fixture cases
+remain in `evidence/e2e/wiring/harbor-answers/boundary-source-comparison.json`.
+`evidence/e2e/wiring/harbor-answers/final-pin-manifest.json` records the
+final verifier wheel and five rebuilt image digests. An empty GAIA reference
+with a redirected candidate produced `invalid_task` and no reward file in
+an actual Harbor trial. Independent positive/wrong and mutation replays matched.
+These are generated fixtures, not saved model rollouts; wider task images
+remain unvalidated.
 
 Apply `arc-agi-2-separate-verifyit.patch` to the pinned Harbor source and pass
 `--verifyit-enabled` when generating ARC-AGI-2 tasks. The agent image retains
@@ -180,19 +186,23 @@ malformed protected evaluator code leaves no reward. Other categories and
 archived candidate workspaces remain unvalidated while AWS SSO is expired.
 Evidence is in `evidence/e2e/wiring/harbor-bfcl/`.
 
-Apply `dabstep-script-verifyit.patch` after the Harbor dispatcher patch. Its
-generated `ScriptSpec` runs the original `test.sh` and protected DABstep scorer
-through the structured runtime bridge. The task image keeps the source Python
-3.12 environment and installs verifyit separately on Python 3.11 from commit
-`27b8c172c454c7c8b4ad32f238186b8d29b0d140`; the bounded image proof
-substitutes a wheel built from that exact local commit for its unpublished Git
-URL. Eleven generated-image cases ran the pinned source script, direct CLI and
-actual Harbor Verifier. Numeric, text and order-independent list answers
+Apply `dabstep-isolation-verifyit.patch` after the Harbor dispatcher and
+`answer-isolation-verifyit.patch`; it cumulatively replaces
+`dabstep-script-verifyit.patch`. Its generated `ScriptSpec` runs the original
+`test.sh` and protected scorer in a separate verifier image, transferring only
+`/app/answer.txt` from the agent image. The agent retains its source Python
+environment and data files. The verifier image pins verifyit
+`ca7fce7c50f61a3b4b26fe1f9609853effadb87c` on Python 3.11; the bounded
+proof substitutes the attested local wheel for its unpublished Git URL.
+Eleven earlier generated-image cases ran the pinned source script, direct CLI
+and actual Harbor Verifier. Numeric, text and order-independent list answers
 matched source rewards. Nonfinite trusted numbers and punctuation-only trusted
 answers no longer earn source false-positive credit; malformed protected scorer
-code and invalid trusted references leave no reward. Broader task instances and
-saved model-run workspaces remain unvalidated. Evidence is in
-`evidence/e2e/wiring/harbor-dabstep/`.
+code and invalid trusted references leave no reward. New actual Harbor Trial
+fixtures scored correct/wrong answers 1/0 and a wrong-answer reference-change
+trial zero after isolation. Broader task instances and saved model-run workspaces
+remain unvalidated. Evidence is in `evidence/e2e/wiring/harbor-dabstep/` and
+`evidence/e2e/wiring/harbor-answers/dabstep-isolation-manifest.json`.
 
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
