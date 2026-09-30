@@ -1,0 +1,25 @@
+--- a/lm_eval/evaluator.py
++++ b/lm_eval/evaluator.py
+@@ -629,6 +629,9 @@
+         from verifyit.adapters import harness_babilong
+ 
+         harness_babilong.validate_babilong_task(task)
++        from verifyit.adapters import harness_mmmu
++
++        harness_mmmu.validate_mmmu_task(task)
+         task.apply_filters()
+ 
+         ### Collect values of metrics on all datapoints ###
+--- a/lm_eval/tasks/mmmu/utils.py
++++ b/lm_eval/tasks/mmmu/utils.py
+@@ -131,8 +131,8 @@
+                 candidates.append(index)
+                 index_ans = False  # it's content ans.
+ 
+-    if len(candidates) == 0:  # still not get answer, randomly choose one.
+-        pred_index = random.choice(all_choices)
++    if len(candidates) == 0:  # Missing extraction must not guess a positive score.
++        pred_index = None
+     elif len(candidates) > 1:
+         start_indexes = []
+         if index_ans:

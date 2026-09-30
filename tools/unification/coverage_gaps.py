@@ -440,6 +440,7 @@ def harness_entities(root, sources):
             or ("/tasks/hendrycks_math/" in record["path"])
             or ("/tasks/crows_pairs/" in record["path"])
             or ("/tasks/babilong/" in record["path"])
+            or ("/tasks/mmmu/" in record["path"])
             or ("/tasks/agieval/" in record["path"] and record.get("output_type") == "multiple_choice")
         ):
             route = record.get("native_route")
@@ -456,6 +457,7 @@ def harness_entities(root, sources):
                     "agieval_mcqa",
                     "crows_pair_preference",
                     "babilong_substring",
+                    "mmmu_typed_answers",
                 }, record["path"]
             entity.update(
                 status="native_route_available",
@@ -493,6 +495,25 @@ def harness_entities(root, sources):
                     else "configuration_eligible_not_dataset_validated"
                 ),
             )
+            if route == "mmmu_typed_answers":
+                entity.update(
+                    primitive_candidates=["exact", "mcq", "numeric"],
+                    reason=(
+                        "Pinned source multimodal prompt/image and answer extraction feed strict choice, "
+                        "typed two-decimal numeric equality and literal substring primitives. "
+                        "Unparsed choices score zero rather than source random guessing; empty or nonfinite "
+                        "references abort the batch, and nonfinite candidates score zero."
+                    ),
+                    evidence=[
+                        "integrations/lm-eval-harness/mmmu-typed-verifyit.patch",
+                        "evidence/e2e/wiring/harness-mmmu/guards/guard-audit.json",
+                        "evidence/e2e/wiring/harness-mmmu/cutover/evaluator-roundtrip.json",
+                        "evidence/e2e/wiring/harness-mmmu/source-failures/source-failures.json",
+                        "evidence/e2e/wiring/harness-mmmu/manager-cutover/evaluator-roundtrip.json",
+                        "evidence/e2e/wiring/harness-mmmu/trace-census.json",
+                    ],
+                    validation_status="registered_guards_and_actual_multimodal_evaluator_fixtures_no_saved_trace",
+                )
             if route == "babilong_substring":
                 entity.update(
                     primitive_candidates=["exact"],
@@ -939,9 +960,9 @@ def main():
             )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 523
+    assert len(harness_gaps) == 493
     assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 978
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11191
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11221
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {

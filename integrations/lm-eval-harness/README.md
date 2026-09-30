@@ -219,3 +219,25 @@ call counts, source-empty-target regression and before/after evidence are under
 `evidence/e2e/wiring/harness-babilong`. Scorer/helper/metric/filter drift aborts
 before filters execute. The tracker/local artifact census found no named matching
 saved runs; validation uses source fixtures rather than archived traces.
+
+### MMMU typed answers
+
+Apply `mmmu-typed-verifyit.patch` after `babilong-substring-verifyit.patch`.
+This adds guarded native scoring for all 30 subject configurations. Source image
+and prompt construction, answer extraction and two-decimal normalization remain;
+verifyit grades choice alternatives with MCQ, prepared numeric values with zero
+tolerance NumericSpec, and strings with strict substring ExactSpec. Source padding
+for single-character references remains significant.
+
+Missing choice extraction returns zero instead of randomly guessing. Empty or
+nonfinite references abort evaluation without a partial aggregate; nonfinite
+candidates receive zero. Ordinary multimodal fixtures preserve sample scores,
+normal stderr and actual image arguments. All 30 guards, three seeded evaluator
+witnesses and five early drift failures pass. The untouched evaluator separately
+reproduces positive scores for empty gold, infinite gold and random guessing.
+Evidence is under `evidence/e2e/wiring/harness-mmmu`; no eligible saved MMMU
+model-run artifacts were found, so this is source-fixture validation.
+
+The exported source patch requires the API revision containing `harness_mmmu`.
+An earlier installed Babilong revision must use its earlier source-patch prefix,
+or the untouched source checkout for baseline comparisons.

@@ -14,6 +14,7 @@ from verifyit.adapters.harness_agieval import agieval_config_profile, agieval_ta
 from verifyit.adapters.harness_babilong import babilong_config_profile, babilong_task_metrics
 from verifyit.adapters.harness_crows import crows_config_profile, crows_task_metrics
 from verifyit.adapters.harness_math_literal import hendrycks_config_profile, hendrycks_task_metrics
+from verifyit.adapters.harness_mmmu import mmmu_config_profile, mmmu_task_metrics
 from verifyit.adapters.harness_probability import truthfulqa_mc2_profile, truthfulqa_task_metrics
 from verifyit.adapters.harness_profiles import generation_profile, profile_task_metrics
 from verifyit.grade import InvalidTask, Reward
@@ -101,6 +102,8 @@ def likelihood_choice(
 
 def native_config_route(config: dict) -> str | None:
     """Recognize implemented source branches; unknown options are not native coverage."""
+    if mmmu_config_profile(config):
+        return "mmmu_typed_answers"
     if babilong_config_profile(config):
         return "babilong_substring"
     if crows_config_profile(config):
@@ -176,6 +179,9 @@ def native_task_metrics(task, doc, responses) -> dict | None:
         or getattr(method, "__qualname__", None) != "ConfigurableTask.process_results"
     ):
         return None
+    mmmu = mmmu_task_metrics(task, doc, responses)
+    if mmmu is not None:
+        return mmmu
     babilong = babilong_task_metrics(task, doc, responses)
     if babilong is not None:
         return babilong
