@@ -395,15 +395,15 @@
       "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/structured_outputs.py",
       "dispatch": "NemotronUltraEnv._step agent=structured_outputs_simple_agent",
       "verifyit_modes": [
-        "json-schema",
-        "script"
+        "json-schema"
       ],
       "mapping_status": "adapter_required",
       "source_contract": "OpenAPI schema; JSON/YAML/TOML/XML/CSV; XML/CSV schema-directed scalar coercion; one named tool payload.",
-      "adapter_requirements": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings.",
+      "adapter_requirements": "Retain source XML/CSV coercion and raw JSON/YAML/TOML/tool extraction, register a private source-policy dialect preserving pinned OAS32 local-only reference semantics, then call grade_json_schema_candidate. No core schema extension; reject unknown dialect and nonfinite values conservatively.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#schema",
-      "resolution_strategy": "existing_json_schema_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "resolution_strategy": "client_composition",
+      "runtime_migration": "implemented_patch",
+      "integration_patch": "integrations/MarinSkyRL/structured-output-verifyit.patch"
     },
     {
       "id": "nemotron_ultra/structured_outputs_v3_simple_agent",
@@ -412,15 +412,15 @@
       "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/structured_outputs.py",
       "dispatch": "NemotronUltraEnv._step agent=structured_outputs_v3_simple_agent",
       "verifyit_modes": [
-        "json-schema",
-        "script"
+        "json-schema"
       ],
       "mapping_status": "adapter_required",
       "source_contract": "OpenAPI schema; JSON/YAML/TOML/XML/CSV; XML/CSV schema-directed scalar coercion; one named tool payload.",
-      "adapter_requirements": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings.",
+      "adapter_requirements": "Retain source XML/CSV coercion and raw JSON/YAML/TOML/tool extraction, register a private source-policy dialect preserving pinned OAS32 local-only reference semantics, then call grade_json_schema_candidate. No core schema extension; reject unknown dialect and nonfinite values conservatively.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#schema",
-      "resolution_strategy": "existing_json_schema_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "resolution_strategy": "client_composition",
+      "runtime_migration": "implemented_patch",
+      "integration_patch": "integrations/MarinSkyRL/structured-output-verifyit.patch"
     },
     {
       "id": "nemotron_ultra/rdkit_chemistry_agent",

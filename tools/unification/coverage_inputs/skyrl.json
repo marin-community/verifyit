@@ -8,20 +8,20 @@
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 26,
-    "pending_scoring_routes": 20,
-    "pending_active_scoring_routes": 16,
+    "source_patched_routes": 28,
+    "pending_scoring_routes": 18,
+    "pending_active_scoring_routes": 14,
     "pending_dormant_scoring_routes": 4,
     "zero_core_extension_unwired_routes": 1,
-    "existing_class_behavior_gap_routes": 19,
-    "real_replayed_source_routes": 16,
+    "existing_class_behavior_gap_routes": 17,
+    "real_replayed_source_routes": 18,
     "implemented_routes_missing_real_traces": 10,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 16,
+      "implemented_validated": 18,
       "implemented_not_validated": 10,
-      "capability_gap": 19,
+      "capability_gap": 17,
       "not_a_correctness_verifier": 2,
       "not_integrated": 1
     },
@@ -36,7 +36,8 @@
     "Native source scorers on unpatched routes are native-only runtime, not hybrid fallback inside an implemented verifyit cutover.",
     "Calendar is a task-owned deterministic ScriptSpec harness integration, not an IFEval capability gap; no new class option is required.",
     "Inherited23 extension-strategy routes split into19 concrete existing-class behavior gaps,1calendar harness wiring case and3 dormant math parity-audit cases.",
-    "Eight additional opt-in cutovers comprise two Reasoning Gym routes, Nemotron MCQA, three tool-comparison routes, and two dormant exported QA APIs. Five have selected real framework traces; pivot and QA lack eligible trace links. Typed tool comparison intentionally rejects JSON boolean for expected integer despite source Python bool/int equality."
+    "Eight additional opt-in cutovers comprise two Reasoning Gym routes, Nemotron MCQA, three tool-comparison routes, and two dormant exported QA APIs. Five have selected real framework traces; pivot and QA lack eligible trace links. Typed tool comparison intentionally rejects JSON boolean for expected integer despite source Python bool/int equality.",
+    "Structured-output policy is implemented entirely in a client dialect registration using existing json-schema grading; source XML/CSV parsing and tool extraction require no core extension. Fifteen selected archived links match pinned native and archive; four reach schema grading and eleven reject in client parsing."
   ],
   "real_trace_replay": {
     "verified_population": 5460,
@@ -1048,20 +1049,19 @@
     },
     {
       "id": "nemotron_ultra/structured_outputs_simple_agent",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing json-schema mode lacks the source OpenAPI validator policy and typed XML/CSV schema-directed decoding; source dispatch remains native.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_schema_client_with_source_decoding",
       "native_fallback_in_cutover": false,
       "contract_family": "schema",
       "existing_primitive_candidate": [
-        "json-schema",
-        "script"
+        "json-schema"
       ],
-      "resolution_strategy": "existing_json_schema_extension",
-      "needed_change": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings.",
+      "resolution_strategy": "client_composition",
+      "needed_change": null,
       "validation_gap": null,
       "source_contract": "OpenAPI schema; JSON/YAML/TOML/XML/CSV; XML/CSV schema-directed scalar coercion; one named tool payload.",
       "source": {
@@ -1074,28 +1074,33 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#schema",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-structured-output/selection.json",
+        "evidence/e2e/wiring/skyrl-structured-output/comparison.json",
+        "evidence/e2e/wiring/skyrl-structured-output/controlled-v3-patched.json",
+        "integrations/MarinSkyRL/structured-output-verifyit.patch"
       ],
       "observed_verified_execution_links": 12,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 9,
+      "core_extension_requirement": "none",
+      "integration_patch": "integrations/MarinSkyRL/structured-output-verifyit.patch",
+      "validation_scope": "Frozen three real links per source_id benchmark group; source-owned parse rejection before grading remains explicit. v3 also has controlled valid/invalid actual Env cases, not counted as archived traces."
     },
     {
       "id": "nemotron_ultra/structured_outputs_v3_simple_agent",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing json-schema mode lacks the source OpenAPI validator policy and typed XML/CSV schema-directed decoding; source dispatch remains native.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_schema_client_with_source_decoding",
       "native_fallback_in_cutover": false,
       "contract_family": "schema",
       "existing_primitive_candidate": [
-        "json-schema",
-        "script"
+        "json-schema"
       ],
-      "resolution_strategy": "existing_json_schema_extension",
-      "needed_change": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings.",
+      "resolution_strategy": "client_composition",
+      "needed_change": null,
       "validation_gap": null,
       "source_contract": "OpenAPI schema; JSON/YAML/TOML/XML/CSV; XML/CSV schema-directed scalar coercion; one named tool payload.",
       "source": {
@@ -1108,11 +1113,17 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#schema",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-structured-output/selection.json",
+        "evidence/e2e/wiring/skyrl-structured-output/comparison.json",
+        "evidence/e2e/wiring/skyrl-structured-output/controlled-v3-patched.json",
+        "integrations/MarinSkyRL/structured-output-verifyit.patch"
       ],
       "observed_verified_execution_links": 9,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 6,
+      "core_extension_requirement": "none",
+      "integration_patch": "integrations/MarinSkyRL/structured-output-verifyit.patch",
+      "validation_scope": "Frozen three real links per source_id benchmark group; source-owned parse rejection before grading remains explicit. v3 also has controlled valid/invalid actual Env cases, not counted as archived traces."
     },
     {
       "id": "nemotron_ultra/rdkit_chemistry_agent",

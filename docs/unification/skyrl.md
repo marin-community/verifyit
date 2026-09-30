@@ -89,8 +89,8 @@ The48 entries comprise46 scoring routes across17 contract families and two exter
 objectives. Calendar joins the client/task-harness group, bringing it to 24 routes.
 The other 22 retain existing-class profile or comparator-parity requirements; three
 dormant math variants are audits, not proven missing APIs. The current register
-separates 26 implemented routes, one client/harness route still unwired and
-19 concrete existing-class behavior gaps. Three dormant math routes now have source integrations and fixture evidence. Source
+separates 28 implemented routes, one partially wired client/harness route still pending and
+17 concrete existing-class behavior gaps. Three dormant math routes now have source integrations and fixture evidence. Source
 orchestration and metrics stay in clients. No new mode category is proposed; a generic source callback
 behind script is only a runtime bridge. The disjoint plan is recorded per entry in
 `skyrl.json` and detailed in [the composition contracts](skyrl-adapter-specs.md).
@@ -212,3 +212,14 @@ in sibling `manager-code-positive` and `manager-code-random` directories.
 `dormant-math-verifyit.patch` wires ToRL and DAPO through `GeneralReactTask.evaluate_result` when the trusted instance sets `verifyit_enabled = true`; PRIME exposes the same explicit opt-in on its exported scorer. Source extraction and pure string normalization remain client owned. Existing exact, numeric and math primitives handle literal answers, percentage alternatives, ordered collections, interval endpoints and matrices. ToRL retains its signed reward and format shaping, while verifier failures receive its minimum -1.
 
 The source boundary suite has 76 tests. Forty-eight benign source/native comparisons record actual primitive module paths, specs and returns; eight intentional source-defect corrections are explained in [the integration notes](../../integrations/MarinSkyRL/dormant-math.md). Candidate-derived eval is removed. These dormant routes have no eligible saved trace in the complete census, so fixtures do not count as archived-trace replay.
+
+Both structured-output agents now use client-only OpenAPI dialect framing with
+the existing JSON-schema candidate API. Source XML/CSV coercion, raw date typing,
+and tool extraction are retained. The frozen complete population has 21 eligible
+links across five benchmark groups; three per group give 15 pinned-native and
+archive matches. Four candidates reach schema grading, while eleven reject in
+source-owned parsing. A separately labeled controlled actual-v3 Env valid/invalid
+pair proves primitive dispatch for that branch. Nineteen source tests cover formats,
+dialects, local-only references, tool payloads, and conservative nonfinite rejection.
+No core schema extension was required. Evidence is under
+`evidence/e2e/wiring/skyrl-structured-output/`.

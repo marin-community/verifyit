@@ -5,7 +5,7 @@ arithmetic and client-boundaries patches, then `reasoning-mcq-verifyit.patch`,
 `tool-comparison-verifyit.patch` and `qa-verifyit.patch`. Apply the dependency pin
 patch last. The latter pins the local
 verifyit implementation checkpoint and raises the standalone gym Python floor
-to >=3.11 and includes the `answer`, `schema` and `reasoning-gym` extras. The source SHA must exist on the remote before external
+to >=3.11 and includes the `answer`, `schema`, `reasoning-gym` and `pytest` extras. The source SHA must exist on the remote before external
 installation. Do not silently replace a pinned Git dependency with a floating
 branch. Regenerate fork locks in the fork's supported environment before use.
 
@@ -101,3 +101,20 @@ The [math integration notes](dormant-math.md) describe retained extraction/rewar
 contracts, source-defect corrections, actual source comparison commands and
 the absence of eligible archived traces. The pin includes the core math timeout
 fix and provides an optional `skyrl-agent[verifyit]` install for these dormant APIs.
+
+Apply `structured-output-verifyit.patch` after the other Nemotron dispatch patches.
+Both structured-output agents retain native JSON/YAML/TOML/XML/CSV decoding and
+tool extraction, then call the existing JSON-schema candidate API. A private
+client dialect selects the pinned OpenAPI 0.9 OAS32 policy and local-only reference
+registry; standard validator registrations remain unchanged. Unknown dialects and
+nonfinite candidates reject conservatively. Native parse/shape categories remain;
+schema violation messages come from verifyit. Configuration and infrastructure
+failures produce framework error status and zero reward.
+
+The frozen full population contains 21 real links in five source_id groups;
+three selected per group give 15 native/archive matches. Four positive responses
+reach schema grading; eleven are rejected by source-owned parsing. An additional
+controlled actual-v3 Env valid/invalid pair proves that branch reaches the schema
+grader and is not counted as archived evidence. Nineteen source parity/edge tests
+pass. Evidence and rerun scripts are in
+`evidence/e2e/wiring/skyrl-structured-output`.
