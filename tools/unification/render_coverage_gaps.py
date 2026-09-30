@@ -161,8 +161,9 @@ text += (
     "uploaded reference changed. This establishes the shared-container failure mode, not a "
     "per-route exploit for every row. These routes have client wiring but require a protected "
     "verifier environment before deployment. ARC-AGI-2, AIME, GAIA, GPQA Diamond, "
-    "SATBench and DABstep now use separate verifier images on bounded generated "
-    "fixtures; GAIA and DABstep passed a corresponding mutation replay.\n\n"
+    "SATBench, DABstep and ReplicationBench now use separate verifier images on bounded "
+    "generated fixtures; GAIA, DABstep and ReplicationBench passed corresponding "
+    "mutation replays.\n\n"
     "| Wired route | Candidate-reachable trusted assets |\n"
     "| --- | --- |\n"
 )
@@ -198,7 +199,7 @@ Harbor MMAU preserves the source CTRF artifact with PytestSpec arguments alongsi
 
 Harbor CodePDE's generated PytestSpec runs the unchanged upstream nRMSE evaluator in a protected directory for each of five PDE variants. The candidate solver receives only public numerical inputs in an unprivileged Landlock child; trusted code validates exact shape and finite values before computing the source metric and binary 0.05 threshold. Ten generated-image reference/wrong cases matched original test.sh, CLI and Harbor Verifier on bounded HDF5 fixtures. Seven adversarial cases reject source false positives from forged stdout and reference reads, along with reward writes and malformed outputs; missing/empty solvers stay unscored. A detached candidate child was reaped before scoring. Full-size data and saved model traces remain unvalidated.
 
-Harbor ReplicationBench's generated PytestSpec executes the protected source comparator and preserves its binary all-tests policy and comparison artifact. A generated image matched original test.sh, direct CLI and Harbor Verifier for nested passing, wrong and missing-result fixtures. The source accepted a boolean as a numeric answer; the patched comparator scores it zero. Explicit null remains valid, while absent or malformed trusted references and incompatible tolerances are unscored. These are bounded generated fixtures; broader task data and saved model traces remain unvalidated.
+Harbor ReplicationBench's generated PytestSpec executes the protected source comparator and preserves its binary all-tests policy and comparison artifact. A generated image matched original test.sh, direct CLI and Harbor Verifier for nested passing, wrong and missing-result fixtures. The source accepted a boolean as a numeric answer; the patched comparator scores it zero. Explicit null remains valid, while absent or malformed trusted references and incompatible tolerances are unscored. A separate verifier image receives only result.json: a wrong-result reference mutation scored one in the shared image and zero after isolation, and malformed protected config fails setup as infra_error without a reward. These are bounded generated fixtures; broader task data and saved model traces remain unvalidated.
 
 Harbor BFCL's structured ScriptSpec keeps the source evaluator and task Python, with verifyit on a separate Python 3.11 runtime. Eleven generated-image cases matched original test.sh, direct CLI and Harbor Verifier across simple, live relevance, irrelevance and parallel calls. Two source false positives from boolean/numeric and overflowing numeric-string comparisons score zero after hardening; a malformed protected evaluator is unscored. Other categories and the linked bfclparity-pi model workspaces remain unvalidated because the available AWS SSO token expired.
 

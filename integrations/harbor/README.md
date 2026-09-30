@@ -158,17 +158,24 @@ commit instead of the unpublished Git install. Full-size PDE data and matching
 saved model traces remain unvalidated. Evidence is in
 `evidence/e2e/wiring/harbor-codepde/`.
 
-Apply `replicationbench-pytest-verifyit.patch` after the Harbor dispatcher
-patch. Generated tasks use PytestSpec with the protected source comparator,
-preserving its binary all-tests policy and `/logs/comparison_result.json`.
-The task image pins verifyit `3f21d36306c86861e5fdff0718bd72029328e752`
-and uses a wheel from that exact local commit in the bounded image proof.
+Apply `replicationbench-isolation-verifyit.patch` after the Harbor dispatcher
+and `answer-isolation-verifyit.patch` patches. It replaces the earlier
+`replicationbench-pytest-verifyit.patch`. Generated tasks use PytestSpec with
+the protected source comparator in a separate verifier image, preserving its
+binary all-tests policy and `/logs/comparison_result.json`. Only the
+candidate's `/app/result.json` transfers from the agent image; reference and
+comparator files stay in the verifier image. The proof image pins verifyit
+`ca7fce7c50f61a3b4b26fe1f9609853effadb87c` and substitutes a wheel from
+that exact local commit for its unpublished Git install.
 Original `test.sh`, direct CLI and actual Harbor Verifier matched on nested
 passing, wrong and missing-result fixtures. The patched comparator scores a
 boolean-as-number candidate zero where the source awarded one. Trusted
 references and tolerance shapes are checked in setup: malformed task data is
-unscored, while explicit null remains valid. Broader task instances, scientific
-data and saved model traces remain unvalidated. Evidence is in
+unscored as `infra_error`, while explicit null remains valid. In an actual
+Harbor Trial, a wrong result scored one when an agent mutated a valid config in
+the shared container, then zero after isolation. Linked result files score
+zero, and invalid trusted config leaves no reward. Broader task instances,
+scientific data and saved model traces remain unvalidated. Evidence is in
 `evidence/e2e/wiring/harbor-replicationbench/`.
 
 Apply `bfcl-script-verifyit.patch` after the Harbor dispatcher patch. Its

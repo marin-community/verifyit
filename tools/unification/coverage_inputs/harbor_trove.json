@@ -3843,12 +3843,16 @@
       "entity_id": "harbor:replicationbench",
       "evidence": [
         "docs/unification/harbor_semantics.json#replicationbench",
-        "docs/unification/harbor_inventory.json#replicationbench"
+        "docs/unification/harbor_inventory.json#replicationbench",
+        "integrations/harbor/replicationbench-isolation-verifyit.patch",
+        "evidence/e2e/wiring/harbor-replicationbench/isolation-final-manifest.json",
+        "evidence/e2e/wiring/harbor-replicationbench/manager-shared-before-attack-v1.json",
+        "evidence/e2e/wiring/harbor-replicationbench/manager-isolated-attack-v2.json"
       ],
       "gap_kind": "implemented_pytest_client",
       "implementation_present": true,
       "name": "replicationbench",
-      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate additional generated task instances, broader data dependencies and saved model traces before wider deployment.",
+      "needed_change": "Validate additional generated task instances, broader data dependencies and saved model traces before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
@@ -3880,11 +3884,11 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "Generated-image fixtures matched original test.sh, direct verifyit CLI and actual Harbor Verifier for nested passing, wrong and missing-result cases. A source boolean-as-number false positive became scored zero. Explicit null remained valid; missing/nonfinite references and incompatible tolerances became unscored. Broader task instances, scientific data and matching saved model traces remain unvalidated. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "validation_limit": "Generated-image fixtures matched original test.sh, direct verifyit CLI and actual Harbor Verifier for nested passing, wrong and missing-result cases. A source boolean-as-number false positive became scored zero. Explicit null remained valid; missing/nonfinite references and incompatible tolerances became unscored. A separate verifier image now receives only result.json; a wrong-result reference-mutation attack scored one in the shared image and zero after isolation. Linked results score zero; malformed trusted config fails setup as infra_error with no reward. Broader task instances, scientific data and matching saved model traces remain unvalidated.",
       "boundary_hardening": {
-        "status": "shared_candidate_reachable",
+        "status": "separate_verifier_validated",
         "trusted_assets": "/tests/config.json and test_outputs.py",
-        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+        "needed_change": "No known boundary change; validate more generated tasks and archived model traces before deployment."
       }
     },
     {

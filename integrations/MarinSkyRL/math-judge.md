@@ -59,7 +59,7 @@ judge requests, malformed trusted references independent of candidate form and
 backend failure that must not reach a positive judge. The core checkpoint passed
 155 focused tests and 760 full-suite tests (one Go skip).
 
-The full real-trace population contains294 verified links in six benchmark groups.
+The full real-trace population contains 294 verified links in six benchmark groups.
 Three seeded selections per group were frozen before scoring, producing 18 actual
 Env roundtrips. Sixteen match recorded and pinned-native score and framework
 reward. Two NS-tools items lack archived external judge transcripts and remain

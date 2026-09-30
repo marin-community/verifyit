@@ -8,7 +8,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Evalchemy 42 custom benchmarks | 8 native integrations + 3 math hybrids | 31 not integrated (20 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid | 17 not integrated; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 31 source-patched (21 with selected real traces, 10 without eligible real traces) | 2 partial client/harness routes + 13 native profile gaps; 2 external-objective placeholders separate |
-| Harbor 87 adapters | 13 native primitive clients + 3 structured source-runtime bridges | 71 not integrated; 10 wired routes need verifier isolation |
+| Harbor 87 adapters | 13 native primitive clients + 3 structured source-runtime bridges | 71 not integrated; 9 wired routes need verifier isolation |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
@@ -227,7 +227,7 @@ The 71 unwired adapters are named individually. Four answer-file clients invoke 
 | gpqa-diamond | native_route_available | mcq | The generated script removes whitespace and uppercases the full answer before strict A-D MCQ grading. Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available. |
 | humanevalfix | native_route_available | pytest | The generated task declares PytestSpec for protected /tests/test_outputs.py with candidate workspace /workspace. Isolate protected verifier files from the live agent process before deployment. |
 | mmau | native_route_available | pytest | The generated PytestSpec runs protected /tests/test_outputs.py in the task's uv-managed Python, preserving the source all-tests policy and CTRF report via pytest arguments. Isolate protected verifier files from the live agent process before deployment. |
-| replicationbench | native_route_available | pytest | The generated PytestSpec runs the protected source comparator and retains its binary all-tests reward, comparison artifact and task Python environment. Isolate protected verifier files from the live agent process before deployment. |
+| replicationbench | native_route_available | pytest | The generated PytestSpec runs the protected source comparator and retains its binary all-tests reward, comparison artifact and task Python environment. Validate additional generated task instances, broader data dependencies and saved model traces before wider deployment. |
 | satbench | native_route_available | exact | The generated script takes the last case-sensitive [SAT] or [UNSAT] marker and grades that label exactly. Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available. |
 
 ### Retained source evaluators
@@ -240,7 +240,7 @@ The 71 unwired adapters are named individually. Four answer-file clients invoke 
 
 ### Shared verifier boundary
 
-10 wired clients still grade in Harbor's shared agent container. Harbor uploads trusted files after the agent phase, while a surviving candidate process can modify them. A generated GAIA task reproduced a wrong answer scoring one after its uploaded reference changed. This establishes the shared-container failure mode, not a per-route exploit for every row. These routes have client wiring but require a protected verifier environment before deployment. ARC-AGI-2, AIME, GAIA, GPQA Diamond, SATBench and DABstep now use separate verifier images on bounded generated fixtures; GAIA and DABstep passed a corresponding mutation replay.
+9 wired clients still grade in Harbor's shared agent container. Harbor uploads trusted files after the agent phase, while a surviving candidate process can modify them. A generated GAIA task reproduced a wrong answer scoring one after its uploaded reference changed. This establishes the shared-container failure mode, not a per-route exploit for every row. These routes have client wiring but require a protected verifier environment before deployment. ARC-AGI-2, AIME, GAIA, GPQA Diamond, SATBench, DABstep and ReplicationBench now use separate verifier images on bounded generated fixtures; GAIA, DABstep and ReplicationBench passed corresponding mutation replays.
 
 | Wired route | Candidate-reachable trusted assets |
 | --- | --- |
@@ -252,7 +252,6 @@ The 71 unwired adapters are named individually. Four answer-file clients invoke 
 | evoeval | /tests/test_outputs.py and source test fixtures |
 | humanevalfix | /tests/test_outputs.py and protected tests |
 | mmau | /tests/test_outputs.py and protected tests |
-| replicationbench | /tests/config.json and test_outputs.py |
 | tau3-bench | /tests native evaluator and tau2-assets.json manifest |
 
 
@@ -294,7 +293,7 @@ Harbor MMAU preserves the source CTRF artifact with PytestSpec arguments alongsi
 
 Harbor CodePDE's generated PytestSpec runs the unchanged upstream nRMSE evaluator in a protected directory for each of five PDE variants. The candidate solver receives only public numerical inputs in an unprivileged Landlock child; trusted code validates exact shape and finite values before computing the source metric and binary 0.05 threshold. Ten generated-image reference/wrong cases matched original test.sh, CLI and Harbor Verifier on bounded HDF5 fixtures. Seven adversarial cases reject source false positives from forged stdout and reference reads, along with reward writes and malformed outputs; missing/empty solvers stay unscored. A detached candidate child was reaped before scoring. Full-size data and saved model traces remain unvalidated.
 
-Harbor ReplicationBench's generated PytestSpec executes the protected source comparator and preserves its binary all-tests policy and comparison artifact. A generated image matched original test.sh, direct CLI and Harbor Verifier for nested passing, wrong and missing-result fixtures. The source accepted a boolean as a numeric answer; the patched comparator scores it zero. Explicit null remains valid, while absent or malformed trusted references and incompatible tolerances are unscored. These are bounded generated fixtures; broader task data and saved model traces remain unvalidated.
+Harbor ReplicationBench's generated PytestSpec executes the protected source comparator and preserves its binary all-tests policy and comparison artifact. A generated image matched original test.sh, direct CLI and Harbor Verifier for nested passing, wrong and missing-result fixtures. The source accepted a boolean as a numeric answer; the patched comparator scores it zero. Explicit null remains valid, while absent or malformed trusted references and incompatible tolerances are unscored. A separate verifier image receives only result.json: a wrong-result reference mutation scored one in the shared image and zero after isolation, and malformed protected config fails setup as infra_error without a reward. These are bounded generated fixtures; broader task data and saved model traces remain unvalidated.
 
 Harbor BFCL's structured ScriptSpec keeps the source evaluator and task Python, with verifyit on a separate Python 3.11 runtime. Eleven generated-image cases matched original test.sh, direct CLI and Harbor Verifier across simple, live relevance, irrelevance and parallel calls. Two source false positives from boolean/numeric and overflowing numeric-string comparisons score zero after hardening; a malformed protected evaluator is unscored. Other categories and the linked bfclparity-pi model workspaces remain unvalidated because the available AWS SSO token expired.
 
