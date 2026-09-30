@@ -40,7 +40,11 @@ def corpus_config_profile(config: Mapping[str, Any]) -> str | None:
     allowed = (
         {"bleu", "chrf", "ter"}
         if output == "generate_until"
-        else {"word_perplexity", "byte_perplexity", "bits_per_byte"} if output == "loglikelihood_rolling" else set()
+        else (
+            {"word_perplexity", "byte_perplexity", "bits_per_byte"}
+            if output == "loglikelihood_rolling"
+            else {"perplexity", "acc"} if output == "loglikelihood" else set()
+        )
     )
     definitions = config.get("metric_list")
     if not allowed or not isinstance(definitions, list) or not definitions:
@@ -55,13 +59,21 @@ def corpus_config_profile(config: Mapping[str, Any]) -> str | None:
         direction = definition.get("higher_is_better")
         if direction is not None and not isinstance(direction, bool):
             return None
-        expected = "weighted_perplexity" if name in {"word_perplexity", "byte_perplexity"} else name
+        expected = (
+            "weighted_perplexity"
+            if name in {"word_perplexity", "byte_perplexity"}
+            else "mean" if name == "acc" else name
+        )
         if definition.get("aggregation") not in (None, expected):
             return None
         names.append(name)
     if len(set(names)) != len(names):
         return None
-    return "translation_corpus" if output == "generate_until" else "rolling_likelihood_corpus"
+    return {
+        "generate_until": "translation_corpus",
+        "loglikelihood_rolling": "rolling_likelihood_corpus",
+        "loglikelihood": "likelihood_corpus",
+    }[str(output)]
 
 
 def score_corpus(

@@ -10,13 +10,14 @@ source APIs and actual evaluator fixtures pass, without matching saved model-run
 The POS scoring boundary preserves ordered gold tags and fewshot behavior while
 fixing the original multiple-target path's scalar/aggregator mismatch.
 
-A further **908 configurations** have an opt-in retained-runtime batch integration:
-868 translation corpus profiles and 40 default rolling-likelihood profiles.
+A further **936 configurations** have an opt-in retained-runtime batch integration:
+868 translation corpus profiles, 40 default rolling-likelihood profiles, and
+28 default likelihood profiles (10 arithmetic, ASDiv and 17 LAMBADA configs).
 `ScriptSpec` executes the actual source scorer and aggregators; the evaluator consumes
 those point aggregates directly. Named metric scales and raw observations remain
 unchanged, including unbounded perplexity. These single-rank integrations use
 fixture/source validation, not saved-run replay, and do not claim native primitive replacement.
-The remaining **693 configs** have no cutover. The [current coverage register](coverage-gaps.json)
+The remaining **665 configs** have no cutover. The [current coverage register](coverage-gaps.json)
 is authoritative for exact names, options, source evidence and limitations.
 
 `verifyit.adapters.harness_native` routes filtered likelihoods through MCQ (or

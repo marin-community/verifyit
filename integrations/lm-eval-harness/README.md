@@ -51,7 +51,7 @@ or live model endpoint was used.
 ## Retained corpus runtime
 
 Apply `corpus-runtime-verifyit.patch` after `verifyit.patch`. It adds an optional
-single-rank batch route for 868 translation and 40 default rolling-likelihood
+single-rank batch route for 868 translation, 40 default rolling-likelihood and 28 default likelihood
 configs. The dependency pin records the actual local implementation checkpoint. It is
 unpublished; use a local Git installation for validation and do not assume the
 remote Git URL is fetchable.
@@ -77,3 +77,17 @@ source zero-overlap behavior. Empty references/weighting denominators, nonfinite
 samples, producer failures or missing observations abort the entire evaluation
 without a positive aggregate. No matching saved tracker runs were available for
 these families, so this validation does not claim genuine archived replay.
+
+The default likelihood extension preserves scalar log probabilities, integer greedy
+accuracy observations, and source `exp(-mean(logp))` perplexity without clipping.
+Ten arithmetic configs, ASDiv and 17 LAMBADA configs pass registered-source guard
+roundtrips; actual evaluator fixtures cover all three families. A malformed pair,
+nonboolean greedy flag, nonfinite/positive log probability or overflowing
+perplexity aborts the entire batch without an aggregate. Acc-only tasks accept
+large negative finite log probabilities because no perplexity is computed.
+Fixture evidence is in campaign `evidence/e2e/wiring/harness-likelihood/`.
+No matching model-run links were found in the tracker. Named local ASDiv artifacts
+include SkyRL generation traces; those do not supply harness likelihood response
+pairs. This is source fixture validation, not archived model-run replay.
+The likelihood extension's implementation pin must follow its API checkpoint;
+the earlier pin above supports only the preceding corpus profiles.

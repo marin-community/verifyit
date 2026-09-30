@@ -143,7 +143,7 @@
                  task_cfg["metadata"] = task_cfg.get("metadata", {}) | self._meta
 --- /dev/null
 +++ b/lm_eval/verifyit_runtime.py
-@@ -0,0 +1,256 @@
+@@ -0,0 +1,276 @@
 +"""Trusted JSON-only corpus scorer used by verifyit's ScriptSpec integration."""
 +
 +import json
@@ -282,7 +282,7 @@
 +        aggregator_name = (
 +            "weighted_perplexity"
 +            if metric in {"word_perplexity", "byte_perplexity"}
-+            else metric
++            else "mean" if metric == "acc" else metric
 +        )
 +        if task.aggregation()[metric] is not getattr(
 +            source_metrics, aggregator_name, None
@@ -326,6 +326,26 @@
 +            ):
 +                raise InvalidTask(
 +                    "rolling likelihood requires one finite nonpositive model log probability"
++                )
++    elif (
++        task.OUTPUT_TYPE == "loglikelihood"
++        and metrics
++        and set(metrics) <= {"perplexity", "acc"}
++    ):
++        profile = "likelihood_corpus"
++        for sample in samples:
++            responses = sample["responses"]
++            if not isinstance(responses, list) or len(responses) != 1:
++                raise InvalidTask("likelihood requires one filtered response pair")
++            pair = responses[0]
++            if (
++                not isinstance(pair, (list, tuple))
++                or len(pair) != 2
++                or not isinstance(pair[1], bool)
++                or finite(pair[0]) > 0
++            ):
++                raise InvalidTask(
++                    "likelihood requires finite nonpositive log probability and boolean greedy flag"
 +                )
 +    else:
 +        raise InvalidTask("unrecognized corpus scoring profile")
