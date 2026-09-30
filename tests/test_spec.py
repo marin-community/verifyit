@@ -13,6 +13,7 @@ from verifyit.spec import (
     MathType,
     McqSpec,
     NumericSpec,
+    PytestSpec,
     StdioSpec,
     parse_spec,
     render_spec,
@@ -28,6 +29,7 @@ def test_round_trip_every_field_kind():
         ExactSpec(expected=("a", "b"), ordered=False, strip_outer_whitespace=False),
         IfevalSpec(constraints=(Constraint("last_word:last_word_answer", {"last_word": "contest"}),)),
         StdioSpec(command="python3 /app/main.py", compare=Compare.FLOAT, special_judge="judge.py", min_cases=3),
+        PytestSpec(setup="uv init", setup_failure_is_infra=True),
     ]
     for spec in specs:
         assert parse_spec(render_spec(spec)) == spec
@@ -47,6 +49,7 @@ def test_single_string_becomes_tuple_and_none_is_omitted():
         ('mode = "mcq"\nexpected = "C"\nbogus = 1\n', r"does not accept \['bogus'\]"),
         ('mode = "mcq"\nexpected = 3\n', "expects str"),
         ('mode = "nope"\n', "nope"),
+        ('mode = "pytest"\nsetup_failure_is_infra = "true"\n', "expects bool"),
     ],
 )
 def test_malformed_specs_are_rejected(text, message):

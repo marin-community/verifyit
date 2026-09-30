@@ -65,6 +65,9 @@ JUnit report globs declare output files: matching old files are removed before e
 passing reports cannot satisfy required tests. Report paths must remain inside the workspace.
 Interrupted pytest runs, collection errors and incomplete Go test/package event streams cannot
 earn positive rewards. Ordinary reported test failures retain required/protected test scoring.
+For pytest tasks, `setup_failure_is_infra = true` makes a failed or timed-out `setup` an unscored
+infrastructure error with no reward file. Use it for task-owned dependency installation and
+environment preparation; the default remains scored zero for candidate-dependent setup commands.
 
 For the `math` and `numeric` grading modes, the last `\boxed{...}` occurrence determines the
 candidate when the output contains a box marker. Its braces must be balanced and its content must be

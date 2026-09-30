@@ -31,6 +31,9 @@ def grade(spec: PytestSpec, tests_dir: Path, workspace: Path) -> Reward:
     if spec.setup:
         setup = run_setup(spec.setup, tests_dir, directory, spec.timeout)
         if setup.timed_out or setup.returncode != 0:
+            if spec.setup_failure_is_infra:
+                reason = "timed out" if setup.timed_out else f"exited {setup.returncode}"
+                raise RuntimeError(f"pytest setup {reason}: {_tail(setup.stderr or setup.stdout, STDERR_TAIL)}")
             return scored(0.0, reason="setup_failed", stderr=setup.stderr[-STDERR_TAIL:], passed=0, total=0)
     with tempfile.TemporaryDirectory(prefix="verifyit-pytest-") as scratch:
         report_path = Path(scratch) / REPORT_NAME

@@ -170,6 +170,16 @@ def test_setup_runs_in_the_workspace_before_the_tests(tmp_path):
     assert reward.reward == 0.0 and reward.detail["reason"] == "setup_failed"
 
 
+def test_task_owned_setup_failure_can_be_unscored(tmp_path):
+    workspace = _project(tmp_path, FIXED)
+    spec = _spec(paths=("tests/test_calc.py",), setup="exit 3", setup_failure_is_infra=True)
+    with pytest.raises(RuntimeError, match="pytest setup exited 3"):
+        grade_pytest.grade(spec, tmp_path, workspace)
+    timed_out = _spec(paths=("tests/test_calc.py",), setup="sleep 2", timeout=0.1, setup_failure_is_infra=True)
+    with pytest.raises(RuntimeError, match="pytest setup timed out"):
+        grade_pytest.grade(timed_out, tmp_path, workspace)
+
+
 def test_pytest_report_repeated_pass_does_not_erase_required_failure(tmp_path):
     workspace = _project(tmp_path, BROKEN)
     # Retry/reporting plugins can emit several observations of one node ID.

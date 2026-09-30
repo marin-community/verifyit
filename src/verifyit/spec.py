@@ -173,6 +173,7 @@ class PytestSpec:
     python: str = "python3"
     timeout: float = 600.0
     workspace: str = DEFAULT_WORKSPACE
+    setup_failure_is_infra: bool = False
 
 
 @dataclass(frozen=True)
