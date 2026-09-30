@@ -16,3 +16,13 @@ verifyit installed, then the original verifier tests. Container deployment is
 not established by these local tests. The upstream task images and mode extras
 remain necessary. See [the mapping](../../docs/unification/harbor.md) and
 [extension specs](../../docs/unification/harbor_specs.md).
+
+Apply `tau3-verifyit.patch` after the dispatcher patch to migrate the tau3 client.
+Generate tasks with `--verifyit-ref 91c55a49599fcdead3475f009e62da4e30ca4f27`;
+this required immutable API pin supplies ScriptSpec.verdict_file. The commit is
+local and unpublished, so remote image builds require publishing that exact
+revision; local API tests use the corresponding Git checkout. The tau3 patch
+retains evaluate.py, model/domain/trajectory behavior and native reward metadata.
+Valid mismatch zero is scored; missing/invalid logs or caught runtime errors
+are infra_error zero. This is a native-runtime client bridge, not a replacement
+state-scoring primitive.

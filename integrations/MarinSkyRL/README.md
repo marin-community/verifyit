@@ -3,8 +3,7 @@
 Source pin: `91c7a60e85e31b6933ab0ee732125b3338e82b89`. Apply the MCQ and
 arithmetic and client-boundaries patches, then the dependency pin patch. The latter pins the local
 verifyit implementation checkpoint and raises the standalone gym Python floor
-to >=3.11. A later implementation checkpoint may be required when this campaign
-lands additional APIs; the source SHA must exist on the remote before external
+to >=3.11. The source SHA must exist on the remote before external
 installation. Do not silently replace a pinned Git dependency with a floating
 branch. Regenerate fork locks in the fork's supported environment before use.
 
@@ -16,7 +15,7 @@ termination, and feedback. Client boundaries also route Search QA EM, rounded ch
 and both ARC grid comparisons through exact after source extraction/execution.
 Malformed candidate grid cells retain rejection; invalid reference grids and nonfinite
 chemistry references now fail closed rather than exploiting Python equality or raising during rounding.
-The expanded patches require the forthcoming implementation checkpoint; the present dependency
-pin predates the new APIs and must be updated before external installation.
+The dependency pin includes the Exact/Math options, expanded client adapters and
+fail-closed boundaries used by these patches.
 Patched source regressions and verifyit API regression
 counts are recorded in [the mapping](../../docs/unification/skyrl.md).

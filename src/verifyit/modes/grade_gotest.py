@@ -3,11 +3,10 @@
 
 """Mode gotest: run ``go test -json`` and grade the event stream.
 
-``go test -json`` writes one JSON object per line. Events that carry a ``Test`` field report a
-single test or subtest; the id is the package import path joined to the test name with a dot, as in
-``example.com/m/pkg.TestAdd`` or ``example.com/m/pkg.TestAdd/negative``. Events without a ``Test``
-field are package-level and are ignored: a build failure produces no test events at all, which
-grades as a run with no tests.
+``go test -json`` writes one JSON object per line. Test identities join the package import
+path and test name, such as ``example.com/m/pkg.TestAdd``. Package terminal events establish
+completion; pending test/package events or package failures without corresponding test failures
+cannot produce positive credit. A build failure with no test outcomes scores zero.
 """
 
 import json

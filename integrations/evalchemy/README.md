@@ -29,7 +29,7 @@ Further normalization/fallback contracts are described in
 
 
 The integration requires verifyit implementation commit
-`2781eb0d3dae1c9a1486f4074eb47398edc643c8`, including `math_answer_text`.
+`91c55a49599fcdead3475f009e62da4e30ca4f27`, including `math_answer_text`.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -39,7 +39,7 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@2781eb0d3dae1c9a1486f4074eb47398edc643c8'
+uv pip install --python /path/to/environment/bin/python 'verifyit[answer] @ git+file:///path/to/verifyit@91c55a49599fcdead3475f009e62da4e30ca4f27'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 

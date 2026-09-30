@@ -897,8 +897,8 @@
     "arithmetic_adapter_tests": 17,
     "arithmetic_source_tests": 40,
     "patch_apply_checks": "Both patches apply cleanly to pinned source; source clone unchanged",
-    "dependency_pin": "2781eb0d3dae1c9a1486f4074eb47398edc643c8",
-    "implementation_install": "Isolated uv install from local Git repository at exact 2781eb0d3dae1c9a1486f4074eb47398edc643c8 succeeded; real rational and MCQ grading passed.",
+    "dependency_pin": "91c55a49599fcdead3475f009e62da4e30ca4f27",
+    "implementation_install": "Isolated uv install from local Git repository at exact 91c55a49599fcdead3475f009e62da4e30ca4f27 succeeded; real rational and MCQ grading passed.",
     "judge_regressions": "5 malformed final-label HTTP cases and8 unsupported/null finish-status cases failed before changes;35 judge tests pass after strict final-label and explicit stop validation.",
     "client_boundary_tests": 50,
     "client_source_parity_cases": 41,
@@ -925,8 +925,8 @@
     ]
   },
   "installation": {
-    "dependency": "verifyit @ git+https://github.com/marin-community/verifyit@2781eb0d3dae1c9a1486f4074eb47398edc643c8",
-    "implementation_revision": "2781eb0d3dae1c9a1486f4074eb47398edc643c8",
+    "dependency": "verifyit @ git+https://github.com/marin-community/verifyit@91c55a49599fcdead3475f009e62da4e30ca4f27",
+    "implementation_revision": "91c55a49599fcdead3475f009e62da4e30ca4f27",
     "source_revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
     "python": "Root Python 3.12; standalone gym >=3.11 after patch",
     "patch_order": [
@@ -936,7 +936,7 @@
       "client-boundaries.patch"
     ],
     "lockfiles": "Regenerate root and standalone gym uv.lock after publishing implementation revision; remote Git install is not verified because this commit is local only.",
-    "pending_checkpoint_requirement": "New source patches require the forthcoming checkpoint containing strict ExactSpec and expanded SkyRL adapters; current2781 pin is foundation only, repin before external installation."
+    "implementation_requirement": "The dependency pin includes strict ExactSpec, MathSpec profiles, structured ScriptSpec verdicts and expanded SkyRL adapters; the Git revision must be published before remote installation."
   },
   "reusable_gap_specs": "docs/unification/skyrl-adapter-specs.md",
   "reassessment": {

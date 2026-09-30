@@ -7,7 +7,7 @@ use verifyit. Generated task images install the declared mode extras and map
 old judge capability variables only when the corresponding new variable is absent.
 
 The compatible verifyit API pin is
-`2781eb0d3dae1c9a1486f4074eb47398edc643c8`. This commit is local and unpublished;
+`91c55a49599fcdead3475f009e62da4e30ca4f27`. This commit is local and unpublished;
 remote installation requires publishing that exact commit. For local validation,
 install the corresponding local Git checkout instead. No dependency on a floating
 branch is intended.

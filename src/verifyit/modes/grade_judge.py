@@ -182,7 +182,7 @@ def _judge_checklist(spec: JudgeSpec, criteria: tuple[str, ...], context: str, c
 def _ask(
     client: openai.OpenAI, model: str, prompt: str, timeout: float, *, allowed_scores: tuple[float, ...]
 ) -> tuple[float, str]:
-    """The parsed score and raw reply, retrying once when the model leaves out the SCORE line."""
+    """Parse a final allowed SCORE label; retry once, then raise if no valid score appears."""
     reply = ""
     for attempt in range(1, ATTEMPTS + 1):
         reply = _complete(client, model, prompt, timeout)
