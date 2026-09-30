@@ -89,8 +89,8 @@ The48 entries comprise46 scoring routes across17 contract families and two exter
 objectives. Calendar joins the client/task-harness group, bringing it to 24 routes.
 The other 22 retain existing-class profile or comparator-parity requirements; three
 dormant math variants are audits, not proven missing APIs. The current register
-separates 28 implemented routes, one partially wired client/harness route still pending and
-17 concrete existing-class behavior gaps. Three dormant math routes now have source integrations and fixture evidence. Source
+separates 30 implemented routes, one partially wired client/harness route still pending and
+15 concrete existing-class behavior gaps. Three dormant math routes now have source integrations and fixture evidence. Source
 orchestration and metrics stay in clients. No new mode category is proposed; a generic source callback
 behind script is only a runtime bridge. The disjoint plan is recorded per entry in
 `skyrl.json` and detailed in [the composition contracts](skyrl-adapter-specs.md).
@@ -223,3 +223,12 @@ pair proves primitive dispatch for that branch. Nineteen source tests cover form
 dialects, local-only references, tool payloads, and conservative nonfinite rejection.
 No core schema extension was required. Evidence is under
 `evidence/e2e/wiring/skyrl-structured-output/`.
+
+Citation/freeform formatting now registers two source-owned parameterized IFEval
+constraint extensions. This is existing-class extension coverage, not built-in
+comparator logic. IFEval owns predicate execution and aggregation inside a trusted
+ScriptSpec child with a regex deadline. Native per-line counts and marker feedback
+are retained. Twenty-nine source tests and twelve frozen real links pass against
+native/archive; manager before/after witnesses prove empty-policy rejection and
+bounded catastrophic-regex failure. Evidence is in
+`evidence/e2e/wiring/skyrl-format/`.

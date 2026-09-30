@@ -350,10 +350,11 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Regex/inline prose counts matching lines; string markers present with no spurious regex matches.",
-      "adapter_requirements": "Source-compatible deterministic constraint script; not generic exact equality.",
+      "adapter_requirements": "Register source-owned parameterized per-line regex threshold and required/allowed-marker constraints. Execute and aggregate through real IFEval inside a ScriptSpec deadline. Preserve native feedback; malformed/vacuous reference policies and execution failure score zero. No native grade_format delegation or core edit.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#format",
-      "resolution_strategy": "existing_ifeval_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "resolution_strategy": "existing_ifeval_client_registry_extension",
+      "runtime_migration": "implemented_patch",
+      "integration_patch": "integrations/MarinSkyRL/format-verifyit.patch"
     },
     {
       "id": "nemotron_ultra/freeform_formatting_simple_agent",
@@ -367,10 +368,11 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Regex/inline prose counts matching lines; string markers present with no spurious regex matches.",
-      "adapter_requirements": "Source-compatible deterministic constraint script; not generic exact equality.",
+      "adapter_requirements": "Register source-owned parameterized per-line regex threshold and required/allowed-marker constraints. Execute and aggregate through real IFEval inside a ScriptSpec deadline. Preserve native feedback; malformed/vacuous reference policies and execution failure score zero. No native grade_format delegation or core edit.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#format",
-      "resolution_strategy": "existing_ifeval_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "resolution_strategy": "existing_ifeval_client_registry_extension",
+      "runtime_migration": "implemented_patch",
+      "integration_patch": "integrations/MarinSkyRL/format-verifyit.patch"
     },
     {
       "id": "nemotron_ultra/mcqa_simple_agent",

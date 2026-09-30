@@ -118,3 +118,20 @@ controlled actual-v3 Env valid/invalid pair proves that branch reaches the schem
 grader and is not counted as archived evidence. Nineteen source parity/edge tests
 pass. Evidence and rerun scripts are in
 `evidence/e2e/wiring/skyrl-structured-output`.
+
+Apply `format-verifyit.patch` after `structured-output-verifyit.patch` to wire
+citation and freeform formatting. These are source-owned parameterized IFEval
+constraint extensions, not built-in comparator coverage. They count matching
+lines across regex alternatives or enforce required/allowed marker policies.
+Existing IFEval executes and aggregates the constraint; a trusted ScriptSpec child
+bounds Python regex evaluation with process-group cleanup. Candidate text is data,
+never executable. The client retains exact native matching/missing/spurious feedback.
+Invalid or vacuous policies produce configuration error and zero; deadline or
+infrastructure failure produces verifier error and zero. Meaningful negative-marker
+policies remain supported.
+
+Twenty-nine source parity/edge tests pass. The complete format population has 18
+verified links across four groups; three selected per group give 12 native/archive
+matches, with an actual child IFEval verdict for every item. The manager independently
+replayed both sides and verified before/after vacuous-policy and catastrophic-regex
+failures. Evidence is in `evidence/e2e/wiring/skyrl-format/`.

@@ -8,20 +8,20 @@
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 28,
-    "pending_scoring_routes": 18,
-    "pending_active_scoring_routes": 14,
+    "source_patched_routes": 30,
+    "pending_scoring_routes": 16,
+    "pending_active_scoring_routes": 12,
     "pending_dormant_scoring_routes": 4,
     "zero_core_extension_unwired_routes": 1,
-    "existing_class_behavior_gap_routes": 17,
-    "real_replayed_source_routes": 18,
+    "existing_class_behavior_gap_routes": 15,
+    "real_replayed_source_routes": 20,
     "implemented_routes_missing_real_traces": 10,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 18,
+      "implemented_validated": 20,
       "implemented_not_validated": 10,
-      "capability_gap": 17,
+      "capability_gap": 15,
       "not_a_correctness_verifier": 2,
       "not_integrated": 1
     },
@@ -37,7 +37,8 @@
     "Calendar is a task-owned deterministic ScriptSpec harness integration, not an IFEval capability gap; no new class option is required.",
     "Inherited23 extension-strategy routes split into19 concrete existing-class behavior gaps,1calendar harness wiring case and3 dormant math parity-audit cases.",
     "Eight additional opt-in cutovers comprise two Reasoning Gym routes, Nemotron MCQA, three tool-comparison routes, and two dormant exported QA APIs. Five have selected real framework traces; pivot and QA lack eligible trace links. Typed tool comparison intentionally rejects JSON boolean for expected integer despite source Python bool/int equality.",
-    "Structured-output policy is implemented entirely in a client dialect registration using existing json-schema grading; source XML/CSV parsing and tool extraction require no core extension. Fifteen selected archived links match pinned native and archive; four reach schema grading and eleven reject in client parsing."
+    "Structured-output policy is implemented entirely in a client dialect registration using existing json-schema grading; source XML/CSV parsing and tool extraction require no core extension. Fifteen selected archived links match pinned native and archive; four reach schema grading and eleven reject in client parsing.",
+    "Citation/freeform format rules are source-owned parameterized IFEval constraint extensions with ScriptSpec deadline orchestration; they are not built-in comparator coverage. Twelve selected real links match source/archive and reach actual child IFEval grading. Vacuous configurations and regex deadlines fail closed."
   ],
   "real_trace_replay": {
     "verified_population": 5460,
@@ -944,20 +945,20 @@
     },
     {
       "id": "nemotron_ultra/citation_format_simple_agent",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing ifeval mode lacks verified equivalent source registry/constraint checkers for this contract; source dispatch remains native.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_executes_source_owned_ifeval_constraint_extensions",
       "native_fallback_in_cutover": false,
       "contract_family": "format",
       "existing_primitive_candidate": [
         "ifeval",
         "script"
       ],
-      "resolution_strategy": "existing_ifeval_extension",
-      "needed_change": "Source-compatible deterministic constraint script; not generic exact equality.",
+      "resolution_strategy": "existing_ifeval_client_registry_extension",
+      "needed_change": null,
       "validation_gap": null,
       "source_contract": "Regex/inline prose counts matching lines; string markers present with no spurious regex matches.",
       "source": {
@@ -970,28 +971,34 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#format",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/format-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-format/selection.json",
+        "evidence/e2e/wiring/skyrl-format/comparison.json",
+        "evidence/e2e/wiring/skyrl-format/manager-failure-audit-after.json"
       ],
       "observed_verified_execution_links": 9,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 6,
+      "core_extension_requirement": "client_registry_extension_implemented_no_core_edit",
+      "integration_patch": "integrations/MarinSkyRL/format-verifyit.patch",
+      "validation_scope": "Three randomly selected real links per full eligible benchmark group; all reach actual child IFEval grading, bounded by ScriptSpec."
     },
     {
       "id": "nemotron_ultra/freeform_formatting_simple_agent",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing ifeval mode lacks verified equivalent source registry/constraint checkers for this contract; source dispatch remains native.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_executes_source_owned_ifeval_constraint_extensions",
       "native_fallback_in_cutover": false,
       "contract_family": "format",
       "existing_primitive_candidate": [
         "ifeval",
         "script"
       ],
-      "resolution_strategy": "existing_ifeval_extension",
-      "needed_change": "Source-compatible deterministic constraint script; not generic exact equality.",
+      "resolution_strategy": "existing_ifeval_client_registry_extension",
+      "needed_change": null,
       "validation_gap": null,
       "source_contract": "Regex/inline prose counts matching lines; string markers present with no spurious regex matches.",
       "source": {
@@ -1004,11 +1011,17 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#format",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/format-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-format/selection.json",
+        "evidence/e2e/wiring/skyrl-format/comparison.json",
+        "evidence/e2e/wiring/skyrl-format/manager-failure-audit-after.json"
       ],
       "observed_verified_execution_links": 9,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 6,
+      "core_extension_requirement": "client_registry_extension_implemented_no_core_edit",
+      "integration_patch": "integrations/MarinSkyRL/format-verifyit.patch",
+      "validation_scope": "Three randomly selected real links per full eligible benchmark group; all reach actual child IFEval grading, bounded by ScriptSpec."
     },
     {
       "id": "nemotron_ultra/mcqa_simple_agent",
