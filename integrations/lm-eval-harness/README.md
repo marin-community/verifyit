@@ -127,3 +127,31 @@ is campaign `evidence/e2e/wiring/harness-rouge/`, including cached backend and
 seed-wrapper hashes. The initial estimate of five prompt families was corrected
 before coverage promotion; the pinned source has three. The dependency pin records this extension at its actual API checkpoint. The optional evaluation environment
 must already supply evaluate, rouge_score and its cached ROUGE metric module.
+
+
+## TruthfulQA MC2 probability mass
+
+Apply `truthfulqa-mc2-verifyit.patch` after the base and corpus-runtime patches.
+The evaluator validates the recognized task before filters run. After filtering,
+it grades raw likelihood pairs and binary correctness labels inside verifyit:
+stable softmax weights strict ExactSpec choice-index membership. This preserves
+probability mass across all correct alternatives, rather than replacing MC2 with
+argmax accuracy. The source mean aggregator still consumes every sample.
+
+The guard accepts 31 pinned Okapi multilingual configs and Evalchemy's English
+TruthfulQA MC2 override with its separate pinned scorer hash. Callback bytecode,
+source hashes, actual default filter and registered mean identity are checked.
+Malformed/nonfinite likelihoods, label vectors without a correct alternative,
+and changed grading callbacks or filters abort without an aggregate. All-correct
+vectors score exactly one. For Okapi's direct exponentiation underflow, stable
+softmax deliberately produces the mathematically defined finite probability ratio.
+The English override already uses stable softmax and matches within floating tolerance.
+
+All 31 registered task guards, three seeded evaluator witnesses, two-document
+native/cutover evaluator parity for both source contracts, and malformed-batch
+failure fixtures pass. Evidence is campaign `evidence/e2e/wiring/harness-mc2/`.
+Three of thirteen matching English tracker links were selected before scoring;
+S3 credentials are currently unavailable and no matching local JSON/JSONL artifacts
+were found, so archived replay is not claimed. This new API requires the next
+local implementation checkpoint; the existing dependency pin above predates it
+and will be replaced with that exact commit after the implementation is committed.

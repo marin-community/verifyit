@@ -1,0 +1,11 @@
+--- a/lm_eval/evaluator.py
++++ b/lm_eval/evaluator.py
+@@ -616,6 +616,8 @@
+         if getattr(task, "_verifyit_corpus_profile", None) == "xlsum_rouge_corpus":
+             from lm_eval.verifyit_runtime import enable_corpus_runtime
+             enable_corpus_runtime(task, task._verifyit_corpus_config)
++        from verifyit.adapters import harness_probability
++        harness_probability.validate_truthfulqa_task(task)
+         task.apply_filters()
+ 
+         ### Collect values of metrics on all datapoints ###

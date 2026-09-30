@@ -2,7 +2,7 @@
 
 ## Implemented native routes
 
-Resolved configuration routing recognizes **11,091 of 12,692 task configurations**:
+Resolved configuration routing recognizes **11,122 of 12,692 task configurations**:
 8,061 likelihood-choice, 2,785 exact-match, 45 AfriQA exact/F1, 100 MasakhaNER
 span-F1 and 100 MasakhaPOS token-accuracy. The [native eligibility manifest](lm_eval_native_inventory.json)
 records every task; eligibility is not execution of every dataset. AfroBench
@@ -19,7 +19,7 @@ XLSUM ROUGE corpus profiles.
 those point aggregates directly. Named metric scales and raw observations remain
 unchanged, including unbounded perplexity. These single-rank integrations use
 fixture/source validation, not saved-run replay, and do not claim native primitive replacement.
-The remaining **623 configs** have no cutover. The [current coverage register](coverage-gaps.json)
+The remaining **592 configs** have no cutover. The [current coverage register](coverage-gaps.json)
 is authoritative for exact names, options, source evidence and limitations.
 
 `verifyit.adapters.harness_native` routes filtered likelihoods through MCQ (or
@@ -157,7 +157,7 @@ The current `score_task` / `aggregate_task` API implements the in-process metric
 preservation/projection portion. The evaluator patch calls this API with actual
 filtered responses. Declarative source identity validation, persisted typed
 artifacts and task-specific failure schemas remain specified work. This distinction
-is recorded in the current coverage register with specific blockers; 11,091 implemented
+is recorded in the current coverage register with specific blockers; 11,122 implemented
 route-eligible configurations are labeled `adapter`, not delegated source equivalence.
 
 Acceptance tests compare actual pinned `ConfigurableTask.process_results` for

@@ -10,6 +10,7 @@ import string
 from collections.abc import Sequence
 from typing import Any, cast
 
+from verifyit.adapters.harness_probability import truthfulqa_mc2_profile, truthfulqa_task_metrics
 from verifyit.adapters.harness_profiles import generation_profile, profile_task_metrics
 from verifyit.grade import InvalidTask, Reward
 from verifyit.modes.grade_exact import grade_exact_candidate
@@ -96,6 +97,8 @@ def likelihood_choice(
 
 def native_config_route(config: dict) -> str | None:
     """Recognize implemented source branches; unknown options are not native coverage."""
+    if truthfulqa_mc2_profile(config):
+        return "truthfulqa_mc2"
     if config.get("process_results") or config.get("class"):
         return None
     profile = generation_profile(config)
@@ -161,6 +164,9 @@ def native_task_metrics(task, doc, responses) -> dict | None:
         or getattr(method, "__qualname__", None) != "ConfigurableTask.process_results"
     ):
         return None
+    probability_metrics = truthfulqa_task_metrics(task, doc, responses)
+    if probability_metrics is not None:
+        return probability_metrics
     if task.config.process_results is not None:
         return None
     profile_metrics = profile_task_metrics(task, doc, responses, exact_match)

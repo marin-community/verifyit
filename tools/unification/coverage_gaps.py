@@ -436,22 +436,35 @@ def harness_entities(root, sources):
                 )
             )
             or (isinstance(record.get("task"), str) and record["task"].startswith("ask_gec_p"))
+            or ("/okapi/truthfulqa_multilingual/" in record["path"] and record["path"].endswith("_mc2.yaml"))
         ):
             route = record.get("native_route")
             if route is None:
                 config, _ = resolve_config(sources / "lm-eval-harness" / record["path"])
                 route = native_config_route(config)
-                assert route in {"afriqa_f1", "ner_span_f1", "pos_accuracy", "exact_match"}, record["path"]
+                assert route in {"afriqa_f1", "ner_span_f1", "pos_accuracy", "exact_match", "truthfulqa_mc2"}, record[
+                    "path"
+                ]
             entity.update(
                 status="native_route_available",
                 kind="task",
                 reason_id=route,
                 reason=(
-                    "Resolved configuration matches an implemented guarded default scorer route; "
-                    "this is eligibility, not full dataset execution."
+                    (
+                        "Pinned MC2 source contract grades raw likelihoods and correctness labels "
+                        "using stable probability mass "
+                        "and exact index membership; fixture validation only."
+                    )
+                    if route == "truthfulqa_mc2"
+                    else (
+                        "Resolved configuration matches an implemented guarded default scorer route; "
+                        "this is eligibility, not full dataset execution."
+                    )
                 ),
                 primitive_candidates=(
-                    [record["existing_mode"]] if record["existing_mode"] != "script" else ["exact", "script"]
+                    ["exact"]
+                    if route == "truthfulqa_mc2"
+                    else [record["existing_mode"]] if record["existing_mode"] != "script" else ["exact", "script"]
                 ),
                 needed_change="No known scorer change; validate task datasets/runtime before deployment.",
                 validation_status=(
@@ -660,6 +673,20 @@ def evalchemy_entities(root):
                 needed_change="No known scorer change; full dataset replay remains unvalidated.",
                 validation_status="source_parity_not_dataset_validated",
             )
+        elif name == "truthfulqa_mc2":
+            entity.update(
+                status="native_integrated",
+                reason_id="override_probability_mass",
+                reason=(
+                    "Raw likelihoods and binary correctness labels are graded by stable probability mass "
+                    "plus strict exact index membership."
+                ),
+                primitive_candidates=["exact"],
+                needed_change=(
+                    "No known scorer change; three selected saved links await S3 access " "and full archived replay."
+                ),
+                validation_status="source_evaluator_fixtures_not_archived_replay",
+            )
         elif name == "gsm8k":
             entity.update(
                 status="native_fallback",
@@ -802,9 +829,9 @@ def main():
             )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 623
+    assert len(harness_gaps) == 592
     assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 978
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11091
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11122
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {
