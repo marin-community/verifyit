@@ -281,5 +281,13 @@ coverage evidence; discovering a source record alone is not semantic validation.
 
 The current classified population is 42 custom benchmarks: four clean adapters, three hybrid integrations,
 and 35 remaining explicit existing-mode specifications, with zero unknown
-benchmarks. Local harness overrides add 21 task configurations (two native exact routes and 19 remaining profiles) and one orchestration group. Native harness population and inline
+benchmarks. Local harness overrides add 21 task configurations (two native exact routes, one hybrid GSM8K rational-exact route, and 18 remaining profiles) and one orchestration group. Native harness population and inline
 group definitions are counted separately in the harness manifest.
+
+### Recorded-trace replay and GSM8K override cutover
+
+The September 2026 campaign selected three model-run links per capable benchmark before scoring (seed 20260930; selection SHA256 `575523245c2f131685e749edf0d3a546f96cadc4566425eacb4543078405e64a`). All 24selected runs replayed 63,360 recorded samples through actual Evalchemy `_score_custom_task` or harness `evaluator.evaluate`, reaching 68,913 verifyit primitive calls. Every per-sample score and deterministic point metric matched the archived result; all rounded tracker scores matched. Harness bootstrap stderr was excluded. This validates scoring/filter/aggregation playback, not regenerated inference or the entire 13,982configuration corpus. Detailed immutable inputs, source hashes, commands, outputs and per-call specs/verdicts are in campaign `evidence/e2e/evals/catalog.json`.
+
+The traces exposed a client mapping omitted from the initial native eligibility assessment: Evalchemy's GSM8K override version 3.3 uses its own final-answer filter and Minerva scorer, rather than upstream harness version 3.0. Its exact rational shortcut now canonicalizes both answers with the pinned source `_rational_value` and compares their Fraction strings through strict verifyit exact. Missing extraction returns verifyit scored zero; non-rational answers retain source symbolic scoring. This is a hybrid client integration, not native symbolic equivalence. All three selected 1,319-sample runs reproduced both strict/flexible metrics and every sample. Eight source-parity regressions cover decimal/integer equality (`28.00` versus `28`), equivalent fractions, mismatches, missing answers, symbolic equality/mismatch and propagation of scorer infrastructure errors. The initial incorrect upstream-route replay and unmodified baseline remain under `evidence/e2e/evals/superseded/upstream-gsm8k`. Upstream 10,841native-config eligibility remains unchanged.
+
+AIW, GSM8KPerturbed and AIME25 had no validated tracker trace links; no replay success is claimed for them.

@@ -47,3 +47,15 @@ An isolated core-only installation from this exact local Git revision was
 validated: completed reasoning-only boxes are accepted, truncated reasoning is
 rejected, and extracted MCQ choices produce the expected scalar score. No remote
 publication or live model endpoint was used.
+
+The GSM8K override retains its version 3.3 extraction/Minerva contract. Its rational
+shortcut uses strict verifyit exact on canonical Fraction values; non-rational
+answers retain Minerva symbolic scoring. This client hybrid was exposed by real
+recorded traces, so it is separate from upstream harness native-config eligibility.
+Run the source parity regressions with the patched Evalchemy environment:
+
+```bash
+PYTHONPATH=/path/to/verifyit/src:/path/to/patched-evalchemy:/path/to/harness \
+  /path/to/evalchemy/.venv/bin/python integrations/evalchemy/check_gsm_override.py \
+  /path/to/original-evalchemy /path/to/patched-evalchemy
+```

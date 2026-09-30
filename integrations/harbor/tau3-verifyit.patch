@@ -1,6 +1,15 @@
+diff --git a/adapters/tau3-bench/src/tau3_bench/adapter.py b/adapters/tau3-bench/src/tau3_bench/adapter.py
+index 141ed9a..b66e0cc 100644
 --- a/adapters/tau3-bench/src/tau3_bench/adapter.py
 +++ b/adapters/tau3-bench/src/tau3_bench/adapter.py
-@@ -67,6 +67,9 @@
+@@ -1,5 +1,6 @@
+ from __future__ import annotations
+ 
++import hashlib
+ import json
+ import os
+ import re
+@@ -67,6 +68,9 @@ class Tau3BenchAdapter:
          task_ids: list[str] | None = None,
          **kwargs,
      ):
@@ -10,18 +19,83 @@
          self.output_dir = output_dir
          self.limit = limit
          self.overwrite = overwrite
-@@ -369,7 +372,7 @@
+@@ -369,7 +373,9 @@ class Tau3BenchAdapter:
          ):
              content = self._read_text(dockerfile)
              dockerfile.write_text(
 -                content.replace("{tau2_bench_ref}", self._TAU2_BENCH_REF),
-+                content.replace("{tau2_bench_ref}", self._TAU2_BENCH_REF).replace("{verifyit_ref}", self.verifyit_ref),
++                content.replace("{tau2_bench_ref}", self._TAU2_BENCH_REF).replace(
++                    "{verifyit_ref}", self.verifyit_ref
++                ),
                  encoding="utf-8",
              )
  
+@@ -397,9 +403,9 @@ class Tau3BenchAdapter:
+         return {
+             "domain": tau_task.domain,
+             "source_task_id": tau_task.source_id,
+-            "retrieval_variant": "bm25"
+-            if tau_task.domain == "banking_knowledge"
+-            else None,
++            "retrieval_variant": (
++                "bm25" if tau_task.domain == "banking_knowledge" else None
++            ),
+             "task": tau_task.task,
+             "expected_actions": expected_actions,
+             "expected_communicate_info": evaluation.get("communicate_info") or [],
+@@ -453,6 +459,47 @@ class Tau3BenchAdapter:
+         (tests_dir / "config.json").write_text(
+             json.dumps(test_config, indent=2, ensure_ascii=True), encoding="utf-8"
+         )
++        # Read immutable Git objects, never bless agent/checkout modifications.
++        domain = test_config["domain"]
++        asset_paths = subprocess.check_output(
++            [
++                "git",
++                "-C",
++                str(self.tau2_root),
++                "ls-tree",
++                "-r",
++                "--name-only",
++                self._TAU2_BENCH_REF,
++                "src/tau2",
++                f"data/tau2/domains/{domain}",
++            ],
++            text=True,
++        ).splitlines()
++        asset_hashes = {}
++        for relative in asset_paths:
++            if relative.startswith("src/") and not relative.endswith(".py"):
++                continue
++            content = subprocess.check_output(
++                [
++                    "git",
++                    "-C",
++                    str(self.tau2_root),
++                    "show",
++                    f"{self._TAU2_BENCH_REF}:{relative}",
++                ]
++            )
++            asset_hashes[relative] = hashlib.sha256(content).hexdigest()
++        (tests_dir / "tau2-assets.json").write_text(
++            json.dumps(
++                {
++                    "revision": self._TAU2_BENCH_REF,
++                    "domain": domain,
++                    "files": asset_hashes,
++                },
++                sort_keys=True,
++            )
++            + "\n"
++        )
+         self._write_runtime_assets(task_dir, test_config)
+         (tests_dir / "test.sh").chmod(0o755)
+         (tests_dir / "evaluate.py").chmod(0o755)
+diff --git a/adapters/tau3-bench/src/tau3_bench/main.py b/adapters/tau3-bench/src/tau3_bench/main.py
+index 5a2fc53..94eafde 100644
 --- a/adapters/tau3-bench/src/tau3_bench/main.py
 +++ b/adapters/tau3-bench/src/tau3_bench/main.py
-@@ -38,6 +38,7 @@
+@@ -38,6 +38,7 @@ def main() -> None:
          default=None,
          help="Only generate these task IDs",
      )
@@ -29,7 +103,7 @@
      args = parser.parse_args()
  
      adapter = Tau3BenchAdapter(
-@@ -45,6 +46,7 @@
+@@ -45,6 +46,7 @@ def main() -> None:
          overwrite=args.overwrite,
          limit=args.limit,
          task_ids=args.task_ids,
@@ -37,9 +111,11 @@
      )
  
      adapter.run()
+diff --git a/adapters/tau3-bench/src/tau3_bench/task-template/environment/Dockerfile b/adapters/tau3-bench/src/tau3_bench/task-template/environment/Dockerfile
+index 758b842..c2a14ea 100644
 --- a/adapters/tau3-bench/src/tau3_bench/task-template/environment/Dockerfile
 +++ b/adapters/tau3-bench/src/tau3_bench/task-template/environment/Dockerfile
-@@ -16,3 +16,7 @@
+@@ -16,3 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
      && git -C "${TAU2_BENCH_ROOT}" checkout --detach FETCH_HEAD \
      && pip install --no-cache-dir "${TAU2_BENCH_ROOT}[knowledge]" \
      && rm -rf /var/lib/apt/lists/*
@@ -47,40 +123,22 @@
 +# Supply the immutable verifyit integration commit when building this task.
 +ARG VERIFYIT_REF="{verifyit_ref}"
 +RUN test -n "$VERIFYIT_REF" && pip install --no-cache-dir "git+https://github.com/marin-community/verifyit@$VERIFYIT_REF"
---- a/adapters/tau3-bench/src/tau3_bench/task-template/tests/test.sh
-+++ b/adapters/tau3-bench/src/tau3_bench/task-template/tests/test.sh
-@@ -1,14 +1,5 @@
- #!/bin/bash
- set -euo pipefail
--
--LOG_DIR="/logs/verifier"
--mkdir -p "${LOG_DIR}"
--
- export TAU2_BENCH_ROOT="${TAU2_BENCH_ROOT:-/opt/tau2-bench}"
- export TAU2_DATA_DIR="${TAU2_DATA_DIR:-${TAU2_BENCH_ROOT}/data}"
--
--python3 /tests/evaluate.py \
--  --config /tests/config.json \
--  --runtime-log /logs/agent/tau3_runtime_state.json \
--  --reward "${LOG_DIR}/reward.txt" \
--  --result "${LOG_DIR}/result.json"
-+exec verifyit /tests/verifier.toml
---- /dev/null
-+++ b/adapters/tau3-bench/src/tau3_bench/task-template/tests/verifier.toml
-@@ -0,0 +1,3 @@
-+mode = "script"
-+path = "tau3_bridge.py"
-+verdict_file = "result.json"
+diff --git a/adapters/tau3-bench/src/tau3_bench/task-template/tests/tau3_bridge.py b/adapters/tau3-bench/src/tau3_bench/task-template/tests/tau3_bridge.py
+new file mode 100644
+index 0000000..6a801be
 --- /dev/null
 +++ b/adapters/tau3-bench/src/tau3_bench/task-template/tests/tau3_bridge.py
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,120 @@
 +# Copyright The Marin Authors
 +# SPDX-License-Identifier: Apache-2.0
 +"""Run tau3's retained evaluator through ScriptSpec's explicit verdict channel."""
 +
++import hashlib
 +import json
 +import math
 +import os
++import re
++import shutil
 +import subprocess
 +import sys
 +from pathlib import Path
@@ -102,6 +160,45 @@
 +    return {"status": "scored", "reward": float(reward), "detail": {"native": result}}
 +
 +
++def validate_assets(tests: Path, domain: str) -> None:
++    manifest = json.loads((tests / "tau2-assets.json").read_text())
++    if not isinstance(manifest, dict) or set(manifest) != {"revision", "domain", "files"}:
++        raise ValueError("invalid tau2 asset manifest")
++    if manifest["revision"] != "fc0055dc4e0a316c3f83133267fbd6faaa770992" or manifest["domain"] != domain:
++        raise ValueError("tau2 manifest revision/domain mismatch")
++    files = manifest["files"]
++    database = "db.toml" if domain == "telecom" else "db.json"
++    if not isinstance(files, dict) or not files or f"data/tau2/domains/{domain}/{database}" not in files:
++        raise ValueError("tau2 manifest lacks required database assets")
++    root = Path(os.environ.get("TAU2_BENCH_ROOT", "/opt/tau2-bench")).resolve()
++    data_root = os.environ.get("TAU2_DATA_DIR")
++    if data_root and Path(data_root).resolve() != root / "data":
++        raise ValueError("tau2 data directory differs from protected assets")
++    for relative, digest in files.items():
++        if not isinstance(relative, str) or not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
++            raise ValueError("invalid tau2 manifest entry")
++        path = Path(relative)
++        if (
++            path.is_absolute()
++            or ".." in path.parts
++            or not (
++                (relative.startswith("src/tau2/") and relative.endswith(".py"))
++                or relative.startswith(f"data/tau2/domains/{domain}/")
++            )
++        ):
++            raise ValueError("tau2 manifest path outside protected domain/source")
++        asset = root / path
++        if not asset.resolve().is_relative_to(root) or asset.is_symlink():
++            raise ValueError("tau2 asset escapes runtime directory")
++        if hashlib.sha256(asset.read_bytes()).hexdigest() != digest:
++            raise ValueError(f"tau2 asset modified: {relative}")
++    # Native imports must read the checked source, not agent-written bytecode.
++    for cache in (root / "src/tau2").rglob("__pycache__"):
++        if cache.is_symlink() or not cache.resolve().is_relative_to(root):
++            raise ValueError("tau2 bytecode cache escapes runtime directory")
++        shutil.rmtree(cache)
++
++
 +def main() -> None:
 +    tests = Path(os.environ["VERIFYIT_TESTS_DIR"])
 +    logs = Path(os.environ["VERIFYIT_LOGS_DIR"])
@@ -116,6 +213,13 @@
 +    except (OSError, ValueError) as error:
 +        verdict = {"status": "invalid_task", "reward": 0.0, "detail": {"error": str(error)}}
 +    else:
++        try:
++            validate_assets(tests, config["domain"])
++        except (OSError, ValueError) as error:
++            (logs / "result.json").write_text(
++                json.dumps({"status": "infra_error", "reward": 0.0, "detail": {"error": str(error)}})
++            )
++            return
 +        runtime = os.environ.get("TAU3_RUNTIME_STATE_PATH", "/logs/agent/tau3_runtime_state.json")
 +        completed = subprocess.run(
 +            [
@@ -145,3 +249,32 @@
 +
 +if __name__ == "__main__":
 +    main()
+diff --git a/adapters/tau3-bench/src/tau3_bench/task-template/tests/test.sh b/adapters/tau3-bench/src/tau3_bench/task-template/tests/test.sh
+index 71b032d..920d9fa 100644
+--- a/adapters/tau3-bench/src/tau3_bench/task-template/tests/test.sh
++++ b/adapters/tau3-bench/src/tau3_bench/task-template/tests/test.sh
+@@ -1,14 +1,5 @@
+ #!/bin/bash
+ set -euo pipefail
+-
+-LOG_DIR="/logs/verifier"
+-mkdir -p "${LOG_DIR}"
+-
+ export TAU2_BENCH_ROOT="${TAU2_BENCH_ROOT:-/opt/tau2-bench}"
+ export TAU2_DATA_DIR="${TAU2_DATA_DIR:-${TAU2_BENCH_ROOT}/data}"
+-
+-python3 /tests/evaluate.py \
+-  --config /tests/config.json \
+-  --runtime-log /logs/agent/tau3_runtime_state.json \
+-  --reward "${LOG_DIR}/reward.txt" \
+-  --result "${LOG_DIR}/result.json"
++exec verifyit /tests/verifier.toml
+diff --git a/adapters/tau3-bench/src/tau3_bench/task-template/tests/verifier.toml b/adapters/tau3-bench/src/tau3_bench/task-template/tests/verifier.toml
+new file mode 100644
+index 0000000..c666636
+--- /dev/null
++++ b/adapters/tau3-bench/src/tau3_bench/task-template/tests/verifier.toml
+@@ -0,0 +1,3 @@
++mode = "script"
++path = "tau3_bridge.py"
++verdict_file = "result.json"

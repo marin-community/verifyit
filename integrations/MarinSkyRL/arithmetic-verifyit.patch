@@ -1,15 +1,17 @@
+diff --git a/skyrl-gym/skyrl_gym/envs/aime/utils.py b/skyrl-gym/skyrl_gym/envs/aime/utils.py
+index 1478ae6..144e5f0 100644
 --- a/skyrl-gym/skyrl_gym/envs/aime/utils.py
 +++ b/skyrl-gym/skyrl_gym/envs/aime/utils.py
-@@ -13,6 +13,8 @@
- # limitations under the License.
+@@ -14,6 +14,8 @@
  # Adapted from https://github.com/EleutherAI/lm-evaluation-harness/blob/main/lm_eval/tasks/hendrycks_math/utils.py
  # https://github.com/volcengine/verl/blob/1a62568f801ba35ac1f5387e27232a2df7eac488/verl/utils/reward_score/math_dapo.py
-+
-+from verifyit.adapters.skyrl import grade_aime_candidate, grade_literal_candidate
  
++from verifyit.adapters.skyrl import grade_aime_candidate, grade_literal_candidate
++
  import math
  import re
-@@ -221,11 +223,7 @@
+ from fractions import Fraction
+@@ -221,11 +223,7 @@ def is_correct_minerva(
      else:
          gt = normalize_final_answer(gt)
  
@@ -22,7 +24,7 @@
  
  
  def is_correct_strict_box(
-@@ -252,7 +250,8 @@
+@@ -252,7 +250,8 @@ def is_correct_strict_box(
      boxed_pred = last_boxed_only_string(pred)
      extracted_pred = remove_boxed(boxed_pred) if boxed_pred is not None else None
  
@@ -32,28 +34,42 @@
  
  
  def verify(
+diff --git a/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py b/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py
+index 6559ec2..a43a517 100644
 --- a/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py
 +++ b/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py
 @@ -12,8 +12,9 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
  
-+from verifyit.adapters.skyrl import grade_gsm8k_final_line, grade_gsm8k_extracted
++from verifyit.adapters.skyrl import grade_gsm8k_final_line, grade_gsm8k_extracted, grade_gsm8k_strict
 +
  import re
 -from decimal import Decimal
  
  FINAL_ANSWER = re.compile(r"#### (-?(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)(?:\.[0-9]+)?)")
  
-@@ -66,9 +67,9 @@
+@@ -62,13 +63,16 @@ def compute_score(solution_str, ground_truth, method="strict", format_score=0.0,
+         format_score: the score for the format
+         score: the score for the correct answer
+     """
++    if method in {"strict", "final_line"}:
++        verdict = (
++            grade_gsm8k_strict(ground_truth, solution_str)
++            if method == "strict"
++            else grade_gsm8k_final_line(ground_truth, solution_str)
++        )
++        if verdict.detail.get("reason") in {"missing_answer_marker", "missing_final_answer"}:
++            return 0
++        return score if verdict.reward == 1.0 else format_score
+     answer = extract_solution(solution_str=solution_str, method=method)
      if answer is None:
          return 0
-     if method == "final_line":
+-    if method == "final_line":
 -        return score if Decimal(answer) == Decimal(ground_truth) else format_score
-+        return score if grade_gsm8k_final_line(ground_truth, solution_str).reward == 1.0 else format_score
-     else:
+-    else:
 -        if answer == ground_truth:
-+        if grade_gsm8k_extracted(ground_truth, answer).reward:
-             return score
-         else:
-             return format_score
+-            return score
+-        else:
+-            return format_score
++    return score if grade_gsm8k_extracted(ground_truth, answer).reward else format_score

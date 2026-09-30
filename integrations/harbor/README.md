@@ -26,3 +26,21 @@ retains evaluate.py, model/domain/trajectory behavior and native reward metadata
 Valid mismatch zero is scored; missing/invalid logs or caught runtime errors
 are infra_error zero. This is a native-runtime client bridge, not a replacement
 state-scoring primitive.
+
+The tau3 client now writes `tests/tau2-assets.json` from immutable Git objects
+at its declared tau2 revision. Before native evaluation, the bridge checks
+Python source and domain assets against that trusted manifest and removes native
+bytecode caches. Changed, missing, or redirected assets produce an unscored
+infrastructure error. This catches direct edits to the base database; legitimate
+trajectory mutations occur in memory during native replay. It does not establish
+isolation from an agent with unrestricted root access to the grader interpreter.
+
+For existing tau3 tasks, generate the manifest using the pinned runtime checkout:
+
+```bash
+python integrations/harbor/tau3_assets.py /path/to/tau2-bench airline /path/to/task/tests/tau2-assets.json
+```
+
+Use the task's actual domain and upload the manifest together with the updated
+bridge through Harbor's tests upload. Replay evidence and limitations are in
+[the Harbor replay report](../../docs/unification/harbor_replay.md).

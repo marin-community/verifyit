@@ -94,7 +94,7 @@ behind script is only a runtime bridge. The disjoint plan is recorded per entry 
 `skyrl.json` and detailed in [the composition contracts](skyrl-adapter-specs.md).
 
 Nine routes now have source patches: AIME (normal and strict), GSM8K, GSM8K multi-turn,
-Search, SearchCode, MCQ, rounded chemistry, and inductive/transductive ARC.50 client
+Search, SearchCode, MCQ, rounded chemistry, and inductive/transductive ARC. 52 client
 boundary tests pass, and41 cases compare directly against unmodified source scorer
 files with checked hashes. Execute the reproducible source parity runner with:
 
@@ -111,9 +111,46 @@ nonfinite references as invalid tasks. Any required verifier failure suppresses
 source format/partial/optimization reward. Central Reward validation additionally
 rejects invalid scalars/status/details and clears stale verdict/reward artifacts.
 
-The dependency pin includes these APIs. This tranche is source-validated, not deployed.
+The dependency pin includes these APIs. These patches are source-validated. The real-trace replay below validates the locally installed integration; remote publication and full training deployment remain separate.
 
 GSM8K strict task references now must parse as finite decimals. Native ground truth `.`
 could previously match `#### .` and earn1; the adapter rejects that malformed task
 as invalid_task before applying format reward. For valid references, a source-formatted
 wrong marker still retains its declared per-turn format reward.
+
+
+## Real framework replay
+
+The authoritative artifact census recursively discovers 5,460 verified SkyRL execution
+links, including retries. Of these, 3,695 belong to the implemented cutover routes
+and contain real task inputs, verifier events, and recorded candidate responses.
+Known handwritten smoke tasks are excluded by provenance. There are 22 eligible
+benchmark/route groups across AIME, GSM8K, MCQ, chemistry, and both ARC routes.
+GSM8K multi-turn, Search, and SearchCode have no eligible recorded execution here.
+The remaining 24 observed routes retain the explicit composition/extension contracts
+in the inventory; they have no current source cutover and are not counted as replayed.
+
+A fresh seeded selection took three execution links from each complete group before
+replay (seed 202609300740; selection SHA256
+`40448efd0826308eeeca3a1920b0565028e9d746d00b5e6d5b7fde41a2272e6e`).
+All 66 selected cases ran the registered framework environment's actual `step`, then
+its verification-contract helper, with installed verifyit from commit
+`739d765d89ec1d36df0e16111c28e85d1f0f2a92`. All 66 called verifyit and matched the
+unmodified pinned framework's verification score and shaped reward; none raised a
+runtime error. ARC used the real local sandbox service. 65 matched the archive.
+
+The remaining AIME case predicts 45 for reference 045. Its archived producer
+`0cdccc9229f47c8eadff90aa2033a5b4604266aa` compares normalized strings literally;
+the pinned source adds rational equality and therefore accepts it. Its over-budget
+flag is diagnostic in both source versions, not the cause of rejection. The pilot
+also found an older producer rejecting `\dfrac{14}{3}` against `\frac{14}{3}`;
+both source fixes have explicit client regression cases. The earlier parent-index
+selection was underinclusive and is retained only as pilot evidence.
+
+Reproducible selection, frozen input hashes, raw outputs, actual module/call records,
+source baseline results, and independent manager reruns are stored under the campaign's
+`evidence/e2e/skyrl`. Use `replay.py --selection selection-full.json --output NEW_DIR
+--mode patched --case TRACE_ID` with the framework worktree's `.venv-replay` and
+`PYTHONPATH=skyrl-gym:skyrl-train`. `comparison-full.json` contains final comparisons;
+`uncovered-routes.json` records the full-population assessment. Archive labels and
+current pinned-source labels are reported separately.

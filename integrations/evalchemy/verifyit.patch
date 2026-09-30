@@ -462,3 +462,34 @@
              changed = [i for i in items if i.get("changed")]
              if changed and len(changed) != len(items):
                  out[f"{prefix}_changed_only"] = _accuracy(changed)
+diff --git a/eval/lm_eval_tasks/gsm8k/utils.py b/eval/lm_eval_tasks/gsm8k/utils.py
+--- a/eval/lm_eval_tasks/gsm8k/utils.py
++++ b/eval/lm_eval_tasks/gsm8k/utils.py
+@@ -3,7 +3,10 @@
+ import re
+ 
+ from eval.generation_stops import GSM8K_STOP_SEQUENCES, truncate_at_stop
+-from eval.graders.minerva_math import is_equiv, normalize_final_answer
++from eval.graders.minerva_math import _rational_value, is_equiv, normalize_final_answer
++from verifyit.grade import scored
++from verifyit.modes.grade_exact import grade_exact_candidate
++from verifyit.spec import ExactSpec
+ 
+ _NUMBER = r"-?\$?\d[\d,]*(?:\.\d+)?"
+ _BOXED_ANSWER = re.compile(rf"\\boxed\{{\s*({_NUMBER})\s*\}}")
+@@ -35,9 +38,14 @@
+     """Score an extracted GSM8K answer with Minerva math equivalence."""
+     prediction = results[0]
+     if prediction == _FALLBACK:
+-        return {"exact_match": 0.0}
++        return {"exact_match": scored(0.0, reason="missing_answer").reward}
+ 
+     reference = doc["answer"].rsplit("#### ", 1)[-1]
+     candidate = normalize_final_answer(prediction)
+     reference = normalize_final_answer(reference)
++    candidate_value = _rational_value(candidate)
++    reference_value = _rational_value(reference)
++    if candidate_value is not None and reference_value is not None:
++        spec = ExactSpec((str(reference_value),), ignore_case=False, ignore_whitespace=False, strip_outer_whitespace=False)
++        return {"exact_match": grade_exact_candidate(spec, str(candidate_value)).reward}
+     return {"exact_match": float(is_equiv(candidate, reference))}

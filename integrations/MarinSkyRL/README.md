@@ -19,3 +19,10 @@ The dependency pin includes the Exact/Math options, expanded client adapters and
 fail-closed boundaries used by these patches.
 Patched source regressions and verifyit API regression
 counts are recorded in [the mapping](../../docs/unification/skyrl.md).
+
+Real registered-environment replay validated 66 randomly selected execution links
+from the complete eligible local artifact population: all matched pinned native
+results and invoked installed verifyit. The [mapping](../../docs/unification/skyrl.md)
+records population scope, one archive producer mismatch, and missing route traces.
+GSM8K strict/final-line rejection now calls the client before source reward projection,
+so missing markers remain zero while still producing a verifyit verdict.

@@ -900,9 +900,31 @@
     "dependency_pin": "91c55a49599fcdead3475f009e62da4e30ca4f27",
     "implementation_install": "Isolated uv install from local Git repository at exact 91c55a49599fcdead3475f009e62da4e30ca4f27 succeeded; real rational and MCQ grading passed.",
     "judge_regressions": "5 malformed final-label HTTP cases and8 unsupported/null finish-status cases failed before changes;35 judge tests pass after strict final-label and explicit stop validation.",
-    "client_boundary_tests": 50,
+    "client_boundary_tests": 52,
     "client_source_parity_cases": 41,
-    "patched_source_tests": 106
+    "patched_source_tests": 106,
+    "real_framework_replay": {
+      "evidence": "evidence/e2e/skyrl/comparison-full.json (campaign root)",
+      "source_revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+      "verifyit_revision": "739d765d89ec1d36df0e16111c28e85d1f0f2a92",
+      "verified_execution_population": 5460,
+      "eligible_cutover_execution_links": 3695,
+      "benchmark_route_groups": 22,
+      "selected_execution_links": 66,
+      "seed": 202609300740,
+      "selection_sha256": "40448efd0826308eeeca3a1920b0565028e9d746d00b5e6d5b7fde41a2272e6e",
+      "pinned_native_parity": 66,
+      "archived_parity": 65,
+      "actual_verifyit_calls": 66,
+      "runtime_errors": 0,
+      "unpatched_observed_routes": 24,
+      "missing_cutover_trace_routes": [
+        "gsm8k_multi_turn",
+        "search",
+        "searchcode"
+      ],
+      "pilot_superseded": true
+    }
   },
   "implementation": {
     "module": "src/verifyit/adapters/skyrl.py",
