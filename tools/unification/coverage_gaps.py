@@ -438,6 +438,7 @@ def harness_entities(root, sources):
             or (isinstance(record.get("task"), str) and record["task"].startswith("ask_gec_p"))
             or ("/okapi/truthfulqa_multilingual/" in record["path"] and record["path"].endswith("_mc2.yaml"))
             or ("/tasks/hendrycks_math/" in record["path"])
+            or ("/tasks/agieval/" in record["path"] and record.get("output_type") == "multiple_choice")
         ):
             route = record.get("native_route")
             if route is None:
@@ -450,6 +451,7 @@ def harness_entities(root, sources):
                     "exact_match",
                     "truthfulqa_mc2",
                     "hendrycks_literal_exact",
+                    "agieval_mcqa",
                 }, record["path"]
             entity.update(
                 status="native_route_available",
@@ -487,6 +489,24 @@ def harness_entities(root, sources):
                     else "configuration_eligible_not_dataset_validated"
                 ),
             )
+            if route == "agieval_mcqa":
+                entity.update(
+                    primitive_candidates=["mcq", "exact"],
+                    reason=(
+                        "Raw and character-normalized first-maximum likelihood winners are graded "
+                        "against alternative gold indices through existing choice/exact primitives. "
+                        "Both source acc/acc_norm means remain; malformed evidence aborts the batch."
+                    ),
+                    evidence=[
+                        "integrations/lm-eval-harness/agieval-mcqa-verifyit.patch",
+                        "evidence/e2e/wiring/harness-agieval/guards/guard-audit.json",
+                        "evidence/e2e/wiring/harness-agieval/cutover/evaluator-roundtrip.json",
+                        "evidence/e2e/wiring/harness-agieval/negative/boundary-guards.json",
+                        "evidence/e2e/wiring/harness-agieval/manager-cutover/evaluator-roundtrip.json",
+                        "evidence/e2e/wiring/harness-agieval/trace-census.json",
+                    ],
+                    validation_status="registered_guards_and_actual_evaluator_fixtures_no_named_saved_trace",
+                )
             if route == "hendrycks_literal_exact":
                 entity.update(
                     evidence=[
@@ -877,9 +897,9 @@ def main():
             )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 584
+    assert len(harness_gaps) == 565
     assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 978
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11130
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11149
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {

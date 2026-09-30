@@ -168,3 +168,19 @@ The patch checks the filter before executing it. Evidence under
 three selected full MATH500 response runs: all 1,500 scores match this fresh
 harness source comparator. Archived custom MATH500 scores use a different
 comparator and are not claimed to match.
+
+AGIEval multi-answer choice scoring
+----------------------------------
+Apply `agieval-mcqa-verifyit.patch` after the Hendrycks patch in the sequence above.
+The 19 pinned MCQA configs use raw and character-normalized first-maximum
+likelihood winners, graded against every accepted gold index through existing
+choice/exact primitives. Source `acc` and `acc_norm` mean aggregation remains.
+Malformed gold, empty options, nonfinite or positive likelihoods, and malformed
+likelihood pairs abort evaluation rather than producing partial aggregates.
+Scorer, metric, and filter drift is rejected before filters run.
+
+Reproducible actual evaluator and all-config guard scripts are under
+`evidence/e2e/wiring/harness-agieval`. They cover Unicode option lengths, ties,
+alternative golds, a mixed valid/invalid batch, and four early contract-drift
+negatives. This validation uses source fixtures: the named tracker/local
+artifact census found no matching AGIEval saved runs.

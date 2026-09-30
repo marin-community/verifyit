@@ -1,0 +1,12 @@
+--- a/lm_eval/evaluator.py
++++ b/lm_eval/evaluator.py
+@@ -620,6 +620,9 @@
+         harness_probability.validate_truthfulqa_task(task)
+         from verifyit.adapters import harness_math_literal
+         harness_math_literal.validate_hendrycks_task(task)
++        from verifyit.adapters import harness_agieval
++
++        harness_agieval.validate_agieval_task(task)
+         task.apply_filters()
+ 
+         ### Collect values of metrics on all datapoints ###
