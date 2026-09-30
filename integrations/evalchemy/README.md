@@ -1,9 +1,3 @@
-Current working-tree native extensions require the next implementation checkpoint:
-`ExactSpec.strip_outer_whitespace`, `MathSpec.profile`, and native harness routing.
-The existing dependency-pin.patch records the earlier API checkpoint and must be
-updated to the actual new commit before distributing this expanded patch. Local
-validation currently uses the campaign working tree; no remote availability is claimed.
-
 The patch targets marin-community/evalchemy
 `e3f4a3d601896c437f37b0bd0a30e51651cce6d0`.
 Install verifyit in the evaluation environment and apply `verifyit.patch` from
@@ -29,7 +23,7 @@ Further normalization/fallback contracts are described in
 
 
 The integration requires verifyit implementation commit
-`91c55a49599fcdead3475f009e62da4e30ca4f27`, including `math_answer_text`.
+`ce52bd670401123318c0513442497cea1ef4957b`, including JEEBench primitive composition and `math_answer_text`.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -39,14 +33,17 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit[answer] @ git+file:///path/to/verifyit@91c55a49599fcdead3475f009e62da4e30ca4f27'
+uv pip install --python /path/to/environment/bin/python 'verifyit[answer] @ git+file:///path/to/verifyit@ce52bd670401123318c0513442497cea1ef4957b'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
 An isolated core-only installation from this exact local Git revision was
-validated: completed reasoning-only boxes are accepted, truncated reasoning is
-rejected, and extracted MCQ choices produce the expected scalar score. No remote
-publication or live model endpoint was used.
+validated through the actual patched JEEBench extraction and evaluation pipeline:
+five fixtures over three repetitions match source scores and aggregates, with 88
+verifyit calls. Four malformed-reference batches abort without an aggregate.
+Installed-package provenance and results are retained in campaign
+`evidence/e2e/wiring/evalchemy-jee/installed-metadata.json` and `installed-replay/`.
+No remote publication or live model endpoint was used.
 
 The GSM8K override retains its version 3.3 extraction/Minerva contract. Its rational
 shortcut uses strict verifyit exact on canonical Fraction values; non-rational
@@ -67,8 +64,8 @@ Apply `jee-verifyit.patch` to the pinned Evalchemy checkout. The opt-in benchmar
 constructor `JEEBenchBenchmark(verifyit_enabled=True)` and the existing public
 `TaskManager(task_list=["JEEBench"], verifyit_enabled=True)` benchmark-kwargs
 route (`from eval.task import TaskManager`) activate the client. No new CLI flag is claimed. The default source scorer
-is unchanged, and the verifyit import is lazy. The dependency pin must be updated
-to the actual JEE API implementation checkpoint before distributing this addition.
+is unchanged, and the verifyit import is lazy. The dependency pin records the actual JEE API implementation checkpoint; it
+remains local and unpublished.
 
 The real `extract_answer` and `evaluate_responses` pipeline dispatches source
 uppercase A–D option sets to strict exact matching, retains `.25` subset credit
