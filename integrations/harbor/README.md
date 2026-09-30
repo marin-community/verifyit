@@ -1,5 +1,18 @@
 # Harbor integration
 
+Apply `answer-routes.patch` to the pinned Harbor source for AIME, GAIA, GPQA
+Diamond and SATBench. Their generated task scripts call the installed verifyit
+answer client with source-specific extraction followed by exact or MCQ grading.
+The four generated Dockerfiles pin verifyit
+`08c14eaf912a940fc4e0401698f95b85250b0006`; this commit is local and must
+be published before the remote Git install can resolve. All 12 original versus
+patched task-script fixtures match when the pinned original runs in Docker.
+One generated GAIA image was built with a wheel from the exact local commit and
+ran positive and negative CLI cases. The local wheel replaced only the
+unpublished remote install in that image. The other three task images and
+matching saved model traces have not been validated. See
+`evidence/e2e/wiring/harbor-answers/` for commands, hashes and verdicts.
+
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
 required by each task's `tests/verifier.toml` inside the verifier image. The

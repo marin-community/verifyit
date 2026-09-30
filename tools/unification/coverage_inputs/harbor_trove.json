@@ -260,16 +260,21 @@
       "entity_id": "harbor:aime",
       "evidence": [
         "docs/unification/harbor_semantics.json#aime",
-        "docs/unification/harbor_inventory.json#aime"
+        "docs/unification/harbor_inventory.json#aime",
+        "integrations/harbor/answer-routes.patch",
+        "tests/test_harbor_answers.py",
+        "evidence/e2e/wiring/harbor-answers/boundary-source-comparison.json",
+        "evidence/e2e/wiring/harbor-answers/generated-image-results.json",
+        "evidence/e2e/wiring/harbor-answers/trace-census.json"
       ],
-      "gap_kind": "exact_extraction_client",
-      "implementation_present": false,
+      "gap_kind": "implemented_exact_client",
+      "implementation_present": true,
       "name": "aime",
-      "needed_change": "Implement this adapter\u2019s stated answer discovery/extraction and explicit ExactSpec flags, emit verifier.toml or call the candidate API, and verify saved source answers against the native grader.",
+      "needed_change": "No missing client integration; validate model-run traces and each task image before wider deployment.",
       "primitive_candidates": [
         "exact"
       ],
-      "reason": "Strip complete /app/answer.txt and compare literal expected integer string; call exact candidate API without permissive boxed extraction. Set ExactSpec(ignore_case=False, ignore_whitespace=False); whole stripped source text only. Core ExactSpec can express the normalized comparison; Harbor does not yet emit the source-specific extraction/spec/client call.",
+      "reason": "The generated script strips the whole answer and compares the decimal reference with exact grading; boxed extraction is never applied.",
       "source_evidence": [
         {
           "functions": [
@@ -298,8 +303,8 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces."
     },
     {
       "entity_id": "harbor:algotune",
@@ -2100,16 +2105,21 @@
       "entity_id": "harbor:gaia",
       "evidence": [
         "docs/unification/harbor_semantics.json#gaia",
-        "docs/unification/harbor_inventory.json#gaia"
+        "docs/unification/harbor_inventory.json#gaia",
+        "integrations/harbor/answer-routes.patch",
+        "tests/test_harbor_answers.py",
+        "evidence/e2e/wiring/harbor-answers/boundary-source-comparison.json",
+        "evidence/e2e/wiring/harbor-answers/generated-image-results.json",
+        "evidence/e2e/wiring/harbor-answers/trace-census.json"
       ],
-      "gap_kind": "exact_extraction_client",
-      "implementation_present": false,
+      "gap_kind": "implemented_exact_client",
+      "implementation_present": true,
       "name": "gaia",
-      "needed_change": "Implement this adapter\u2019s stated answer discovery/extraction and explicit ExactSpec flags, emit verifier.toml or call the candidate API, and verify saved source answers against the native grader.",
+      "needed_change": "No missing client integration; validate model-run traces and each task image before wider deployment.",
       "primitive_candidates": [
         "exact"
       ],
-      "reason": "Strip newlines, trim and lowercase both answer files; exact candidate API after original ASCII normalization, no boxed extraction. Set ExactSpec(ignore_case=False, ignore_whitespace=False) after source ASCII lower/newline removal. Core ExactSpec can express the normalized comparison; Harbor does not yet emit the source-specific extraction/spec/client call.",
+      "reason": "The generated script removes newlines, lowercases ASCII letters and trims outer whitespace on both files before exact grading.",
       "source_evidence": [
         {
           "functions": [
@@ -2131,8 +2141,8 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces."
     },
     {
       "entity_id": "harbor:gaia2",
@@ -2320,16 +2330,21 @@
       "entity_id": "harbor:gpqa-diamond",
       "evidence": [
         "docs/unification/harbor_semantics.json#gpqa-diamond",
-        "docs/unification/harbor_inventory.json#gpqa-diamond"
+        "docs/unification/harbor_inventory.json#gpqa-diamond",
+        "integrations/harbor/answer-routes.patch",
+        "tests/test_harbor_answers.py",
+        "evidence/e2e/wiring/harbor-answers/boundary-source-comparison.json",
+        "evidence/e2e/wiring/harbor-answers/generated-image-results.json",
+        "evidence/e2e/wiring/harbor-answers/trace-census.json"
       ],
-      "gap_kind": "mcq_extraction_client",
-      "implementation_present": false,
+      "gap_kind": "implemented_mcq_client",
+      "implementation_present": true,
       "name": "gpqa-diamond",
-      "needed_change": "Implement the stated source extractor and option set before strict MCQ grading; preserve full-answer malformed-input rejection and test pinned native answer cases.",
+      "needed_change": "No missing client integration; validate model-run traces and each task image before wider deployment.",
       "primitive_candidates": [
         "mcq"
       ],
-      "reason": "Strip all whitespace, uppercase, require entire answer in A-D; retain strict single-option extraction before candidate scoring. Strict MCQ scoring exists; the source-specific whole-answer normalization/extractor is not wired in Harbor.",
+      "reason": "The generated script removes whitespace and uppercases the full answer before strict A-D MCQ grading.",
       "source_evidence": [
         {
           "functions": [
@@ -2349,8 +2364,8 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces."
     },
     {
       "entity_id": "harbor:gso",
@@ -3837,16 +3852,21 @@
       "entity_id": "harbor:satbench",
       "evidence": [
         "docs/unification/harbor_semantics.json#satbench",
-        "docs/unification/harbor_inventory.json#satbench"
+        "docs/unification/harbor_inventory.json#satbench",
+        "integrations/harbor/answer-routes.patch",
+        "tests/test_harbor_answers.py",
+        "evidence/e2e/wiring/harbor-answers/boundary-source-comparison.json",
+        "evidence/e2e/wiring/harbor-answers/generated-image-results.json",
+        "evidence/e2e/wiring/harbor-answers/trace-census.json"
       ],
-      "gap_kind": "exact_extraction_client",
-      "implementation_present": false,
+      "gap_kind": "implemented_exact_client",
+      "implementation_present": true,
       "name": "satbench",
-      "needed_change": "Implement this adapter\u2019s stated answer discovery/extraction and explicit ExactSpec flags, emit verifier.toml or call the candidate API, and verify saved source answers against the native grader.",
+      "needed_change": "No missing client integration; validate model-run traces and each task image before wider deployment.",
       "primitive_candidates": [
         "exact"
       ],
-      "reason": "Extract last literal [SAT] or [UNSAT] marker then compare expected label; no mathematical solver validation, preserve marker order/case. Core ExactSpec can express the normalized comparison; Harbor does not yet emit the source-specific extraction/spec/client call.",
+      "reason": "The generated script takes the last case-sensitive [SAT] or [UNSAT] marker and grades that label exactly.",
       "source_evidence": [
         {
           "functions": [
@@ -3858,8 +3878,8 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces."
     },
     {
       "entity_id": "harbor:scicode",

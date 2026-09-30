@@ -1,0 +1,253 @@
+diff --git a/adapters/aime/src/aime/adapter.py b/adapters/aime/src/aime/adapter.py
+index 391ba99..310aae0 100644
+--- a/adapters/aime/src/aime/adapter.py
++++ b/adapters/aime/src/aime/adapter.py
+@@ -54,6 +54,7 @@ class AIMEAdapter:
+         dst = output_dir / "tests/test.sh"
+         if src.exists():
+             shutil.copy2(src, dst)
++        (tests_dir / "expected_answer.txt").write_text(str(task.answer))
+         test_template = TEMPLATE_DIR / "tests/test_outputs.py"
+         if test_template.exists():
+             content = test_template.read_text()
+diff --git a/adapters/aime/src/aime/task-template/environment/Dockerfile b/adapters/aime/src/aime/task-template/environment/Dockerfile
+index e46572b..ec9abb8 100644
+--- a/adapters/aime/src/aime/task-template/environment/Dockerfile
++++ b/adapters/aime/src/aime/task-template/environment/Dockerfile
+@@ -1,7 +1,11 @@
+ FROM ghcr.io/laude-institute/t-bench/ubuntu-24-04:20250624
+-
+-WORKDIR /app
+-
+-ENV TEST_DIR=/tests
+-# ======================================================================================
+-
++
++WORKDIR /app
++
++ENV TEST_DIR=/tests
++# ======================================================================================
++
++
++RUN apt-get update && apt-get install -y --no-install-recommends git python3-pip \
++    && python3 -m pip install --break-system-packages --no-cache-dir "verifyit @ git+https://github.com/marin-community/verifyit@08c14eaf912a940fc4e0401698f95b85250b0006" \
++    && rm -rf /var/lib/apt/lists/*
+diff --git a/adapters/aime/src/aime/task-template/tests/test.sh b/adapters/aime/src/aime/task-template/tests/test.sh
+index 47a75fa..c564864 100644
+--- a/adapters/aime/src/aime/task-template/tests/test.sh
++++ b/adapters/aime/src/aime/task-template/tests/test.sh
+@@ -1,33 +1,7 @@
+ #!/bin/bash
+ set -Eeuo pipefail
+ 
+-echo "=== STARTING AIME TEST EXECUTION ==="
+-
+-# Ensure logs directory exists
+-mkdir -p /logs/verifier
+-
+-# Run the Python test script and capture result
+-set +e
+-python3 /tests/test_outputs.py
+-exit_code=$?
+-set -e
+-
+-echo "=== TEST EXECUTION COMPLETED ==="
+-echo "Exit code: $exit_code"
+-
+-# Write reward to file based on test result
+-if [ $exit_code -eq 0 ]; then
+-    echo "✓ Test passed - answer is correct"
+-    echo 1 > /logs/verifier/reward.txt
+-else
+-    echo "✗ Test failed - answer is incorrect"
+-    echo 0 > /logs/verifier/reward.txt
+-fi
+-
+-# Ensure proper permissions
+-if [ -f /logs/verifier/reward.txt ]; then
+-    chmod 664 /logs/verifier/reward.txt || true
+-fi
+-
+-echo "=== SCRIPT FINISHED ==="
+-exit 0
+\ No newline at end of file
++python3 -m verifyit.adapters.harbor_answers aime \
++  "${VERIFYIT_TESTS_DIR:-/tests}/expected_answer.txt" \
++  "${VERIFYIT_WORKSPACE:-/app}/answer.txt" \
++  --logs-dir "${VERIFYIT_LOGS_DIR:-/logs/verifier}"
+diff --git a/adapters/gaia/template/environment/Dockerfile b/adapters/gaia/template/environment/Dockerfile
+index 7c72d73..6173053 100644
+--- a/adapters/gaia/template/environment/Dockerfile
++++ b/adapters/gaia/template/environment/Dockerfile
+@@ -6,3 +6,7 @@ WORKDIR /app
+ RUN apt-get update && apt-get install -y --no-install-recommends \
+     curl \
+     && rm -rf /var/lib/apt/lists/*
++
++RUN apt-get update && apt-get install -y --no-install-recommends git \
++    && python -m pip install --no-cache-dir "verifyit @ git+https://github.com/marin-community/verifyit@08c14eaf912a940fc4e0401698f95b85250b0006" \
++    && rm -rf /var/lib/apt/lists/*
+diff --git a/adapters/gaia/template/tests/test.sh b/adapters/gaia/template/tests/test.sh
+index 22dec80..9ecb316 100644
+--- a/adapters/gaia/template/tests/test.sh
++++ b/adapters/gaia/template/tests/test.sh
+@@ -1,38 +1,7 @@
+ #!/bin/bash
++set -Eeuo pipefail
+ 
+-set -euo pipefail
+-
+-echo "=== STARTING GAIA TEST EXECUTION ==="
+-
+-# Ensure logs directory exists
+-mkdir -p /logs/verifier
+-
+-# Check if answer file exists
+-if [ ! -f /app/answer.txt ]; then
+-    echo "ERROR: /app/answer.txt not found"
+-    echo 0 > /logs/verifier/reward.txt
+-    exit 0
+-fi
+-
+-# Read agent answer and expected answer
+-AGENT_ANSWER=$(tr -d '\n' < /app/answer.txt)
+-EXPECTED_ANSWER=$(tr -d '\n' < /tests/expected_answer.txt)
+-
+-echo "Agent answer: '$AGENT_ANSWER'"
+-echo "Expected answer: '$EXPECTED_ANSWER'"
+-
+-# Normalize for comparison (lowercase, trim whitespace)
+-AGENT_NORMALIZED=$(printf '%s' "$AGENT_ANSWER" | tr '[:upper:]' '[:lower:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+-EXPECTED_NORMALIZED=$(printf '%s' "$EXPECTED_ANSWER" | tr '[:upper:]' '[:lower:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+-
+-# Compare answers
+-if [ "$AGENT_NORMALIZED" = "$EXPECTED_NORMALIZED" ]; then
+-    echo "✓ Test passed - answer is correct"
+-    echo 1 > /logs/verifier/reward.txt
+-else
+-    echo "✗ Test failed - answer is incorrect"
+-    echo 0 > /logs/verifier/reward.txt
+-fi
+-
+-echo "=== SCRIPT FINISHED ==="
+-exit 0
++python3 -m verifyit.adapters.harbor_answers gaia \
++  "${VERIFYIT_TESTS_DIR:-/tests}/expected_answer.txt" \
++  "${VERIFYIT_WORKSPACE:-/app}/answer.txt" \
++  --logs-dir "${VERIFYIT_LOGS_DIR:-/logs/verifier}"
+diff --git a/adapters/gpqa-diamond/adapter.py b/adapters/gpqa-diamond/adapter.py
+index 4d7fb53..41717be 100644
+--- a/adapters/gpqa-diamond/adapter.py
++++ b/adapters/gpqa-diamond/adapter.py
+@@ -64,9 +64,8 @@ class GPQAAdapter:
+         tests_dir = output_dir / "tests"
+         tests_dir.mkdir(exist_ok=True)
+ 
+-        test_sh = (TEMPLATE_DIR / "tests/test.sh").read_text()
+-        test_sh = test_sh.replace("{answer}", task.correct_letter)
+-        (tests_dir / "test.sh").write_text(test_sh)
++        shutil.copy2(TEMPLATE_DIR / "tests/test.sh", tests_dir / "test.sh")
++        (tests_dir / "expected_answer.txt").write_text(task.correct_letter)
+ 
+         # Generate task.toml with domain tags
+         task_toml = (TEMPLATE_DIR / "task.toml").read_text()
+diff --git a/adapters/gpqa-diamond/template/environment/Dockerfile b/adapters/gpqa-diamond/template/environment/Dockerfile
+index cd880fc..680a070 100644
+--- a/adapters/gpqa-diamond/template/environment/Dockerfile
++++ b/adapters/gpqa-diamond/template/environment/Dockerfile
+@@ -1,3 +1,6 @@
+ FROM ghcr.io/laude-institute/t-bench/ubuntu-24-04:20250624
+ 
+-WORKDIR /app
+\ No newline at end of file
++WORKDIR /app
++RUN apt-get update && apt-get install -y --no-install-recommends git python3-pip \
++    && python3 -m pip install --break-system-packages --no-cache-dir "verifyit @ git+https://github.com/marin-community/verifyit@08c14eaf912a940fc4e0401698f95b85250b0006" \
++    && rm -rf /var/lib/apt/lists/*
+diff --git a/adapters/gpqa-diamond/template/tests/test.sh b/adapters/gpqa-diamond/template/tests/test.sh
+index 4dcef38..4bfd77c 100644
+--- a/adapters/gpqa-diamond/template/tests/test.sh
++++ b/adapters/gpqa-diamond/template/tests/test.sh
+@@ -1,40 +1,7 @@
+ #!/bin/bash
+ set -Eeuo pipefail
+ 
+-echo "=== GPQA Diamond Test Execution ==="
+-
+-mkdir -p /logs/verifier
+-
+-# Check answer file exists
+-if [ ! -f /app/answer.txt ]; then
+-    echo "✗ Error: /app/answer.txt not found"
+-    echo 0 > /logs/verifier/reward.txt
+-    exit 0
+-fi
+-
+-# Read answer and normalize
+-answer=$(cat /app/answer.txt | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')
+-
+-# Expected answer (will be replaced by adapter)
+-expected="{answer}"
+-
+-echo "Expected: $expected"
+-echo "Got: $answer"
+-
+-# Validate format
+-if [[ ! "$answer" =~ ^[ABCD]$ ]]; then
+-    echo "✗ Invalid format: must be A, B, C, or D"
+-    echo 0 > /logs/verifier/reward.txt
+-    exit 0
+-fi
+-
+-# Check correctness
+-if [ "$answer" = "$expected" ]; then
+-    echo "✓ Correct answer"
+-    echo 1 > /logs/verifier/reward.txt
+-else
+-    echo "✗ Incorrect answer"
+-    echo 0 > /logs/verifier/reward.txt
+-fi
+-
+-exit 0
+\ No newline at end of file
++python3 -m verifyit.adapters.harbor_answers gpqa-diamond \
++  "${VERIFYIT_TESTS_DIR:-/tests}/expected_answer.txt" \
++  "${VERIFYIT_WORKSPACE:-/app}/answer.txt" \
++  --logs-dir "${VERIFYIT_LOGS_DIR:-/logs/verifier}"
+diff --git a/adapters/satbench/src/satbench/task-template/environment/Dockerfile b/adapters/satbench/src/satbench/task-template/environment/Dockerfile
+index cdfd1b7..e0dcd28 100644
+--- a/adapters/satbench/src/satbench/task-template/environment/Dockerfile
++++ b/adapters/satbench/src/satbench/task-template/environment/Dockerfile
+@@ -13,4 +13,7 @@ RUN apt-get update && apt-get install -y \
+ # Copy task files if needed
+ # COPY . /workspace/
+ 
+-CMD ["/bin/bash"]
+\ No newline at end of file
++CMD ["/bin/bash"]
++RUN apt-get update && apt-get install -y --no-install-recommends git \
++    && python -m pip install --no-cache-dir "verifyit @ git+https://github.com/marin-community/verifyit@08c14eaf912a940fc4e0401698f95b85250b0006" \
++    && rm -rf /var/lib/apt/lists/*
+diff --git a/adapters/satbench/src/satbench/task-template/tests/test.sh b/adapters/satbench/src/satbench/task-template/tests/test.sh
+index e169402..d831d65 100644
+--- a/adapters/satbench/src/satbench/task-template/tests/test.sh
++++ b/adapters/satbench/src/satbench/task-template/tests/test.sh
+@@ -1,12 +1,7 @@
+ #!/bin/bash
++set -Eeuo pipefail
+ 
+-# Test script for SATBench task
+-# This script verifies if the agent correctly identified SAT or UNSAT
+-
+-set -e
+-
+-echo "Running SATBench verification..."
+-
+-# Run the Python verification script
+-cd /tests
+-python3 verify.py
+\ No newline at end of file
++python3 -m verifyit.adapters.harbor_answers satbench \
++  "${VERIFYIT_TESTS_DIR:-/tests}/ground_truth.json" \
++  "${VERIFYIT_WORKSPACE:-/workspace}/solution.txt" \
++  --logs-dir "${VERIFYIT_LOGS_DIR:-/logs/verifier}"
