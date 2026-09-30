@@ -2,9 +2,14 @@
 
 ## Implemented reassessment
 
-The 42 custom benchmarks now have four clean primitive integrations: GPQA and
+The 42 custom benchmarks now have five clean primitive integrations: GPQA and
 MMLU-Pro use MCQ; AIW retains its source normalization and uses strict exact;
 GSM8KPerturbed retains extraction/sanitization and uses numeric with zero tolerance.
+JEEBench opt-in source extraction/type dispatch composes strict exact option-set
+comparison and partial credit with absolute `.01` numeric tolerance; its source
+three-repetition metrics remain unchanged. Source fixtures pass, with no matching
+archived traces. Malformed references abort the batch; unsupported uppercase
+candidate labels are deliberately penalized instead of filtered into a success.
 Three benchmarks (AIME24, AIME25, MATH500) share a hybrid integration: native boxed
 math parsing/comparison, with source Minerva retained only when parsing extracts
 nothing. Parsed non-equivalence never invokes fallback. Parser/verification errors
@@ -12,9 +17,9 @@ and timeouts propagate with `raise_on_error=True`, preventing successful fallbac
 on infrastructure failure. This is a deliberate conservative change from the
 source parser's exception-to-empty behavior.
 
-The remaining 35 custom benchmarks can be reframed around existing math, judge,
+The remaining 34 custom benchmarks can be reframed around existing math, judge,
 IFEval, stdio or script modes; implementation/parity remains outstanding. These
-are integration/profile gaps, not evidence that 35 new verifier categories are
+are integration/profile gaps, not evidence that 34 new verifier categories are
 needed. In particular source-specific judge prompts and instruction registries
 need client profiles, while execution/structured metrics need an execution bridge.
 Generic delegation remains compatibility-only.
@@ -47,8 +52,9 @@ dynamic dispatch still requires runtime verification.
 | Benchmarks | Primitive candidate | Score contract / remaining work |
 | --- | --- | --- |
 | GPQADiamond, MMLUPro | `mcq` after source extraction | Implemented patch calls `grade_mcq_candidate`; preserve source option shuffle, categories, repeat vectors and standard errors |
-| AIME24, AIME25, AMC23, HMMT, MATH500, JEEBench | `math` | Box extraction and anchors/fallback equivalence need parity; JEE includes mixed numeric responses |
+| AIME24, AIME25, AMC23, HMMT, MATH500 | `math` | Box extraction and anchors/fallback equivalence need parity |
 | OlympiadBench, OlympiadBenchFull, OlympiadBenchDeterministic | `math`, with source judge policy | Preserve deterministic versus judge-fallback distinctions and units; do not add a judge to deterministic variant |
+| JEEBench | `exact` + `numeric` | Opt-in source constructor/extraction/evaluator preserves subset credit and three repetitions; malformed references abort, source fixture parity passes |
 | GSM8KPerturbed, AIW | `numeric`, `exact` with source normalization | Implemented zero-tolerance numeric and literal exact; five source parity cases each |
 | IFEval | `ifeval` | Preserve strict/loose prompt and instruction aggregates; instruction registry parity unresolved |
 | IFBench | `script` with original registry | Expanded instruction catalog should remain data/plugin orchestration until shared checker equivalence is shown |
@@ -269,25 +275,20 @@ explicit original aggregation, not approximate numeric/exact comparisons.
 
 ## Coverage classification
 
-A clean native mapping requires source-scoring equivalence plus the required
-extraction/configuration adapter. `adapter` identifies four clean custom integrations; `adapter-hybrid` identifies
-three boxed-math integrations with explicitly retained Minerva fallback. `spec-needed` identifies a non-clean
-mapping covered by a concrete existing-mode profile/contract above; it does not
-claim that profile is implemented. Groups/templates remain orchestration. The
-inventory generator fails on unknown custom benchmark names and unknown native
-output types. Its per-record specification anchors and aggregated counts are the
-coverage evidence; discovering a source record alone is not semantic validation.
-
-
-The current classified population is 42 custom benchmarks: four clean adapters, three hybrid integrations,
-and 35 remaining explicit existing-mode specifications, with zero unknown
-benchmarks. Local harness overrides add 21 task configurations (two native exact routes, one hybrid GSM8K rational-exact route, and 18 remaining profiles) and one orchestration group. Native harness population and inline
-group definitions are counted separately in the harness manifest.
+The source discovery inventory retains its earlier planning labels. The current
+[coverage register](coverage-gaps.json) is authoritative for implemented cutovers:
+42 custom benchmarks comprise five native clients, three boxed-math hybrids,
+and 34 pending integrations/profiles. JEEBench is explicitly opt-in and has
+source/evaluator fixture validation, without saved-run replay. Its `invalid_task`
+results abort aggregation. Local overrides comprise 21 task configurations
+(two native exact routes, one hybrid GSM8K rational-exact route and 18 pending
+profiles) plus one orchestration group. Native harness and inline definitions
+are separate populations; discovery alone is not semantic validation.
 
 ### Recorded-trace replay and GSM8K override cutover
 
-The September 2026 campaign selected three model-run links per capable benchmark before scoring (seed 20260930; selection SHA256 `575523245c2f131685e749edf0d3a546f96cadc4566425eacb4543078405e64a`). All 24selected runs replayed 63,360 recorded samples through actual Evalchemy `_score_custom_task` or harness `evaluator.evaluate`, reaching 68,913 verifyit primitive calls. Every per-sample score and deterministic point metric matched the archived result; all rounded tracker scores matched. Harness bootstrap stderr was excluded. This validates scoring/filter/aggregation playback, not regenerated inference or the entire 13,982configuration corpus. Detailed immutable inputs, source hashes, commands, outputs and per-call specs/verdicts are in campaign `evidence/e2e/evals/catalog.json`.
+The September 2026 campaign selected three model-run links per capable benchmark before scoring (seed 20260930; selection SHA256 `575523245c2f131685e749edf0d3a546f96cadc4566425eacb4543078405e64a`). All 24 selected runs replayed 63,360 recorded samples through actual Evalchemy `_score_custom_task` or harness `evaluator.evaluate`, reaching 68,913 verifyit primitive calls. Every per-sample score and deterministic point metric matched the archived result; all rounded tracker scores matched. Harness bootstrap stderr was excluded. This validates scoring/filter/aggregation playback, not regenerated inference or the entire 13,982-configuration corpus. Detailed immutable inputs, source hashes, commands, outputs and per-call specs/verdicts are in campaign `evidence/e2e/evals/catalog.json`.
 
-The traces exposed a client mapping omitted from the initial native eligibility assessment: Evalchemy's GSM8K override version 3.3 uses its own final-answer filter and Minerva scorer, rather than upstream harness version 3.0. Its exact rational shortcut now canonicalizes both answers with the pinned source `_rational_value` and compares their Fraction strings through strict verifyit exact. Missing extraction returns verifyit scored zero; non-rational answers retain source symbolic scoring. This is a hybrid client integration, not native symbolic equivalence. All three selected 1,319-sample runs reproduced both strict/flexible metrics and every sample. Eight source-parity regressions cover decimal/integer equality (`28.00` versus `28`), equivalent fractions, mismatches, missing answers, symbolic equality/mismatch and propagation of scorer infrastructure errors. The initial incorrect upstream-route replay and unmodified baseline remain under `evidence/e2e/evals/superseded/upstream-gsm8k`. Upstream 10,841native-config eligibility remains unchanged.
+The traces exposed a client mapping omitted from the initial native eligibility assessment: Evalchemy's GSM8K override version 3.3 uses its own final-answer filter and Minerva scorer, rather than upstream harness version 3.0. Its exact rational shortcut now canonicalizes both answers with the pinned source `_rational_value` and compares their Fraction strings through strict verifyit exact. Missing extraction returns verifyit scored zero; non-rational answers retain source symbolic scoring. This is a hybrid client integration, not native symbolic equivalence. All three selected 1,319-sample runs reproduced both strict/flexible metrics and every sample. Eight source-parity regressions cover decimal/integer equality (`28.00` versus `28`), equivalent fractions, mismatches, missing answers, symbolic equality/mismatch and propagation of scorer infrastructure errors. The initial incorrect upstream-route replay and unmodified baseline remain under `evidence/e2e/evals/superseded/upstream-gsm8k`. The current broader harness availability is recorded in [the harness mapping](lm_eval_mapping.md).
 
 AIW, GSM8KPerturbed and AIME25 had no validated tracker trace links; no replay success is claimed for them.

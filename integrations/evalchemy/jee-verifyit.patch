@@ -1,0 +1,62 @@
+--- a/eval/chat_benchmarks/JEEBench/utils.py
++++ b/eval/chat_benchmarks/JEEBench/utils.py
+@@ -45,7 +45,7 @@
+ QUES_TYPES = ["MCQ", "MCQ(multiple)", "Integer", "Numeric"]
+ 
+ 
+-def compute_score(gold, resp, question_type):
++def _native_compute_score(gold, resp, question_type):
+     """
+     from https://github.com/dair-iitd/jeebench/blob/main/compute_metrics.py
+     """
+@@ -74,3 +74,18 @@
+             return int(abs(g - r) <= 0.01)
+         except:  # failed to parse resp
+             return 0
++
++
++def compute_score(gold, resp, question_type, *, verifyit_enabled=False):
++    """Opt in to native verifyit composition; preserve the source baseline by default."""
++    if not isinstance(verifyit_enabled, bool):
++        raise ValueError("verifyit_enabled must be a boolean")
++    if not verifyit_enabled:
++        return _native_compute_score(gold, resp, question_type)
++    from verifyit.adapters.evalchemy_jee import grade_jee_answer
++    from verifyit.grade import Status
++
++    verdict = grade_jee_answer(gold, resp, question_type)
++    if verdict.status != Status.SCORED:
++        raise ValueError(f"Unscored JEEBench sample: {verdict.status.value}: {verdict.detail}")
++    return verdict.reward
+--- a/eval/chat_benchmarks/JEEBench/eval_instruct.py
++++ b/eval/chat_benchmarks/JEEBench/eval_instruct.py
+@@ -81,6 +81,7 @@
+         max_tokens: int = 32768,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize JEEBench benchmark.
+@@ -95,6 +96,9 @@
+         self.max_new_tokens = max_tokens
+         self.seed = seed
+         self.n_repeat = 3
++        if not isinstance(verifyit_enabled, bool):
++            raise ValueError("verifyit_enabled must be a boolean")
++        self.verifyit_enabled = verifyit_enabled
+ 
+         self.prompt_library = prompt_for_boxed_answer(PROMPT_LIBRARY)
+ 
+@@ -184,7 +188,10 @@
+         # Calculate accuracy for each example and repetition
+         for example in examples:
+             example["score"] = [
+-                compute_score(example["gold"], example["model_answers"][i], example["type"])
++                compute_score(
++                    example["gold"], example["model_answers"][i], example["type"],
++                    verifyit_enabled=self.verifyit_enabled,
++                )
+                 for i in range(self.n_repeat)
+             ]
+ 

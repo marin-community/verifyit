@@ -556,17 +556,38 @@ def evalchemy_entities(root):
         name = record["benchmark"]
         entity = base_entity("evalchemy-custom", record, inventory["revision"], name)
         entity["source_evidence"].extend(record["scoring_evidence"])
-        if record["classification"] == "adapter":
+        if record["classification"] == "adapter" or name == "JEEBench":
             entity.update(
                 status="native_integrated",
                 reason_id="custom_native",
                 reason="Concrete source client patch calls an existing primitive after source extraction/normalization.",
-                primitive_candidates=["numeric" if name == "GSM8KPerturbed" else record["primitive_candidate"]],
+                primitive_candidates=(
+                    ["exact", "numeric"]
+                    if name == "JEEBench"
+                    else ["numeric" if name == "GSM8KPerturbed" else record["primitive_candidate"]]
+                ),
                 needed_change="No known scorer change.",
                 validation_status=(
                     "real_trace" if name in {"MMLUPro", "GPQADiamond"} else "source_parity_no_tracker_trace"
                 ),
             )
+            if name == "JEEBench":
+                entity.update(
+                    reason=(
+                        "Opt-in type dispatch composes strict exact option-set equality/subset credit "
+                        "and numeric absolute tolerance .01; source extraction and repetition metrics remain. "
+                        "Malformed references and unsupported uppercase labels fail closed."
+                    ),
+                    needed_change=(
+                        "Enable verifyit_enabled=True through JEEBenchBenchmark or TaskManager "
+                        "benchmark kwargs; validate saved runs when available."
+                    ),
+                    evidence=[
+                        "integrations/evalchemy/jee-verifyit.patch",
+                        "evidence/e2e/wiring/evalchemy-jee/source-roundtrip.json",
+                    ],
+                    validation_status="source_evaluator_fixtures_no_tracker_trace",
+                )
         elif record["classification"] == "adapter-hybrid":
             entity.update(
                 status="native_fallback",

@@ -59,3 +59,30 @@ PYTHONPATH=/path/to/verifyit/src:/path/to/patched-evalchemy:/path/to/harness \
   /path/to/evalchemy/.venv/bin/python integrations/evalchemy/check_gsm_override.py \
   /path/to/original-evalchemy /path/to/patched-evalchemy
 ```
+
+
+## JEEBench native client
+
+Apply `jee-verifyit.patch` to the pinned Evalchemy checkout. The opt-in benchmark
+constructor `JEEBenchBenchmark(verifyit_enabled=True)` and the existing public
+`TaskManager(task_list=["JEEBench"], verifyit_enabled=True)` benchmark-kwargs
+route (`from eval.task import TaskManager`) activate the client. No new CLI flag is claimed. The default source scorer
+is unchanged, and the verifyit import is lazy. The dependency pin must be updated
+to the actual JEE API implementation checkpoint before distributing this addition.
+
+The real `extract_answer` and `evaluate_responses` pipeline dispatches source
+uppercase A–D option sets to strict exact matching, retains `.25` subset credit
+for multiple-answer questions, and uses `NumericSpec` with absolute tolerance
+`.01` and zero relative tolerance for integer/numeric questions. Three-repetition
+score vectors, means, standard errors and sample metrics remain benchmark-owned.
+Malformed/empty choice references and nonfinite/boolean numeric references return
+`invalid_task` and abort the evaluation rather than being averaged into positive
+scores. Unsupported uppercase candidate labels are scored zero; this tightens
+the source's permissive letter filtering (e.g. `AE` formerly matched `A`).
+
+Five actual benchmark fixture cases over three repetitions match every score and
+aggregate, with 88 observed verifyit calls. Four malformed-reference batches abort
+without returning an aggregate. No JEEBench model-run links were found in the
+campaign tracker or local JSON/JSONL artifacts; this is source fixture validation,
+not archived-trace replay. Reproducible evidence is in campaign
+`evidence/e2e/wiring/evalchemy-jee/source_roundtrip.py` (supports `--output`).
