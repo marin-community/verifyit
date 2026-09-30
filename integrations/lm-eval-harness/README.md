@@ -2,8 +2,7 @@ The AfroBench profile patch adds 45 AfriQA exact/F1, 100 MasakhaNER span-F1,
 100 MasakhaPOS token-accuracy and five ASK-GEC implicit exact configurations.
 The three AfroBench families passed source API and evaluator fixture comparisons;
 no matching saved model-run traces were available. Apply
-`afrobench-profiles-verifyit.patch` after `verifyit.patch`. The profile API
-dependency must be pinned to its implementation commit before deployment.
+`afrobench-profiles-verifyit.patch` after `verifyit.patch`. The dependency pin records the implementation commit for the profile APIs.
 
 The patch targets EleutherAI/lm-evaluation-harness v0.4.12,
 `6d642546f4688648fced259eb3302efd36ece5af`, which Evalchemy pins.
@@ -27,7 +26,7 @@ zero metric produces `scored`, never an infrastructure failure.
 
 
 The integration requires verifyit implementation commit
-`08c14eaf912a940fc4e0401698f95b85250b0006`, including the AfroBench profile API.
+`a4b0602a2f03b7864f7d7da35d374b7007b348f1`, including the AfroBench and corpus runtime APIs.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -37,23 +36,25 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@08c14eaf912a940fc4e0401698f95b85250b0006'
+uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@a4b0602a2f03b7864f7d7da35d374b7007b348f1'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
-An isolated core-only installation from this exact local Git revision was
-validated: completed reasoning-only boxes are accepted, truncated reasoning is
-rejected, and extracted MCQ choices produce the expected scalar score. No remote
-publication or live model endpoint was used.
+A core-package installation from this exact local Git revision was validated
+against the existing optional framework dependencies. Actual factory/evaluator
+roundtrips preserve BLEU/CHRF/TER and weighted-perplexity observations and point
+metrics. The installed module path and Git commit are recorded in campaign
+`evidence/e2e/wiring/harness-runtime/installed-metadata.json`; no remote publication
+or live model endpoint was used.
 
 
 ## Retained corpus runtime
 
 Apply `corpus-runtime-verifyit.patch` after `verifyit.patch`. It adds an optional
 single-rank batch route for 868 translation and 40 default rolling-likelihood
-configs. The current dependency pin predates this API: distribution must wait
-until it is updated to the actual implementation checkpoint. Local tests use the
-campaign working tree; no unpublished remote installation is claimed.
+configs. The dependency pin records the actual local implementation checkpoint. It is
+unpublished; use a local Git installation for validation and do not assume the
+remote Git URL is fetchable.
 
 Select supported tasks and opt in with `--metadata verifyit_corpus_runtime=true`,
 or `TaskManager(metadata={"verifyit_corpus_runtime": True})`. The actual task
