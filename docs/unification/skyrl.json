@@ -666,14 +666,18 @@
       "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/torl/math_verify.py",
       "dispatch": "GeneralReactTask.evaluate_result data_source=ToRL",
       "verifyit_modes": [
+        "exact",
+        "numeric",
         "math"
       ],
-      "mapping_status": "dormant_adapter_required",
+      "mapping_status": "implemented_source_adapter",
       "source_contract": "Math extraction with reward_type and symbolic evaluator.",
-      "adapter_requirements": "Preserve source extraction and reward_type.",
+      "adapter_requirements": "Source extraction/string normalization retained; bounded literal/arithmetic interpretation replaces eval; comparator ordering and source reward shaping retained.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#math-judge",
-      "resolution_strategy": "existing_math_judge_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "resolution_strategy": "client_composition_existing_modes",
+      "runtime_migration": "opt_in_source_helper_and_dispatch_integration",
+      "implementation_patch": "integrations/MarinSkyRL/dormant-math-verifyit.patch",
+      "validation": "76 source boundary tests;48 pinned native/cutover fixture rows. No real archived trace available. Eight documented intentional source-defect deviations."
     },
     {
       "id": "dormant/naive_dapo",
@@ -682,14 +686,18 @@
       "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/naive_dapo.py",
       "dispatch": "GeneralReactTask.evaluate_result data_source starts math",
       "verifyit_modes": [
+        "exact",
+        "numeric",
         "math"
       ],
-      "mapping_status": "dormant_adapter_required",
+      "mapping_status": "implemented_source_adapter",
       "source_contract": "Extract answer; normalization then symbolic fallback including pi=3.14; binary score.",
-      "adapter_requirements": "Approximate pi policy differs from math-verify, use explicit adapter.",
+      "adapter_requirements": "Source extraction/string normalization retained; bounded literal/arithmetic interpretation replaces eval; comparator ordering and source reward shaping retained.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#math-judge",
-      "resolution_strategy": "existing_math_judge_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "resolution_strategy": "client_composition_existing_modes",
+      "runtime_migration": "opt_in_source_helper_and_dispatch_integration",
+      "implementation_patch": "integrations/MarinSkyRL/dormant-math-verifyit.patch",
+      "validation": "76 source boundary tests;48 pinned native/cutover fixture rows. No real archived trace available. Eight documented intentional source-defect deviations."
     },
     {
       "id": "dormant/coder1",
@@ -780,14 +788,18 @@
       "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-agent/skyrl_agent/tasks/verifiers/prime_math/__init__.py",
       "dispatch": "Library called through naive_dapo grader; exported compute_score has no production caller",
       "verifyit_modes": [
+        "exact",
+        "numeric",
         "math"
       ],
-      "mapping_status": "dormant_adapter_required",
+      "mapping_status": "implemented_source_adapter",
       "source_contract": "Extract answer and grade_answer/math_equal fallback.",
-      "adapter_requirements": "Source extraction and equivalence policies differ.",
+      "adapter_requirements": "Source extraction/string normalization retained; bounded literal/arithmetic interpretation replaces eval; comparator ordering and source reward shaping retained.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#math-judge",
-      "resolution_strategy": "existing_math_judge_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "resolution_strategy": "client_composition_existing_modes",
+      "runtime_migration": "opt_in_source_helper_and_dispatch_integration",
+      "implementation_patch": "integrations/MarinSkyRL/dormant-math-verifyit.patch",
+      "validation": "76 source boundary tests;48 pinned native/cutover fixture rows. No real archived trace available. Eight documented intentional source-defect deviations."
     },
     {
       "id": "dormant/stem_llm_judge",
@@ -954,6 +966,7 @@
       "integrations/MarinSkyRL/sqlite-verifyit.patch",
       "integrations/MarinSkyRL/lean-verifyit.patch",
       "integrations/MarinSkyRL/code-verifyit.patch",
+      "integrations/MarinSkyRL/dormant-math-verifyit.patch",
       "integrations/MarinSkyRL/dependency-pin.patch"
     ],
     "covered_routes": [
@@ -979,12 +992,15 @@
       "text_to_sql",
       "nemotron_ultra/math_formal_lean_refinement_agent",
       "lcb",
-      "nemotron_ultra/code_gen_simple_agent"
+      "nemotron_ultra/code_gen_simple_agent",
+      "dormant/naive_dapo",
+      "dormant/prime_math",
+      "dormant/torl"
     ]
   },
   "installation": {
-    "dependency": "verifyit @ git+https://github.com/marin-community/verifyit@91c55a49599fcdead3475f009e62da4e30ca4f27",
-    "implementation_revision": "91c55a49599fcdead3475f009e62da4e30ca4f27",
+    "dependency": "verifyit[answer,schema,reasoning-gym] @ git+https://github.com/marin-community/verifyit@cd4c4a9be9200a4da6d722503d04bc5408e98f17",
+    "implementation_revision": "cd4c4a9be9200a4da6d722503d04bc5408e98f17",
     "source_revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
     "python": "Root Python 3.12; standalone gym >=3.11 after patch",
     "patch_order": [
@@ -994,7 +1010,8 @@
       "client-boundaries.patch"
     ],
     "lockfiles": "Regenerate root and standalone gym uv.lock after publishing implementation revision; remote Git install is not verified because this commit is local only.",
-    "implementation_requirement": "The dependency pin includes strict ExactSpec, MathSpec profiles, structured ScriptSpec verdicts and expanded SkyRL adapters; the Git revision must be published before remote installation."
+    "implementation_requirement": "The dependency pin includes strict ExactSpec, MathSpec profiles, structured ScriptSpec verdicts and expanded SkyRL adapters; the Git revision must be published before remote installation.",
+    "agent_optional_extra": "skyrl-agent[verifyit] installs verifyit[answer]; opt-in execution requires Python>=3.11."
   },
   "reusable_gap_specs": "docs/unification/skyrl-adapter-specs.md",
   "reassessment": {
@@ -1033,13 +1050,16 @@
       "text_to_sql",
       "nemotron_ultra/math_formal_lean_refinement_agent",
       "lcb",
-      "nemotron_ultra/code_gen_simple_agent"
+      "nemotron_ultra/code_gen_simple_agent",
+      "dormant/naive_dapo",
+      "dormant/prime_math",
+      "dormant/torl"
     ],
-    "implemented_source_patch_route_count": 23,
+    "implemented_source_patch_route_count": 26,
     "notes": "Disjoint route populations; proposed composition is mapping, not deployed migration. A generic retained source callback is only runtime bridge, not primitive parity.",
     "intentional_tightening": "Invalid GSM8K expected decimals, nonfinite chemistry references and malformed reference grids are invalid_task0 rather than exploiting literal/Python equality; valid wrong source format reward retained.",
     "pending_concrete_existing_class_behavior_gaps": 19,
-    "pending_dormant_math_parity_audits": 3,
+    "pending_dormant_math_parity_audits": 0,
     "pending_client_or_harness_wiring_routes": 1
   }
 }

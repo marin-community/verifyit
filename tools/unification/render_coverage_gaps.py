@@ -128,7 +128,7 @@ text += """
 
 ## SkyRL
 
-The 23 pending scoring routes comprise 16 active routes and 7 dormant implementations. Three dormant math variants are parity audits, not claims of a missing math API. Nineteen rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
+SKYRL_PENDING_SUMMARY
 
 """ + table(
     "MarinSkyRL", {"not_integrated", "capability_gap"}
@@ -164,7 +164,7 @@ Harbor AutoCodeBench uses the task's uv-managed Python for source and PytestSpec
 
 Harbor MMAU preserves the source CTRF artifact with PytestSpec arguments alongside verifyit's JSON report. A generated image matched original test.sh, direct CLI and Harbor Verifier for passing and failing candidates; both paths emitted the same CTRF pass/fail counts and Harbor retained the artifact. Malformed protected-test collection remained unscored without a reward. No matching saved model trace was available.
 
-SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Seven patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, two dormant QA APIs and legacy text2sql. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
+SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Ten patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, two dormant QA APIs, legacy text2sql and three dormant math APIs. These routes have source-fixture validation, with documented intentional math corrections; the SWE pivot dispatches to Harbor in the observed population.
 
 """ + table(
     "MarinSkyRL", {"implemented_not_validated"}
@@ -200,7 +200,7 @@ text += """
 
 The register covers pinned snapshots only, not future revisions or external plugins. Source revisions and exact evidence are stored per entity. Reconciliation is automatic: indexed harness 13,982 = 12,692 tasks + 834 groups + 456 templates; tasks 12,692 = 11,091 native available + 942 retained-runtime available + 659 remaining; Evalchemy 42 custom + 22 override configs; SkyRL 48 entries; Harbor 87 adapters; TaskTrove 81 cohorts with 861,848 rows plus 19 converter, 12 mode and 7 helper contracts. Seven Harbor tracker datasets and 64 harness inline definitions are separate populations and must not be added to those source denominators.
 
-The [replay report](e2e-replay.md) records the earlier campaign baseline and exceptions: Evalchemy/harness 24 runs matched 63,360 samples; SkyRL 66/66 pinned-native and 65/66 archived results; Harbor 1,101 trials preserve 37 recovered zeros, 10 infrastructure failures and 3 database discrepancies. Later opt-in SkyRL cutovers add 18 selected real-trace matches under campaign `evidence/e2e/wiring/`; Reasoning Gym rejects boolean scorer results, and typed tool comparison rejects a boolean argument for an integer reference. Calendar rejects invalid clock values, boolean/negative/nonfinite durations and malformed reference constraints; zero durations retain source behavior. Full archived parity remains unvalidated.
+The [replay report](e2e-replay.md) records the earlier campaign baseline and exceptions: Evalchemy/harness 24 runs matched 63,360 samples; SkyRL 66/66 pinned-native and 65/66 archived results; Harbor 1,101 trials preserve 37 recovered zeros, 10 infrastructure failures and 3 database discrepancies. Later opt-in SkyRL cutovers add nine Reasoning Gym/MCQA, six tool, three calendar, three SQL, three Lean and six code random selections under campaign `evidence/e2e/wiring/`, plus two separately selected supplemental code positives; Reasoning Gym rejects boolean scorer results, and typed tool comparison rejects a boolean argument for an integer reference. Calendar rejects invalid clock values, boolean/negative/nonfinite durations and malformed reference constraints; zero durations retain source behavior. Full archived parity remains unvalidated.
 
 Regenerate from the campaign worktree with the pinned read-only sources:
 
@@ -224,6 +224,18 @@ summary = (
     f"{skyrl_counts['capability_gap']} native profile gaps; {external} external-objective placeholders separate |"
 )
 text = text.replace("SKYRL_SUMMARY_ROW", summary)
+pending_skyrl = [r for r in rows if r["source"] == "MarinSkyRL" and r["status"] in {"not_integrated", "capability_gap"}]
+pending_active = sum(bool(r.get("active_in_pinned_dispatch")) for r in pending_skyrl)
+pending_dormant = sum(bool(r.get("dormant")) for r in pending_skyrl)
+text = text.replace(
+    "SKYRL_PENDING_SUMMARY",
+    f"The {len(pending_skyrl)} pending scoring routes comprise {pending_active} active routes and "
+    f"{pending_dormant} dormant implementations. Three dormant math variants now have opt-in source "
+    "integrations and fixture evidence; archived traces remain unavailable. "
+    f"{skyrl_counts['capability_gap']} rows need a native comparator/registry/schema/judge profile in an "
+    "existing class; a task-owned structured source bridge remains an alternative. "
+    "The full register preserves active/dormant dispatch and source hashes.",
+)
 harbor_counts = Counter(r["status"] for r in rows if r["source"] == "harbor")
 harbor_total = sum(harbor_counts.values())
 harbor_native = harbor_counts["native_route_available"]

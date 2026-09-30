@@ -1,16 +1,32 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index 6ef2bde..d2a1168 100644
 --- a/pyproject.toml
 +++ b/pyproject.toml
-@@ -11,6 +11,7 @@
+@@ -11,6 +11,7 @@ version = "0.1.0"
  description = "Marin's typed launcher and RL training runtime"
  requires-python = "==3.12.*"
  dependencies = [
-+    "verifyit[schema,reasoning-gym] @ git+https://github.com/marin-community/verifyit@36a7267c600e3b2165299c0856185d7d88717f9c",
++    "verifyit[answer,schema,reasoning-gym] @ git+https://github.com/marin-community/verifyit@cd4c4a9be9200a4da6d722503d04bc5408e98f17",
      "aiohttp>=3.13.3",
      "boto3",
      "datasets>=4.0.0",
+diff --git a/skyrl-agent/pyproject.toml b/skyrl-agent/pyproject.toml
+index f1b7544..4b1af21 100644
+--- a/skyrl-agent/pyproject.toml
++++ b/skyrl-agent/pyproject.toml
+@@ -61,6 +61,7 @@ dependencies=[
+ ]
+ 
+ [project.optional-dependencies]
++verifyit = ["verifyit[answer] @ git+https://github.com/marin-community/verifyit@cd4c4a9be9200a4da6d722503d04bc5408e98f17"]
+ skyrl-train = ["skyrl-train[vllm]", 'torchdata']
+ verl = ["verl[vllm,gpu]","vllm==0.8.5"]
+ tinker = ["tinker", "chz"]
+diff --git a/skyrl-gym/pyproject.toml b/skyrl-gym/pyproject.toml
+index 510a493..293cb58 100644
 --- a/skyrl-gym/pyproject.toml
 +++ b/skyrl-gym/pyproject.toml
-@@ -11,9 +11,10 @@
+@@ -11,9 +11,10 @@ authors = [
  ]
  license = { text = "MIT" }
  readme = "README.md"
@@ -18,7 +34,7 @@
 +requires-python = ">=3.11"
  
  dependencies = [
-+    "verifyit[schema,reasoning-gym] @ git+https://github.com/marin-community/verifyit@36a7267c600e3b2165299c0856185d7d88717f9c",
++    "verifyit[answer,schema,reasoning-gym] @ git+https://github.com/marin-community/verifyit@cd4c4a9be9200a4da6d722503d04bc5408e98f17",
      "func_timeout",
      "loguru",
      "numpy",

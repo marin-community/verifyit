@@ -780,7 +780,9 @@ def main():
                 row = {
                     **row,
                     "historical_primitive_candidates": row["existing_primitive_candidate"],
-                    "existing_primitive_candidate": ["mcq" if row["id"] == "mcq" else "exact"],
+                    "existing_primitive_candidate": row.get(
+                        "implemented_primitive_modes", ["mcq" if row["id"] == "mcq" else "exact"]
+                    ),
                 }
             project = "MarinSkyRL"
             entities.append(

@@ -2,30 +2,30 @@
   "schema_version": 1,
   "project": "MarinSkyRL",
   "source_revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
-  "verifyit_audit_revision": "b5b6e111aadb8ece8ea5c1527ee78494b763c21c",
+  "verifyit_audit_revision": "cd4c4a9be9200a4da6d722503d04bc5408e98f17",
   "population_definition": "All built-in gym registrations; all Nemotron _step agent branches; dormant GeneralReactTask/WebResearchTask dispatch and exported unused scorers. External user-registered gym envs are open extension points, not enumerable repository verifiers.",
   "counts": {
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 23,
-    "pending_scoring_routes": 23,
+    "source_patched_routes": 26,
+    "pending_scoring_routes": 20,
     "pending_active_scoring_routes": 16,
-    "pending_dormant_scoring_routes": 7,
+    "pending_dormant_scoring_routes": 4,
     "zero_core_extension_unwired_routes": 1,
     "existing_class_behavior_gap_routes": 19,
     "real_replayed_source_routes": 16,
-    "implemented_routes_missing_real_traces": 7,
+    "implemented_routes_missing_real_traces": 10,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
       "implemented_validated": 16,
-      "implemented_not_validated": 7,
+      "implemented_not_validated": 10,
       "capability_gap": 19,
       "not_a_correctness_verifier": 2,
-      "not_integrated": 4
+      "not_integrated": 1
     },
-    "unwired_dormant_math_comparator_parity_audits": 3,
+    "unwired_dormant_math_comparator_parity_audits": 0,
     "inherited_planning_existing_class_extension_routes": 23
   },
   "classification_notes": [
@@ -177,7 +177,10 @@
       ],
       "observed_verified_execution_links": 1783,
       "actual_replayed_links": 33,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     },
     {
       "id": "gsm8k",
@@ -220,7 +223,10 @@
       ],
       "observed_verified_execution_links": 103,
       "actual_replayed_links": 3,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     },
     {
       "id": "gsm8k_multi_turn",
@@ -259,7 +265,10 @@
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     },
     {
       "id": "text2sql",
@@ -297,7 +306,11 @@
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
       "core_extension_requirement": "none_proposed",
-      "intentional_tightening": "Read-only candidate SQL and invalid/nonfinite reference rejection precede signed format projection; failed verifier never earns formatting reward."
+      "intentional_tightening": "Read-only candidate SQL and invalid/nonfinite reference rejection precede signed format projection; failed verifier never earns formatting reward.",
+      "implemented_primitive_modes": [
+        "script",
+        "exact"
+      ]
     },
     {
       "id": "text_to_sql",
@@ -335,7 +348,11 @@
       "observed_verified_execution_links": 3,
       "actual_replayed_links": 3,
       "core_extension_requirement": "none_proposed",
-      "intentional_tightening": "Read-only candidate SQL and invalid/nonfinite reference rejection precede signed format projection; failed verifier never earns formatting reward."
+      "intentional_tightening": "Read-only candidate SQL and invalid/nonfinite reference rejection precede signed format projection; failed verifier never earns formatting reward.",
+      "implemented_primitive_modes": [
+        "script",
+        "exact"
+      ]
     },
     {
       "id": "search",
@@ -374,7 +391,10 @@
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     },
     {
       "id": "lcb",
@@ -414,7 +434,11 @@
       "actual_replayed_links": 4,
       "core_extension_requirement": "none_proposed",
       "intentional_tightening": "Isolated candidate runtime has no reference/verdict paths; immutable hard memory bound; boolean/numeric, nonfinite/non-JSON values reject. Lost sessions fail infra0 rather than retain prior partial credit.",
-      "real_trace_selection_contract": "Three unchanged random missing-code rejection traces plus one separately selected recorded-positive supplemental trace; not four unbiased random traces."
+      "real_trace_selection_contract": "Three unchanged random missing-code rejection traces plus one separately selected recorded-positive supplemental trace; not four unbiased random traces.",
+      "implemented_primitive_modes": [
+        "script",
+        "exact"
+      ]
     },
     {
       "id": "searchcode",
@@ -453,7 +477,10 @@
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     },
     {
       "id": "mcq",
@@ -496,7 +523,10 @@
       ],
       "observed_verified_execution_links": 218,
       "actual_replayed_links": 6,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "mcq"
+      ]
     },
     {
       "id": "ifeval",
@@ -564,7 +594,10 @@
       ],
       "observed_verified_execution_links": 12,
       "actual_replayed_links": 3,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "reasoning-gym"
+      ]
     },
     {
       "id": "preference",
@@ -738,7 +771,10 @@
       ],
       "observed_verified_execution_links": 12,
       "actual_replayed_links": 3,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "script"
+      ]
     },
     {
       "id": "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
@@ -774,7 +810,12 @@
       ],
       "observed_verified_execution_links": 9,
       "actual_replayed_links": 3,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact",
+        "numeric",
+        "json-schema"
+      ]
     },
     {
       "id": "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
@@ -810,7 +851,12 @@
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact",
+        "numeric",
+        "json-schema"
+      ]
     },
     {
       "id": "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent",
@@ -846,7 +892,12 @@
       ],
       "observed_verified_execution_links": 9,
       "actual_replayed_links": 3,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact",
+        "numeric",
+        "json-schema"
+      ]
     },
     {
       "id": "nemotron_ultra/calendar_simple_agent",
@@ -885,7 +936,10 @@
       "observed_verified_execution_links": 214,
       "actual_replayed_links": 3,
       "core_extension_requirement": "none_proposed",
-      "intentional_tightening": "Boolean/nonfinite/negative duration, invalid clock fields, reversed windows and malformed reference constraints fail closed; zero-duration intervals remain allowed. Five positive/misclassified regressions fail before hardening."
+      "intentional_tightening": "Boolean/nonfinite/negative duration, invalid clock fields, reversed windows and malformed reference constraints fail closed; zero-duration intervals remain allowed. Five positive/misclassified regressions fail before hardening.",
+      "implemented_primitive_modes": [
+        "script"
+      ]
     },
     {
       "id": "nemotron_ultra/citation_format_simple_agent",
@@ -987,7 +1041,10 @@
       ],
       "observed_verified_execution_links": 408,
       "actual_replayed_links": 3,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "mcq"
+      ]
     },
     {
       "id": "nemotron_ultra/structured_outputs_simple_agent",
@@ -1099,7 +1156,10 @@
       ],
       "observed_verified_execution_links": 461,
       "actual_replayed_links": 6,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     },
     {
       "id": "nemotron_ultra/nvarc_inductive_simple_agent",
@@ -1143,7 +1203,10 @@
       ],
       "observed_verified_execution_links": 477,
       "actual_replayed_links": 9,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     },
     {
       "id": "nemotron_ultra/nvarc_transductive_simple_agent",
@@ -1187,7 +1250,10 @@
       ],
       "observed_verified_execution_links": 657,
       "actual_replayed_links": 9,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     },
     {
       "id": "nemotron_ultra/code_gen_simple_agent",
@@ -1227,7 +1293,11 @@
       "actual_replayed_links": 4,
       "core_extension_requirement": "none_proposed",
       "intentional_tightening": "Isolated candidate runtime has no reference/verdict paths; immutable hard memory bound; boolean/numeric, nonfinite/non-JSON values reject. Lost sessions fail infra0 rather than retain prior partial credit.",
-      "real_trace_selection_contract": "Three unchanged random missing-code rejection traces plus one separately selected recorded-positive supplemental trace; not four unbiased random traces."
+      "real_trace_selection_contract": "Three unchanged random missing-code rejection traces plus one separately selected recorded-positive supplemental trace; not four unbiased random traces.",
+      "implemented_primitive_modes": [
+        "script",
+        "exact"
+      ]
     },
     {
       "id": "nemotron_ultra/instruction_following_simple_agent",
@@ -1498,7 +1568,10 @@
       ],
       "observed_verified_execution_links": 13,
       "actual_replayed_links": 3,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "reasoning-gym"
+      ]
     },
     {
       "id": "nemotron_ultra/genrm_simple_agent",
@@ -1570,21 +1643,22 @@
     },
     {
       "id": "dormant/torl",
-      "status": "not_integrated",
-      "not_covered_reason": "Dormant source extraction/comparator and signed/format reward projection are not wired to existing exact/prepared-math APIs. Full source acceptance parity has not been tested; no specific missing core API is established.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "Opt-in source integration is implemented and source-fixture validated; no eligible archived trace exists for this dormant route.",
       "active_in_pinned_dispatch": false,
       "dormant": true,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "source_extraction_normalization_and_verifyit_primitives",
       "native_fallback_in_cutover": false,
       "contract_family": "math-judge",
       "existing_primitive_candidate": [
         "exact",
+        "numeric",
         "math"
       ],
-      "resolution_strategy": "existing_math_judge_extension",
-      "needed_change": "Port source reward_type/extraction and prove prepared math comparator acceptance parity; add only demonstrated missing equality policy, then wire the dormant caller if activated.",
-      "validation_gap": null,
+      "resolution_strategy": "client_composition_existing_modes",
+      "needed_change": "Replay genuine archived outputs if this dormant source route is activated; no missing primitive API remains for the implemented contract.",
+      "validation_gap": "No eligible real trace in the full 5460-link census; source callback/dispatcher fixtures are not archived-trace E2E.",
       "source_contract": "Math extraction with reward_type and symbolic evaluator.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1596,29 +1670,36 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#math-judge",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/dormant-math-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-dormant-math/checkpoint-summary.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "undetermined_comparator_parity_audit"
+      "core_extension_requirement": "none",
+      "implemented_primitive_modes": [
+        "exact",
+        "math"
+      ]
     },
     {
       "id": "dormant/naive_dapo",
-      "status": "not_integrated",
-      "not_covered_reason": "Dormant source extraction/comparator and signed/format reward projection are not wired to existing exact/prepared-math APIs. Full source acceptance parity has not been tested; no specific missing core API is established.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "Opt-in source integration is implemented and source-fixture validated; no eligible archived trace exists for this dormant route.",
       "active_in_pinned_dispatch": false,
       "dormant": true,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "source_extraction_normalization_and_verifyit_primitives",
       "native_fallback_in_cutover": false,
       "contract_family": "math-judge",
       "existing_primitive_candidate": [
         "exact",
+        "numeric",
         "math"
       ],
-      "resolution_strategy": "existing_math_judge_extension",
-      "needed_change": "Apply source independent approximate-pi substitutions and extraction before prepared math grading; prove source symbolic fallback parity before wiring dormant caller.",
-      "validation_gap": null,
+      "resolution_strategy": "client_composition_existing_modes",
+      "needed_change": "Replay genuine archived outputs if this dormant source route is activated; no missing primitive API remains for the implemented contract.",
+      "validation_gap": "No eligible real trace in the full 5460-link census; source callback/dispatcher fixtures are not archived-trace E2E.",
       "source_contract": "Extract answer; normalization then symbolic fallback including pi=3.14; binary score.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1630,11 +1711,18 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#math-judge",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/dormant-math-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-dormant-math/checkpoint-summary.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "undetermined_comparator_parity_audit"
+      "core_extension_requirement": "none",
+      "implemented_primitive_modes": [
+        "exact",
+        "numeric",
+        "math"
+      ]
     },
     {
       "id": "dormant/coder1",
@@ -1703,7 +1791,10 @@
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     },
     {
       "id": "dormant/qa_browsecomp",
@@ -1804,25 +1895,29 @@
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "core_extension_requirement": "none_proposed",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     },
     {
       "id": "dormant/prime_math",
-      "status": "not_integrated",
-      "not_covered_reason": "Dormant source extraction/comparator and signed/format reward projection are not wired to existing exact/prepared-math APIs. Full source acceptance parity has not been tested; no specific missing core API is established.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "Opt-in source integration is implemented and source-fixture validated; no eligible archived trace exists for this dormant route.",
       "active_in_pinned_dispatch": false,
       "dormant": true,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "source_extraction_normalization_and_verifyit_primitives",
       "native_fallback_in_cutover": false,
       "contract_family": "math-judge",
       "existing_primitive_candidate": [
         "exact",
+        "numeric",
         "math"
       ],
-      "resolution_strategy": "existing_math_judge_extension",
-      "needed_change": "Compare source grade_answer/math_equal acceptance set against prepared MathSpec profiles using real source fixtures, implement missing comparator policy only if needed, then wire dormant caller.",
-      "validation_gap": null,
+      "resolution_strategy": "client_composition_existing_modes",
+      "needed_change": "Replay genuine archived outputs if this dormant source route is activated; no missing primitive API remains for the implemented contract.",
+      "validation_gap": "No eligible real trace in the full 5460-link census; source callback/dispatcher fixtures are not archived-trace E2E.",
       "source_contract": "Extract answer and grade_answer/math_equal fallback.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1834,11 +1929,18 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#math-judge",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/dormant-math-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-dormant-math/checkpoint-summary.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "undetermined_comparator_parity_audit"
+      "core_extension_requirement": "none",
+      "implemented_primitive_modes": [
+        "exact",
+        "numeric",
+        "math"
+      ]
     },
     {
       "id": "dormant/stem_llm_judge",

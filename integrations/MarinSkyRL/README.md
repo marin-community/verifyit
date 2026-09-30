@@ -5,7 +5,7 @@ arithmetic and client-boundaries patches, then `reasoning-mcq-verifyit.patch`,
 `tool-comparison-verifyit.patch` and `qa-verifyit.patch`. Apply the dependency pin
 patch last. The latter pins the local
 verifyit implementation checkpoint and raises the standalone gym Python floor
-to >=3.11 and includes the `schema` and `reasoning-gym` extras. The source SHA must exist on the remote before external
+to >=3.11 and includes the `answer`, `schema` and `reasoning-gym` extras. The source SHA must exist on the remote before external
 installation. Do not silently replace a pinned Git dependency with a floating
 branch. Regenerate fork locks in the fork's supported environment before use.
 
@@ -95,3 +95,9 @@ Twenty-four boundary regression cases have focused passing evidence, including
 reference/verdict tampering, state, memory limits, cleanup and protocol errors.
 Artifacts are under `evidence/e2e/wiring/skyrl-code`; independent manager replays
 are in sibling `manager-code-positive` and `manager-code-random` directories.
+
+Apply `dormant-math-verifyit.patch` for opt-in ToRL, DAPO and PRIME source scoring.
+The [math integration notes](dormant-math.md) describe retained extraction/reward
+contracts, source-defect corrections, actual source comparison commands and
+the absence of eligible archived traces. The pin includes the core math timeout
+fix and provides an optional `skyrl-agent[verifyit]` install for these dormant APIs.
