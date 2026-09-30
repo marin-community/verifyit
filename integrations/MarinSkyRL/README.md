@@ -36,3 +36,5 @@ The SWE pivot tool route and two exported QA APIs have no eligible real trace.
 The tool comparator uses exact, numeric and JSON-schema primitives for typed
 arguments and message actions. It rejects a boolean candidate for an integer
 reference, which the source comparator accepts through Python's bool/int equality.
+The campaign evidence is under `evidence/e2e/wiring/skyrl-reasoning-mcq/`,
+`evidence/e2e/wiring/skyrl-tools/` and `evidence/e2e/wiring/skyrl-qa/`.

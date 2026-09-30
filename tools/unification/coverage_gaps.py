@@ -728,8 +728,8 @@ def main():
     payload = {
         "schema_version": 1,
         "scope": (
-            "Pinned source snapshots; route availability is separate from runtime "
-            "validation. No new scoring implementation in this consolidation."
+            "Pinned source snapshots and subsequent opt-in cutovers; route availability "
+            "is separate from runtime validation."
         ),
         "counts": [
             {"source": source, "status": status, "count": count} for (source, status), count in sorted(counts.items())

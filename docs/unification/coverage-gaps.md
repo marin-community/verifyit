@@ -331,7 +331,7 @@ TaskTrove's 81 cohorts below account for 861,848 metadata rows, 43 sources and 6
 
 The register covers pinned snapshots only, not future revisions or external plugins. Source revisions and exact evidence are stored per entity. Reconciliation is automatic: indexed harness 13,982 = 12,692 tasks + 834 groups + 456 templates; tasks 12,692 = 10,841 available + 1,851 remaining; Evalchemy 42 custom + 22 override configs; SkyRL 48 entries; Harbor 87 adapters; TaskTrove 81 cohorts with 861,848 rows plus 19 converter, 12 mode and 7 helper contracts. Seven Harbor tracker datasets and 64 harness inline definitions are separate populations and must not be added to those source denominators.
 
-The [replay report](e2e-replay.md) records actual results and exceptions: Evalchemy/harness 24 runs matched 63,360 samples; SkyRL 66/66 pinned-native and 65/66 archived results; Harbor 1,101 trials preserve 37 recovered zeros, 10 infrastructure failures and 3 database discrepancies rather than claiming complete archived parity. No scoring behavior changed during this consolidation.
+The [replay report](e2e-replay.md) records the earlier campaign baseline and exceptions: Evalchemy/harness 24 runs matched 63,360 samples; SkyRL 66/66 pinned-native and 65/66 archived results; Harbor 1,101 trials preserve 37 recovered zeros, 10 infrastructure failures and 3 database discrepancies. Later opt-in SkyRL cutovers add 15 selected real-trace matches under campaign `evidence/e2e/wiring/`; Reasoning Gym rejects boolean answers for integer references, and typed tool comparison rejects a boolean argument for an integer reference. Full archived parity remains unvalidated.
 
 Regenerate from the campaign worktree with the pinned read-only sources:
 
