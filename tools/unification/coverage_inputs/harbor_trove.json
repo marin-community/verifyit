@@ -1782,16 +1782,21 @@
       "entity_id": "harbor:ds1000",
       "evidence": [
         "docs/unification/harbor_semantics.json#ds1000",
-        "docs/unification/harbor_inventory.json#ds1000"
+        "docs/unification/harbor_inventory.json#ds1000",
+        "integrations/harbor/ds1000-numpy-verifyit.patch",
+        "evidence/e2e/wiring/harbor-ds1000/README.md",
+        "evidence/e2e/wiring/harbor-ds1000/manager-numpy-probe-results.json",
+        "evidence/e2e/wiring/harbor-ds1000/manager-adapter-generated-results.json",
+        "evidence/e2e/wiring/harbor-ds1000/manager-boundary-results.json"
       ],
       "gap_kind": "retained_specialized_runtime_wiring",
       "implementation_present": false,
       "name": "ds1000",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/ds1000/template/tests/run_test.py preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Extend the isolated typed result contract beyond the 87 statically selected NumPy contexts, verify the exact full task image on a native amd64 Linux kernel with Landlock, and replay archived candidate workspaces before promoting the adapter.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "run_test.py executes task-provided test harness for Python data-science code after completion extraction; retain context and library-specific semantic tests. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "A partial opt-in ScriptSpec bridge now isolates candidate execution and passes bounded typed NumPy results to the trusted source assertions for 87 of 1,000 static contexts. The remaining library and result contracts are not wired. The exact full task image could not run the verifier on this ARM host because amd64 emulation lacks Landlock, so whole-adapter source-image parity remains unvalidated.",
       "source_evidence": [
         {
           "functions": [
@@ -1831,7 +1836,7 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "validation_limit": "All 87 selected source reference solutions and 174 typed result transports passed under source Python 3.10 and NumPy 1.26.4. A reduced NumPy image matched source, direct CLI and actual Harbor Verifier on three generated tasks with isolation and infrastructure regressions; independent manager replays matched. The exact full image built only on amd64 emulation, where Landlock returned ENOSYS before candidate grading. No full-image verifier parity or archived model trace is claimed."
     },
     {
       "entity_id": "harbor:evoeval",

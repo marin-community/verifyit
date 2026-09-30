@@ -88,6 +88,22 @@ fixtures, not a general same-UID isolation proof. The other 13 task images and
 matching saved model traces remain unvalidated. Evidence and exact replay
 commands are in `evidence/e2e/wiring/harbor-compilebench/`.
 
+`ds1000-numpy-verifyit.patch` is a partial, opt-in DS-1000 client checkpoint;
+the canonical DS-1000 adapter remains pending. Its static gate selects 87 of
+1,000 NumPy-only source contexts. Candidate code runs in an unprivileged
+Landlock child and returns bounded typed values without pickle; the trusted
+parent runs the source assertions. This rejects the pinned source's
+`SystemExit(0)` false positive and candidate attempts to read references or
+write a reward. All 87 source reference solutions and their result transports
+passed under source Python 3.10 and NumPy 1.26.4. A smaller NumPy task image
+matched source, CLI and actual Harbor Verifier on three generated tasks, with
+negative and isolation cases. The exact full source image builds on amd64, but
+Landlock is unavailable under this ARM host's amd64 emulation; the original
+source image cannot build natively on ARM because its torch CPU wheel is
+missing. The full image has source-only score evidence, not a verifier cutover.
+No archived model workspaces were replayed. Exact commands, hashes, and
+failure evidence are in `evidence/e2e/wiring/harbor-ds1000/README.md`.
+
 Apply `codepde-pytest-verifyit.patch` after the Harbor dispatcher patch. Its
 generated tasks declare PytestSpec against a protected `/tests/verifyit/` copy
 of each upstream nRMSE evaluator. The original `test.sh` and evaluator remain
