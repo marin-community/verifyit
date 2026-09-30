@@ -8,7 +8,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Evalchemy 42 custom benchmarks | 6 native integrations + 3 math hybrids | 33 not integrated (22 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid | 17 not integrated; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 31 source-patched (21 with selected real traces, 10 without eligible real traces) | 2 partial client/harness routes + 13 native profile gaps; 2 external-objective placeholders separate |
-| Harbor 87 adapters | 13 native primitive clients + 3 structured source-runtime bridges | 71 not integrated; BFCL, DABstep and tau3 retain source evaluators |
+| Harbor 87 adapters | 13 native primitive clients + 3 structured source-runtime bridges | 71 not integrated; 15 wired routes need verifier isolation |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
@@ -218,27 +218,50 @@ The 71 unwired adapters are named individually. Four answer-file clients invoke 
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
-| aime | native_route_available | exact | The generated script strips the whole answer and compares the decimal reference with exact grading; boxed extraction is never applied. No missing client integration; validate model-run traces and each task image before wider deployment. |
+| aime | native_route_available | exact | The generated script strips the whole answer and compares the decimal reference with exact grading; boxed extraction is never applied. Isolate protected verifier files from the live agent process before deployment. |
 | arc_agi_2 | native_route_available | json-schema | The opt-in Harbor adapter transfers only the candidate grid to a separate verifier image, where the protected reference is graded with the existing JSON-schema const primitive. Replay saved model traces and broader task images before deployment; publish the pinned verifyit revision for remote image builds. |
-| autocodebench | native_route_available | pytest | The generated PytestSpec executes protected /tests/test_outputs.py in the same uv-managed task interpreter as the source script. Validate saved model traces and more generated task instances before wider deployment. |
-| bigcodebench_hard | native_route_available | pytest | The generated task declares PytestSpec for protected /tests/test_outputs.py and invokes the benchmark tests under Python 3.10, while verifyit runs separately under Python 3.11. Validate saved model traces and more generated task instances before wider deployment. |
-| codepde | native_route_available | pytest | The generated PytestSpec runs the unchanged upstream nRMSE evaluator and binary 0.05 threshold for all five PDE variants. Validate saved model traces and full-size PDE datasets before wider deployment. |
-| compilebench | native_route_available | pytest | The pinned 15-task adapter now emits PytestSpec for each unchanged protected test_outputs.py suite. Replay the other 13 task images and saved model rollouts before wider deployment; bounded executable tamper witnesses do not establish general same-UID candidate isolation. |
-| evoeval | native_route_available | pytest | The generated task emits PytestSpec for its protected test_outputs.py. No missing pytest client integration; validate saved model traces and further dataset tasks before wider deployment. |
-| gaia | native_route_available | exact | The generated script removes newlines, lowercases ASCII letters and trims outer whitespace on both files before exact grading. No missing client integration; validate model-run traces and each task image before wider deployment. |
-| gpqa-diamond | native_route_available | mcq | The generated script removes whitespace and uppercases the full answer before strict A-D MCQ grading. No missing client integration; validate model-run traces and each task image before wider deployment. |
-| humanevalfix | native_route_available | pytest | The generated task declares PytestSpec for protected /tests/test_outputs.py with candidate workspace /workspace. No missing pytest client integration; validate saved model traces and more generated task instances before wider deployment. |
-| mmau | native_route_available | pytest | The generated PytestSpec runs protected /tests/test_outputs.py in the task's uv-managed Python, preserving the source all-tests policy and CTRF report via pytest arguments. Validate saved model traces and more generated task instances before wider deployment. |
-| replicationbench | native_route_available | pytest | The generated PytestSpec runs the protected source comparator and retains its binary all-tests reward, comparison artifact and task Python environment. Validate additional generated task instances, broader data dependencies and saved model traces before wider deployment. |
-| satbench | native_route_available | exact | The generated script takes the last case-sensitive [SAT] or [UNSAT] marker and grades that label exactly. No missing client integration; validate model-run traces and each task image before wider deployment. |
+| autocodebench | native_route_available | pytest | The generated PytestSpec executes protected /tests/test_outputs.py in the same uv-managed task interpreter as the source script. Isolate protected verifier files from the live agent process before deployment. |
+| bigcodebench_hard | native_route_available | pytest | The generated task declares PytestSpec for protected /tests/test_outputs.py and invokes the benchmark tests under Python 3.10, while verifyit runs separately under Python 3.11. Isolate protected verifier files from the live agent process before deployment. |
+| codepde | native_route_available | pytest | The generated PytestSpec runs the unchanged upstream nRMSE evaluator and binary 0.05 threshold for all five PDE variants. Isolate protected verifier files from the live agent process before deployment. |
+| compilebench | native_route_available | pytest | The pinned 15-task adapter now emits PytestSpec for each unchanged protected test_outputs.py suite. Isolate protected verifier files from the live agent process before deployment. |
+| evoeval | native_route_available | pytest | The generated task emits PytestSpec for its protected test_outputs.py. Isolate protected verifier files from the live agent process before deployment. |
+| gaia | native_route_available | exact | The generated script removes newlines, lowercases ASCII letters and trims outer whitespace on both files before exact grading. Isolate protected verifier files from the live agent process before deployment. |
+| gpqa-diamond | native_route_available | mcq | The generated script removes whitespace and uppercases the full answer before strict A-D MCQ grading. Isolate protected verifier files from the live agent process before deployment. |
+| humanevalfix | native_route_available | pytest | The generated task declares PytestSpec for protected /tests/test_outputs.py with candidate workspace /workspace. Isolate protected verifier files from the live agent process before deployment. |
+| mmau | native_route_available | pytest | The generated PytestSpec runs protected /tests/test_outputs.py in the task's uv-managed Python, preserving the source all-tests policy and CTRF report via pytest arguments. Isolate protected verifier files from the live agent process before deployment. |
+| replicationbench | native_route_available | pytest | The generated PytestSpec runs the protected source comparator and retains its binary all-tests reward, comparison artifact and task Python environment. Isolate protected verifier files from the live agent process before deployment. |
+| satbench | native_route_available | exact | The generated script takes the last case-sensitive [SAT] or [UNSAT] marker and grades that label exactly. Isolate protected verifier files from the live agent process before deployment. |
 
 ### Retained source evaluators
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
-| bfcl | native_fallback | script | A generated ScriptSpec executes the preserved BFCL test.sh and category-specific evaluator inside the original task Python, then converts its binary reward to a structured verdict. Validate the other generated task categories and archived candidate workspaces before wider deployment; the retained source scorer is not a native BFCL comparator. |
-| dabstep | native_fallback | numeric, exact, script | A generated ScriptSpec runs the original DABstep test.sh and protected question_scorer through verifyit's structured native-runtime bridge. Validate broader generated tasks and archived model-run workspaces before deployment; the fuzzy and list branches retain the source scorer rather than using a native exact/numeric comparator. |
-| tau3-bench | native_fallback | script | Native state/tool-action/NL evaluation remains in tau2; verifyit provides structured score/status/process boundary. No missing client integration: current tau3 patch invokes ScriptSpec.verdict_file and trusted pinned asset manifest, retaining native tau2 simulation/judge runtime. |
+| bfcl | native_fallback | script | A generated ScriptSpec executes the preserved BFCL test.sh and category-specific evaluator inside the original task Python, then converts its binary reward to a structured verdict. Isolate protected verifier files from the live agent process before deployment. |
+| dabstep | native_fallback | numeric, exact, script | A generated ScriptSpec runs the original DABstep test.sh and protected question_scorer through verifyit's structured native-runtime bridge. Isolate protected verifier files from the live agent process before deployment. |
+| tau3-bench | native_fallback | script | Native state/tool-action/NL evaluation remains in tau2; verifyit provides structured score/status/process boundary. Isolate protected verifier files from the live agent process before deployment. |
+
+### Shared verifier boundary
+
+15 wired clients still grade in Harbor's shared agent container. Harbor uploads trusted files after the agent phase, while a surviving candidate process can modify them. A generated GAIA task reproduced a wrong answer scoring one after its uploaded reference changed. This establishes the shared-container failure mode, not a per-route exploit for every row. These routes have client wiring but require a protected verifier environment before deployment. ARC-AGI-2 uses a separate verifier and passed the corresponding mutation replay.
+
+| Wired route | Candidate-reachable trusted assets |
+| --- | --- |
+| aime | /tests/expected_answer.txt and test.sh |
+| autocodebench | /tests/test_outputs.py and protected tests |
+| bfcl | /tests/evaluate.py and generated ground truth |
+| bigcodebench_hard | /tests/test_outputs.py and protected tests |
+| codepde | /tests/verifyit/nRMSE_evaluator.py and reference HDF5 |
+| compilebench | /tests/test_outputs.py and protected tests |
+| dabstep | /tests/scorer.py and expected_answer.txt |
+| evoeval | /tests/test_outputs.py and source test fixtures |
+| gaia | /tests/expected_answer.txt and test.sh |
+| gpqa-diamond | /tests/expected_answer.txt and test.sh |
+| humanevalfix | /tests/test_outputs.py and protected tests |
+| mmau | /tests/test_outputs.py and protected tests |
+| replicationbench | /tests/config.json and test_outputs.py |
+| satbench | /tests/ground_truth.json and test.sh |
+| tau3-bench | /tests native evaluator and tau2-assets.json manifest |
+
 
 ### Additional tracker replay requirements
 

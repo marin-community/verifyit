@@ -1,5 +1,17 @@
 # Harbor integration
 
+The coverage register identifies a shared-verifier boundary gap in 15 wired
+Harbor routes. Harbor uploads their protected tests or references into the live
+agent container before grading; a surviving candidate process can modify them.
+A generated GAIA task reproduced the failure: the wrong answer `Boston` scored
+one after the candidate changed the uploaded `New York` reference. Existing
+source/CLI and generated-image parity cases establish grader behavior on bounded
+fixtures, not protected-reference isolation. ARC-AGI-2 uses a separate verifier
+image; the other wired routes require the boundary changes listed in the
+[coverage report](../../docs/unification/coverage-gaps.md#shared-verifier-boundary)
+before deployment. The GAIA reproduction is in
+`evidence/e2e/wiring/harbor-answers/gaia-shared-reference-before.json`.
+
 Apply `answer-routes.patch` to the pinned Harbor source for AIME, GAIA, GPQA
 Diamond and SATBench. Their generated task scripts call the installed verifyit
 answer client with source-specific extraction followed by exact or MCQ grading.

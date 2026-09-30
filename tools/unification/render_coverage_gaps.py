@@ -148,6 +148,25 @@ text += (
 )
 text += "\n\n### Wired primitive clients\n\n" + table("harbor", {"native_route_available"})
 text += "\n\n### Retained source evaluators\n\n" + table("harbor", {"native_fallback"})
+boundary_rows = [
+    row
+    for row in rows
+    if row["source"] == "harbor" and row.get("boundary_hardening", {}).get("status") == "shared_candidate_reachable"
+]
+text += (
+    "\n\n### Shared verifier boundary\n\n"
+    "HARBOR_BOUNDARY_COUNT wired clients still grade in Harbor's shared agent container. "
+    "Harbor uploads trusted files after the agent phase, while a surviving candidate process "
+    "can modify them. A generated GAIA task reproduced a wrong answer scoring one after its "
+    "uploaded reference changed. This establishes the shared-container failure mode, not a "
+    "per-route exploit for every row. These routes have client wiring but require a protected "
+    "verifier environment before deployment. ARC-AGI-2 uses a separate verifier and passed "
+    "the corresponding mutation replay.\n\n"
+    "| Wired route | Candidate-reachable trusted assets |\n"
+    "| --- | --- |\n"
+)
+for row in boundary_rows:
+    text += f"| {clean(row['name'])} | {clean(row['boundary_hardening']['trusted_assets'])} |\n"
 text += (
     "\n\n### Additional tracker replay requirements\n\nThese seven tracker datasets are separate from the 87 adapter census. Missing workspaces/provenance are artifact gaps, not unsupported verifier modes.\n\n"
     + table("harbor-tracker")
@@ -261,12 +280,22 @@ harbor_pending = harbor_counts["not_integrated"]
 harbor_fallback = harbor_counts["native_fallback"]
 assert harbor_total == 87
 assert harbor_native + harbor_pending + harbor_fallback == harbor_total
+assert (
+    len(boundary_rows)
+    + sum(
+        r.get("boundary_hardening", {}).get("status") == "separate_verifier_validated"
+        for r in rows
+        if r["source"] == "harbor"
+    )
+    == harbor_native + harbor_fallback
+)
 text = text.replace(
     "HARBOR_SUMMARY_ROW",
     f"| Harbor {harbor_total} adapters | {harbor_native} native primitive clients + "
     f"{harbor_fallback} structured source-runtime bridges | {harbor_pending} not integrated; "
-    "BFCL, DABstep and tau3 retain source evaluators |",
+    f"{len(boundary_rows)} wired routes need verifier isolation |",
 )
 text = text.replace("HARBOR_PENDING_COUNT", str(harbor_pending))
 text = text.replace("HARBOR_NATIVE_COUNT", str(harbor_native))
+text = text.replace("HARBOR_BOUNDARY_COUNT", str(len(boundary_rows)))
 (root / "docs/unification/coverage-gaps.md").write_text(text)

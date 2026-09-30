@@ -270,7 +270,7 @@
       "gap_kind": "implemented_exact_client",
       "implementation_present": true,
       "name": "aime",
-      "needed_change": "No missing client integration; validate model-run traces and each task image before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing client integration; validate model-run traces and each task image before wider deployment.",
       "primitive_candidates": [
         "exact"
       ],
@@ -304,7 +304,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces."
+      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/expected_answer.txt and test.sh",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:algotune",
@@ -448,7 +453,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "Three seeded source-generated test pairs matched original source, direct verifyit CLI and actual Harbor Trial positive/wrong scores. A shared-container reference mutation falsely scored one before isolation and scored zero in the separate verifier; symlink, missing output, invalid reference and typed-cell cases were exercised. The installed verifier executed the JSON-schema primitive. These are bounded fixtures, not archived model rollouts or full benchmark accuracy validation."
+      "validation_limit": "Three seeded source-generated test pairs matched original source, direct verifyit CLI and actual Harbor Trial positive/wrong scores. A shared-container reference mutation falsely scored one before isolation and scored zero in the separate verifier; symlink, missing output, invalid reference and typed-cell cases were exercised. The installed verifier executed the JSON-schema primitive. These are bounded fixtures, not archived model rollouts or full benchmark accuracy validation.",
+      "boundary_hardening": {
+        "status": "separate_verifier_validated",
+        "trusted_assets": "/tests/expected.json in the verifier image only",
+        "needed_change": "Replay archived model traces and additional task images before deployment."
+      }
     },
     {
       "entity_id": "harbor:autocodebench",
@@ -462,7 +472,7 @@
       "gap_kind": "implemented_pytest_client",
       "implementation_present": true,
       "name": "autocodebench",
-      "needed_change": "Validate saved model traces and more generated task instances before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate saved model traces and more generated task instances before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
@@ -494,7 +504,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "The base task image lacked uv, so the patched image installs pinned uv 0.7.13 for both source and verifyit paths. A generated image matched source test.sh, CLI and Harbor Verifier on passing and failing candidates; wheel-install failure produced no source reward and verifyit infra_error without stale reward. Malformed protected-test collection was unscored. No matching saved model trace was found."
+      "validation_limit": "The base task image lacked uv, so the patched image installs pinned uv 0.7.13 for both source and verifyit paths. A generated image matched source test.sh, CLI and Harbor Verifier on passing and failing candidates; wheel-install failure produced no source reward and verifyit infra_error without stale reward. Malformed protected-test collection was unscored. No matching saved model trace was found. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/test_outputs.py and protected tests",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:bfcl",
@@ -508,7 +523,7 @@
       "gap_kind": "implemented_native_runtime_bridge",
       "implementation_present": true,
       "name": "bfcl",
-      "needed_change": "Validate the other generated task categories and archived candidate workspaces before wider deployment; the retained source scorer is not a native BFCL comparator.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate the other generated task categories and archived candidate workspaces before wider deployment; the retained source scorer is not a native BFCL comparator.",
       "primitive_candidates": [
         "script"
       ],
@@ -544,7 +559,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_fallback",
-      "validation_limit": "Eleven bounded generated-image cases executed pinned original test.sh, direct verifyit CLI and actual Harbor Verifier, including simple, live relevance, irrelevance and reordered parallel calls. Boolean/numeric and overflowing numeric-string source false positives became scored zero; malformed trusted evaluator was unscored. Other categories and saved model-run workspaces remain unvalidated; frozen bfclparity-pi tracker links could not be replayed while AWS SSO credentials were expired."
+      "validation_limit": "Eleven bounded generated-image cases executed pinned original test.sh, direct verifyit CLI and actual Harbor Verifier, including simple, live relevance, irrelevance and reordered parallel calls. Boolean/numeric and overflowing numeric-string source false positives became scored zero; malformed trusted evaluator was unscored. Other categories and saved model-run workspaces remain unvalidated; frozen bfclparity-pi tracker links could not be replayed while AWS SSO credentials were expired. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/evaluate.py and generated ground truth",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:bigcodebench_hard",
@@ -558,7 +578,7 @@
       "gap_kind": "implemented_pytest_client",
       "implementation_present": true,
       "name": "bigcodebench_hard",
-      "needed_change": "Validate saved model traces and more generated task instances before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate saved model traces and more generated task instances before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
@@ -599,7 +619,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "A generated task image matched source test.sh, direct verifyit CLI and actual Harbor Verifier for passing and failing candidates. A malformed protected test produced infra_error with no reward. No matching saved model trace was found."
+      "validation_limit": "A generated task image matched source test.sh, direct verifyit CLI and actual Harbor Verifier for passing and failing candidates. A malformed protected test produced infra_error with no reward. No matching saved model trace was found. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/test_outputs.py and protected tests",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:bird_bench",
@@ -893,7 +918,7 @@
       "gap_kind": "implemented_pytest_client",
       "implementation_present": true,
       "name": "codepde",
-      "needed_change": "Validate saved model traces and full-size PDE datasets before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate saved model traces and full-size PDE datasets before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
@@ -941,7 +966,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "Ten generated-image reference/wrong cases match source test.sh, direct CLI and Harbor Verifier across all five PDEs using bounded genuine-format HDF5 fixtures. Seven adversarial cases reject source stdout/reference-read false positives and malformed outputs; a detached child is reaped before scoring. An unavailable sandbox is unscored. No matching saved model traces or full-size PDE dataset replays were available."
+      "validation_limit": "Ten generated-image reference/wrong cases match source test.sh, direct CLI and Harbor Verifier across all five PDEs using bounded genuine-format HDF5 fixtures. Seven adversarial cases reject source stdout/reference-read false positives and malformed outputs; a detached child is reaped before scoring. An unavailable sandbox is unscored. No matching saved model traces or full-size PDE dataset replays were available. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/verifyit/nRMSE_evaluator.py and reference HDF5",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:compilebench",
@@ -960,7 +990,7 @@
       "gap_kind": "implemented_pytest_client",
       "implementation_present": true,
       "name": "compilebench",
-      "needed_change": "Replay the other 13 task images and saved model rollouts before wider deployment; bounded executable tamper witnesses do not establish general same-UID candidate isolation.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Replay the other 13 task images and saved model rollouts before wider deployment; bounded executable tamper witnesses do not establish general same-UID candidate isolation.",
       "primitive_candidates": [
         "pytest"
       ],
@@ -979,7 +1009,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "Generated Ubuntu cowsay and Alpine legacy-coreutils images matched source test.sh, direct CLI and actual Harbor Verifier on oracle and missing-result candidates with matching CTRF counts. Malformed protected tests were unscored; no collected tests scored zero under the existing PytestSpec policy. Three candidate executable tamper probes yielded zero or unscored. The other 13 images and saved model rollouts were not replayed; same-UID isolation is not established by these probes."
+      "validation_limit": "Generated Ubuntu cowsay and Alpine legacy-coreutils images matched source test.sh, direct CLI and actual Harbor Verifier on oracle and missing-result candidates with matching CTRF counts. Malformed protected tests were unscored; no collected tests scored zero under the existing PytestSpec policy. Three candidate executable tamper probes yielded zero or unscored. The other 13 images and saved model rollouts were not replayed; same-UID isolation is not established by these probes. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/test_outputs.py and protected tests",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:cooperbench",
@@ -1248,7 +1283,7 @@
       "gap_kind": "implemented_native_runtime_bridge",
       "implementation_present": true,
       "name": "dabstep",
-      "needed_change": "Validate broader generated tasks and archived model-run workspaces before deployment; the fuzzy and list branches retain the source scorer rather than using a native exact/numeric comparator.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate broader generated tasks and archived model-run workspaces before deployment; the fuzzy and list branches retain the source scorer rather than using a native exact/numeric comparator.",
       "primitive_candidates": [
         "numeric",
         "exact",
@@ -1277,7 +1312,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_fallback",
-      "validation_limit": "Eleven bounded generated-image cases ran pinned original test.sh, direct verifyit CLI and actual Harbor Verifier: numeric, text and list positives and negatives plus missing/blank candidates matched; overflowing trusted numbers, malformed protected scorer and punctuation-only trusted references became unscored without a reward. Broader task instances and saved model-run workspaces remain unvalidated."
+      "validation_limit": "Eleven bounded generated-image cases ran pinned original test.sh, direct verifyit CLI and actual Harbor Verifier: numeric, text and list positives and negatives plus missing/blank candidates matched; overflowing trusted numbers, malformed protected scorer and punctuation-only trusted references became unscored without a reward. Broader task instances and saved model-run workspaces remain unvalidated. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/scorer.py and expected_answer.txt",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:dacode",
@@ -1861,7 +1901,7 @@
       "gap_kind": "implemented_pytest_client",
       "implementation_present": true,
       "name": "evoeval",
-      "needed_change": "No missing pytest client integration; validate saved model traces and further dataset tasks before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing pytest client integration; validate saved model traces and further dataset tasks before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
@@ -1909,7 +1949,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "A generated task image matches original test.sh on one positive and one wrong candidate through verifyit CLI and actual Harbor Verifier. Malformed protected-test collection yields infra_error without a reward. No matching saved model trace was found."
+      "validation_limit": "A generated task image matches original test.sh on one positive and one wrong candidate through verifyit CLI and actual Harbor Verifier. Malformed protected-test collection yields infra_error without a reward. No matching saved model trace was found. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/test_outputs.py and source test fixtures",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:featbench",
@@ -2158,12 +2203,13 @@
         "tests/test_harbor_answers.py",
         "evidence/e2e/wiring/harbor-answers/boundary-source-comparison.json",
         "evidence/e2e/wiring/harbor-answers/generated-image-results.json",
-        "evidence/e2e/wiring/harbor-answers/trace-census.json"
+        "evidence/e2e/wiring/harbor-answers/trace-census.json",
+        "evidence/e2e/wiring/harbor-answers/gaia-shared-reference-before.json"
       ],
       "gap_kind": "implemented_exact_client",
       "implementation_present": true,
       "name": "gaia",
-      "needed_change": "No missing client integration; validate model-run traces and each task image before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing client integration; validate model-run traces and each task image before wider deployment.",
       "primitive_candidates": [
         "exact"
       ],
@@ -2190,7 +2236,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces."
+      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/expected_answer.txt and test.sh",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:gaia2",
@@ -2388,7 +2439,7 @@
       "gap_kind": "implemented_mcq_client",
       "implementation_present": true,
       "name": "gpqa-diamond",
-      "needed_change": "No missing client integration; validate model-run traces and each task image before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing client integration; validate model-run traces and each task image before wider deployment.",
       "primitive_candidates": [
         "mcq"
       ],
@@ -2413,7 +2464,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces."
+      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/expected_answer.txt and test.sh",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:gso",
@@ -2534,7 +2590,7 @@
       "gap_kind": "implemented_pytest_client",
       "implementation_present": true,
       "name": "humanevalfix",
-      "needed_change": "No missing pytest client integration; validate saved model traces and more generated task instances before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing pytest client integration; validate saved model traces and more generated task instances before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
@@ -2564,7 +2620,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "A generated task image matched source test.sh, direct verifyit CLI and actual Harbor Verifier for one passing and one failing candidate. Malformed protected-test collection produced infra_error and no reward. No matching saved model trace was found."
+      "validation_limit": "A generated task image matched source test.sh, direct verifyit CLI and actual Harbor Verifier for one passing and one failing candidate. Malformed protected-test collection produced infra_error and no reward. No matching saved model trace was found. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/test_outputs.py and protected tests",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:ineqmath",
@@ -3210,7 +3271,7 @@
       "gap_kind": "implemented_pytest_client",
       "implementation_present": true,
       "name": "mmau",
-      "needed_change": "Validate saved model traces and more generated task instances before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate saved model traces and more generated task instances before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
@@ -3271,7 +3332,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "A generated task image matched source test.sh, direct CLI and actual Harbor Verifier on passing and failing candidates. Source and verifyit CTRF pass/fail counts matched and Harbor retained CTRF. Malformed protected-test collection produced infra_error with no reward. No matching saved model trace was found."
+      "validation_limit": "A generated task image matched source test.sh, direct CLI and actual Harbor Verifier on passing and failing candidates. Source and verifyit CTRF pass/fail counts matched and Harbor retained CTRF. Malformed protected-test collection produced infra_error with no reward. No matching saved model trace was found. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/test_outputs.py and protected tests",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:mmmlu",
@@ -3768,7 +3834,7 @@
       "gap_kind": "implemented_pytest_client",
       "implementation_present": true,
       "name": "replicationbench",
-      "needed_change": "Validate additional generated task instances, broader data dependencies and saved model traces before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate additional generated task instances, broader data dependencies and saved model traces before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
@@ -3800,7 +3866,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "Generated-image fixtures matched original test.sh, direct verifyit CLI and actual Harbor Verifier for nested passing, wrong and missing-result cases. A source boolean-as-number false positive became scored zero. Explicit null remained valid; missing/nonfinite references and incompatible tolerances became unscored. Broader task instances, scientific data and matching saved model traces remain unvalidated."
+      "validation_limit": "Generated-image fixtures matched original test.sh, direct verifyit CLI and actual Harbor Verifier for nested passing, wrong and missing-result cases. A source boolean-as-number false positive became scored zero. Explicit null remained valid; missing/nonfinite references and incompatible tolerances became unscored. Broader task instances, scientific data and matching saved model traces remain unvalidated. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/config.json and test_outputs.py",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:research-code-bench",
@@ -3916,7 +3987,7 @@
       "gap_kind": "implemented_exact_client",
       "implementation_present": true,
       "name": "satbench",
-      "needed_change": "No missing client integration; validate model-run traces and each task image before wider deployment.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing client integration; validate model-run traces and each task image before wider deployment.",
       "primitive_candidates": [
         "exact"
       ],
@@ -3933,7 +4004,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces."
+      "validation_limit": "12 original-script versus patched-CLI fixture cases across four routes; only GAIA has generated image execution (two cases). The frozen tracker and local run census contain no matching model traces. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests/ground_truth.json and test.sh",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:scicode",
@@ -5012,7 +5088,7 @@
       "gap_kind": "implemented_native_runtime_hybrid",
       "implementation_present": true,
       "name": "tau3-bench",
-      "needed_change": "No missing client integration: current tau3 patch invokes ScriptSpec.verdict_file and trusted pinned asset manifest, retaining native tau2 simulation/judge runtime. Broader adapter deployments remain validation work, not unsupported capability.",
+      "needed_change": "Isolate protected verifier files from the live agent process before deployment. No missing client integration: current tau3 patch invokes ScriptSpec.verdict_file and trusted pinned asset manifest, retaining native tau2 simulation/judge runtime. Broader adapter deployments remain validation work, not unsupported capability.",
       "primitive_candidates": [
         "script"
       ],
@@ -5127,7 +5203,12 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_fallback",
-      "validation_limit": "1101 real frozen739 replays plus three clean positive and one tamper Docker guard case; not all possible task deployments. Native runtime retained; no standalone native state comparator."
+      "validation_limit": "1101 real frozen739 replays plus three clean positive and one tamper Docker guard case; not all possible task deployments. Native runtime retained; no standalone native state comparator. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "boundary_hardening": {
+        "status": "shared_candidate_reachable",
+        "trusted_assets": "/tests native evaluator and tau2-assets.json manifest",
+        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+      }
     },
     {
       "entity_id": "harbor:textarena",

@@ -44,6 +44,13 @@ They require a fetchable Git revision or the corresponding local checkout; an
 unpushed local checkpoint does not establish published availability, updated
 fork lockfiles, or deployed integration.
 
+Fifteen wired Harbor routes still run the verifier in the agent container.
+A candidate process changed a GAIA reference after Harbor uploaded it and
+turned a wrong answer into a positive reward. Their client integration remains
+recorded, with [route-specific trusted assets and isolation work](coverage-gaps.md#shared-verifier-boundary)
+listed as a separate deployment blocker. ARC-AGI-2 has an isolated verifier
+image and passed the corresponding mutation replay.
+
 ## Hardening evidence
 
 The [replay report](e2e-replay.md) records 24 Evalchemy/harness runs matching
