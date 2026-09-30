@@ -184,3 +184,20 @@ Reproducible actual evaluator and all-config guard scripts are under
 alternative golds, a mixed valid/invalid batch, and four early contract-drift
 negatives. This validation uses source fixtures: the named tracker/local
 artifact census found no matching AGIEval saved runs.
+
+CrowS-Pairs preference metrics
+-----------------------------
+Apply `crows-pairs-verifyit.patch` after the AGIEval patch. All 22 pinned configs
+preserve source sentence ordering, subset filters, strict preference ties, and
+both named metrics. Reversed MCQ choice implements strict stereo preference;
+verifyit also computes unbounded `likelihood_diff` and the original arithmetic
+means. These are bias/preference benchmark metrics, not universal correctness
+rewards. The framework still computes stderr, which verifyit validates before
+export. Malformed samples, missing sentence references, nonfinite means or
+stderr abort evaluation without a partial aggregate. Finite-overflow rejection
+is an intentional conservative change from source infinity outputs.
+
+Evidence and reproducible scripts are under `evidence/e2e/wiring/harness-crows`:
+all 22 config guards, three seeded actual evaluator witnesses, fresh source
+metric/stderr parity, and malformed/overflow/drift failures. No named matching
+tracker or local saved runs were found; this is source-fixture validation.

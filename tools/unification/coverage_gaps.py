@@ -438,6 +438,7 @@ def harness_entities(root, sources):
             or (isinstance(record.get("task"), str) and record["task"].startswith("ask_gec_p"))
             or ("/okapi/truthfulqa_multilingual/" in record["path"] and record["path"].endswith("_mc2.yaml"))
             or ("/tasks/hendrycks_math/" in record["path"])
+            or ("/tasks/crows_pairs/" in record["path"])
             or ("/tasks/agieval/" in record["path"] and record.get("output_type") == "multiple_choice")
         ):
             route = record.get("native_route")
@@ -452,6 +453,7 @@ def harness_entities(root, sources):
                     "truthfulqa_mc2",
                     "hendrycks_literal_exact",
                     "agieval_mcqa",
+                    "crows_pair_preference",
                 }, record["path"]
             entity.update(
                 status="native_route_available",
@@ -489,6 +491,25 @@ def harness_entities(root, sources):
                     else "configuration_eligible_not_dataset_validated"
                 ),
             )
+            if route == "crows_pair_preference":
+                entity.update(
+                    primitive_candidates=["mcq"],
+                    reason=(
+                        "Reversed raw likelihood choice preserves strict stereotype preference and ties; "
+                        "verifyit computes the unbounded likelihood difference and original arithmetic means. "
+                        "These are source bias/preference metrics, not universal correctness rewards. "
+                        "Malformed samples and nonfinite means/stderr abort instead of exporting partial metrics."
+                    ),
+                    evidence=[
+                        "integrations/lm-eval-harness/crows-pairs-verifyit.patch",
+                        "evidence/e2e/wiring/harness-crows/guards/guard-audit.json",
+                        "evidence/e2e/wiring/harness-crows/bootstrap-cutover/evaluator-roundtrip.json",
+                        "evidence/e2e/wiring/harness-crows/negative/boundary-guards.json",
+                        "evidence/e2e/wiring/harness-crows/manager-bootstrap-cutover/evaluator-roundtrip.json",
+                        "evidence/e2e/wiring/harness-crows/trace-census.json",
+                    ],
+                    validation_status="registered_guards_and_actual_evaluator_fixtures_no_named_saved_trace",
+                )
             if route == "agieval_mcqa":
                 entity.update(
                     primitive_candidates=["mcq", "exact"],
@@ -897,9 +918,9 @@ def main():
             )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 565
+    assert len(harness_gaps) == 543
     assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 978
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11149
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11171
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {
