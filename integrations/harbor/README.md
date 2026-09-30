@@ -25,6 +25,15 @@ produced `infra_error` without a reward file. No matching saved model trace was
 available. The reusable ScriptSpec bridge in that API commit is for task scripts
 whose native reward policy cannot be represented by pytest directly.
 
+Apply `humanevalfix-pytest-verifyit.patch` after the Harbor dispatcher patch.
+Its generated task declares PytestSpec against protected `/tests/test_outputs.py`
+while the candidate workspace remains `/workspace`.
+The Python 3.12 task image installs `pytest-json-report` and verifyit
+`1dd6292b54dd1c2525a1c1354d49940ba5ba6dbf`. A generated image matched
+the pinned source script, verifyit CLI and actual Harbor Verifier on passing
+and failing candidate files. Malformed protected-test collection remained
+unscored. No matching saved model trace was available.
+
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
 required by each task's `tests/verifier.toml` inside the verifier image. The

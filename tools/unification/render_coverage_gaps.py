@@ -51,7 +51,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Evalchemy 42 custom benchmarks | 4 native integrations + 3 math hybrids | 35 not integrated (24 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 GSM hybrid | 18 not integrated; plus 1 orchestration group |
 SKYRL_SUMMARY_ROW
-| Harbor 87 adapters | 5 exact/MCQ/pytest clients + tau3 structured native-runtime bridge | 81 not integrated; tau3 retains native evaluator |
+HARBOR_SUMMARY_ROW
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
@@ -137,7 +137,7 @@ text += "\n\nThe two external objectives are not correctness verifiers:\n\n" + t
     "MarinSkyRL", {"not_a_correctness_verifier"}
 )
 text += (
-    "\n\n## Harbor\n\nThe 81 unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval now invokes the existing all-suite pytest route. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; five primitive clients are now implemented.\n\n"
+    "\n\n## Harbor\n\nThe HARBOR_PENDING_COUNT unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval and HumanEvalFix invoke the existing all-suite pytest route. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; HARBOR_NATIVE_COUNT primitive clients are now implemented.\n\n"
     + table("harbor", {"not_integrated"})
 )
 text += "\n\n### Wired exact, MCQ and pytest clients\n\n" + table("harbor", {"native_route_available"})
@@ -155,6 +155,8 @@ Harness 908 retained-runtime configurations have source/evaluator fixture valida
 Harbor AIME, GAIA, GPQA Diamond and SATBench match 12 original-source task-script cases using actual patched CLI calls. One generated GAIA image ran two candidate cases with verifyit installed from the exact local API commit. The frozen eval-policy tracker and local run-manifest census have no matching saved model traces. The other three task images have not been built and run.
 
 Harbor EvoEval's generated PytestSpec preserves the original binary all-tests policy. A generated task image matched original test.sh, direct verifyit CLI and the actual Harbor Verifier for one passing and one failing candidate; malformed protected-test collection produced infra_error and removed stale reward output. No matching saved model trace was available.
+
+Harbor HumanEvalFix's generated PytestSpec likewise matched original test.sh, verifyit CLI and the actual Harbor Verifier on one passing and one failing generated task image. A malformed protected test produced infra_error without a reward. No matching saved model trace was available.
 
 SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Seven patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, two dormant QA APIs and legacy text2sql. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
 
@@ -216,4 +218,19 @@ summary = (
     f"{skyrl_counts['capability_gap']} native profile gaps; {external} external-objective placeholders separate |"
 )
 text = text.replace("SKYRL_SUMMARY_ROW", summary)
+harbor_counts = Counter(r["status"] for r in rows if r["source"] == "harbor")
+harbor_total = sum(harbor_counts.values())
+harbor_native = harbor_counts["native_route_available"]
+harbor_pending = harbor_counts["not_integrated"]
+harbor_fallback = harbor_counts["native_fallback"]
+assert harbor_total == 87
+assert harbor_native + harbor_pending + harbor_fallback == harbor_total
+text = text.replace(
+    "HARBOR_SUMMARY_ROW",
+    f"| Harbor {harbor_total} adapters | {harbor_native} exact/MCQ/pytest clients + "
+    f"{harbor_fallback} structured native-runtime bridge | {harbor_pending} not integrated; "
+    "tau3 retains native evaluator |",
+)
+text = text.replace("HARBOR_PENDING_COUNT", str(harbor_pending))
+text = text.replace("HARBOR_NATIVE_COUNT", str(harbor_native))
 (root / "docs/unification/coverage-gaps.md").write_text(text)
