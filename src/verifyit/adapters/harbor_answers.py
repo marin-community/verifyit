@@ -52,6 +52,8 @@ def grade_answer(mode: str, expected: str, candidate: str | None) -> Reward:
         return grade_literal_candidate(expected, candidate.strip() if candidate is not None else "")
     if mode == "gaia":
         reference = expected.replace("\n", "").translate(ASCII_LOWER).strip(ASCII_SPACE)
+        if not reference:
+            raise InvalidTask("GAIA expected answer must not be empty")
         answer = (candidate or "").replace("\n", "").translate(ASCII_LOWER).strip(ASCII_SPACE)
         return grade_literal_candidate(reference, answer)
     if mode == "satbench":
@@ -87,6 +89,10 @@ def grade_files(mode: str, expected_path: Path, candidate_path: Path) -> Reward:
         if not isinstance(label, str):
             return invalid_task("SATBench expected answer must be a string")
         expected = label
+    try:
+        grade_answer(mode, expected, None)
+    except InvalidTask as error:
+        return invalid_task(str(error))
     try:
         candidate = _read_regular_text(candidate_path)
     except FileNotFoundError:

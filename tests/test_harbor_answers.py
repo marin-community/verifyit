@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from verifyit.adapters.harbor_answers import grade_answer, main
+from verifyit.adapters.harbor_answers import grade_answer, grade_files, main
 from verifyit.grade import Status
 
 
@@ -80,3 +80,24 @@ def test_harbor_answer_cli_rejects_candidate_alias_to_protected_reference(tmp_pa
     assert main(["gaia", str(expected), str(candidate), "--logs-dir", str(logs)]) == 0
     assert json.loads((logs / "verdict.json").read_text())["status"] == "invalid_task"
     assert not (logs / "reward.txt").exists()
+
+
+@pytest.mark.parametrize(
+    ("mode", "reference"),
+    [
+        ("aime", "forty-two"),
+        ("gaia", " \n "),
+        ("gpqa-diamond", "E"),
+        ("satbench", '{"expected_answer":"MAYBE"}'),
+        ("unknown", "42"),
+    ],
+)
+def test_invalid_reference_precedes_redirected_candidate(tmp_path: Path, mode: str, reference: str) -> None:
+    expected = tmp_path / "expected"
+    candidate = tmp_path / "candidate"
+    expected.write_text(reference)
+    candidate.symlink_to(expected)
+
+    reward = grade_files(mode, expected, candidate)
+    assert reward.status == Status.INVALID_TASK
+    assert reward.reward == 0.0
