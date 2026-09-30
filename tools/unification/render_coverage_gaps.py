@@ -50,7 +50,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Harness 12,692 indexed task configs | 10,841 guarded native routes available | 1,851 configs retain source scoring; breakdown below |
 | Evalchemy 42 custom benchmarks | 4 native integrations + 3 math hybrids | 35 not integrated (24 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 GSM hybrid | 18 not integrated; plus 1 orchestration group |
-| SkyRL 46 scoring routes | 17 source-patched (11 with selected real traces, 6 without eligible real traces) | 10 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
+| SkyRL 46 scoring routes | 18 source-patched (12 with selected real traces, 6 without eligible real traces) | 9 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
 | Harbor 87 adapters | tau3 structured native-runtime bridge | 86 not integrated; tau3 retains native evaluator |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
@@ -126,7 +126,7 @@ text += """
 
 ## SkyRL
 
-The 29 pending scoring routes comprise 22 active routes and 7 dormant implementations. Three dormant math variants are parity audits, not claims of a missing math API. Nineteen rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
+The 28 pending scoring routes comprise 21 active routes and 7 dormant implementations. Three dormant math variants are parity audits, not claims of a missing math API. Nineteen rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
 
 """ + table(
     "MarinSkyRL", {"not_integrated", "capability_gap"}
@@ -185,7 +185,7 @@ text += """
 
 The register covers pinned snapshots only, not future revisions or external plugins. Source revisions and exact evidence are stored per entity. Reconciliation is automatic: indexed harness 13,982 = 12,692 tasks + 834 groups + 456 templates; tasks 12,692 = 10,841 available + 1,851 remaining; Evalchemy 42 custom + 22 override configs; SkyRL 48 entries; Harbor 87 adapters; TaskTrove 81 cohorts with 861,848 rows plus 19 converter, 12 mode and 7 helper contracts. Seven Harbor tracker datasets and 64 harness inline definitions are separate populations and must not be added to those source denominators.
 
-The [replay report](e2e-replay.md) records the earlier campaign baseline and exceptions: Evalchemy/harness 24 runs matched 63,360 samples; SkyRL 66/66 pinned-native and 65/66 archived results; Harbor 1,101 trials preserve 37 recovered zeros, 10 infrastructure failures and 3 database discrepancies. Later opt-in SkyRL cutovers add 15 selected real-trace matches under campaign `evidence/e2e/wiring/`; Reasoning Gym rejects boolean answers for integer references, and typed tool comparison rejects a boolean argument for an integer reference. Full archived parity remains unvalidated.
+The [replay report](e2e-replay.md) records the earlier campaign baseline and exceptions: Evalchemy/harness 24 runs matched 63,360 samples; SkyRL 66/66 pinned-native and 65/66 archived results; Harbor 1,101 trials preserve 37 recovered zeros, 10 infrastructure failures and 3 database discrepancies. Later opt-in SkyRL cutovers add 18 selected real-trace matches under campaign `evidence/e2e/wiring/`; Reasoning Gym rejects boolean scorer results, and typed tool comparison rejects a boolean argument for an integer reference. Calendar rejects invalid clock values, boolean/negative/nonfinite durations and malformed reference constraints; zero durations retain source behavior. Full archived parity remains unvalidated.
 
 Regenerate from the campaign worktree with the pinned read-only sources:
 

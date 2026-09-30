@@ -8,20 +8,20 @@
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 17,
-    "pending_scoring_routes": 29,
-    "pending_active_scoring_routes": 22,
+    "source_patched_routes": 18,
+    "pending_scoring_routes": 28,
+    "pending_active_scoring_routes": 21,
     "pending_dormant_scoring_routes": 7,
-    "zero_core_extension_unwired_routes": 7,
+    "zero_core_extension_unwired_routes": 6,
     "existing_class_behavior_gap_routes": 19,
-    "real_replayed_source_routes": 11,
+    "real_replayed_source_routes": 12,
     "implemented_routes_missing_real_traces": 6,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 11,
+      "implemented_validated": 12,
       "implemented_not_validated": 6,
-      "not_integrated": 10,
+      "not_integrated": 9,
       "capability_gap": 19,
       "not_a_correctness_verifier": 2
     },
@@ -829,19 +829,19 @@
     },
     {
       "id": "nemotron_ultra/calendar_simple_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing ScriptSpec can execute a trusted deterministic calendar constraint harness; source-specific schedule extraction/validation and dispatch wiring are not implemented. No missing IFEval registry API is required.",
+      "status": "implemented_validated",
+      "not_covered_reason": "Opt-in source dispatch invokes a task-owned ScriptSpec calendar constraint harness; actual three selected real executions match pinned native and archive results.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_cutover",
       "native_fallback_in_cutover": false,
       "contract_family": "calendar",
       "existing_primitive_candidate": [
         "script"
       ],
       "resolution_strategy": "task_harness",
-      "needed_change": "Implement a task-owned schedule checker preserving source think-marker rejection, then empty-reference pass, first object-bearing JSON-list extraction, event-ID map cardinality, durations, min/max windows and before/after/between/at constraints; touching intervals are allowed. Preserve source duplicate-ID behavior or document an intentional tightening rather than assuming rejection. Return candidate wrong as scored0, malformed reference invalid_task0 and execution failure infra_error0 through ScriptSpec.verdict_file; wire grade_calendar and retain reason labels.",
+      "needed_change": "None for implemented cutover; preserve task-owned constraint harness and source extraction/reason labels.",
       "validation_gap": null,
       "source_contract": "JSON event schedule exact IDs/count, durations, windows and pairwise conflicts; rejects think marker.",
       "source": {
@@ -854,11 +854,17 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#calendar",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/calendar-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-calendar/selection.json",
+        "evidence/e2e/wiring/skyrl-calendar/patched-final",
+        "evidence/e2e/wiring/skyrl-calendar/regression-final.stdout",
+        "evidence/e2e/wiring/manager-calendar"
       ],
       "observed_verified_execution_links": 214,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "actual_replayed_links": 3,
+      "core_extension_requirement": "none_proposed",
+      "intentional_tightening": "Boolean/nonfinite/negative duration, invalid clock fields, reversed windows and malformed reference constraints fail closed; zero-duration intervals remain allowed. Five positive/misclassified regressions fail before hardening."
     },
     {
       "id": "nemotron_ultra/citation_format_simple_agent",

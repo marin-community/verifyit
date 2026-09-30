@@ -182,7 +182,7 @@
       "adapter_requirements": "Exact task/entry port plus source extraction; package version pin and scorer availability.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#reasoning-gym",
       "resolution_strategy": "client_composition",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "implemented_patch"
     },
     {
       "id": "preference",
@@ -282,7 +282,7 @@
       "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#typed-equality",
       "resolution_strategy": "client_composition",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "implemented_patch"
     },
     {
       "id": "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
@@ -298,7 +298,7 @@
       "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#typed-equality",
       "resolution_strategy": "client_composition",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "implemented_patch"
     },
     {
       "id": "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent",
@@ -314,7 +314,7 @@
       "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#typed-equality",
       "resolution_strategy": "client_composition",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "implemented_patch"
     },
     {
       "id": "nemotron_ultra/calendar_simple_agent",
@@ -327,10 +327,10 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "JSON event schedule exact IDs/count, durations, windows and pairwise conflicts; rejects think marker.",
-      "adapter_requirements": "Executable schedule constraints; schema validation alone insufficient.",
+      "adapter_requirements": "Task-owned ScriptSpec constraint harness implemented with opt-in verifyit_enabled; preserve source extraction and reason labels; malformed candidate and trusted reference validation fail closed.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#calendar",
-      "resolution_strategy": "existing_ifeval_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "resolution_strategy": "task_harness",
+      "runtime_migration": "implemented_patch"
     },
     {
       "id": "nemotron_ultra/citation_format_simple_agent",
@@ -380,7 +380,7 @@
       "adapter_requirements": "Source extraction precedes grade_mcq_candidate; options may be noncontiguous, so validate source allowed set explicitly.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#mcq",
       "resolution_strategy": "client_composition",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "implemented_patch"
     },
     {
       "id": "nemotron_ultra/structured_outputs_simple_agent",
@@ -616,7 +616,7 @@
       "adapter_requirements": "Preserve final_answer_text and extraction ordering, full metadata.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#reasoning-gym",
       "resolution_strategy": "client_composition",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "implemented_patch"
     },
     {
       "id": "nemotron_ultra/genrm_simple_agent",
@@ -716,7 +716,7 @@
       "adapter_requirements": "Normalize both sides; explicit accepted alternatives.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#qa",
       "resolution_strategy": "client_composition",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "implemented_patch"
     },
     {
       "id": "dormant/qa_browsecomp",
@@ -764,7 +764,7 @@
       "adapter_requirements": "Fractional token scorer executable; no exact primitive equivalence.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#qa",
       "resolution_strategy": "client_composition",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "implemented_patch"
     },
     {
       "id": "dormant/prime_math",
@@ -924,6 +924,14 @@
         "searchcode"
       ],
       "pilot_superseded": true
+    },
+    "calendar_task_harness": {
+      "tests": 12,
+      "before_fix_regressions": 5,
+      "real_selected_links": 3,
+      "native_and_archive_matches": 3,
+      "evidence": "evidence/e2e/wiring/skyrl-calendar (campaign root)",
+      "independent_review": "evidence/e2e/wiring/manager-calendar"
     }
   },
   "implementation": {
@@ -931,19 +939,32 @@
     "patches": [
       "integrations/MarinSkyRL/mcq-verifyit.patch",
       "integrations/MarinSkyRL/arithmetic-verifyit.patch",
-      "integrations/MarinSkyRL/dependency-pin.patch",
-      "integrations/MarinSkyRL/client-boundaries.patch"
+      "integrations/MarinSkyRL/client-boundaries.patch",
+      "integrations/MarinSkyRL/reasoning-mcq-verifyit.patch",
+      "integrations/MarinSkyRL/tool-comparison-verifyit.patch",
+      "integrations/MarinSkyRL/qa-verifyit.patch",
+      "integrations/MarinSkyRL/calendar-verifyit.patch",
+      "integrations/MarinSkyRL/dependency-pin.patch"
     ],
     "covered_routes": [
       "aime",
       "gsm8k",
       "gsm8k_multi_turn",
+      "search",
+      "searchcode",
       "mcq",
+      "reasoning_gym",
+      "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
+      "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
+      "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent",
+      "nemotron_ultra/calendar_simple_agent",
+      "nemotron_ultra/mcqa_simple_agent",
+      "nemotron_ultra/rdkit_chemistry_agent",
       "nemotron_ultra/nvarc_inductive_simple_agent",
       "nemotron_ultra/nvarc_transductive_simple_agent",
-      "nemotron_ultra/rdkit_chemistry_agent",
-      "search",
-      "searchcode"
+      "nemotron_ultra/reasoning_gym_simple_agent",
+      "dormant/qa_em",
+      "dormant/qa_f1"
     ]
   },
   "installation": {
@@ -965,8 +986,8 @@
     "scoring_routes": 46,
     "external_objective_routes": 2,
     "distinct_scoring_contract_families": 17,
-    "existing_class_client_or_task_harness_routes": 23,
-    "existing_class_extension_routes": 23,
+    "existing_class_client_or_task_harness_routes": 24,
+    "existing_class_extension_routes": 22,
     "extension_classes": [
       "math",
       "json-schema",
@@ -978,15 +999,27 @@
       "aime",
       "gsm8k",
       "gsm8k_multi_turn",
+      "search",
+      "searchcode",
       "mcq",
+      "reasoning_gym",
+      "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
+      "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
+      "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent",
+      "nemotron_ultra/calendar_simple_agent",
+      "nemotron_ultra/mcqa_simple_agent",
+      "nemotron_ultra/rdkit_chemistry_agent",
       "nemotron_ultra/nvarc_inductive_simple_agent",
       "nemotron_ultra/nvarc_transductive_simple_agent",
-      "nemotron_ultra/rdkit_chemistry_agent",
-      "search",
-      "searchcode"
+      "nemotron_ultra/reasoning_gym_simple_agent",
+      "dormant/qa_em",
+      "dormant/qa_f1"
     ],
-    "implemented_source_patch_route_count": 9,
+    "implemented_source_patch_route_count": 18,
     "notes": "Disjoint route populations; proposed composition is mapping, not deployed migration. A generic retained source callback is only runtime bridge, not primitive parity.",
-    "intentional_tightening": "Invalid GSM8K expected decimals, nonfinite chemistry references and malformed reference grids are invalid_task0 rather than exploiting literal/Python equality; valid wrong source format reward retained."
+    "intentional_tightening": "Invalid GSM8K expected decimals, nonfinite chemistry references and malformed reference grids are invalid_task0 rather than exploiting literal/Python equality; valid wrong source format reward retained.",
+    "pending_concrete_existing_class_behavior_gaps": 19,
+    "pending_dormant_math_parity_audits": 3,
+    "pending_client_or_harness_wiring_routes": 6
   }
 }

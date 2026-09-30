@@ -86,14 +86,16 @@ or resolve either complete SkyRL environment.
 ## Client-first reassessment
 
 The48 entries comprise46 scoring routes across17 contract families and two external
-objectives.23 routes resolve through client extraction/canonicalization or task-owned
-executable harnesses using existing modes. The other23 require concrete extensions
-of four existing classes (math, json-schema, ifeval, judge), with source orchestration
-and metrics retained. No new mode category is proposed; a generic source callback
+objectives. Calendar joins the client/task-harness group, bringing it to 24 routes.
+The other 22 retain existing-class profile or comparator-parity requirements; three
+dormant math variants are audits, not proven missing APIs. The current register
+separates 18 implemented routes, six client/harness routes still unwired, three
+dormant parity audits and 19 concrete existing-class behavior gaps. Source
+orchestration and metrics stay in clients. No new mode category is proposed; a generic source callback
 behind script is only a runtime bridge. The disjoint plan is recorded per entry in
 `skyrl.json` and detailed in [the composition contracts](skyrl-adapter-specs.md).
 
-Nine routes now have source patches: AIME (normal and strict), GSM8K, GSM8K multi-turn,
+The original nine routes have source patches: AIME (normal and strict), GSM8K, GSM8K multi-turn,
 Search, SearchCode, MCQ, rounded chemistry, and inductive/transductive ARC. 52 client
 boundary tests pass, and41 cases compare directly against unmodified source scorer
 files with checked hashes. Execute the reproducible source parity runner with:
@@ -154,3 +156,25 @@ source baseline results, and independent manager reruns are stored under the cam
 `PYTHONPATH=skyrl-gym:skyrl-train`. `comparison-full.json` contains final comparisons;
 `uncovered-routes.json` records the full-population assessment. Archive labels and
 current pinned-source labels are reported separately.
+
+
+## Later opt-in source cutovers
+
+Eighteen source routes now have integration patches. Nine later cutovers use
+`verifyit_enabled` for Reasoning Gym, Nemotron MCQA and typed tool comparison,
+explicit QA entrypoints, and the calendar constraint harness. The source-pinned
+register separates these implementations from the remaining 28 routes.
+
+The calendar patch applies after `reasoning-mcq-verifyit.patch`. It retains source
+JSON extraction and executes trusted duration, window, ordering and overlap checks
+through `ScriptSpec.verdict_file`; it does not call the retained native calendar
+scorer. Twelve source tests pass, including five regressions that failed before
+hardening. Three randomly selected real executions from 214 eligible links match
+both native and archived scores, with independent manager replay retained.
+
+Calendar validation intentionally rejects boolean, negative and nonfinite durations,
+invalid clock ranges, reversed windows and malformed reference constraints. Unknown
+constraints are checked before candidate window short circuits. Zero-duration intervals
+remain valid because the source permits them; touching intervals remain nonconflicting.
+Evidence, raw actual framework calls and the frozen selection are under the campaign's
+`evidence/e2e/wiring/skyrl-calendar`.

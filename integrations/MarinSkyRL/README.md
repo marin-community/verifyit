@@ -38,3 +38,10 @@ arguments and message actions. It rejects a boolean candidate for an integer
 reference, which the source comparator accepts through Python's bool/int equality.
 The campaign evidence is under `evidence/e2e/wiring/skyrl-reasoning-mcq/`,
 `evidence/e2e/wiring/skyrl-tools/` and `evidence/e2e/wiring/skyrl-qa/`.
+
+
+Apply `calendar-verifyit.patch` after `reasoning-mcq-verifyit.patch` to enable the
+calendar task harness with `verifyit_enabled = true` in Nemotron environment config.
+Its trusted ScriptSpec checker preserves valid source schedule semantics and rejects
+malformed candidates/tasks with zero. Twelve source tests and three selected real
+framework replays pass; evidence is under `evidence/e2e/wiring/skyrl-calendar`.
