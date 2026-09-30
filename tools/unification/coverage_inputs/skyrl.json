@@ -2,7 +2,7 @@
   "schema_version": 1,
   "project": "MarinSkyRL",
   "source_revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
-  "verifyit_audit_revision": "cd4c4a9be9200a4da6d722503d04bc5408e98f17",
+  "verifyit_audit_revision": "67db341c77449f0977bb034c6d7fca034038b98f",
   "population_definition": "All built-in gym registrations; all Nemotron _step agent branches; dormant GeneralReactTask/WebResearchTask dispatch and exported unused scorers. External user-registered gym envs are open extension points, not enumerable repository verifiers.",
   "counts": {
     "inventory_entries": 48,
@@ -12,8 +12,8 @@
     "pending_scoring_routes": 15,
     "pending_active_scoring_routes": 11,
     "pending_dormant_scoring_routes": 4,
-    "zero_core_extension_unwired_routes": 2,
-    "existing_class_behavior_gap_routes": 13,
+    "zero_core_extension_unwired_routes": 4,
+    "existing_class_behavior_gap_routes": 11,
     "real_replayed_source_routes": 21,
     "implemented_routes_missing_real_traces": 10,
     "native_fallback_in_cutover_routes": 0,
@@ -21,9 +21,9 @@
     "status_counts": {
       "implemented_validated": 21,
       "implemented_not_validated": 10,
-      "capability_gap": 13,
+      "capability_gap": 11,
       "not_a_correctness_verifier": 2,
-      "not_integrated": 2
+      "not_integrated": 4
     },
     "unwired_dormant_math_comparator_parity_audits": 0,
     "inherited_planning_existing_class_extension_routes": 23
@@ -677,12 +677,12 @@
     },
     {
       "id": "nemotron_ultra/ns_tools_simple_agent",
-      "status": "capability_gap",
-      "not_covered_reason": "Prepared math candidate API exists; source comparator policies and/or symmetric custom-prompt judge fallback are not available as the complete composed contract or wired into source.",
+      "status": "not_integrated",
+      "not_covered_reason": "Partial source integration: existing MathSpec RAW/additive, configured JudgeSpec and total ScriptSpec deadline are wired; valid trusted references outside the reviewed parsed-expression, prose and typography-only domains remain unsupported.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_executes_math_and_symmetric_labels_partial",
       "native_fallback_in_cutover": false,
       "contract_family": "math-judge",
       "existing_primitive_candidate": [
@@ -690,9 +690,9 @@
         "judge",
         "script"
       ],
-      "resolution_strategy": "existing_math_judge_extension",
-      "needed_change": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness.",
-      "validation_gap": null,
+      "resolution_strategy": "existing_math_judge_client_composition",
+      "needed_change": "Extend trusted reference representation/validation for legitimate parser-unsupported mathematical or prose forms without converting malformed references or backend errors into positive judge fallback.",
+      "validation_gap": "Sixteen of eighteen frozen actual Env traces match source/archive scores and framework rewards; two NS-tools traces lack archived external judge responses and cannot be completed without those transcripts.",
       "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -704,20 +704,33 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#math-judge",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/math-judge.md",
+        "integrations/MarinSkyRL/math-judge-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-math-judge/selection.json",
+        "evidence/e2e/wiring/skyrl-math-judge/reviewed-summary.json",
+        "evidence/e2e/wiring/skyrl-math-judge/install.json"
       ],
       "observed_verified_execution_links": 16,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 9,
+      "core_extension_requirement": "none_for_implemented_subset",
+      "integration_patch": "integrations/MarinSkyRL/math-judge-verifyit.patch",
+      "validation_scope": "25 source tests; 18 seeded real-trace Env roundtrips from294 eligible links across6 groups;16 complete and2 missing externaljudge transcripts.",
+      "remaining_contracts": [
+        "Trusted references outside the reviewed parsed-expression, natural-language and typography-only reference domains."
+      ],
+      "intentional_tightening": "Finite scalar additive policy removes set/interval/nonfinite false positives; malformed/contradictory/refused/tool completions and backend/HTTP failures invalidate the full composition.",
+      "completed_replayed_links": 7,
+      "incomplete_replayed_links": 2
     },
     {
       "id": "nemotron_ultra/math_with_judge_simple_agent",
-      "status": "capability_gap",
-      "not_covered_reason": "Prepared math candidate API exists; source comparator policies and/or symmetric custom-prompt judge fallback are not available as the complete composed contract or wired into source.",
+      "status": "not_integrated",
+      "not_covered_reason": "Partial source integration: existing MathSpec RAW/additive, configured JudgeSpec and total ScriptSpec deadline are wired; valid trusted references outside the reviewed parsed-expression, prose and typography-only domains remain unsupported.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_executes_math_and_symmetric_labels_partial",
       "native_fallback_in_cutover": false,
       "contract_family": "math-judge",
       "existing_primitive_candidate": [
@@ -725,9 +738,9 @@
         "judge",
         "script"
       ],
-      "resolution_strategy": "existing_math_judge_extension",
-      "needed_change": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness.",
-      "validation_gap": null,
+      "resolution_strategy": "existing_math_judge_client_composition",
+      "needed_change": "Extend trusted reference representation/validation for legitimate parser-unsupported mathematical or prose forms without converting malformed references or backend errors into positive judge fallback.",
+      "validation_gap": "Sixteen of eighteen frozen actual Env traces match source/archive scores and framework rewards; two NS-tools traces lack archived external judge responses and cannot be completed without those transcripts.",
       "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -739,11 +752,24 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#math-judge",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/math-judge.md",
+        "integrations/MarinSkyRL/math-judge-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-math-judge/selection.json",
+        "evidence/e2e/wiring/skyrl-math-judge/reviewed-summary.json",
+        "evidence/e2e/wiring/skyrl-math-judge/install.json"
       ],
       "observed_verified_execution_links": 278,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 9,
+      "core_extension_requirement": "none_for_implemented_subset",
+      "integration_patch": "integrations/MarinSkyRL/math-judge-verifyit.patch",
+      "validation_scope": "25 source tests; 18 seeded real-trace Env roundtrips from294 eligible links across6 groups;16 complete and2 missing externaljudge transcripts.",
+      "remaining_contracts": [
+        "Trusted references outside the reviewed parsed-expression, natural-language and typography-only reference domains."
+      ],
+      "intentional_tightening": "Finite scalar additive policy removes set/interval/nonfinite false positives; malformed/contradictory/refused/tool completions and backend/HTTP failures invalidate the full composition.",
+      "completed_replayed_links": 9,
+      "incomplete_replayed_links": 0
     },
     {
       "id": "nemotron_ultra/math_formal_lean_refinement_agent",

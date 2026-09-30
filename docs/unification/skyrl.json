@@ -233,12 +233,14 @@
         "judge",
         "script"
       ],
-      "mapping_status": "adapter_required",
+      "mapping_status": "partially_integrated",
       "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
-      "adapter_requirements": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness.",
+      "adapter_requirements": "Extend trusted reference domain beyond reviewed parsed/prose/typographic forms; retain two missing externaljudge transcripts as incomplete validation.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#math-judge",
       "resolution_strategy": "existing_math_judge_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "opt_in_partial_source_dispatch",
+      "integration_patch": "integrations/MarinSkyRL/math-judge-verifyit.patch",
+      "implementation_evidence": "evidence/e2e/wiring/skyrl-math-judge/reviewed-summary.json"
     },
     {
       "id": "nemotron_ultra/math_with_judge_simple_agent",
@@ -251,12 +253,14 @@
         "judge",
         "script"
       ],
-      "mapping_status": "adapter_required",
+      "mapping_status": "partially_integrated",
       "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
-      "adapter_requirements": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness.",
+      "adapter_requirements": "Extend trusted reference domain beyond reviewed parsed/prose/typographic forms; retain two missing externaljudge transcripts as incomplete validation.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#math-judge",
       "resolution_strategy": "existing_math_judge_extension",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "opt_in_partial_source_dispatch",
+      "integration_patch": "integrations/MarinSkyRL/math-judge-verifyit.patch",
+      "implementation_evidence": "evidence/e2e/wiring/skyrl-math-judge/reviewed-summary.json"
     },
     {
       "id": "nemotron_ultra/math_formal_lean_refinement_agent",
@@ -1003,8 +1007,8 @@
     ]
   },
   "installation": {
-    "dependency": "verifyit[answer,schema,reasoning-gym] @ git+https://github.com/marin-community/verifyit@cd4c4a9be9200a4da6d722503d04bc5408e98f17",
-    "implementation_revision": "cd4c4a9be9200a4da6d722503d04bc5408e98f17",
+    "dependency": "verifyit[answer,schema,reasoning-gym,pytest,judge] @ git+https://github.com/marin-community/verifyit@67db341c77449f0977bb034c6d7fca034038b98f",
+    "implementation_revision": "67db341c77449f0977bb034c6d7fca034038b98f",
     "source_revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
     "python": "Root Python 3.12; standalone gym >=3.11 after patch",
     "patch_order": [

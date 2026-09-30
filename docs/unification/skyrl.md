@@ -89,8 +89,8 @@ The48 entries comprise46 scoring routes across17 contract families and two exter
 objectives. Calendar joins the client/task-harness group, bringing it to 24 routes.
 The other 22 retain existing-class profile or comparator-parity requirements; three
 dormant math variants are audits, not proven missing APIs. The current register
-separates 31 implemented routes, two partially wired routes still pending and
-13 concrete existing-class behavior gaps. Three dormant math routes now have source integrations and fixture evidence. Source
+separates 31 implemented routes, four partially wired routes still pending and
+11 concrete existing-class behavior gaps. Three dormant math routes now have source integrations and fixture evidence. Source
 orchestration and metrics stay in clients. No new mode category is proposed; a generic source callback
 behind script is only a runtime bridge. The disjoint plan is recorded per entry in
 `skyrl.json` and detailed in [the composition contracts](skyrl-adapter-specs.md).
@@ -244,3 +244,11 @@ Fifteen frozen real links across five groups match recorded/native rewards; thes
 validate the implemented deterministic subset, not the remaining stochastic contract.
 Sixty exported-source tests pass. See the integration README and
 `evidence/e2e/wiring/skyrl-instructions/` for registry, replay and patch evidence.
+
+Math-with-judge and NS-tools terminal math now have partial source integration
+through existing RAW/additive MathSpec, configured final-label JudgeSpec and a
+total ScriptSpec deadline. Trusted references outside the reviewed parsed, prose
+and typography-only domains remain pending. Twenty-five source tests pass; 16 of 18
+frozen Env replay items match native/archive score and framework reward. The
+other two lack archived external judge transcripts and remain incomplete. See
+[integration contracts](../../integrations/MarinSkyRL/math-judge.md).
