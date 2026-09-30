@@ -8,20 +8,20 @@
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 20,
-    "pending_scoring_routes": 26,
-    "pending_active_scoring_routes": 19,
+    "source_patched_routes": 21,
+    "pending_scoring_routes": 25,
+    "pending_active_scoring_routes": 18,
     "pending_dormant_scoring_routes": 7,
-    "zero_core_extension_unwired_routes": 4,
+    "zero_core_extension_unwired_routes": 3,
     "existing_class_behavior_gap_routes": 19,
-    "real_replayed_source_routes": 13,
+    "real_replayed_source_routes": 14,
     "implemented_routes_missing_real_traces": 7,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 13,
+      "implemented_validated": 14,
       "implemented_not_validated": 7,
-      "not_integrated": 7,
+      "not_integrated": 6,
       "capability_gap": 19,
       "not_a_correctness_verifier": 2
     },
@@ -698,19 +698,19 @@
     },
     {
       "id": "nemotron_ultra/math_formal_lean_refinement_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_retained_compiler_runtime",
       "native_fallback_in_cutover": false,
       "contract_family": "lean",
       "existing_primitive_candidate": [
         "script"
       ],
       "resolution_strategy": "task_harness",
-      "needed_change": "Compile source proof artifact in task environment; preserve correction prompt and unavailable intermediate verdict.",
+      "needed_change": "No remaining implementation change for this route.",
       "validation_gap": null,
       "source_contract": "Lean proof compilation and up to three correction turns.",
       "source": {
@@ -723,10 +723,15 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#lean",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/lean-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-lean/source-manifest.json",
+        "evidence/e2e/wiring/skyrl-lean/patched/summary.json",
+        "evidence/e2e/wiring/skyrl-lean/baseline/summary.json",
+        "evidence/e2e/wiring/manager-lean/summary.json"
       ],
       "observed_verified_execution_links": 12,
-      "actual_replayed_links": 0,
+      "actual_replayed_links": 3,
       "core_extension_requirement": "none_proposed"
     },
     {

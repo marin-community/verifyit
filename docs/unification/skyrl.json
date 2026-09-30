@@ -265,12 +265,13 @@
       "verifyit_modes": [
         "script"
       ],
-      "mapping_status": "adapter_required",
+      "mapping_status": "implemented_client_adapter",
       "source_contract": "Lean proof compilation and up to three correction turns.",
       "adapter_requirements": "Compile source proof artifact in task environment; preserve correction prompt and unavailable intermediate verdict.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#lean",
       "resolution_strategy": "task_harness",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "source_patch_implemented",
+      "integration_patch": "integrations/MarinSkyRL/lean-verifyit.patch"
     },
     {
       "id": "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
@@ -949,6 +950,7 @@
       "integrations/MarinSkyRL/qa-verifyit.patch",
       "integrations/MarinSkyRL/calendar-verifyit.patch",
       "integrations/MarinSkyRL/sqlite-verifyit.patch",
+      "integrations/MarinSkyRL/lean-verifyit.patch",
       "integrations/MarinSkyRL/dependency-pin.patch"
     ],
     "covered_routes": [
@@ -971,7 +973,8 @@
       "dormant/qa_em",
       "dormant/qa_f1",
       "text2sql",
-      "text_to_sql"
+      "text_to_sql",
+      "nemotron_ultra/math_formal_lean_refinement_agent"
     ]
   },
   "installation": {
@@ -1022,13 +1025,14 @@
       "dormant/qa_em",
       "dormant/qa_f1",
       "text2sql",
-      "text_to_sql"
+      "text_to_sql",
+      "nemotron_ultra/math_formal_lean_refinement_agent"
     ],
-    "implemented_source_patch_route_count": 20,
+    "implemented_source_patch_route_count": 21,
     "notes": "Disjoint route populations; proposed composition is mapping, not deployed migration. A generic retained source callback is only runtime bridge, not primitive parity.",
     "intentional_tightening": "Invalid GSM8K expected decimals, nonfinite chemistry references and malformed reference grids are invalid_task0 rather than exploiting literal/Python equality; valid wrong source format reward retained.",
     "pending_concrete_existing_class_behavior_gaps": 19,
     "pending_dormant_math_parity_audits": 3,
-    "pending_client_or_harness_wiring_routes": 4
+    "pending_client_or_harness_wiring_routes": 3
   }
 }

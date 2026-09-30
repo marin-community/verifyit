@@ -7,7 +7,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Harness 12,692 indexed task configs | 11,091 guarded native routes available | 1,601 configs retain source scoring; breakdown below |
 | Evalchemy 42 custom benchmarks | 4 native integrations + 3 math hybrids | 35 not integrated (24 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 GSM hybrid | 18 not integrated; plus 1 orchestration group |
-| SkyRL 46 scoring routes | 20 source-patched (13 with selected real traces, 7 without eligible real traces) | 7 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
+| SkyRL 46 scoring routes | 21 source-patched (14 with selected real traces, 7 without eligible real traces) | 6 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
 | Harbor 87 adapters | tau3 structured native-runtime bridge | 86 not integrated; tau3 retains native evaluator |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
@@ -106,7 +106,7 @@ The 35 remaining custom benchmarks are named below. Script/stdio/pytest candidat
 
 ## SkyRL
 
-The 26 pending scoring routes comprise 19 active routes and 7 dormant implementations. Three dormant math variants are parity audits, not claims of a missing math API. Nineteen rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
+The 25 pending scoring routes comprise 18 active routes and 7 dormant implementations. Three dormant math variants are parity audits, not claims of a missing math API. Nineteen rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
@@ -114,7 +114,6 @@ The 26 pending scoring routes comprise 19 active routes and 7 dormant implementa
 | ifeval | capability_gap | ifeval, script | Existing ifeval mode lacks verified equivalent source registry/constraint checkers for this contract; source dispatch remains native. Translate each constraint only after checking checker equivalence; registry names/quantifiers are not interchangeable. |
 | nemotron_ultra/ns_tools_simple_agent | capability_gap | math, judge, script | Prepared math candidate API exists; source comparator policies and/or symmetric custom-prompt judge fallback are not available as the complete composed contract or wired into source. Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. |
 | nemotron_ultra/math_with_judge_simple_agent | capability_gap | math, judge, script | Prepared math candidate API exists; source comparator policies and/or symmetric custom-prompt judge fallback are not available as the complete composed contract or wired into source. Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. |
-| nemotron_ultra/math_formal_lean_refinement_agent | not_integrated | script | Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented. Compile source proof artifact in task environment; preserve correction prompt and unavailable intermediate verdict. |
 | nemotron_ultra/citation_format_simple_agent | capability_gap | ifeval, script | Existing ifeval mode lacks verified equivalent source registry/constraint checkers for this contract; source dispatch remains native. Source-compatible deterministic constraint script; not generic exact equality. |
 | nemotron_ultra/freeform_formatting_simple_agent | capability_gap | ifeval, script | Existing ifeval mode lacks verified equivalent source registry/constraint checkers for this contract; source dispatch remains native. Source-compatible deterministic constraint script; not generic exact equality. |
 | nemotron_ultra/structured_outputs_simple_agent | capability_gap | json-schema, script | Existing json-schema mode lacks the source OpenAPI validator policy and typed XML/CSV schema-directed decoding; source dispatch remains native. JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. |

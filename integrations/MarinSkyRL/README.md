@@ -61,3 +61,12 @@ match recorded and pinned-native results through the registered environment and
 verifyit. The complete census contains no eligible legacy `text2sql` trace, so that
 route has fixture coverage but no real-trace validation. Inputs, hashes, commands
 and results are in `evidence/e2e/wiring/skyrl-sql`.
+
+Apply `lean-verifyit.patch` after the reasoning/MCQ and calendar patches. The
+Nemotron opt-in flag routes each proof attempt through ScriptSpec, which executes
+the retained sandbox compiler runtime and emits a structured verdict. Source
+proof construction, correction prompts and refinement termination are retained.
+Compiler errors, sorry and timeouts score zero; incomplete, unknown or truncated
+compiler results are infrastructure errors. Six HTTP boundary tests and three
+selected real refinement traces pass against pinned-native and recorded results.
+Evidence is under `evidence/e2e/wiring/skyrl-lean`.
