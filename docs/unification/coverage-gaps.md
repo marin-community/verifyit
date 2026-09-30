@@ -7,7 +7,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Harness 12,692 indexed task configs | 11,091 guarded native routes available | 1,601 configs retain source scoring; breakdown below |
 | Evalchemy 42 custom benchmarks | 4 native integrations + 3 math hybrids | 35 not integrated (24 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 GSM hybrid | 18 not integrated; plus 1 orchestration group |
-| SkyRL 46 scoring routes | 18 source-patched (12 with selected real traces, 6 without eligible real traces) | 9 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
+| SkyRL 46 scoring routes | 20 source-patched (13 with selected real traces, 7 without eligible real traces) | 7 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
 | Harbor 87 adapters | tau3 structured native-runtime bridge | 86 not integrated; tau3 retains native evaluator |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
@@ -261,7 +261,7 @@ These seven tracker datasets are separate from the 87 adapter census. Missing wo
 
 Harness 11,091 static-eligible configurations have implemented guards and representative source parity, but only PIQA/Winogrande/BoolQ have full selected real-run replays. The new 250 have source API and evaluator fixture validation without matching saved model traces. Evalchemy MMLUPro/GPQADiamond and AIME24/MATH500/GSM override have real replay evidence. AIW/GSM8KPerturbed/AIME25 have source parity but no validated tracker links. NQ-Open/TriviaQA source exact routes lack full dataset replay.
 
-SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Six patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, and two dormant QA APIs. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
+SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Seven patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, two dormant QA APIs and legacy text2sql. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |

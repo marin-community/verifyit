@@ -4,7 +4,7 @@
 # ruff: noqa: E501
 
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 root = Path.cwd()
@@ -50,7 +50,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Harness 12,692 indexed task configs | 11,091 guarded native routes available | 1,601 configs retain source scoring; breakdown below |
 | Evalchemy 42 custom benchmarks | 4 native integrations + 3 math hybrids | 35 not integrated (24 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 GSM hybrid | 18 not integrated; plus 1 orchestration group |
-| SkyRL 46 scoring routes | 18 source-patched (12 with selected real traces, 6 without eligible real traces) | 9 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
+SKYRL_SUMMARY_ROW
 | Harbor 87 adapters | tau3 structured native-runtime bridge | 86 not integrated; tau3 retains native evaluator |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
@@ -149,7 +149,7 @@ text += """
 
 Harness 11,091 static-eligible configurations have implemented guards and representative source parity, but only PIQA/Winogrande/BoolQ have full selected real-run replays. The new 250 have source API and evaluator fixture validation without matching saved model traces. Evalchemy MMLUPro/GPQADiamond and AIME24/MATH500/GSM override have real replay evidence. AIW/GSM8KPerturbed/AIME25 have source parity but no validated tracker links. NQ-Open/TriviaQA source exact routes lack full dataset replay.
 
-SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Six patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, and two dormant QA APIs. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
+SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Seven patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, two dormant QA APIs and legacy text2sql. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
 
 """ + table(
     "MarinSkyRL", {"implemented_not_validated"}
@@ -197,4 +197,16 @@ uv run python tools/unification/render_coverage_gaps.py
 
 Each entity resolves `coverage_contract` in the top-level contract table for its reason, existing mode candidates, required change and validation status. Small curated peer inputs retain their exact source contracts; generated JSON is one entity per line and can be queried by source/name/status/reason. Raw datasets and replay credentials are not included.
 """
+skyrl_counts = Counter(r["status"] for r in rows if r["source"] == "MarinSkyRL")
+validated = skyrl_counts["implemented_validated"]
+unvalidated = skyrl_counts["implemented_not_validated"]
+external = skyrl_counts["not_a_correctness_verifier"]
+scoring = sum(skyrl_counts.values()) - external
+summary = (
+    f"| SkyRL {scoring} scoring routes | {validated + unvalidated} source-patched "
+    f"({validated} with selected real traces, {unvalidated} without eligible real traces) | "
+    f"{skyrl_counts['not_integrated']} client/parity-audit routes + "
+    f"{skyrl_counts['capability_gap']} native profile gaps; {external} external-objective placeholders separate |"
+)
+text = text.replace("SKYRL_SUMMARY_ROW", summary)
 (root / "docs/unification/coverage-gaps.md").write_text(text)
