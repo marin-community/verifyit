@@ -26,7 +26,7 @@ zero metric produces `scored`, never an infrastructure failure.
 
 
 The integration requires verifyit implementation commit
-`7cf470dbf54008778104be8d4eb434a852868490`, including the AfroBench and corpus runtime APIs.
+`7e3aa30d5f9fd8f90dfe1c5a23162d5ec5a8c296`, including the AfroBench and corpus runtime APIs.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -36,7 +36,7 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@7cf470dbf54008778104be8d4eb434a852868490'
+uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@7e3aa30d5f9fd8f90dfe1c5a23162d5ec5a8c296'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
@@ -152,6 +152,7 @@ native/cutover evaluator parity for both source contracts, and malformed-batch
 failure fixtures pass. Evidence is campaign `evidence/e2e/wiring/harness-mc2/`.
 Three of thirteen matching English tracker links were selected before scoring;
 S3 credentials are currently unavailable and no matching local JSON/JSONL artifacts
-were found, so archived replay is not claimed. This new API requires the next
-local implementation checkpoint; the existing dependency pin above predates it
-and will be replaced with that exact commit after the implementation is committed.
+were found, so archived replay is not claimed. The dependency pin above records the actual local MC2 implementation checkpoint.
+An isolated core-only Git install passed the English actual evaluator replay with
+32 calls and matching metrics; installed provenance and results are in campaign
+`evidence/e2e/wiring/harness-mc2/installed-english/`. The commit remains unpublished.

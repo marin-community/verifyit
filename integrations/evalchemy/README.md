@@ -23,7 +23,7 @@ Further normalization/fallback contracts are described in
 
 
 The integration requires verifyit implementation commit
-`ce52bd670401123318c0513442497cea1ef4957b`, including JEEBench primitive composition and `math_answer_text`.
+`7e3aa30d5f9fd8f90dfe1c5a23162d5ec5a8c296`, including JEEBench primitive composition and `math_answer_text`.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -33,7 +33,7 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit[answer] @ git+file:///path/to/verifyit@ce52bd670401123318c0513442497cea1ef4957b'
+uv pip install --python /path/to/environment/bin/python 'verifyit[answer] @ git+file:///path/to/verifyit@7e3aa30d5f9fd8f90dfe1c5a23162d5ec5a8c296'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
@@ -83,3 +83,13 @@ without returning an aggregate. No JEEBench model-run links were found in the
 campaign tracker or local JSON/JSONL artifacts; this is source fixture validation,
 not archived-trace replay. Reproducible evidence is in campaign
 `evidence/e2e/wiring/evalchemy-jee/source_roundtrip.py` (supports `--output`).
+
+
+The English TruthfulQA MC2 override uses the harness probability-mass integration
+from this same dependency checkpoint. Apply the harness
+`truthfulqa-mc2-verifyit.patch` after its base/corpus patches; no override scorer
+file change is required. The pinned callback body is verified, then raw likelihoods
+and binary labels are graded inside verifyit. Native/source evaluator fixtures and
+an isolated installed-package replay match. Three saved run links are frozen in
+campaign `evidence/e2e/wiring/harness-mc2/truthfulqa-selection.json`; S3 access is
+currently unavailable, so no archived TruthfulQA replay is claimed.
