@@ -20,10 +20,22 @@ normalization/fallback contracts require additional parity work described in
 [the mapping](../../docs/unification/evalchemy_mapping.md).
 
 
-The initial bridge implementation is local verifyit commit
-`545ae96c553b171b09d4ee108df7c3d06879497d` on `codex/verifier-unification`.
-It has not been pushed and is not installable from a GitHub revision URL.
-Use a local checkout or built wheel for validation. The current Evalchemy patch
-also requires the subsequent `math_answer_text` API refinement; its final
-implementation revision must be recorded after that checkpoint is committed.
-Do not pin only the initial commit for the latest patch.
+The integration requires verifyit implementation commit
+`2781eb0d3dae1c9a1486f4074eb47398edc643c8`, including `math_answer_text`.
+Apply `dependency-pin.patch` to declare that exact implementation in the source
+project metadata. This commit remains local and unpublished: the remote Git URL
+in the dependency patch is a publication target, not an available installation.
+Evalchemy's lockfile must be regenerated when that dependency becomes fetchable.
+For current validation in an environment with the pinned project's existing
+dependencies installed, use the local Git commit and install the patched source
+without resolving the unpublished remote dependency:
+
+```bash
+uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@2781eb0d3dae1c9a1486f4074eb47398edc643c8'
+uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
+```
+
+An isolated core-only installation from this exact local Git revision was
+validated: completed reasoning-only boxes are accepted, truncated reasoning is
+rejected, and extracted MCQ choices produce the expected scalar score. No remote
+publication or live model endpoint was used.

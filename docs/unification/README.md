@@ -30,14 +30,13 @@ orchestration rather than independent correctness scorers.
 | [Evalchemy patch](../../integrations/evalchemy/README.md) | GPQA/MMLU extracted choices call verifyit; completion boundary preserves final-content precedence and completed reasoning-only math policy. Source box parsers/stops and aggregation remain. | Source scoring before/after parity probes; 26 upstream AIME24/AIME25, MATH500 and MMLU-Pro tests pass against patched validation tree. |
 | [Harness patch](../../integrations/lm-eval-harness/README.md) | Filtered native responses call `score_task`; source metrics and aggregators remain intact. Explicit scalar projection is optional. | Structured weighted-perplexity and optional metric bridge tests; pinned loader parity covers configuration includes. This proves compatibility, not replacement by native primitive equivalents. |
 | [Harbor patch](../../integrations/harbor/verifyit.patch) | Tasks shipping `tests/verifier.toml` invoke verifyit; unscored verdicts reject stale scalar reward artifacts. Legacy task harnesses remain supported. | Three real-verifier/local-CLI integration regressions and 12 existing verifier tests pass; container execution remains unverified. |
-| Task Trove task specs | Existing archive `tests/verifier.toml` specifies primitive routing; installation/invocation must use verifyit while retaining task runtime and hidden/protected tests. | All rows' metadata scanned using bounded HTTP ranges. Historical mode/helper drift and archive namespace migration remain under audit; pipeline installation changes are not yet ready. |
+| [Task Trove integration](../../integrations/task-trove/README.md) | Explicit verifyit revision/dependency overlay, source converter migration, local Docker audit checkout, and task-owned archive script/setup namespace wrappers. | All rows' metadata scanned using bounded HTTP ranges;19 converter and 12 mode/helper drift matrix;8 local CLI integration cases; actual patched pipeline CLI and Dockerfile rewriting pass at scheduling/container I/O boundaries. |
 
-The first implementation checkpoint is local commit
-`545ae96c553b171b09d4ee108df7c3d06879497d` on `codex/verifier-unification`.
+The current implementation checkpoint is local commit
+`2781eb0d3dae1c9a1486f4074eb47398edc643c8` on `codex/verifier-unification`.
 SkyRL's dependency patch pins this commit and raises its standalone gym Python
 floor to >=3.11, as required by verifyit. An isolated local Git installation at
-that SHA passed real helper grading. Later completion/judge/MCQ refinements need
-their subsequent implementation checkpoint. Nothing here establishes a published
+that SHA passed real helper grading. This checkpoint includes the completion/judge/MCQ refinements. Nothing here establishes a published
 GitHub dependency, updated frozen fork locks, or deployed integration.
 
 ## Hardening evidence
@@ -68,8 +67,8 @@ retaining the original scorer is an adapter mapping, not native equivalence.
 Proposed Python profile APIs and mode profiles are not implemented merely because
 they are specified.
 
-The user permits a concrete reusable specification when no clean primitive mapping
-exists. The linked unimplemented profiles fulfill that mapping/specification role;
+A concrete reusable specification supplies the mapping when no clean primitive
+mapping exists. The linked unimplemented profiles fulfill that mapping/specification role;
 they do not promise a completed runtime migration. Retained source scorers and
 implemented bridges keep original dependencies and metric contracts. Any missing
 source route, vague specification, or source patch with an untested existing

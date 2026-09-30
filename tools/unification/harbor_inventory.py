@@ -52,6 +52,8 @@ def inventory(source: Path) -> dict:
                         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
                     ]
                 except SyntaxError:
+                    if "template" not in path:
+                        raise
                     functions = [{"name": "rendered-template", "line": 1}]
             evidence.append(
                 {

@@ -1,0 +1,10 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -19,6 +19,7 @@
+ ]
+ 
+ dependencies = [
++    "verifyit @ git+https://github.com/marin-community/verifyit@2781eb0d3dae1c9a1486f4074eb47398edc643c8",
+     # Lean core: everything `python -m eval.eval` needs to evaluate a *served*
+     # OpenAI-compatible endpoint (--model local-completions / curator) and grade the
+     # requested benchmarks. Per-benchmark and GPU/accelerator deps live in the extras

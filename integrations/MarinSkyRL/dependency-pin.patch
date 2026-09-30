@@ -4,7 +4,7 @@
  description = "Marin's typed launcher and RL training runtime"
  requires-python = "==3.12.*"
  dependencies = [
-+    "verifyit @ git+https://github.com/marin-community/verifyit@545ae96c553b171b09d4ee108df7c3d06879497d",
++    "verifyit @ git+https://github.com/marin-community/verifyit@2781eb0d3dae1c9a1486f4074eb47398edc643c8",
      "aiohttp>=3.13.3",
      "boto3",
      "datasets>=4.0.0",
@@ -18,7 +18,7 @@
 +requires-python = ">=3.11"
  
  dependencies = [
-+    "verifyit @ git+https://github.com/marin-community/verifyit@545ae96c553b171b09d4ee108df7c3d06879497d",
++    "verifyit @ git+https://github.com/marin-community/verifyit@2781eb0d3dae1c9a1486f4074eb47398edc643c8",
      "func_timeout",
      "loguru",
      "numpy",

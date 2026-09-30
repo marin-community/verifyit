@@ -802,8 +802,8 @@
     "arithmetic_adapter_tests": 17,
     "arithmetic_source_tests": 40,
     "patch_apply_checks": "Both patches apply cleanly to pinned source; source clone unchanged",
-    "dependency_pin": "545ae96c553b171b09d4ee108df7c3d06879497d",
-    "implementation_install": "Isolated uv install from local Git repository at exact 545ae96c553b171b09d4ee108df7c3d06879497d succeeded; real rational and MCQ grading passed.",
+    "dependency_pin": "2781eb0d3dae1c9a1486f4074eb47398edc643c8",
+    "implementation_install": "Isolated uv install from local Git repository at exact 2781eb0d3dae1c9a1486f4074eb47398edc643c8 succeeded; real rational and MCQ grading passed.",
     "judge_regressions": "6 real HTTP regression cases failed before fix: completed malformed replies and incomplete valid-looking SCORE labels for reference/checklist rubrics. Core now masks judge failures; source larger-budget retry still adapter-specific."
   },
   "implementation": {
@@ -820,8 +820,8 @@
     ]
   },
   "installation": {
-    "dependency": "verifyit @ git+https://github.com/marin-community/verifyit@545ae96c553b171b09d4ee108df7c3d06879497d",
-    "implementation_revision": "545ae96c553b171b09d4ee108df7c3d06879497d",
+    "dependency": "verifyit @ git+https://github.com/marin-community/verifyit@2781eb0d3dae1c9a1486f4074eb47398edc643c8",
+    "implementation_revision": "2781eb0d3dae1c9a1486f4074eb47398edc643c8",
     "source_revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
     "python": "Root Python 3.12; standalone gym >=3.11 after patch",
     "patch_order": [

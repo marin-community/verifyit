@@ -8,9 +8,9 @@ lands additional APIs; the source SHA must exist on the remote before external
 installation. Do not silently replace a pinned Git dependency with a floating
 branch. Regenerate fork locks in the fork's supported environment before use.
 
-The MCQ patch retains source strict first-box extraction, signed reward and
-length shaping, and calls verifyit only for candidate correctness. Arithmetic
-patches retain source AIME rational equivalence and GSM8K final-line equality;
+The MCQ patch retains source strict first-box extraction and binary reward,
+and calls verifyit only for candidate correctness. Arithmetic patches retain
+source AIME rational equivalence, signed reward/length shaping, and GSM8K final-line equality;
 the multi-turn GSM8K adapter is specified separately and is not implemented by
 the final-line helper. Patched source regressions and verifyit API regression
 counts are recorded in [the mapping](../../docs/unification/skyrl.md).

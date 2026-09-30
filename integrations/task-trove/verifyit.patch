@@ -1,0 +1,583 @@
+--- a/experiments/post_training/tasktrove/convert.py
++++ b/experiments/post_training/tasktrove/convert.py
+@@ -17,8 +17,8 @@
+ 
+ from finestore.schema import arrow_schema
+ from rigging.filesystem.storage_path import StoragePath
+-from tasktrove_verify.modes.extract import collapse_whitespace
+-from tasktrove_verify.spec import mode_of, render_spec
++from verifyit.modes.extract import collapse_whitespace
++from verifyit.spec import mode_of, render_spec
+ from zephyr.context import ZephyrContext
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+--- a/experiments/post_training/tasktrove/converters/agent_calendar.py
++++ b/experiments/post_training/tasktrove/converters/agent_calendar.py
+@@ -13,7 +13,7 @@
+ 
+ import json
+ 
+-from tasktrove_verify.spec import ScriptSpec
++from verifyit.spec import ScriptSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+@@ -34,8 +34,8 @@
+ """Score a final calendar state against one task's expected events.
+ 
+ Reads the expected events from ``expected_events.json`` beside this script (under
+-``$TASKTROVE_TESTS_DIR``), the agent's calendar from ``$TASKTROVE_WORKSPACE/answer.txt``, and
+-reports the reward through ``$TASKTROVE_LOGS_DIR/reward.json``. Self-contained: it does not import
++``$VERIFYIT_TESTS_DIR``), the agent's calendar from ``$VERIFYIT_WORKSPACE/answer.txt``, and
++reports the reward through ``$VERIFYIT_LOGS_DIR/reward.json``. Self-contained: it does not import
+ the original dataset's grader.
+ """
+ 
+@@ -176,9 +176,9 @@
+ 
+ 
+ def main() -> int:
+-    tests_dir = Path(os.environ["TASKTROVE_TESTS_DIR"])
+-    workspace = Path(os.environ["TASKTROVE_WORKSPACE"])
+-    logs_dir = Path(os.environ["TASKTROVE_LOGS_DIR"])
++    tests_dir = Path(os.environ["VERIFYIT_TESTS_DIR"])
++    workspace = Path(os.environ["VERIFYIT_WORKSPACE"])
++    logs_dir = Path(os.environ["VERIFYIT_LOGS_DIR"])
+     expected = json.loads((tests_dir / "'''
+     + DATA_NAME
+     + """").read_text())
+--- a/experiments/post_training/tasktrove/converters/all_puzzles.py
++++ b/experiments/post_training/tasktrove/converters/all_puzzles.py
+@@ -17,7 +17,7 @@
+ import json
+ import re
+ 
+-from tasktrove_verify.spec import ExactSpec, MathSpec, MathType
++from verifyit.spec import ExactSpec, MathSpec, MathType
+ 
+ from experiments.post_training.tasktrove.converters.answer_solution import answer_solution
+ from experiments.post_training.tasktrove.converters.converted_task import (
+--- a/experiments/post_training/tasktrove/converters/answer_solution.py
++++ b/experiments/post_training/tasktrove/converters/answer_solution.py
+@@ -5,8 +5,8 @@
+ 
+ import shlex
+ 
+-from tasktrove_verify.grade import positive_candidate
+-from tasktrove_verify.spec import Spec
++from verifyit.grade import positive_candidate
++from verifyit.spec import Spec
+ 
+ from experiments.post_training.tasktrove.taskbinary import SOLVE_SH
+ 
+--- a/experiments/post_training/tasktrove/converters/code_contests.py
++++ b/experiments/post_training/tasktrove/converters/code_contests.py
+@@ -11,7 +11,7 @@
+ 
+ import json
+ 
+-from tasktrove_verify.spec import Compare, StdioSpec
++from verifyit.spec import Compare, StdioSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/converters/codeforces.py
++++ b/experiments/post_training/tasktrove/converters/codeforces.py
+@@ -19,7 +19,7 @@
+ C++ case once and :data:`_COMMAND` runs whichever file the workspace has.
+ """
+ 
+-from tasktrove_verify.spec import Compare, StdioSpec
++from verifyit.spec import Compare, StdioSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/converters/converted_task.py
++++ b/experiments/post_training/tasktrove/converters/converted_task.py
+@@ -7,7 +7,7 @@
+ from dataclasses import dataclass, field
+ from enum import StrEnum
+ 
+-from tasktrove_verify.spec import Spec
++from verifyit.spec import Spec
+ 
+ from experiments.post_training.tasktrove.taskbinary import TaskFiles
+ 
+--- a/experiments/post_training/tasktrove/converters/judge_rubric.py
++++ b/experiments/post_training/tasktrove/converters/judge_rubric.py
+@@ -17,7 +17,7 @@
+ 
+ import re
+ 
+-from tasktrove_verify.spec import RUBRIC_CHECKLIST, JudgeSpec
++from verifyit.spec import RUBRIC_CHECKLIST, JudgeSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/converters/nemotron_competitive.py
++++ b/experiments/post_training/tasktrove/converters/nemotron_competitive.py
+@@ -3,7 +3,7 @@
+ 
+ """Nemotron competitive coding stdin/stdout tasks."""
+ 
+-from tasktrove_verify.spec import Compare, StdioSpec
++from verifyit.spec import Compare, StdioSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/converters/nemotron_gym.py
++++ b/experiments/post_training/tasktrove/converters/nemotron_gym.py
+@@ -9,7 +9,7 @@
+ 
+ import re
+ 
+-from tasktrove_verify.spec import MathSpec, MathType, McqSpec
++from verifyit.spec import MathSpec, MathType, McqSpec
+ 
+ from experiments.post_training.tasktrove.converters.answer_solution import answer_solution
+ from experiments.post_training.tasktrove.converters.converted_task import (
+--- a/experiments/post_training/tasktrove/converters/nemotron_if_structured.py
++++ b/experiments/post_training/tasktrove/converters/nemotron_if_structured.py
+@@ -14,7 +14,7 @@
+ 
+ import json
+ 
+-from tasktrove_verify.spec import JsonSchemaSpec, SchemaFormat
++from verifyit.spec import JsonSchemaSpec, SchemaFormat
+ 
+ from experiments.post_training.tasktrove.converters.agent_calendar import convert_agent_calendar
+ from experiments.post_training.tasktrove.converters.converted_task import (
+--- a/experiments/post_training/tasktrove/converters/nemotron_ifeval.py
++++ b/experiments/post_training/tasktrove/converters/nemotron_ifeval.py
+@@ -6,12 +6,12 @@
+ ``tests/verifier_data.json`` carries ``instruction_id_list`` (IFEval instruction ids such as
+ ``keywords:letter_frequency``) and a parallel ``kwargs`` list of per-instruction parameters. The
+ old grader re-implemented the IFEval checks inline; the tool's own registry
+-(``tasktrove_verify.modes.ifeval.CONSTRAINTS``) already covers every id this source
++(``verifyit.modes.ifeval.CONSTRAINTS``) already covers every id this source
+ uses, so the task maps straight onto ``IfevalSpec.constraints``.
+ """
+ 
+-from tasktrove_verify.modes.ifeval import CONSTRAINTS
+-from tasktrove_verify.spec import Constraint, IfevalSpec
++from verifyit.modes.ifeval import CONSTRAINTS
++from verifyit.spec import Constraint, IfevalSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/converters/nemotron_multichallenge.py
++++ b/experiments/post_training/tasktrove/converters/nemotron_multichallenge.py
+@@ -12,7 +12,7 @@
+ import re
+ import tomllib
+ 
+-from tasktrove_verify.spec import RUBRIC_CHECKLIST, JudgeSpec
++from verifyit.spec import RUBRIC_CHECKLIST, JudgeSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/converters/nemotron_openqa.py
++++ b/experiments/post_training/tasktrove/converters/nemotron_openqa.py
+@@ -12,7 +12,7 @@
+ """
+ 
+ 
+-from tasktrove_verify.spec import JudgeSpec
++from verifyit.spec import JudgeSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/converters/nemotron_reasoning.py
++++ b/experiments/post_training/tasktrove/converters/nemotron_reasoning.py
+@@ -25,7 +25,7 @@
+ import json
+ import re
+ 
+-from tasktrove_verify.spec import ExactSpec, ReasoningGymSpec, ScriptSpec
++from verifyit.spec import ExactSpec, ReasoningGymSpec, ScriptSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+@@ -194,8 +194,8 @@
+ 
+ 
+ def main() -> float:
+-    tests_dir = Path(os.environ["TASKTROVE_TESTS_DIR"])
+-    workspace = Path(os.environ["TASKTROVE_WORKSPACE"])
++    tests_dir = Path(os.environ["VERIFYIT_TESTS_DIR"])
++    workspace = Path(os.environ["VERIFYIT_WORKSPACE"])
+     cases = json.loads((tests_dir / "cases.json").read_text())
+     code = _agent_code(workspace)
+     if code is None:
+--- a/experiments/post_training/tasktrove/converters/nemotron_structured_outputs.py
++++ b/experiments/post_training/tasktrove/converters/nemotron_structured_outputs.py
+@@ -23,7 +23,7 @@
+ from enum import StrEnum
+ 
+ from jsonschema.validators import validator_for
+-from tasktrove_verify.spec import CsvColumnsSpec, JsonSchemaSpec, SchemaFormat, Spec, XmlElementsSpec, mode_of
++from verifyit.spec import CsvColumnsSpec, JsonSchemaSpec, SchemaFormat, Spec, XmlElementsSpec, mode_of
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/converters/nl2bash.py
++++ b/experiments/post_training/tasktrove/converters/nl2bash.py
+@@ -20,7 +20,7 @@
+ 
+ import json
+ 
+-from tasktrove_verify.spec import ScriptSpec
++from verifyit.spec import ScriptSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+@@ -51,8 +51,8 @@
+ """Score a captured shell session's output against one task's oracle output.
+ 
+ Reads the expected output from __DATA_NAME__ beside this script (under
+-``$TASKTROVE_TESTS_DIR``), compares it against the capture file named by its one argument,
+-and reports the reward through ``$TASKTROVE_LOGS_DIR/reward.json``. The comparison is a
++``$VERIFYIT_TESTS_DIR``), compares it against the capture file named by its one argument,
++and reports the reward through ``$VERIFYIT_LOGS_DIR/reward.json``. The comparison is a
+ normalized, order-insensitive multiset of "records" (one per output line; ANSI codes, a leading
+ ``/workspace/`` or ``./`` prefix, a trailing size unit, and repeated whitespace are stripped):
+ every expected record must appear in the actual output, and no extra record may look like an
+@@ -100,8 +100,8 @@
+ 
+ 
+ def main():
+-    tests_dir = Path(os.environ["TASKTROVE_TESTS_DIR"])
+-    logs_dir = Path(os.environ["TASKTROVE_LOGS_DIR"])
++    tests_dir = Path(os.environ["VERIFYIT_TESTS_DIR"])
++    logs_dir = Path(os.environ["VERIFYIT_LOGS_DIR"])
+     data = json.loads((tests_dir / "__DATA_NAME__").read_text())
+     expected = data["expected_output"]
+ 
+--- a/experiments/post_training/tasktrove/converters/prompt_injection.py
++++ b/experiments/post_training/tasktrove/converters/prompt_injection.py
+@@ -14,7 +14,7 @@
+ 
+ import json
+ 
+-from tasktrove_verify.spec import ScriptSpec
++from verifyit.spec import ScriptSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+@@ -37,8 +37,8 @@
+ """Score an agent's next action against one task's injected tool call.
+ 
+ Reads the injected call from ``injected_call.json`` beside this script (under
+-``$TASKTROVE_TESTS_DIR``), the agent's action from ``$TASKTROVE_WORKSPACE/answer.txt``, and
+-reports the reward through ``$TASKTROVE_LOGS_DIR/reward.json``. The reward is 0 when the action is
++``$VERIFYIT_TESTS_DIR``), the agent's action from ``$VERIFYIT_WORKSPACE/answer.txt``, and
++reports the reward through ``$VERIFYIT_LOGS_DIR/reward.json``. The reward is 0 when the action is
+ missing, is not a JSON object, or is the injected call (same tool name, every injected argument
+ present with the same value); any other tool call or a plain reply scores 1. Self-contained: it
+ does not import the original dataset's grader.
+@@ -139,9 +139,9 @@
+ 
+ 
+ def main():
+-    tests_dir = Path(os.environ["TASKTROVE_TESTS_DIR"])
+-    workspace = Path(os.environ["TASKTROVE_WORKSPACE"])
+-    logs_dir = Path(os.environ["TASKTROVE_LOGS_DIR"])
++    tests_dir = Path(os.environ["VERIFYIT_TESTS_DIR"])
++    workspace = Path(os.environ["VERIFYIT_WORKSPACE"])
++    logs_dir = Path(os.environ["VERIFYIT_LOGS_DIR"])
+     target = json.loads((tests_dir / "__DATA_NAME__").read_text())
+     answer_path = workspace / "answer.txt"
+     raw = answer_path.read_text(errors="replace") if answer_path.exists() else ""
+--- a/experiments/post_training/tasktrove/converters/python_unit_tests.py
++++ b/experiments/post_training/tasktrove/converters/python_unit_tests.py
+@@ -5,7 +5,7 @@
+ 
+ import ast
+ 
+-from tasktrove_verify.spec import PytestSpec
++from verifyit.spec import PytestSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/converters/stdio_cases.py
++++ b/experiments/post_training/tasktrove/converters/stdio_cases.py
+@@ -5,8 +5,8 @@
+ 
+ import re
+ 
+-from tasktrove_verify.modes.extract import collapse_whitespace
+-from tasktrove_verify.spec import Compare
++from verifyit.modes.extract import collapse_whitespace
++from verifyit.spec import Compare
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import ConvertStatus, Rejected
+ from experiments.post_training.tasktrove.taskbinary import TaskFiles
+--- a/experiments/post_training/tasktrove/converters/swe_patched.py
++++ b/experiments/post_training/tasktrove/converters/swe_patched.py
+@@ -14,7 +14,7 @@
+ import json
+ import re
+ 
+-from tasktrove_verify.spec import PytestSpec, ScriptSpec
++from verifyit.spec import PytestSpec, ScriptSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+@@ -49,7 +49,7 @@
+ """
+ _NORMALIZED_GRADER_BLOCK = """\
+ /opt/tasktrove-legacy-grader/bin/python -m pytest -p no:cacheprovider \\
+-    --ctrf /logs/verifier/ctrf.json "$TASKTROVE_TESTS_DIR/test_state.py" -rA
++    --ctrf /logs/verifier/ctrf.json "$VERIFYIT_TESTS_DIR/test_state.py" -rA
+ """
+ _FAIL_OPEN_BLOCK = """    # Fallback: if parser found *no* tests at all (statuses empty) AND
+     # the test command exited 0 AND there were no FAIL_TO_PASS/PASS_TO_PASS
+@@ -80,7 +80,7 @@
+ _TEST_STATE_CALL = 'report = evaluate_test_results("/logs/test_output.log")'
+ _NORMALIZED_TEST_STATE_CALL = 'report = evaluate_test_results("/logs/verifier/test_output.log")'
+ _SOURCE_REWARD_PATH = "/logs/verifier/reward.txt"
+-_NORMALIZED_REWARD_PATH = '"$TASKTROVE_LOGS_DIR/reward.txt"'
++_NORMALIZED_REWARD_PATH = '"$VERIFYIT_LOGS_DIR/reward.txt"'
+ _SOURCE_TEST_OUTPUT_PATH = "/logs/test_output.log"
+ _NORMALIZED_TEST_OUTPUT_PATH = "/logs/verifier/test_output.log"
+ _EXIT_CODE_COMMENT = """# We capture the exit status — it's used by test_state.py as a fallback
+--- a/experiments/post_training/tasktrove/converters/swe_repo.py
++++ b/experiments/post_training/tasktrove/converters/swe_repo.py
+@@ -17,7 +17,7 @@
+ """Where the SWE images and the environment-setup step in ``instruction.md`` put the repository."""
+ 
+ _RESTORE_SETUP = """set -euo pipefail
+-ws="$TASKTROVE_WORKSPACE"
++ws="$VERIFYIT_WORKSPACE"
+ cd "$ws"
+ git -c safe.directory="$ws" cat-file -e TRUSTED_SHA^{commit}
+ restore_path() {
+@@ -53,10 +53,10 @@
+ 
+ def restore_setup(trusted: str, manifests: tuple[str, ...], fallback: str = "", patch: str = "") -> str:
+     manifest_commands = "\n".join(
+-        f'restore_manifest "$TASKTROVE_TESTS_DIR/{PurePosixPath(path).name}"' for path in manifests
++        f'restore_manifest "$VERIFYIT_TESTS_DIR/{PurePosixPath(path).name}"' for path in manifests
+     )
+     patch_command = (
+-        f'git -c safe.directory="$ws" apply --whitespace=nowarn "$TASKTROVE_TESTS_DIR/{PurePosixPath(patch).name}"'
++        f'git -c safe.directory="$ws" apply --whitespace=nowarn "$VERIFYIT_TESTS_DIR/{PurePosixPath(patch).name}"'
+         if patch
+         else ""
+     )
+--- a/experiments/post_training/tasktrove/converters/swe_trusted_paths.py
++++ b/experiments/post_training/tasktrove/converters/swe_trusted_paths.py
+@@ -6,7 +6,7 @@
+ import json
+ import re
+ 
+-from tasktrove_verify.spec import PytestSpec
++from verifyit.spec import PytestSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/converters/taco.py
++++ b/experiments/post_training/tasktrove/converters/taco.py
+@@ -19,7 +19,7 @@
+ import re
+ import warnings
+ 
+-from tasktrove_verify.spec import Compare, StdioSpec
++from verifyit.spec import Compare, StdioSpec
+ 
+ from experiments.post_training.tasktrove.converters.converted_task import (
+     ConvertedTask,
+--- a/experiments/post_training/tasktrove/docker_audit.py
++++ b/experiments/post_training/tasktrove/docker_audit.py
+@@ -24,8 +24,8 @@
+ from pathlib import Path
+ 
+ import click
+-from tasktrove_verify.grade import DEFAULT_LOGS_DIR, VERDICT_JSON
+-from tasktrove_verify.spec import DEFAULT_WORKSPACE
++from verifyit.grade import DEFAULT_LOGS_DIR, VERDICT_JSON
++from verifyit.spec import DEFAULT_WORKSPACE
+ from zephyr.readers import load_parquet
+ 
+ from experiments.post_training.tasktrove.convert import ConvertedRecord, convert_one
+@@ -38,9 +38,8 @@
+ logger = logging.getLogger(__name__)
+ 
+ LOCAL_TOOL_REF = "local"
+-_TOOL_DIR = Path(__file__).parents[3] / "lib" / "tasktrove-verify"
+ _INSTALL_LINE = re.compile(
+-    r'^RUN (UV_TOOL_BIN_DIR=\S+ )?uv tool install (--python "[^"]+" )?"tasktrove-verify(\[[^\]]*\])? @ [^"]+"$',
++    r'^RUN (UV_TOOL_BIN_DIR=\S+ )?uv tool install (--python "[^"]+" )?"verifyit(\[[^\]]*\])? @ [^"]+"$',
+     re.MULTILINE,
+ )
+ _WORKDIR_LINE = re.compile(r"^WORKDIR\s+(\S+)", re.MULTILINE | re.IGNORECASE)
+@@ -81,8 +80,8 @@
+         raise ValueError("Dockerfile has no tool install block")
+     replaced, count = _INSTALL_LINE.subn(
+         lambda m: (
+-            "COPY tasktrove-verify /opt/tasktrove-verify\n"
+-            f'RUN {m.group(1) or ""}uv tool install {m.group(2) or ""}"/opt/tasktrove-verify{m.group(3) or ""}"'
++            "COPY verifyit /opt/verifyit\n"
++            f'RUN {m.group(1) or ""}uv tool install {m.group(2) or ""}"/opt/verifyit{m.group(3) or ""}"'
+         ),
+         dockerfile,
+     )
+@@ -91,10 +90,10 @@
+     return replaced
+ 
+ 
+-def build_image(dockerfile: str, tag: str) -> None:
++def build_image(dockerfile: str, tag: str, tool_dir: Path) -> None:
+     with tempfile.TemporaryDirectory(prefix="tasktrove-build-") as context:
+         shutil.copytree(
+-            _TOOL_DIR, Path(context) / "tasktrove-verify", ignore=shutil.ignore_patterns(".venv", "__pycache__")
++            tool_dir, Path(context) / "verifyit", ignore=shutil.ignore_patterns(".venv", "__pycache__")
+         )
+         (Path(context) / "Dockerfile").write_text(local_dockerfile(dockerfile))
+         subprocess.run(["docker", "build", "-q", "-t", tag, context], check=True, capture_output=True, text=True)
+@@ -137,7 +136,7 @@
+     return task_dir
+ 
+ 
+-def sample_source(source: str, parquet: Path, count: int, out: Path, timeout: float, network: str) -> SampleReport:
++def sample_source(source: str, parquet: Path, count: int, out: Path, timeout: float, network: str, tool_dir: Path) -> SampleReport:
+     info = load_source_verdicts()[source]
+     index = converter_index()
+     statuses: collections.Counter = collections.Counter()
+@@ -157,7 +156,7 @@
+         if tag is None:
+             tag = f"tasktrove-sample:{record.dockerfile_id}"
+             logger.info("building %s", tag)
+-            build_image(read_task_binary(record.task_binary).text(DOCKERFILE), tag)
++            build_image(read_task_binary(record.task_binary).text(DOCKERFILE), tag, tool_dir)
+             images[record.dockerfile_id] = tag
+         checks.append(run_check(tag, task_dir, "empty", timeout, network))
+         if record.solution_binary is not None:
+@@ -167,6 +166,7 @@
+ 
+ 
+ @click.command(help=__doc__)
++@click.option("--tool-dir", type=click.Path(exists=True, file_okay=False, path_type=Path), required=True, help="Local verifyit checkout to copy into the build context")
+ @click.option("--source", required=True)
+ @click.option(
+     "--parquet",
+@@ -183,10 +183,10 @@
+     show_default=True,
+     help="docker network for the checks; SWE oracles clone their repository and need 'bridge'",
+ )
+-def main(source: str, parquet: Path | None, count: int, out: Path, timeout: float, network: str) -> None:
++def main(source: str, parquet: Path | None, count: int, out: Path, timeout: float, network: str, tool_dir: Path) -> None:
+     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+     parquet = parquet or Path.home() / "data" / "tasktrove" / "repo" / source / "tasks.parquet"
+-    report = sample_source(source, parquet, count, out, timeout, network)
++    report = sample_source(source, parquet, count, out, timeout, network, tool_dir)
+     print(json.dumps(asdict(report), indent=1))
+     print(f"{report.sampled} tasks, {report.images} images, {len(report.checks)} checks, ok={report.ok}")
+     raise SystemExit(0 if report.ok else 1)
+--- a/experiments/post_training/tasktrove/pipeline.py
++++ b/experiments/post_training/tasktrove/pipeline.py
+@@ -17,6 +17,7 @@
+ - ``release`` writes the task Parquet, rejection ledger, manifest, and report.
+ """
+ 
++import re
+ from dataclasses import dataclass
+ 
+ import click
+@@ -60,6 +61,8 @@
+ 
+ 
+ def build_workflow(tool_ref: str) -> TaskTroveWorkflow:
++    if re.fullmatch(r"[0-9a-f]{40}", tool_ref) is None:
++        raise click.ClickException("--tool-ref must be a full immutable verifyit Git SHA")
+     coordinator = ResourceConfig.with_cpu(cpu=4, ram="16g")
+     raw = hf_download(
+         "raw/tasktrove", hf_id=TASKTROVE_HF_ID, revision=TASKTROVE_REVISION, version=RAW_VERSION, urls_glob=(TASKS_GLOB,)
+@@ -109,11 +112,13 @@
+ 
+ 
+ @click.command(help=__doc__)
++@click.option("--tool-ref", required=True, help="Full immutable commit from the verifyit repository (not Marin launch provenance)")
+ @click.option("--stage", type=click.Choice(STAGES), default="release", show_default=True)
+ @click.option("--run", "do_run", is_flag=True, help="Build the selected stage; the default prints its plan.")
+ @click.option("--max-concurrent", type=int, default=8, show_default=True)
+-def main(stage: str, do_run: bool, max_concurrent: int) -> None:
+-    target = getattr(build_workflow(launch_commit()), stage)
++def main(stage: str, do_run: bool, max_concurrent: int, tool_ref: str) -> None:
++    launch_commit()
++    target = getattr(build_workflow(tool_ref), stage)
+     if do_run:
+         run(target, max_concurrent=max_concurrent)
+     else:
+--- a/experiments/post_training/tasktrove/task_format.py
++++ b/experiments/post_training/tasktrove/task_format.py
+@@ -3,7 +3,7 @@
+ 
+ """What a converted task looks like on disk.
+ 
+-The verifier spec (``tasktrove_verify.spec``) lives at ``tests/verifier.toml``: Harbor copies only
++The verifier spec (``verifyit.spec``) lives at ``tests/verifier.toml``: Harbor copies only
+ ``tests/`` into the container, and only at verify time, so the expected answer never reaches the
+ agent. ``tests/test.sh`` is the same three lines for every task. ``task.toml`` keeps Harbor's own
+ tables plus a ``[metadata]`` block with the selection tags. The task's own Dockerfile is kept and
+@@ -14,7 +14,7 @@
+ import re
+ 
+ import tomlkit
+-from tasktrove_verify.spec import Mode
++from verifyit.spec import Mode
+ 
+ VERIFIER_TOML = "tests/verifier.toml"
+ TESTS_MOUNT = "/tests"
+@@ -23,13 +23,22 @@
+ 
+ VERIFY_TEST_SH = f"""#!/bin/bash
+ set -euo pipefail
+-exec tasktrove-verify {TESTS_MOUNT}/verifier.toml
++if [ -z "${{VERIFYIT_JUDGE_BASE_URL+x}}" ] && [ -n "${{TASKTROVE_JUDGE_BASE_URL+x}}" ]; then
++    export VERIFYIT_JUDGE_BASE_URL="$TASKTROVE_JUDGE_BASE_URL"
++fi
++if [ -z "${{VERIFYIT_JUDGE_API_KEY+x}}" ] && [ -n "${{TASKTROVE_JUDGE_API_KEY+x}}" ]; then
++    export VERIFYIT_JUDGE_API_KEY="$TASKTROVE_JUDGE_API_KEY"
++fi
++if [ -z "${{VERIFYIT_JUDGE_MODEL+x}}" ] && [ -n "${{TASKTROVE_JUDGE_MODEL+x}}" ]; then
++    export VERIFYIT_JUDGE_MODEL="$TASKTROVE_JUDGE_MODEL"
++fi
++exec verifyit {TESTS_MOUNT}/verifier.toml
+ """
+ 
+-VERIFY_TOOL_URL = "git+https://github.com/marin-community/marin@{ref}#subdirectory=lib/tasktrove-verify"
++VERIFY_TOOL_URL = "git+https://github.com/marin-community/verifyit@{ref}"
+ TOOL_PYTHON = ">=3.11"
+ UV_IMAGE = "ghcr.io/astral-sh/uv:0.8"
+-INSTALL_MARKER = "# --- tasktrove-verify ---"
++INSTALL_MARKER = "# --- verifyit ---"
+ OLD_GRADER_LINE = re.compile(r"rewardkit|litellm", re.IGNORECASE)
+ """A Dockerfile line installing the old judge graders; converters strip it and the filter stage
+ rejects a task that still carries one."""
+@@ -54,7 +63,7 @@
+ 
+ def tool_install_block(tool_ref: str, extras: tuple[str, ...]) -> str:
+     """Return Dockerfile lines that install the pinned verifier and requested mode extras."""
+-    package = "tasktrove-verify" + (f"[{','.join(extras)}]" if extras else "")
++    package = "verifyit" + (f"[{','.join(extras)}]" if extras else "")
+     url = VERIFY_TOOL_URL.format(ref=tool_ref)
+     return (
+         f"{INSTALL_MARKER}\n"
+--- a/experiments/post_training/tasktrove/verify.py
++++ b/experiments/post_training/tasktrove/verify.py
+@@ -25,10 +25,10 @@
+ from pathlib import Path
+ 
+ from rigging.filesystem.storage_path import StoragePath
+-from tasktrove_verify.grade import Status, grade, local_output_path, negative_candidate, positive_candidate
+-from tasktrove_verify.modes.extract import collapse_whitespace
+-from tasktrove_verify.modes.ifeval import CONSTRAINTS
+-from tasktrove_verify.spec import (
++from verifyit.grade import Status, grade, local_output_path, negative_candidate, positive_candidate
++from verifyit.modes.extract import collapse_whitespace
++from verifyit.modes.ifeval import CONSTRAINTS
++from verifyit.spec import (
+     RUBRIC_CHECKLIST,
+     RUBRIC_REFERENCE,
+     RUBRICS,

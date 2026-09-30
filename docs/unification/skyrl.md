@@ -18,7 +18,7 @@ MCQ, final GSM8K line, and last answer-tag Reasoning Gym have different policies
 `integrations/MarinSkyRL/mcq-verifyit.patch` replaces the simplest native comparison
 with `grade_mcq_candidate` while retaining first-box extraction and all 26 option
 letters. It applies cleanly to the pinned source. `dependency-pin.patch` adds verifyit to both the root distribution and standalone
-gym at implementation commit `545ae96c553b171b09d4ee108df7c3d06879497d` and raises
+gym at implementation commit `2781eb0d3dae1c9a1486f4074eb47398edc643c8` and raises
 standalone gym Python support to >=3.11. Valid prepared tasks retain 0/1 scores. An invalid expected
 letter becomes a task error rather than silently producing zero. The patch includes first-versus-last box, lowercase, missing/malformed boxes, and Z
 regressions; all 18 source MCQ tests pass in a disposable patched source copy.
