@@ -2,17 +2,11 @@ diff --git a/adapters/codepde/src/codepde/adapter.py b/adapters/codepde/src/code
 index 863ac14..5d0ee00 100755
 --- a/adapters/codepde/src/codepde/adapter.py
 +++ b/adapters/codepde/src/codepde/adapter.py
-@@ -5,6 +5,7 @@ CodePDE Adapter for Terminal-Bench Harbor
- This adapter generates CodePDE benchmark tasks in the new harbor format.
- """
+@@ -7,2 +7,3 @@ This adapter generates CodePDE benchmark tasks in the new harbor format.
  
 +import json
  import logging
- import re
- import shutil
-@@ -381,12 +382,60 @@ class CodePDEAdapter:
-         if nrmse_source.exists():
-             shutil.copy2(nrmse_source, tests_dir / "nRMSE_evaluator.py")
+@@ -383,2 +384,7 @@ class CodePDEAdapter:
  
 +        verifyit_dir = tests_dir / "verifyit"
 +        verifyit_dir.mkdir(exist_ok=True)
@@ -20,7 +14,7 @@ index 863ac14..5d0ee00 100755
 +            shutil.copy2(nrmse_source, verifyit_dir / "nRMSE_evaluator.py")
 +
          # Create test_outputs.py
-         self._create_test_outputs_py(tests_dir, pde_name, pde_config)
+@@ -386,2 +392,26 @@ class CodePDEAdapter:
  
 +        # The verifier runs the upstream evaluator with an unprivileged
 +        # candidate proxy, keeping reference data and scoring in trusted code.
@@ -47,7 +41,7 @@ index 863ac14..5d0ee00 100755
 +                     verifyit_dir / "landlock.py")
 +
          # Create test.sh
-         self._create_test_sh(tests_dir, pde_name, pde_config)
+@@ -389,2 +419,21 @@ class CodePDEAdapter:
  
 +        data_path = f"/app/data/{data_file}"
 +        data_url = f"https://huggingface.co/datasets/LDA1020/codepde-data/resolve/main/{pde_name}/{data_file}"
@@ -69,29 +63,19 @@ index 863ac14..5d0ee00 100755
 +        )
 +
          logger.debug("Created test files")
- 
-     def _create_test_outputs_py(
 diff --git a/adapters/codepde/src/codepde/task-template/environment/Dockerfile b/adapters/codepde/src/codepde/task-template/environment/Dockerfile
 index 420d742..9a9ecc6 100644
 --- a/adapters/codepde/src/codepde/task-template/environment/Dockerfile
 +++ b/adapters/codepde/src/codepde/task-template/environment/Dockerfile
-@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir \
-     matplotlib \
-     h5py \
+@@ -19,2 +19,3 @@ RUN pip install --no-cache-dir \
      pytest \
 +    pytest-json-report \
      pandas
- 
- # Install TensorFlow (CPU version for compatibility)
-@@ -28,6 +29,8 @@ RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://
- # Try to install JAX (CPU version)
- RUN pip install --no-cache-dir jax jaxlib
+@@ -30,2 +31,4 @@ RUN pip install --no-cache-dir jax jaxlib
  
 +RUN pip install --no-cache-dir "verifyit @ git+https://github.com/marin-community/verifyit@3f21d36306c86861e5fdff0718bd72029328e752"
 +
  # Set environment variables
- ENV PYTHONPATH=/app:$PYTHONPATH
- ENV T_BENCH_TEST_DIR=/app/tests
 diff --git a/adapters/codepde/src/codepde/task-template/tests/verifyit/landlock.py b/adapters/codepde/src/codepde/task-template/tests/verifyit/landlock.py
 new file mode 100644
 index 0000000..1f796ed
