@@ -51,6 +51,7 @@ class MathType(StrEnum):
 class MathProfile(StrEnum):
     ANCHORED = "anchored"
     BOXED = "boxed"
+    RAW = "raw"
 
 
 class SchemaFormat(StrEnum):
@@ -78,6 +79,7 @@ class MathSpec:
     math_type: MathType = MathType.SCALAR
     output: str = DEFAULT_OUTPUT
     profile: MathProfile = MathProfile.ANCHORED
+    allow_additive_constant: bool = False
 
 
 @dataclass(frozen=True)
@@ -207,7 +209,8 @@ class GotestSpec:
 
 RUBRIC_REFERENCE = "reference"
 RUBRIC_CHECKLIST = "checklist"
-RUBRICS = frozenset({RUBRIC_REFERENCE, RUBRIC_CHECKLIST})
+RUBRIC_LABELS = "labels"
+RUBRICS = frozenset({RUBRIC_REFERENCE, RUBRIC_CHECKLIST, RUBRIC_LABELS})
 
 
 @dataclass(frozen=True)
@@ -231,6 +234,13 @@ class JudgeSpec:
     exact_gate: bool = True
     request_timeout: float = 120.0
     output: str = DEFAULT_OUTPUT
+    system_prompt: str = ""
+    prompt_template: str = ""
+    label_scores: dict[str, float] = field(default_factory=dict)
+    strip_reasoning_blocks: bool = False
+    max_completion_tokens: int = 8192
+    incomplete_retry_tokens: int = 0
+    reasoning_effort: str = ""
 
 
 @dataclass(frozen=True)

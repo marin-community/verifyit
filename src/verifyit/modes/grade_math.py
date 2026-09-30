@@ -106,8 +106,32 @@ def _members_match(expected: list[list], candidate: list[list]) -> bool:
     )
 
 
+def _additive_constant_match(expected: list, candidate: list) -> bool:
+    """Compare finite scalar expressions modulo a finite additive constant."""
+    from math_verify.utils import timeout  # noqa: PLC0415
+    from sympy import Expr, exp, nan, oo, simplify, zoo  # noqa: PLC0415
+    from sympy.matrices.expressions import MatrixExpr  # noqa: PLC0415
+
+    @timeout(_timeout())
+    def difference_of(gold, prediction):
+        return simplify((gold - prediction).rewrite(exp))
+
+    for gold in expected:
+        for prediction in candidate:
+            if not all(isinstance(value, Expr) and not isinstance(value, MatrixExpr) for value in (gold, prediction)):
+                continue
+            if any(value.has(nan, zoo, oo, -oo) for value in (gold, prediction)):
+                continue
+            difference = difference_of(gold, prediction)
+            if not difference.free_symbols and difference.is_finite is True:
+                return True
+    return False
+
+
 def grade_math_candidate(spec: MathSpec, candidate: str) -> Reward:
     """Score extracted math content; backend deadlines become infrastructure failures."""
+    if type(spec.allow_additive_constant) is not bool:
+        raise InvalidTask("allow_additive_constant must be boolean")
     if not isinstance(spec.profile, MathProfile) or not isinstance(spec.math_type, MathType):
         raise InvalidTask("unknown math parsing profile or math_type")
     from math_verify.errors import TimeoutException  # noqa: PLC0415
@@ -119,7 +143,56 @@ def grade_math_candidate(spec: MathSpec, candidate: str) -> Reward:
         raise RuntimeError("math verifier deadline exhausted") from error
 
 
+def _grade_raw_math(spec: MathSpec, candidate: str) -> Reward:
+    from math_verify import parse  # noqa: PLC0415
+    from math_verify.parser import ExprExtractionConfig, LatexExtractionConfig  # noqa: PLC0415
+    from math_verify.utils import timeout  # noqa: PLC0415
+
+    @timeout(_timeout())
+    def strings_of(values):
+        return [str(value) for value in values]
+
+    if spec.math_type is not MathType.SCALAR:
+        raise InvalidTask("raw math profile requires scalar math_type")
+    if BOXED in candidate:
+        boxed = extract_boxed(candidate)
+        candidate = f"\\boxed{{{boxed}}}" if boxed else ""
+    gold_text = f"\\boxed{{{spec.expected}}}"
+    expected = parse(
+        gold_text, extraction_config=[LatexExtractionConfig()], parsing_timeout=_timeout(), raise_on_error=True
+    )
+    if not _is_expression(expected):
+        raise InvalidTask("raw math profile could not parse the reference")
+    parsed = parse(
+        candidate,
+        extraction_config=[ExprExtractionConfig(), LatexExtractionConfig()],
+        parsing_timeout=_timeout(),
+        raise_on_error=True,
+    )
+    match = bool(parsed) and _verify(expected, parsed)
+    chosen = None
+    if parsed:
+        gold_strings = strings_of(expected)
+        prediction_strings = strings_of(parsed)
+        chosen = next(
+            (value for value in prediction_strings if any(_verify(gold, value) for gold in gold_strings)),
+            prediction_strings[0],
+        )
+    if not match and spec.allow_additive_constant:
+        latex_prediction = parse(
+            candidate, extraction_config=[LatexExtractionConfig()], parsing_timeout=_timeout(), raise_on_error=True
+        )
+        match = _additive_constant_match(expected, latex_prediction)
+        if match:
+            chosen = next(
+                strings_of([value])[0] for value in latex_prediction if _additive_constant_match(expected, [value])
+            )
+    return scored(float(match), extracted=candidate, expected=spec.expected, parsed_candidate=chosen)
+
+
 def _grade_math_candidate(spec: MathSpec, candidate: str) -> Reward:
+    if spec.profile is MathProfile.RAW:
+        return _grade_raw_math(spec, candidate)
     if spec.profile is MathProfile.BOXED:
         from math_verify import parse, verify  # noqa: PLC0415
 
@@ -129,11 +202,10 @@ def _grade_math_candidate(spec: MathSpec, candidate: str) -> Reward:
         parsed = parse(f"\\boxed{{{candidate}}}", parsing_timeout=_timeout(), raise_on_error=True)
         if not expected or not parsed:
             return scored(0.0, reason="missing_parse", expected_parsed=bool(expected), candidate_parsed=bool(parsed))
-        return scored(
-            float(bool(verify(gold=expected, target=parsed, timeout_seconds=_timeout(), raise_on_error=True))),
-            extracted=candidate,
-            expected=spec.expected,
-        )
+        match = bool(verify(gold=expected, target=parsed, timeout_seconds=_timeout(), raise_on_error=True))
+        if not match and spec.allow_additive_constant:
+            match = _additive_constant_match(expected, parsed)
+        return scored(float(match), extracted=candidate, expected=spec.expected)
     is_list = spec.math_type is MathType.LIST
     expected = _parsed_members(spec.expected) if is_list else [_parse(spec.expected)]
     if not all(_is_expression(member) for member in expected):
@@ -147,6 +219,8 @@ def _grade_math_candidate(spec: MathSpec, candidate: str) -> Reward:
         match = _members_match(expected, parsed)
     else:
         match = _verify(expected[0], parsed[0], allow_set_relation_comp=spec.math_type in SET_TYPES)
+    if not match and spec.allow_additive_constant and not is_list:
+        match = _additive_constant_match(expected[0], parsed[0])
     return scored(float(bool(match)), extracted=candidate, expected=spec.expected)
 
 
@@ -156,6 +230,8 @@ def _grade_symbolic(spec: MathSpec, workspace: Path) -> Reward:
         # Validate the reference even when no candidate was submitted.
         grade_math_candidate(spec, "")
         return scored(0.0, reason="no_output")
+    if spec.profile is MathProfile.RAW:
+        return grade_math_candidate(spec, text)
     boxed = extract_boxed(text)
     candidate = (boxed or "") if BOXED in text else last_line(text) or ""
     return grade_math_candidate(spec, candidate)

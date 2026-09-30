@@ -41,7 +41,7 @@ shaping belong in the client rather than this bounded correctness scalar.
 | `pytest` | pytest JSON report with required and protected tests |
 | `junit` | JUnit XML report |
 | `gotest` | `go test -json` events |
-| `judge` | reference-answer or checklist rubric through a configured model endpoint |
+| `judge` | reference-answer, checklist or configured final-label rubric through a model endpoint |
 | `script` | legacy `test.sh` fallback with normalized reward files and fail-closed errors |
 
 For `judge`, a length-truncated or content-filtered judge response is an infrastructure
@@ -50,6 +50,15 @@ unknown reasons also fail closed. A completed response with no parseable score i
 also fails, the verdict is `infra_error`. These failures write no reward files.
 The last nonempty response line must be a complete `SCORE: value` label: reference accepts
 `0`, `0.5`, or `1`; checklist accepts `0` or `1`. Numeric prefixes and other labels fail closed.
+The opt-in `labels` rubric supplies one reference, trusted `system_prompt`/`prompt_template`
+strings using only `{question}`, `{reference}` and `{candidate}`, and a nonempty
+`label_scores` table of finite rewards in `[0, 1]`. Its final line must exactly name one
+configured label; contradictory labels in the answer invalidate the result. Optional
+`strip_reasoning_blocks` removes completed think/thinking blocks before label parsing.
+Unfinished reasoning, malformed labels, HTTP errors and non-completed responses are
+infrastructure failures with zero reward; label judging does not retry HTTP failures.
+`incomplete_retry_tokens` permits one larger budget only after length truncation; it does not retry malformed labels. Successful
+label verdict detail retains the complete judge response in `completion`.
 
 For `stdio`, a candidate program that exits unsuccessfully scores zero even if its stdout matches.
 
@@ -152,3 +161,16 @@ a reference emptied by normalization are invalid tasks, even when no candidate
 output exists. This option preserves the existing case/whitespace controls;
 clients requiring source `lower()` semantics should lowercase their inputs and
 set `ignore_case = false` rather than relying on casefold normalization.
+
+`MathSpec.allow_additive_constant` is an opt-in equivalence policy for finite scalar
+expressions. After ordinary equality fails, a simplified difference with no free
+symbols and a proven finite value counts as equal. Multiplicative factors, collection
+differences and nonfinite constants do not qualify. Existing parsing profiles, exact
+comparison and defaults remain unchanged; backend deadlines fail closed.
+
+The opt-in math `raw` profile preserves an unwrapped prediction for expression and
+LaTeX extraction, while parsing the reference as boxed LaTeX. A final box still
+takes precedence and a malformed final box scores zero. Unlike the default profile,
+it does not wrap bare symbolic text to make it parse. A reference that yields only
+an unparsed string is an invalid task. Additive fallback in this profile uses
+LaTeX extraction only.

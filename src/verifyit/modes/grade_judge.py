@@ -16,19 +16,22 @@ without a configured endpoint returns an infrastructure failure.
 """
 
 import logging
+import math
 import os
 import re
 import string
 import unicodedata
 from pathlib import Path
+from typing import Any, cast
 
 import openai
+from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
 from verifyit.grade import InvalidTask, Reward, read_output, scored
 from verifyit.modes.extract import extract_boxed
 from verifyit.modes.grade_ifeval import resolve_checks
 from verifyit.modes.ifeval import Check
-from verifyit.spec import RUBRIC_CHECKLIST, RUBRIC_REFERENCE, RUBRICS, JudgeSpec, Spec
+from verifyit.spec import RUBRIC_CHECKLIST, RUBRIC_LABELS, RUBRIC_REFERENCE, RUBRICS, JudgeSpec, Spec
 
 BASE_URL_ENV = "VERIFYIT_JUDGE_BASE_URL"
 API_KEY_ENV = "VERIFYIT_JUDGE_API_KEY"
@@ -81,12 +84,21 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
     assert isinstance(spec, JudgeSpec)
     if spec.rubric not in RUBRICS:
         raise InvalidTask(f"unknown judge rubric {spec.rubric!r}; known rubrics: {sorted(RUBRICS)}")
+    if spec.rubric == RUBRIC_LABELS and (
+        not isinstance(spec.system_prompt, str)
+        or not isinstance(spec.prompt_template, str)
+        or not isinstance(spec.question, str)
+        or not all(isinstance(reference, str) for reference in spec.references)
+    ):
+        raise InvalidTask("label rubric templates, question and references must be strings")
     references = tuple(reference for reference in spec.references if reference.strip())
     criteria = tuple(criterion for criterion in spec.criteria if criterion.strip())
     if spec.rubric == RUBRIC_REFERENCE and not references:
         raise InvalidTask("judge rubric 'reference' needs non-empty reference answers")
     if spec.rubric == RUBRIC_CHECKLIST and not criteria:
         raise InvalidTask("judge rubric 'checklist' needs non-empty criteria")
+    if spec.rubric == RUBRIC_LABELS:
+        _validate_label_spec(spec, references)
     checks = resolve_checks(spec.constraints) if spec.constraints else []
     context = _context(spec, tests_dir)
 
@@ -101,7 +113,115 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
         if spec.exact_gate and normalize(boxed_answer(candidate)) in {normalize(r) for r in references}:
             return scored(1.0, gate="exact")
         return _judge_reference(spec, references, candidate)
+    if spec.rubric == RUBRIC_LABELS:
+        return _judge_labels(spec, references[0], candidate)
     return _judge_checklist(spec, criteria, context, candidate)
+
+
+def _validate_label_spec(spec: JudgeSpec, references: tuple[str, ...]) -> None:
+    if len(references) != 1 or len(spec.references) != 1 or not spec.prompt_template.strip() or not spec.label_scores:
+        raise InvalidTask("label rubric requires one reference, a prompt template and labels")
+    if type(spec.strip_reasoning_blocks) is not bool:
+        raise InvalidTask("strip_reasoning_blocks must be boolean")
+    if not isinstance(spec.label_scores, dict):
+        raise InvalidTask("verdict labels must be a label/reward table")
+    for label, score in spec.label_scores.items():
+        if not isinstance(label, str) or not label.strip() or label != label.strip() or "\n" in label:
+            raise InvalidTask("verdict labels must be nonempty single lines")
+        if (
+            isinstance(score, bool)
+            or not isinstance(score, (int, float))
+            or not 0 <= score <= 1
+            or not math.isfinite(score)
+        ):
+            raise InvalidTask("verdict label rewards must be finite unit scalars")
+    for budget in (spec.max_completion_tokens, spec.incomplete_retry_tokens):
+        if type(budget) is not int or budget < 0:
+            raise InvalidTask("judge token budgets must be nonnegative integers")
+    if spec.max_completion_tokens == 0:
+        raise InvalidTask("judge token budget must be positive")
+    if spec.incomplete_retry_tokens and spec.incomplete_retry_tokens <= spec.max_completion_tokens:
+        raise InvalidTask("retry token budget must exceed the initial budget")
+    if (
+        isinstance(spec.request_timeout, bool)
+        or not isinstance(spec.request_timeout, (int, float))
+        or spec.request_timeout <= 0
+        or not math.isfinite(spec.request_timeout)
+    ):
+        raise InvalidTask("judge request timeout must be finite and positive")
+    used = set()
+    for template in (spec.system_prompt, spec.prompt_template):
+        try:
+            for _, name, format_spec, conversion in string.Formatter().parse(template):
+                if name is None:
+                    continue
+                if name not in {"question", "reference", "candidate"} or format_spec or conversion:
+                    raise InvalidTask("judge template has an unsupported field")
+                used.add(name)
+        except ValueError as error:
+            raise InvalidTask("malformed judge template") from error
+    if not {"reference", "candidate"} <= used:
+        raise InvalidTask("judge template must include reference and candidate")
+
+
+def _label_answer(reply: str, strip_reasoning: bool) -> str:
+    if not strip_reasoning:
+        return reply.strip()
+    pairs = (("<think>", "</think>"), ("<thinking>", "</thinking>"), ("<|start_think|>", "<|end_think|>"))
+    for opening, closing in pairs:
+        reply = re.sub(re.escape(opening) + ".*?" + re.escape(closing), "", reply, flags=re.DOTALL)
+    closing = max((reply.rfind(end) + len(end) for _, end in pairs if end in reply), default=0)
+    reply = reply[closing:]
+    if any(start in reply for start, _ in pairs):
+        raise RuntimeError("judge has unfinished reasoning")
+    return reply.strip().removesuffix("<|eot_id|>").strip()
+
+
+def _judge_labels(spec: JudgeSpec, reference: str, candidate: str) -> Reward:
+    client, model = _client(spec)
+    fields = {"question": spec.question, "reference": reference, "candidate": candidate}
+    messages: list[ChatCompletionMessageParam] = []
+    if spec.system_prompt:
+        messages.append({"role": "system", "content": spec.system_prompt.format(**fields)})
+    messages.append({"role": "user", "content": spec.prompt_template.format(**fields)})
+    budgets = [spec.max_completion_tokens]
+    if spec.incomplete_retry_tokens:
+        budgets.append(spec.incomplete_retry_tokens)
+    options: dict[str, Any] = {"reasoning_effort": spec.reasoning_effort} if spec.reasoning_effort else {}
+    for index, budget in enumerate(budgets):
+        response = cast(
+            ChatCompletion,
+            client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.0,
+                timeout=spec.request_timeout,
+                max_completion_tokens=budget,
+                **options,
+            ),
+        )
+        if not response.choices:
+            raise RuntimeError("judge returned no completion choices")
+        choice = response.choices[0]
+        if choice.message.tool_calls or choice.message.function_call or choice.message.refusal:
+            raise RuntimeError("judge completion contains a tool call or refusal")
+        if choice.finish_reason == "length" and index + 1 < len(budgets):
+            continue
+        if choice.finish_reason != "stop" or not isinstance(choice.message.content, str):
+            raise RuntimeError("judge completion is incomplete or has no text")
+        answer = _label_answer(choice.message.content, spec.strip_reasoning_blocks)
+        final = answer.rsplit("\n", 1)[-1].strip()
+        observed = {label for label in spec.label_scores if label in answer}
+        if final not in spec.label_scores or observed != {final}:
+            raise RuntimeError("judge returned malformed or contradictory verdict labels")
+        return scored(
+            float(spec.label_scores[final]),
+            model=model,
+            verdict=final,
+            reasoning=_reasoning(answer),
+            completion=choice.message.content,
+        )
+    raise RuntimeError("judge exhausted completion budgets")
 
 
 def _context(spec: JudgeSpec, tests_dir: Path) -> str:
@@ -147,7 +267,8 @@ def _client(spec: JudgeSpec) -> tuple[openai.OpenAI, str]:
     if not model:
         raise RuntimeError(f"no judge model: set {MODEL_ENV} or the spec's model field")
     # Local OpenAI-compatible servers ignore the key, but the client insists on a non-empty one.
-    return openai.OpenAI(base_url=base_url, api_key=os.environ.get(API_KEY_ENV) or "unused"), model
+    options: dict[str, Any] = {"max_retries": 0} if spec.rubric == RUBRIC_LABELS else {}
+    return openai.OpenAI(base_url=base_url, api_key=os.environ.get(API_KEY_ENV) or "unused", **options), model
 
 
 def _question(spec: JudgeSpec) -> str:

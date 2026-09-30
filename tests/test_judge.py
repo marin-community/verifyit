@@ -30,6 +30,10 @@ class FakeJudgeServer(ThreadingHTTPServer):
     replies: list[str]
     prompts: list[str]
     finish_reason: str
+    requests: list[dict]
+    finish_reasons: list[str]
+    http_status: int
+    message_fields: dict
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -37,6 +41,7 @@ class _Handler(BaseHTTPRequestHandler):
         assert self.path.endswith("/chat/completions")
         server: FakeJudgeServer = self.server  # pyrefly: ignore[bad-assignment]
         request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        server.requests.append(request)
         server.prompts.append(request["messages"][-1]["content"])
         reply = server.replies[min(len(server.prompts) - 1, len(server.replies) - 1)]
         body = json.dumps(
@@ -48,13 +53,17 @@ class _Handler(BaseHTTPRequestHandler):
                 "choices": [
                     {
                         "index": 0,
-                        "message": {"role": "assistant", "content": reply},
-                        "finish_reason": server.finish_reason,
+                        "message": {"role": "assistant", "content": reply, **server.message_fields},
+                        "finish_reason": (
+                            server.finish_reasons[min(len(server.prompts) - 1, len(server.finish_reasons) - 1)]
+                            if server.finish_reasons
+                            else server.finish_reason
+                        ),
                     }
                 ],
             }
         ).encode()
-        self.send_response(200)
+        self.send_response(server.http_status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
@@ -69,6 +78,10 @@ def fake_judge(monkeypatch):
     server = FakeJudgeServer(("127.0.0.1", 0), _Handler)
     server.replies = ["SCORE: 1"]
     server.prompts = []
+    server.requests = []
+    server.finish_reasons = []
+    server.http_status = 200
+    server.message_fields = {}
     server.finish_reason = "stop"
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -279,3 +292,143 @@ def test_malformed_final_judge_labels_never_award_reward(tmp_path, fake_judge, r
     write_reward(logs, verdict)
     assert (verdict.status, verdict.reward) == (Status.INFRA_ERROR, 0.0)
     assert not (logs / "reward.json").exists()
+
+
+def _label_spec(**overrides) -> JudgeSpec:
+    values = dict(
+        rubric="labels",
+        references=("reference answer",),
+        question="trusted question",
+        system_prompt="Compare {reference} against {candidate} for {question}.",
+        prompt_template="A: {reference}\nB: {candidate}",
+        label_scores={"[[A=B]]": 1.0, "[[A!=B]]": 0.0},
+        strip_reasoning_blocks=True,
+    )
+    values.update(overrides)
+    return JudgeSpec(**values)
+
+
+@pytest.mark.parametrize(
+    "reply,reward,status",
+    [
+        ("[[A=B]]", 1.0, Status.SCORED),
+        ("[[A!=B]]", 0.0, Status.SCORED),
+        ("reasoning\n[[A=B]]\n", 1.0, Status.SCORED),
+        ("<think>[[A!=B]]</think>\n[[A=B]]", 1.0, Status.SCORED),
+        ("earlier [[A!=B]]\n[[A=B]]", 0.0, Status.INFRA_ERROR),
+        ("[[A=B]] but unclear", 0.0, Status.INFRA_ERROR),
+        ("<think>unfinished [[A=B]]", 0.0, Status.INFRA_ERROR),
+        ("", 0.0, Status.INFRA_ERROR),
+    ],
+)
+def test_configured_judge_labels_on_real_http_boundary(tmp_path, fake_judge, reply, reward, status):
+    fake_judge.replies = [reply]
+    workspace = _workspace(tmp_path, "candidate {reference}")
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(_label_spec()))
+    result = run(spec_path, workspace)
+    assert result.status is status
+    assert result.reward == reward
+    if status is Status.SCORED:
+        assert result.detail["completion"] == reply
+    assert fake_judge.requests[0]["messages"] == [
+        {"role": "system", "content": "Compare reference answer against candidate {reference} for trusted question."},
+        {"role": "user", "content": "A: reference answer\nB: candidate {reference}"},
+    ]
+
+
+@pytest.mark.parametrize("reason", ["length", "content_filter", "tool_calls", None])
+def test_configured_judge_incomplete_score_cannot_pass(tmp_path, fake_judge, reason):
+    fake_judge.replies = ["[[A=B]]"]
+    fake_judge.finish_reason = reason
+    _workspace(tmp_path, "candidate")
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(_label_spec()))
+    result = run(spec_path, tmp_path)
+    assert result.status is Status.INFRA_ERROR
+    assert result.reward == 0.0
+
+
+def test_configured_judge_only_retries_incomplete_completion_budget(tmp_path, fake_judge):
+    fake_judge.replies = ["[[A=B]]", "[[A!=B]]"]
+    fake_judge.finish_reasons = ["length", "stop"]
+    _workspace(tmp_path, "candidate")
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(_label_spec(incomplete_retry_tokens=16384)))
+    result = run(spec_path, tmp_path)
+    assert result.status is Status.SCORED
+    assert result.reward == 0.0
+    assert [request["max_completion_tokens"] for request in fake_judge.requests] == [8192, 16384]
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"references": ()},
+        {"references": ("",)},
+        {"references": ("", "reference")},
+        {"prompt_template": "{unknown}"},
+        {"system_prompt": "", "prompt_template": "{candidate}"},
+        {"label_scores": {}},
+        {"label_scores": {"[[A=B]]": True}},
+        {"label_scores": {"[[A=B]]": 1.5}},
+        {"label_scores": {"": 1.0}},
+        {"request_timeout": -1.0},
+        {"request_timeout": float("inf")},
+        {"incomplete_retry_tokens": 8192},
+    ],
+)
+def test_configured_judge_invalid_contract_never_calls_model(tmp_path, fake_judge, overrides):
+    _workspace(tmp_path, "candidate")
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(_label_spec(**overrides)))
+    result = run(spec_path, tmp_path)
+    assert result.status is Status.INVALID_TASK
+    assert result.reward == 0.0
+    assert fake_judge.requests == []
+
+
+def test_configured_judge_http_failure_cannot_use_positive_body(tmp_path, fake_judge):
+    fake_judge.http_status = 500
+    fake_judge.replies = ["[[A=B]]"]
+    _workspace(tmp_path, "candidate")
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(_label_spec()))
+    result = run(spec_path, tmp_path)
+    assert result.status is Status.INFRA_ERROR
+    assert result.reward == 0.0
+    assert len(fake_judge.requests) == 1
+
+
+@pytest.mark.parametrize(
+    "message_fields",
+    [
+        {"tool_calls": [{"id": "call_1", "type": "function", "function": {"name": "tool", "arguments": "{}"}}]},
+        {"function_call": {"name": "tool", "arguments": "{}"}},
+        {"refusal": "Cannot judge this answer."},
+    ],
+)
+def test_configured_judge_rejects_positive_text_with_structured_refusal(tmp_path, fake_judge, message_fields):
+    fake_judge.replies = ["[[A=B]]"]
+    fake_judge.message_fields = message_fields
+    workspace = _workspace(tmp_path, "candidate")
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(_label_spec()))
+    result = run(spec_path, workspace)
+    assert (result.status, result.reward) == (Status.INFRA_ERROR, 0.0)
+
+
+@pytest.mark.parametrize(
+    "overrides", [{"system_prompt": None}, {"prompt_template": 1}, {"question": []}, {"references": (1,)}]
+)
+def test_direct_configured_judge_rejects_nontext_contract(tmp_path, fake_judge, overrides):
+    workspace = _workspace(tmp_path, "candidate")
+    with pytest.raises(grade_judge.InvalidTask):
+        grade_judge.grade(_label_spec(**overrides), tmp_path, workspace)
+    assert fake_judge.requests == []
+
+
+def test_judge_positional_output_argument_preserves_public_constructor():
+    spec = JudgeSpec((), (), "", "", (), "reference", "", True, 120.0, "custom-answer.txt")
+    assert spec.output == "custom-answer.txt"
+    assert spec.system_prompt == ""
