@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
+import os
+from pathlib import Path
 
 import pytest
 
@@ -52,4 +54,29 @@ def test_harbor_answer_cli_removes_prior_reward_after_candidate_read_failure(tmp
     candidate.write_bytes(b"\xff")
     assert main(["aime", str(expected), str(candidate), "--logs-dir", str(logs)]) == 0
     assert json.loads((logs / "verdict.json").read_text())["status"] == "infra_error"
+    assert not (logs / "reward.txt").exists()
+
+
+def test_harbor_answer_cli_rejects_candidate_alias_to_protected_reference(tmp_path: Path) -> None:
+    expected = tmp_path / "expected_answer.txt"
+    candidate = tmp_path / "answer.txt"
+    logs = tmp_path / "logs"
+    expected.write_text("New York")
+    candidate.symlink_to(expected)
+
+    assert main(["gaia", str(expected), str(candidate), "--logs-dir", str(logs)]) == 0
+    verdict = json.loads((logs / "verdict.json").read_text())
+    assert (verdict["status"], verdict["reward"]) == ("scored", 0.0)
+    assert (logs / "reward.txt").read_text().strip() == "0.0"
+
+    candidate.unlink()
+    os.mkfifo(candidate)
+    assert main(["gaia", str(expected), str(candidate), "--logs-dir", str(logs)]) == 0
+    verdict = json.loads((logs / "verdict.json").read_text())
+    assert (verdict["status"], verdict["reward"]) == ("scored", 0.0)
+
+    expected.unlink()
+    expected.symlink_to(candidate)
+    assert main(["gaia", str(expected), str(candidate), "--logs-dir", str(logs)]) == 0
+    assert json.loads((logs / "verdict.json").read_text())["status"] == "invalid_task"
     assert not (logs / "reward.txt").exists()

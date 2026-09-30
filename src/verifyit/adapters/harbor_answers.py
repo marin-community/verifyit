@@ -4,8 +4,11 @@
 """Harbor answer-file clients for existing exact and MCQ primitives."""
 
 import argparse
+import errno
 import json
+import os
 import re
+import stat
 from pathlib import Path
 
 from verifyit.adapters.skyrl import grade_literal_candidate
@@ -17,6 +20,28 @@ SAT_MARKER = re.compile(r"\[(SAT|UNSAT)\]")
 ASCII_LOWER = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")
 ASCII_UPPER = str.maketrans("abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 ASCII_SPACE = " \t\r\n\v\f"
+MAX_ANSWER_BYTES = 1_000_000
+
+
+def _read_regular_text(path: Path) -> str:
+    """Reject redirected and special files at the Harbor artifact boundary."""
+    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        descriptor = os.open(
+            path.name,
+            os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
+            dir_fd=directory,
+        )
+    finally:
+        os.close(directory)
+    with os.fdopen(descriptor, "rb") as source:
+        info = os.fstat(source.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_ANSWER_BYTES:
+            raise ValueError("answer is not a bounded regular file")
+        payload = source.read(MAX_ANSWER_BYTES + 1)
+    if len(payload) > MAX_ANSWER_BYTES:
+        raise ValueError("answer exceeds the size limit")
+    return payload.decode()
 
 
 def grade_answer(mode: str, expected: str, candidate: str | None) -> Reward:
@@ -44,10 +69,14 @@ def grade_answer(mode: str, expected: str, candidate: str | None) -> Reward:
 def grade_files(mode: str, expected_path: Path, candidate_path: Path) -> Reward:
     """Read protected task reference and candidate output with distinct failure statuses."""
     try:
-        expected = expected_path.read_text()
+        expected = _read_regular_text(expected_path)
     except FileNotFoundError as error:
         return invalid_task(f"missing expected answer: {error.filename}")
-    except (OSError, UnicodeError) as error:
+    except (UnicodeError, ValueError) as error:
+        return invalid_task(f"invalid expected answer: {error}")
+    except OSError as error:
+        if error.errno in (errno.ELOOP, errno.ENOTDIR):
+            return invalid_task(f"invalid expected answer: {error}")
         return infra_error(f"cannot read expected answer: {error}")
     if mode == "satbench":
         try:
@@ -59,10 +88,16 @@ def grade_files(mode: str, expected_path: Path, candidate_path: Path) -> Reward:
             return invalid_task("SATBench expected answer must be a string")
         expected = label
     try:
-        candidate = candidate_path.read_text()
+        candidate = _read_regular_text(candidate_path)
     except FileNotFoundError:
         candidate = None
-    except (OSError, UnicodeError) as error:
+    except UnicodeError as error:
+        return infra_error(f"cannot read candidate answer: {error}")
+    except ValueError as error:
+        return scored(0.0, reason="invalid_answer_file", error=str(error))
+    except OSError as error:
+        if error.errno in (errno.ELOOP, errno.ENOTDIR, errno.ENXIO):
+            return scored(0.0, reason="invalid_answer_file", error=str(error))
         return infra_error(f"cannot read candidate answer: {error}")
     try:
         if candidate is None and mode == "gaia":
