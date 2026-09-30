@@ -21,8 +21,7 @@ def native_task(tmp_path, monkeypatch):
     logs.mkdir()
     monkeypatch.setenv("VERIFYIT_NATIVE_LOGS_DIR", str(logs))
     (tests / "native_bridge.py").write_text(
-        "from verifyit.adapters.harbor_runtime import main\n"
-        "raise SystemExit(main(['test.sh']))\n"
+        "from verifyit.adapters.harbor_runtime import main\n" "raise SystemExit(main(['test.sh']))\n"
     )
     (tests / "verifier.toml").write_text(
         render_spec(ScriptSpec(path="native_bridge.py", verdict_file="native-verdict.json"))
@@ -33,10 +32,7 @@ def native_task(tmp_path, monkeypatch):
 def test_native_script_zero_replaces_stale_positive_reward(native_task, tmp_path):
     tests, workspace, logs = native_task
     (logs / "reward.txt").write_text("1")
-    (tests / "test.sh").write_text(
-        "#!/bin/bash\n"
-        'echo 0 > "$VERIFYIT_NATIVE_LOGS_DIR/reward.txt"\n'
-    )
+    (tests / "test.sh").write_text("#!/bin/bash\n" 'echo 0 > "$VERIFYIT_NATIVE_LOGS_DIR/reward.txt"\n')
     reward = run(tests / "verifier.toml", workspace)
     assert (reward.status, reward.reward) == (Status.SCORED, 0.0)
     outer = tmp_path / "outer"
@@ -79,8 +75,7 @@ def test_native_runtime_failure_cannot_reuse_previous_reward(native_task, tmp_pa
 def test_native_json_keeps_named_numeric_metrics(native_task):
     tests, workspace, _ = native_task
     (tests / "test.sh").write_text(
-        "#!/bin/bash\n"
-        'echo \'{"reward":0.5,"pass_rate":0.75}\' > "$VERIFYIT_NATIVE_LOGS_DIR/reward.json"\n'
+        "#!/bin/bash\n" 'echo \'{"reward":0.5,"pass_rate":0.75}\' > "$VERIFYIT_NATIVE_LOGS_DIR/reward.json"\n'
     )
     reward = run(tests / "verifier.toml", workspace)
     assert (reward.status, reward.reward) == (Status.SCORED, 0.5)

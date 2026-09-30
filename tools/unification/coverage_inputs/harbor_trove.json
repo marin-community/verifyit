@@ -1808,16 +1808,19 @@
       "entity_id": "harbor:evoeval",
       "evidence": [
         "docs/unification/harbor_semantics.json#evoeval",
-        "docs/unification/harbor_inventory.json#evoeval"
+        "docs/unification/harbor_inventory.json#evoeval",
+        "integrations/harbor/evoeval-pytest-verifyit.patch",
+        "evidence/e2e/wiring/harbor-answers/evoeval-pytest-image-results.json",
+        "evidence/e2e/wiring/harbor-answers/trace-census.json"
       ],
-      "gap_kind": "pytest_task_client",
-      "implementation_present": false,
+      "gap_kind": "implemented_pytest_client",
+      "implementation_present": true,
       "name": "evoeval",
-      "needed_change": "Generate task-specific PytestSpec with pinned hidden tests, restore/setup/import paths and complete report IDs; preserve native all-pass binary policy instead of substituting partial pass fraction; test the native task environment.",
+      "needed_change": "No missing pytest client integration; validate saved model traces and further dataset tasks before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
-      "reason": "Binary all-pass generated pytest assertions; preserve solution extraction/imports and evolving hidden input cases. Existing PytestSpec can execute preserved assertions, but no adapter emits the required setup/restore/report specification or native binary projection.",
+      "reason": "The generated task emits PytestSpec for its protected test_outputs.py. Existing all-suite policy awards one only when every reported test passes, matching the source binary pytest result.",
       "source_evidence": [
         {
           "functions": [
@@ -1860,8 +1863,8 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "A generated task image matches original test.sh on one positive and one wrong candidate through verifyit CLI and actual Harbor Verifier. Malformed protected-test collection yields infra_error without a reward. No matching saved model trace was found."
     },
     {
       "entity_id": "harbor:featbench",

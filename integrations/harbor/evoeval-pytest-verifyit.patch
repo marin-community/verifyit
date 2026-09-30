@@ -1,0 +1,34 @@
+diff --git a/adapters/evoeval/adapter.py b/adapters/evoeval/adapter.py
+index 288297a..8c68acd 100644
+--- a/adapters/evoeval/adapter.py
++++ b/adapters/evoeval/adapter.py
+@@ -216,6 +216,12 @@ class EvoEvalAdapter(BaseAdapter):
+         test_script = test_script_template.read_text()
+         task_paths.test_path.write_text(test_script)
+         task_paths.test_path.chmod(0o755)
++        (task_paths.tests_dir / "verifier.toml").write_text(
++            'mode = "pytest"\n'
++            'paths = ["/tests/test_outputs.py"]\n'
++            'workspace = "/app"\n'
++            'timeout = 110\n'
++        )
+ 
+         # 6. Generate tests/test_outputs.py
+         test_outputs_py, external_data = self._build_test_outputs_py(
+diff --git a/adapters/evoeval/templates/environment/Dockerfile b/adapters/evoeval/templates/environment/Dockerfile
+index 124955b..669f8c7 100644
+--- a/adapters/evoeval/templates/environment/Dockerfile
++++ b/adapters/evoeval/templates/environment/Dockerfile
+@@ -5,7 +5,10 @@ FROM python:3.13-slim-bookworm
+ 
+ WORKDIR /app
+ 
+-RUN pip install --no-cache-dir pytest
++RUN pip install --no-cache-dir pytest pytest-json-report
+ 
+-CMD ["sh", "-c", "sleep infinity"]
++RUN apt-get update && apt-get install -y --no-install-recommends git \
++    && python -m pip install --no-cache-dir "verifyit @ git+https://github.com/marin-community/verifyit@1dd6292b54dd1c2525a1c1354d49940ba5ba6dbf" \
++    && rm -rf /var/lib/apt/lists/*
+ 
++CMD ["sh", "-c", "sleep infinity"]

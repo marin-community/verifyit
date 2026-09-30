@@ -8,7 +8,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Evalchemy 42 custom benchmarks | 4 native integrations + 3 math hybrids | 35 not integrated (24 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 GSM hybrid | 18 not integrated; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 21 source-patched (14 with selected real traces, 7 without eligible real traces) | 6 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
-| Harbor 87 adapters | 4 exact/MCQ clients + tau3 structured native-runtime bridge | 82 not integrated; tau3 retains native evaluator |
+| Harbor 87 adapters | 5 exact/MCQ/pytest clients + tau3 structured native-runtime bridge | 81 not integrated; tau3 retains native evaluator |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
@@ -146,7 +146,7 @@ The two external objectives are not correctness verifiers:
 
 ## Harbor
 
-The 82 unwired adapters are named individually. Four answer-file clients now invoke exact or MCQ grading. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; four primitive clients are now implemented.
+The 81 unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval now invokes the existing all-suite pytest route. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; five primitive clients are now implemented.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
@@ -178,7 +178,6 @@ The 82 unwired adapters are named individually. Four answer-file clients now inv
 | devopsgym | not_integrated | script | Task-specific executable test script binary exit outcome; retain services, runtime state and per-task checks. Add a structured ScriptSpec producer around adapters/devopsgym/template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary. |
 | dolci | not_integrated | math, pytest, stdio, ifeval | grade.py routes dataset domain math equivalence, function assertions, stdin/stdout cases and extended IFEval registry; preserve extraction and extension constraint IDs. Port domain dispatch to math/function assertions/stdio/IFEval with original extraction; retain or explicitly register extended IFEval constraint IDs absent from standard registry. |
 | ds1000 | not_integrated | script | run_test.py executes task-provided test harness for Python data-science code after completion extraction; retain context and library-specific semantic tests. Add a structured ScriptSpec producer around adapters/ds1000/template/tests/run_test.py preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary. |
-| evoeval | not_integrated | pytest | Binary all-pass generated pytest assertions; preserve solution extraction/imports and evolving hidden input cases. Generate task-specific PytestSpec with pinned hidden tests, restore/setup/import paths and complete report IDs; preserve native all-pass binary policy instead of substituting partial pass fraction; test the native task environment. |
 | featbench | not_integrated | pytest, script | SWE-bench-style generated eval script plus original test-output parser and protected FAIL_TO_PASS/PASS_TO_PASS; pytest route when node IDs/report available, parser fallback script. Produce stable required FAIL_TO_PASS/PASS_TO_PASS identities from the original eval script/parser; use pytest only for actual pytest reports and retain parser-based runtime for other harnesses. |
 | featurebench | not_integrated | pytest, script | Requires non-test code changes and restored lv1/lv2 test files then original parser; preserve patch guard and protected suites outside pytest primitive. Implement non-test-code-change guard, restore lv1/lv2 test files, then parse original outcomes with canonical protected IDs; primitive pytest grading alone does not enforce the patch guard. |
 | financeagent | not_integrated | judge | Exact-answer short circuit followed by model judge; retain question/expected prompt and configured judge. Compose the source exact short circuit and its question/expected-answer judge prompt, preserving configured model/endpoint and unavailable-judge errors. |
@@ -233,11 +232,12 @@ The 82 unwired adapters are named individually. Four answer-file clients now inv
 | webgen_bench | not_integrated | script | WebVoyager/browser multimodal UI judge writes reward; preserve interactive browser artifacts and model evaluation prompts, cannot reduce to file schema. Retain browser state/screenshots and native WebVoyager judge invocation through a structured script client; current JudgeSpec answer-text interface cannot replace interactive multimodal evidence. |
 | widesearch | not_integrated | script | Table matching uses per-cell exact/URL/numeric/date/model comparators and row/item F1; primary reward=f1_by_item with named metrics JSON, explicit reward_key required. Add a structured ScriptSpec producer around adapters/widesearch/template/tests/evaluate.py, adapters/widesearch/template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary. |
 
-### Wired exact and MCQ clients
+### Wired exact, MCQ and pytest clients
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
 | aime | native_route_available | exact | The generated script strips the whole answer and compares the decimal reference with exact grading; boxed extraction is never applied. No missing client integration; validate model-run traces and each task image before wider deployment. |
+| evoeval | native_route_available | pytest | The generated task emits PytestSpec for its protected test_outputs.py. No missing pytest client integration; validate saved model traces and further dataset tasks before wider deployment. |
 | gaia | native_route_available | exact | The generated script removes newlines, lowercases ASCII letters and trims outer whitespace on both files before exact grading. No missing client integration; validate model-run traces and each task image before wider deployment. |
 | gpqa-diamond | native_route_available | mcq | The generated script removes whitespace and uppercases the full answer before strict A-D MCQ grading. No missing client integration; validate model-run traces and each task image before wider deployment. |
 | satbench | native_route_available | exact | The generated script takes the last case-sensitive [SAT] or [UNSAT] marker and grades that label exactly. No missing client integration; validate model-run traces and each task image before wider deployment. |
@@ -267,6 +267,8 @@ These seven tracker datasets are separate from the 87 adapter census. Missing wo
 Harness 908 retained-runtime configurations have source/evaluator fixture validation, without matching saved tracker runs. Harness 11,091 static-eligible configurations have implemented guards and representative source parity, but only PIQA/Winogrande/BoolQ have full selected real-run replays. The new 250 have source API and evaluator fixture validation without matching saved model traces. Evalchemy MMLUPro/GPQADiamond and AIME24/MATH500/GSM override have real replay evidence. AIW/GSM8KPerturbed/AIME25 have source parity but no validated tracker links. NQ-Open/TriviaQA source exact routes lack full dataset replay.
 
 Harbor AIME, GAIA, GPQA Diamond and SATBench match 12 original-source task-script cases using actual patched CLI calls. One generated GAIA image ran two candidate cases with verifyit installed from the exact local API commit. The frozen eval-policy tracker and local run-manifest census have no matching saved model traces. The other three task images have not been built and run.
+
+Harbor EvoEval's generated PytestSpec preserves the original binary all-tests policy. A generated task image matched original test.sh, direct verifyit CLI and the actual Harbor Verifier for one passing and one failing candidate; malformed protected-test collection produced infra_error and removed stale reward output. No matching saved model trace was available.
 
 SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Seven patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, two dormant QA APIs and legacy text2sql. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
 

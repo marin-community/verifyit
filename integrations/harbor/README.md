@@ -13,6 +13,18 @@ unpublished remote install in that image. The other three task images and
 matching saved model traces have not been validated. See
 `evidence/e2e/wiring/harbor-answers/` for commands, hashes and verdicts.
 
+Apply `evoeval-pytest-verifyit.patch` after the Harbor dispatcher patch. The
+generated EvoEval task declares `PytestSpec` over its protected test file;
+verifyit's existing all-suite rule matches the source binary pytest result.
+The task image installs `pytest-json-report` and verifyit
+`1dd6292b54dd1c2525a1c1354d49940ba5ba6dbf`. A wheel built from that exact
+local commit replaced only the unpublished remote install during image proof.
+The generated image matched source test.sh, direct verifyit CLI and Harbor's
+Verifier on one passing and one failing candidate. A malformed protected test
+produced `infra_error` without a reward file. No matching saved model trace was
+available. The reusable ScriptSpec bridge in that API commit is for task scripts
+whose native reward policy cannot be represented by pytest directly.
+
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
 required by each task's `tests/verifier.toml` inside the verifier image. The

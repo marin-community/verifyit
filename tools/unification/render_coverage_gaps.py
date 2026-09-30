@@ -51,7 +51,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Evalchemy 42 custom benchmarks | 4 native integrations + 3 math hybrids | 35 not integrated (24 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 GSM hybrid | 18 not integrated; plus 1 orchestration group |
 SKYRL_SUMMARY_ROW
-| Harbor 87 adapters | 4 exact/MCQ clients + tau3 structured native-runtime bridge | 82 not integrated; tau3 retains native evaluator |
+| Harbor 87 adapters | 5 exact/MCQ/pytest clients + tau3 structured native-runtime bridge | 81 not integrated; tau3 retains native evaluator |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
@@ -137,10 +137,10 @@ text += "\n\nThe two external objectives are not correctness verifiers:\n\n" + t
     "MarinSkyRL", {"not_a_correctness_verifier"}
 )
 text += (
-    "\n\n## Harbor\n\nThe 82 unwired adapters are named individually. Four answer-file clients now invoke exact or MCQ grading. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; four primitive clients are now implemented.\n\n"
+    "\n\n## Harbor\n\nThe 81 unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval now invokes the existing all-suite pytest route. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; five primitive clients are now implemented.\n\n"
     + table("harbor", {"not_integrated"})
 )
-text += "\n\n### Wired exact and MCQ clients\n\n" + table("harbor", {"native_route_available"})
+text += "\n\n### Wired exact, MCQ and pytest clients\n\n" + table("harbor", {"native_route_available"})
 text += "\n\n### Retained native evaluator\n\n" + table("harbor", {"native_fallback"})
 text += (
     "\n\n### Additional tracker replay requirements\n\nThese seven tracker datasets are separate from the 87 adapter census. Missing workspaces/provenance are artifact gaps, not unsupported verifier modes.\n\n"
@@ -153,6 +153,8 @@ text += """
 Harness 908 retained-runtime configurations have source/evaluator fixture validation, without matching saved tracker runs. Harness 11,091 static-eligible configurations have implemented guards and representative source parity, but only PIQA/Winogrande/BoolQ have full selected real-run replays. The new 250 have source API and evaluator fixture validation without matching saved model traces. Evalchemy MMLUPro/GPQADiamond and AIME24/MATH500/GSM override have real replay evidence. AIW/GSM8KPerturbed/AIME25 have source parity but no validated tracker links. NQ-Open/TriviaQA source exact routes lack full dataset replay.
 
 Harbor AIME, GAIA, GPQA Diamond and SATBench match 12 original-source task-script cases using actual patched CLI calls. One generated GAIA image ran two candidate cases with verifyit installed from the exact local API commit. The frozen eval-policy tracker and local run-manifest census have no matching saved model traces. The other three task images have not been built and run.
+
+Harbor EvoEval's generated PytestSpec preserves the original binary all-tests policy. A generated task image matched original test.sh, direct verifyit CLI and the actual Harbor Verifier for one passing and one failing candidate; malformed protected-test collection produced infra_error and removed stale reward output. No matching saved model trace was available.
 
 SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Seven patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, two dormant QA APIs and legacy text2sql. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
 
