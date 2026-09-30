@@ -50,6 +50,6 @@ def grade(spec: ReasoningGymSpec, tests_dir: Path, workspace: Path) -> Reward:
         score = score_answer(answer, entry)
     except Exception as error:
         return scored(0.0, reason="scorer_error", error=f"{type(error).__name__}: {error}")
-    if not isinstance(score, int | float):
+    if isinstance(score, bool) or not isinstance(score, int | float):
         raise TypeError(f"reasoning-gym scorer for {spec.dataset} returned {type(score).__name__}")
     return scored(float(score), dataset=spec.dataset, answer=answer[:CANDIDATE_DETAIL_CHARS])

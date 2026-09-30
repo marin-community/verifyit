@@ -49,6 +49,19 @@ def test_document_matching_the_schema_scores_one(tests_dir, workspace):
     assert (reward.reward, reward.status) == (1.0, Status.SCORED)
 
 
+def test_decoded_candidate_uses_same_schema_contract_as_file_grade(tests_dir, workspace):
+    for candidate, expected_reward in ((ORDER, 1.0), ({**ORDER, "quantity": "three"}, 0.0)):
+        answer(workspace, json.dumps(candidate))
+        direct = grade_json_schema.grade_json_schema_candidate(SCHEMA, candidate)
+        from_file = grade_json_schema.grade(JsonSchemaSpec(), tests_dir, workspace)
+        assert direct.reward == expected_reward
+        assert (direct.reward, direct.status, direct.detail) == (
+            from_file.reward,
+            from_file.status,
+            from_file.detail,
+        )
+
+
 def test_document_inside_a_code_fence_is_unwrapped(tests_dir, workspace):
     answer(workspace, f"Here is the order:\n\n```json\n{json.dumps(ORDER)}\n```\n")
     assert grade_json_schema.grade(JsonSchemaSpec(), tests_dir, workspace).reward == 1.0

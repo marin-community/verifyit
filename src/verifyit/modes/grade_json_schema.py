@@ -64,19 +64,14 @@ def parse_candidate(text: str, candidate_format: SchemaFormat) -> Any:
     return stringify_dates(document)
 
 
-def grade(spec: JsonSchemaSpec, tests_dir: Path, workspace: Path) -> Reward:
-    schema = load_schema(tests_dir / spec.schema)
-    text = read_output(spec, workspace)
-    if text is None:
-        return scored(0.0, reason="no_output")
+def grade_json_schema_candidate(schema: dict, instance: Any) -> Reward:
+    """Validate an already decoded candidate against a JSON Schema."""
     try:
-        instance = parse_candidate(unwrap_fence(text), spec.format)
-    except (ValueError, yaml.YAMLError) as error:
-        return scored(0.0, reason="parse_error", error=str(error))
-
+        validator_for(schema).check_schema(schema)
+    except SchemaError as error:
+        raise InvalidTask(f"invalid JSON Schema: {error.message}") from error
     validator_class = validator_for(schema)
-    # pyrefly: ignore[bad-instantiation, missing-argument]  # validator_for returns a concrete
-    # validator class; jsonschema types it as the Validator protocol.
+    # pyrefly: ignore[bad-instantiation, missing-argument]  # validator_for returns a concrete validator.
     validator = validator_class(schema)
     errors = sorted(validator.iter_errors(instance), key=lambda error: [str(part) for part in error.path])
     if not errors:
@@ -89,3 +84,16 @@ def grade(spec: JsonSchemaSpec, tests_dir: Path, workspace: Path) -> Reward:
         path="/".join(str(part) for part in first.path),
         error=first.message,
     )
+
+
+def grade(spec: JsonSchemaSpec, tests_dir: Path, workspace: Path) -> Reward:
+    schema = load_schema(tests_dir / spec.schema)
+    text = read_output(spec, workspace)
+    if text is None:
+        return scored(0.0, reason="no_output")
+    try:
+        instance = parse_candidate(unwrap_fence(text), spec.format)
+    except (ValueError, yaml.YAMLError) as error:
+        return scored(0.0, reason="parse_error", error=str(error))
+
+    return grade_json_schema_candidate(schema, instance)

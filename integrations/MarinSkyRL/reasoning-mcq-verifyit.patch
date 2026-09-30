@@ -1,0 +1,265 @@
+diff --git a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py
+index 703aeac..99d15a9 100644
+--- a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py
++++ b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py
+@@ -76,6 +76,7 @@ class NemotronUltraEnv(BaseTextEnv):
+ 
+     def __init__(self, env_config: DictConfig, extras: dict[str, Any] | None = None):
+         super().__init__()
++        self.verifyit_enabled = bool(env_config.get("verifyit_enabled", False))
+         self.grading = NemotronUltraGrading(env_config.get("grading", NemotronUltraGrading.VERIFY))
+         judges = env_config.get("judges", {})
+         general_judge = judges.get("general") if isinstance(judges, Mapping) else None
+@@ -231,10 +232,12 @@ class NemotronUltraEnv(BaseTextEnv):
+                     reset_conversation=[{"role": "user", "content": correction_prompt}],
+                 )
+         elif self.agent in _TOOL_COMPARISON_AGENTS:
+-            reward, category = grade_expected_action(
+-                self.record["expected_action"],
+-                self._assistant_message(action),
+-            )
++            comparator = grade_expected_action
++            if self.verifyit_enabled:
++                from skyrl_gym.envs.nemotron_ultra.tool_comparison_verifyit import grade_expected_action_verifyit
++
++                comparator = grade_expected_action_verifyit
++            reward, category = comparator(self.record["expected_action"], self._assistant_message(action))
+             diagnostics["category"] = category.value
+         elif self.agent == "calendar_simple_agent":
+             reward, reason = grade_calendar(action, self.record["exp_cal_state"])
+@@ -243,7 +246,7 @@ class NemotronUltraEnv(BaseTextEnv):
+             reward, details = grade_format(action, self.record["verifier"])
+             diagnostics.update(details)
+         elif self.agent == "mcqa_simple_agent":
+-            reward, details = grade_mcqa(action, self.record)
++            reward, details = grade_mcqa(action, self.record, verifyit_enabled=self.verifyit_enabled)
+             diagnostics.update(details)
+         elif self.agent in _STRUCTURED_OUTPUT_AGENTS:
+             reward, details = grade_structured_output(action, self.record, self._assistant_message(action))
+@@ -289,7 +292,12 @@ class NemotronUltraEnv(BaseTextEnv):
+                 "metadata": self.record["metadata"],
+             }
+             answer = _extract_reasoning_gym_answer(action)
+-            reward = float(reasoning_gym.get_score_answer_fn(task_name)(answer=answer, entry=entry))
++            if self.verifyit_enabled:
++                from skyrl_gym.envs.verifyit_clients import grade_reasoning_entry
++
++                reward = grade_reasoning_entry(task_name, entry, answer)
++            else:
++                reward = float(reasoning_gym.get_score_answer_fn(task_name)(answer=answer, entry=entry))
+             diagnostics.update({"task_name": task_name, "extracted_answer": answer})
+         else:
+             raise NotImplementedError(f"Nemotron Ultra verifier {self.agent!r} has not been ported")
+diff --git a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/mcqa.py b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/mcqa.py
+index 6f913d4..a8c0284 100644
+--- a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/mcqa.py
++++ b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/mcqa.py
+@@ -100,12 +100,12 @@ def _custom_regex(
+     return None
+ 
+ 
+-def grade_mcqa(text: str, record: dict[str, Any]) -> tuple[float, dict[str, Any]]:
++def grade_mcqa(text: str, record: dict[str, Any], *, verifyit_enabled: bool = False) -> tuple[float, dict[str, Any]]:
+     text = text.strip()
+     options = record.get("options")
+     gold = str(record.get("expected_answer") or "").strip().upper()
+     allowed = _letters(options)
+-    if not text:
++    if not text and not verifyit_enabled:
+         return 0.0, {"expected_answer": gold, "extracted_answer": None}
+     prediction = None
+     template = record.get("template_metadata")
+@@ -132,5 +132,10 @@ def grade_mcqa(text: str, record: dict[str, Any]) -> tuple[float, dict[str, Any]
+         if match := ANSWER_COLON_MD_PATTERN.search(text):
+             candidate = match.group(1).upper()
+             prediction = candidate if candidate in allowed else None
+-    reward = float(bool(prediction and gold and prediction == gold))
++    if verifyit_enabled:
++        from skyrl_gym.envs.verifyit_clients import grade_mcqa_option
++
++        reward = grade_mcqa_option(gold, prediction, allowed)
++    else:
++        reward = float(bool(prediction and gold and prediction == gold))
+     return reward, {"expected_answer": gold, "extracted_answer": prediction}
+diff --git a/skyrl-gym/skyrl_gym/envs/reasoning_gym/env.py b/skyrl-gym/skyrl_gym/envs/reasoning_gym/env.py
+index 562aa4e..0e9a8d0 100644
+--- a/skyrl-gym/skyrl_gym/envs/reasoning_gym/env.py
++++ b/skyrl-gym/skyrl_gym/envs/reasoning_gym/env.py
+@@ -19,6 +19,7 @@ class ReasoningGymEnv(BaseTextEnv):
+ 
+     def __init__(self, env_config: DictConfig, extras: dict[str, Any] | None = None):
+         super().__init__()
++        self.verifyit_enabled = bool(env_config.get("verifyit_enabled", False))
+         reward_model = (extras or {}).get("reward_model")
+         ground_truth = reward_model.get("ground_truth") if isinstance(reward_model, Mapping) else None
+         try:
+@@ -29,11 +30,34 @@ class ReasoningGymEnv(BaseTextEnv):
+ 
+     def step(self, action: str) -> BaseTextEnvStepOutput:
+         if self.ground_truth is None:
++            if self.verifyit_enabled:
++                from skyrl_gym.verification import VerificationResult
++
++                return BaseTextEnvStepOutput(
++                    observations=[],
++                    reward=0.0,
++                    done=True,
++                    metadata={},
++                    verification=VerificationResult.error("invalid Reasoning Gym task"),
++                )
+             return BaseTextEnvStepOutput(
+                 observations=[],
+                 reward=0.0,
+                 done=True,
+                 metadata={"verifier_error": "invalid reward_model.ground_truth"},
+             )
+-        reward = score_response(action, self.ground_truth)
++        try:
++            reward = score_response(action, self.ground_truth, verifyit_enabled=self.verifyit_enabled)
++        except (RuntimeError, ValueError) as error:
++            from skyrl_gym.verification import VerificationResult
++
++            return BaseTextEnvStepOutput(
++                observations=[],
++                reward=0.0,
++                done=True,
++                metadata={},
++                verification=VerificationResult.error(
++                    "verifier failed", diagnostics={"error_type": type(error).__name__}
++                ),
++            )
+         return BaseTextEnvStepOutput(observations=[], reward=reward, done=True, metadata={})
+diff --git a/skyrl-gym/skyrl_gym/envs/reasoning_gym/scoring.py b/skyrl-gym/skyrl_gym/envs/reasoning_gym/scoring.py
+index e267287..7cf6c62 100644
+--- a/skyrl-gym/skyrl_gym/envs/reasoning_gym/scoring.py
++++ b/skyrl-gym/skyrl_gym/envs/reasoning_gym/scoring.py
+@@ -42,8 +42,12 @@ def extract_answer(response: str) -> str:
+     return answer.strip() if marker else response.strip()
+ 
+ 
+-def score_response(response: str, ground_truth: str) -> float:
++def score_response(response: str, ground_truth: str, *, verifyit_enabled: bool = False) -> float:
+     """Score a response's extracted final answer with the generated task's package verifier."""
+     spec = json.loads(normalize_ground_truth(ground_truth))
++    if verifyit_enabled:
++        from skyrl_gym.envs.verifyit_clients import grade_reasoning_entry
++
++        return grade_reasoning_entry(spec["task"], spec["entry"], extract_answer(response))
+     score = reasoning_gym.get_score_answer_fn(spec["task"])(extract_answer(response), spec["entry"])
+     return float(score)
+diff --git a/skyrl-gym/skyrl_gym/envs/verifyit_clients.py b/skyrl-gym/skyrl_gym/envs/verifyit_clients.py
+new file mode 100644
+index 0000000..2261be9
+--- /dev/null
++++ b/skyrl-gym/skyrl_gym/envs/verifyit_clients.py
+@@ -0,0 +1,52 @@
++"""Opt-in clients for existing verifyit graders; source extraction stays in callers."""
++
++from __future__ import annotations
++
++import json
++from pathlib import Path
++from tempfile import TemporaryDirectory
++from typing import Any
++
++
++def _grade_reasoning_entry(task: str, entry: dict[str, Any], answer: str) -> float:
++    from verifyit.grade import Status, run
++    from verifyit.spec import ReasoningGymSpec, render_spec
++
++    with TemporaryDirectory(prefix="skyrl-verifyit-") as directory:
++        root = Path(directory)
++        (root / "entry.json").write_text(json.dumps(entry, allow_nan=False))
++        (root / "answer.txt").write_text(answer)
++        spec = root / "verifier.toml"
++        spec.write_text(render_spec(ReasoningGymSpec(dataset=task)))
++        verdict = run(spec, root)
++
++    if verdict.status is not Status.SCORED or verdict.detail.get("reason") == "scorer_error":
++        raise RuntimeError("Reasoning Gym verification failed")
++    return verdict.reward
++
++
++def _grade_mcqa_option(gold: str, prediction: str | None, allowed: set[str]) -> float:
++    from verifyit.modes.grade_mcq import grade_mcq_candidate
++    from verifyit.spec import McqSpec
++
++    # Map a possibly noncontiguous source option set independently to a contiguous core set.
++    ordered = sorted(allowed)
++    if gold not in ordered or not ordered or len(ordered) > 26:
++        raise ValueError("MCQA reference is outside declared options")
++    expected = chr(ord("A") + ordered.index(gold))
++    candidate = chr(ord("A") + ordered.index(prediction)) if prediction in ordered else ""
++    return grade_mcq_candidate(McqSpec(expected=expected, options=len(ordered)), candidate).reward
++
++
++def grade_reasoning_entry(task: str, entry: dict[str, Any], answer: str) -> float:
++    try:
++        return _grade_reasoning_entry(task, entry, answer)
++    except (ImportError, OSError, TypeError, ValueError, RuntimeError) as error:
++        raise RuntimeError("Reasoning Gym verification failed") from error
++
++
++def grade_mcqa_option(gold: str, prediction: str | None, allowed: set[str]) -> float:
++    try:
++        return _grade_mcqa_option(gold, prediction, allowed)
++    except (ImportError, OSError, TypeError, ValueError, RuntimeError) as error:
++        raise RuntimeError("MCQA verification failed") from error
+diff --git a/skyrl-gym/tests/test_verifyit_reasoning_mcqa.py b/skyrl-gym/tests/test_verifyit_reasoning_mcqa.py
+new file mode 100644
+index 0000000..d331e01
+--- /dev/null
++++ b/skyrl-gym/tests/test_verifyit_reasoning_mcqa.py
+@@ -0,0 +1,52 @@
++"""Public source clients preserve extraction, partial scores and failure boundaries."""
++
++import json
++
++import pytest
++from omegaconf import OmegaConf
++
++import skyrl_gym
++from skyrl_gym.envs.nemotron_ultra.mcqa import grade_mcqa
++
++
++@pytest.mark.parametrize("response", ["Answer: 42", "Answer: wrong\nAnswer: x = 42", "42"])
++def test_reasoning_client_preserves_native_fractional_score(response):
++    entry = {"answer": "42", "metadata": {"source_dataset": "simple_equations"}}
++    extras = {"reward_model": {"ground_truth": {"task": "simple_equations", "entry": entry}}}
++    native = skyrl_gym.make("reasoning_gym", env_config=OmegaConf.create({}), extras=extras)
++    client = skyrl_gym.make("reasoning_gym", env_config=OmegaConf.create({"verifyit_enabled": True}), extras=extras)
++    assert client.step(response)["reward"] == native.step(response)["reward"]
++
++
++@pytest.mark.parametrize(
++    "mode,response",
++    [
++        ("strict_single_letter_boxed", r"\boxed{Z}"),
++        ("lenient_boxed", r"\boxed{zebra}"),
++        ("lenient_answer_colon", "Answer: zebra"),
++        ("lenient_answer_colon_md", "**Answer:** Z"),
++    ],
++)
++def test_mcqa_client_preserves_source_extraction_noncontiguous_options(mode, response):
++    record = {"options": [{"A": "apple"}, {"Z": "zebra"}], "expected_answer": "Z", "grading_mode": mode}
++    assert grade_mcqa(response, record, verifyit_enabled=True) == grade_mcqa(response, record)
++    assert grade_mcqa(response, record, verifyit_enabled=True)[0] == 1.0
++    assert grade_mcqa(response.replace("Z", "B").replace("zebra", "apple"), record, verifyit_enabled=True)[0] == 0
++
++
++def test_invalid_reference_does_not_become_successful_verification():
++    record = {"options": [{"A": "apple"}], "expected_answer": "Z"}
++    extras = {
++        "extra_info": {
++            "nemotron_ultra": {
++                "route": "skyrl_gym",
++                "agent": "mcqa_simple_agent",
++                "record_json": json.dumps(record),
++                "request_json": "{}",
++            }
++        }
++    }
++    env = skyrl_gym.make("nemotron_ultra", env_config=OmegaConf.create({"verifyit_enabled": True}), extras=extras)
++    result = env.step(r"\boxed{Z}")
++    assert result["reward"] == 0
++    assert result["verification"].score is None

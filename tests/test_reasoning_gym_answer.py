@@ -116,7 +116,7 @@ def test_unusable_entry_file_is_an_invalid_task(tmp_path, workspace, entry_text,
         grade(tests_dir, workspace)
 
 
-@pytest.mark.parametrize("score", [float("nan"), float("inf"), -0.1, 1.1])
+@pytest.mark.parametrize("score", [True, float("nan"), float("inf"), -0.1, 1.1])
 def test_broken_external_scorer_cannot_persist_an_invalid_reward(tests_dir, workspace, monkeypatch, score):
     monkeypatch.setattr(
         grade_reasoning_gym.reasoning_gym, "get_score_answer_fn", lambda name: lambda response, entry: score

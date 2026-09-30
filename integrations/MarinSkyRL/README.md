@@ -1,9 +1,11 @@
 # MarinSkyRL integration
 
-Source pin: `91c7a60e85e31b6933ab0ee732125b3338e82b89`. Apply the MCQ and
-arithmetic and client-boundaries patches, then the dependency pin patch. The latter pins the local
+Source pin: `91c7a60e85e31b6933ab0ee732125b3338e82b89`. Apply the MCQ,
+arithmetic and client-boundaries patches, then `reasoning-mcq-verifyit.patch`,
+`tool-comparison-verifyit.patch` and `qa-verifyit.patch`. Apply the dependency pin
+patch last. The latter pins the local
 verifyit implementation checkpoint and raises the standalone gym Python floor
-to >=3.11. The source SHA must exist on the remote before external
+to >=3.11 and includes the `schema` and `reasoning-gym` extras. The source SHA must exist on the remote before external
 installation. Do not silently replace a pinned Git dependency with a floating
 branch. Regenerate fork locks in the fork's supported environment before use.
 
@@ -26,3 +28,11 @@ results and invoked installed verifyit. The [mapping](../../docs/unification/sky
 records population scope, one archive producer mismatch, and missing route traces.
 GSM8K strict/final-line rejection now calls the client before source reward projection,
 so missing markers remain zero while still producing a verifyit verdict.
+
+The [coverage report](../../docs/unification/coverage-gaps.md) tracks eight later
+opt-in cutovers. Reasoning Gym and Nemotron MCQA matched nine selected real
+traces; the two tool-comparison routes with saved SkyRL Gym traces matched six.
+The SWE pivot tool route and two exported QA APIs have no eligible real trace.
+The tool comparator uses exact, numeric and JSON-schema primitives for typed
+arguments and message actions. It rejects a boolean candidate for an integer
+reference, which the source comparator accepts through Python's bool/int equality.

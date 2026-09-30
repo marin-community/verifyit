@@ -8,20 +8,20 @@
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 9,
-    "pending_scoring_routes": 37,
-    "pending_active_scoring_routes": 28,
-    "pending_dormant_scoring_routes": 9,
-    "zero_core_extension_unwired_routes": 15,
+    "source_patched_routes": 17,
+    "pending_scoring_routes": 29,
+    "pending_active_scoring_routes": 22,
+    "pending_dormant_scoring_routes": 7,
+    "zero_core_extension_unwired_routes": 7,
     "existing_class_behavior_gap_routes": 19,
-    "real_replayed_source_routes": 6,
-    "implemented_routes_missing_real_traces": 3,
+    "real_replayed_source_routes": 11,
+    "implemented_routes_missing_real_traces": 6,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 6,
-      "implemented_not_validated": 3,
-      "not_integrated": 18,
+      "implemented_validated": 11,
+      "implemented_not_validated": 6,
+      "not_integrated": 10,
       "capability_gap": 19,
       "not_a_correctness_verifier": 2
     },
@@ -35,7 +35,8 @@
     "Existing prepared math API is implemented; remaining math semantics require source parity/comparator-policy proof. Historic docs proposal to expose this API is stale and not counted as missing.",
     "Native source scorers on unpatched routes are native-only runtime, not hybrid fallback inside an implemented verifyit cutover.",
     "Calendar is a task-owned deterministic ScriptSpec harness integration, not an IFEval capability gap; no new class option is required.",
-    "Inherited23 extension-strategy routes split into19 concrete existing-class behavior gaps,1calendar harness wiring case and3 dormant math parity-audit cases."
+    "Inherited23 extension-strategy routes split into19 concrete existing-class behavior gaps,1calendar harness wiring case and3 dormant math parity-audit cases.",
+    "Eight additional opt-in cutovers comprise two Reasoning Gym routes, Nemotron MCQA, three tool-comparison routes, and two dormant exported QA APIs. Five have selected real framework traces; pivot and QA lack eligible trace links. Typed tool comparison intentionally rejects JSON boolean for expected integer despite source Python bool/int equality."
   ],
   "real_trace_replay": {
     "verified_population": 5460,
@@ -517,20 +518,20 @@
     },
     {
       "id": "reasoning_gym",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "status": "implemented_validated",
+      "not_covered_reason": "Implemented opt-in source cutover and replayed saved framework executions through verifyit.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_cutover",
       "native_fallback_in_cutover": false,
       "contract_family": "reasoning-gym",
       "existing_primitive_candidate": [
         "reasoning-gym"
       ],
       "resolution_strategy": "client_composition",
-      "needed_change": "Exact task/entry port plus source extraction; package version pin and scorer availability.",
-      "validation_gap": null,
+      "needed_change": "No known scorer change; retain source extraction and orchestration.",
+      "validation_gap": "Selected real traces validated; complete dataset execution and deployment remain unvalidated.",
       "source_contract": "Complete task+entry metadata; text after last Answer: marker; task-native fractional scorer.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -542,10 +543,11 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#reasoning-gym",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-reasoning-mcq/comparison.json"
       ],
       "observed_verified_execution_links": 12,
-      "actual_replayed_links": 0,
+      "actual_replayed_links": 3,
       "core_extension_requirement": "none_proposed"
     },
     {
@@ -719,21 +721,22 @@
     },
     {
       "id": "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "status": "implemented_validated",
+      "not_covered_reason": "Implemented opt-in source cutover and replayed saved framework executions through verifyit.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_cutover",
       "native_fallback_in_cutover": false,
       "contract_family": "typed-equality",
       "existing_primitive_candidate": [
         "exact",
-        "numeric"
+        "numeric",
+        "json-schema"
       ],
       "resolution_strategy": "client_composition",
-      "needed_change": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
-      "validation_gap": null,
+      "needed_change": "No known scorer change; retain source extraction and orchestration.",
+      "validation_gap": "Selected real traces validated; complete dataset execution and deployment remain unvalidated.",
       "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -745,29 +748,31 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#typed-equality",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-tools/runs/verifyit-schema-path/summary.json"
       ],
       "observed_verified_execution_links": 9,
-      "actual_replayed_links": 0,
+      "actual_replayed_links": 3,
       "core_extension_requirement": "none_proposed"
     },
     {
       "id": "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "Implemented verifyit client route; no eligible saved framework execution validates this route.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_cutover",
       "native_fallback_in_cutover": false,
       "contract_family": "typed-equality",
       "existing_primitive_candidate": [
         "exact",
-        "numeric"
+        "numeric",
+        "json-schema"
       ],
       "resolution_strategy": "client_composition",
-      "needed_change": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
-      "validation_gap": null,
+      "needed_change": "Run an eligible genuine task through the cutover and compare the source result.",
+      "validation_gap": "The pinned SkyRL Gym trace census has no eligible pivot trace; source dispatch sends pivot rows to Harbor.",
       "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -779,7 +784,8 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#typed-equality",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-tools/trace-results.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
@@ -787,21 +793,22 @@
     },
     {
       "id": "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "status": "implemented_validated",
+      "not_covered_reason": "Implemented opt-in source cutover and replayed saved framework executions through verifyit.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_cutover",
       "native_fallback_in_cutover": false,
       "contract_family": "typed-equality",
       "existing_primitive_candidate": [
         "exact",
-        "numeric"
+        "numeric",
+        "json-schema"
       ],
       "resolution_strategy": "client_composition",
-      "needed_change": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
-      "validation_gap": null,
+      "needed_change": "No known scorer change; retain source extraction and orchestration.",
+      "validation_gap": "Selected real traces validated; complete dataset execution and deployment remain unvalidated.",
       "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -813,10 +820,11 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#typed-equality",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-tools/runs/verifyit-schema-path/summary.json"
       ],
       "observed_verified_execution_links": 9,
-      "actual_replayed_links": 0,
+      "actual_replayed_links": 3,
       "core_extension_requirement": "none_proposed"
     },
     {
@@ -922,20 +930,20 @@
     },
     {
       "id": "nemotron_ultra/mcqa_simple_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "status": "implemented_validated",
+      "not_covered_reason": "Implemented opt-in source cutover and replayed saved framework executions through verifyit.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_cutover",
       "native_fallback_in_cutover": false,
       "contract_family": "mcq",
       "existing_primitive_candidate": [
         "mcq"
       ],
       "resolution_strategy": "client_composition",
-      "needed_change": "Source extraction precedes grade_mcq_candidate; options may be noncontiguous, so validate source allowed set explicitly.",
-      "validation_gap": null,
+      "needed_change": "No known scorer change; retain source extraction and orchestration.",
+      "validation_gap": "Selected real traces validated; complete dataset execution and deployment remain unvalidated.",
       "source_contract": "Allowed options + strict/lenient boxed, option text, Answer colon/markdown, or template regex; Arabic/Bengali/fullwidth normalizations.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -947,10 +955,11 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#mcq",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-reasoning-mcq/comparison.json"
       ],
       "observed_verified_execution_links": 408,
-      "actual_replayed_links": 0,
+      "actual_replayed_links": 3,
       "core_extension_requirement": "none_proposed"
     },
     {
@@ -1426,20 +1435,20 @@
     },
     {
       "id": "nemotron_ultra/reasoning_gym_simple_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired.",
+      "status": "implemented_validated",
+      "not_covered_reason": "Implemented opt-in source cutover and replayed saved framework executions through verifyit.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_cutover",
       "native_fallback_in_cutover": false,
       "contract_family": "reasoning-gym",
       "existing_primitive_candidate": [
         "reasoning-gym"
       ],
       "resolution_strategy": "client_composition",
-      "needed_change": "Preserve final_answer_text and extraction ordering, full metadata.",
-      "validation_gap": null,
+      "needed_change": "No known scorer change; retain source extraction and orchestration.",
+      "validation_gap": "Selected real traces validated; complete dataset execution and deployment remain unvalidated.",
       "source_contract": "Source_dataset task-native scorer; last answer tag, then last box, then text; complete entry.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1451,10 +1460,11 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#reasoning-gym",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-reasoning-mcq/comparison.json"
       ],
       "observed_verified_execution_links": 13,
-      "actual_replayed_links": 0,
+      "actual_replayed_links": 3,
       "core_extension_requirement": "none_proposed"
     },
     {
@@ -1630,20 +1640,20 @@
     },
     {
       "id": "dormant/qa_em",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "Implemented verifyit client route; no eligible saved framework execution validates this route.",
       "active_in_pinned_dispatch": false,
       "dormant": true,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_exported_api",
       "native_fallback_in_cutover": false,
       "contract_family": "qa",
       "existing_primitive_candidate": [
         "exact"
       ],
       "resolution_strategy": "client_composition",
-      "needed_change": "Normalize both sides; explicit accepted alternatives.",
-      "validation_gap": null,
+      "needed_change": "Run an eligible genuine task through the cutover and compare the source result.",
+      "validation_gap": "Exported QA API matches pinned source fixtures, but no eligible saved execution trace exists.",
       "source_contract": "Answer extraction and QA EM target normalization.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1655,7 +1665,8 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#qa",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-qa/api-roundtrips.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
@@ -1729,21 +1740,21 @@
     },
     {
       "id": "dormant/qa_f1",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing primitives can implement this contract, but no source dispatch integration is wired. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "Implemented verifyit client route; no eligible saved framework execution validates this route.",
       "active_in_pinned_dispatch": false,
       "dormant": true,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_exported_api",
       "native_fallback_in_cutover": false,
       "contract_family": "qa",
       "existing_primitive_candidate": [
-        "exact (token leaves)",
-        "client overlap/F1 aggregation"
+        "exact",
+        "token-overlap client"
       ],
       "resolution_strategy": "client_composition",
-      "needed_change": "Fractional token scorer executable; no exact primitive equivalence.",
-      "validation_gap": null,
+      "needed_change": "Run an eligible genuine task through the cutover and compare the source result.",
+      "validation_gap": "Exported QA API matches pinned source fixtures, but no eligible saved execution trace exists.",
       "source_contract": "Token overlap F1 after QA normalization.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1755,7 +1766,8 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#qa",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "evidence/e2e/wiring/skyrl-qa/api-roundtrips.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
