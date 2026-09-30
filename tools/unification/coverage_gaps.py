@@ -10,6 +10,7 @@ from pathlib import Path
 from eval_inventory import resolve_config
 
 from verifyit.adapters.harness_native import native_config_route
+from verifyit.adapters.harness_runtime import corpus_config_profile
 
 CUSTOM = {
     "AMC23": (
@@ -461,6 +462,40 @@ def harness_entities(root, sources):
             )
         else:
             config, _ = resolve_config(sources / "lm-eval-harness" / record["path"])
+            runtime_profile = corpus_config_profile(config)
+            if runtime_profile is not None:
+                entity.update(
+                    status="retained_runtime_available",
+                    kind="task",
+                    reason_id=runtime_profile,
+                    reason=(
+                        "A guarded single-rank ScriptSpec batch executes source process_results and "
+                        "registered corpus aggregators, returning every raw observation and named point metric. "
+                        "This retains source scoring and is not a native correctness projection."
+                    ),
+                    primitive_candidates=["script"],
+                    needed_change=(
+                        "Apply corpus-runtime-verifyit.patch and opt in via TaskManager metadata "
+                        "verifyit_corpus_runtime=true; validate actual dataset records before deployment. "
+                        "Distributed evaluation and unsupported grading overrides remain outside this profile."
+                    ),
+                    validation_status="source_and_evaluator_fixtures_not_saved_trace_validated",
+                    runtime_profile=runtime_profile,
+                    metric_profile=config.get("metric_list"),
+                    output_type=config.get("output_type"),
+                    limitations=[
+                        "single_rank_only",
+                        "default_ConfigurableTask_only",
+                        "finite_JSON_only",
+                        "fixture_only",
+                    ],
+                    evidence=[
+                        "integrations/lm-eval-harness/corpus-runtime-verifyit.patch",
+                        "evidence/e2e/wiring/harness-runtime/evaluator-roundtrip.json",
+                    ],
+                )
+                entities.append(entity)
+                continue
             group, reason, modes = classify_harness(config)
             contracts = callable_contracts(sources / "lm-eval-harness", config)
             entity.update(
@@ -738,7 +773,8 @@ def main():
             )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 1601
+    assert len(harness_gaps) == 693
+    assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 908
     assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11091
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"

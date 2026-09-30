@@ -2,13 +2,22 @@
 
 ## Implemented native routes
 
-Resolved configuration routing now recognizes **10,841 of 12,692 task configurations**:
-8,061 likelihood-choice configurations and 2,780 exact-match configurations. These
-are two scorer contracts, not 10,841 independent implementations. The generated
-[literal eligibility manifest](lm_eval_native_inventory.json) records every task;
-this is static eligibility, not execution of every dataset. The remaining 1,851
-contracts/configurations retain compatibility integration or require further
-client composition. No new verifier category is established as necessary.
+Resolved configuration routing recognizes **11,091 of 12,692 task configurations**:
+8,061 likelihood-choice, 2,785 exact-match, 45 AfriQA exact/F1, 100 MasakhaNER
+span-F1 and 100 MasakhaPOS token-accuracy. The [native eligibility manifest](lm_eval_native_inventory.json)
+records every task; eligibility is not execution of every dataset. AfroBench
+source APIs and actual evaluator fixtures pass, without matching saved model-run traces.
+The POS scoring boundary preserves ordered gold tags and fewshot behavior while
+fixing the original multiple-target path's scalar/aggregator mismatch.
+
+A further **908 configurations** have an opt-in retained-runtime batch integration:
+868 translation corpus profiles and 40 default rolling-likelihood profiles.
+`ScriptSpec` executes the actual source scorer and aggregators; the evaluator consumes
+those point aggregates directly. Named metric scales and raw observations remain
+unchanged, including unbounded perplexity. These single-rank integrations use
+fixture/source validation, not saved-run replay, and do not claim native primitive replacement.
+The remaining **693 configs** have no cutover. The [current coverage register](coverage-gaps.json)
+is authoritative for exact names, options, source evidence and limitations.
 
 `verifyit.adapters.harness_native` routes filtered likelihoods through MCQ (or
 literal exact indices above 26 choices), preserving first-maximum ties and raw,
@@ -145,7 +154,7 @@ The current `score_task` / `aggregate_task` API implements the in-process metric
 preservation/projection portion. The evaluator patch calls this API with actual
 filtered responses. Declarative source identity validation, persisted typed
 artifacts and task-specific failure schemas remain specified work. This distinction
-is recorded per remaining inventory row as `spec-needed`; 10,841 implemented
+is recorded in the current coverage register with specific blockers; 11,091 implemented
 route-eligible configurations are labeled `adapter`, not delegated source equivalence.
 
 Acceptance tests compare actual pinned `ConfigurableTask.process_results` for

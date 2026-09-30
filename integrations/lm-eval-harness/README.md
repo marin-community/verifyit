@@ -45,3 +45,34 @@ An isolated core-only installation from this exact local Git revision was
 validated: completed reasoning-only boxes are accepted, truncated reasoning is
 rejected, and extracted MCQ choices produce the expected scalar score. No remote
 publication or live model endpoint was used.
+
+
+## Retained corpus runtime
+
+Apply `corpus-runtime-verifyit.patch` after `verifyit.patch`. It adds an optional
+single-rank batch route for 868 translation and 40 default rolling-likelihood
+configs. The current dependency pin predates this API: distribution must wait
+until it is updated to the actual implementation checkpoint. Local tests use the
+campaign working tree; no unpublished remote installation is claimed.
+
+Select supported tasks and opt in with `--metadata verifyit_corpus_runtime=true`,
+or `TaskManager(metadata={"verifyit_corpus_runtime": True})`. The actual task
+factory binds its trusted indexed YAML path; unknown grading overrides, inline
+configs and custom classes are rejected. `enable_corpus_runtime(task, trusted_yaml)`
+is also available for explicit task setup. Multi-rank execution is rejected.
+
+The evaluator passes a complete filtered response/document batch as JSON to
+`verifyit.adapters.harness_runtime.score_corpus`. Its `ScriptSpec` subprocess
+loads the matching trusted source modules, constructs datasets from those
+supplied documents without downloads, and executes actual `process_results` and
+registered corpus aggregators. Source module/config SHA256 provenance is retained.
+The evaluator consumes the returned point metrics directly; optional bootstrap
+statistics use the unchanged raw observations. Corpus reward is explicitly zero
+with `retained_runtime` metadata, not a clipped correctness score.
+
+BLEU/CHRF/TER and word/byte perplexity/bits-per-byte before/after evaluator fixtures
+match all named point metrics and observations. Empty candidate translations retain
+source zero-overlap behavior. Empty references/weighting denominators, nonfinite
+samples, producer failures or missing observations abort the entire evaluation
+without a positive aggregate. No matching saved tracker runs were available for
+these families, so this validation does not claim genuine archived replay.
