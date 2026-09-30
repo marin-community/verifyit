@@ -117,6 +117,20 @@ malformed protected evaluator code leaves no reward. Other categories and
 archived candidate workspaces remain unvalidated while AWS SSO is expired.
 Evidence is in `evidence/e2e/wiring/harbor-bfcl/`.
 
+Apply `dabstep-script-verifyit.patch` after the Harbor dispatcher patch. Its
+generated `ScriptSpec` runs the original `test.sh` and protected DABstep scorer
+through the structured runtime bridge. The task image keeps the source Python
+3.12 environment and installs verifyit separately on Python 3.11 from commit
+`27b8c172c454c7c8b4ad32f238186b8d29b0d140`; the bounded image proof
+substitutes a wheel built from that exact local commit for its unpublished Git
+URL. Eleven generated-image cases ran the pinned source script, direct CLI and
+actual Harbor Verifier. Numeric, text and order-independent list answers
+matched source rewards. Nonfinite trusted numbers and punctuation-only trusted
+answers no longer earn source false-positive credit; malformed protected scorer
+code and invalid trusted references leave no reward. Broader task instances and
+saved model-run workspaces remain unvalidated. Evidence is in
+`evidence/e2e/wiring/harbor-dabstep/`.
+
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
 required by each task's `tests/verifier.toml` inside the verifier image. The

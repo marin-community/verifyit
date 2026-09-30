@@ -1221,18 +1221,21 @@
       "entity_id": "harbor:dabstep",
       "evidence": [
         "docs/unification/harbor_semantics.json#dabstep",
-        "docs/unification/harbor_inventory.json#dabstep"
+        "docs/unification/harbor_inventory.json#dabstep",
+        "integrations/harbor/dabstep-script-verifyit.patch",
+        "evidence/e2e/wiring/harbor-dabstep/image-results-branches.json",
+        "evidence/e2e/wiring/harbor-dabstep/manager-image-results-branches.json"
       ],
-      "gap_kind": "typed_answer_dispatch",
-      "implementation_present": false,
+      "gap_kind": "implemented_native_runtime_bridge",
+      "implementation_present": true,
       "name": "dabstep",
-      "needed_change": "Preserve question_scorer type inference, percent/numeric extraction, ordered-list handling and fuzzy-string scoring; only normalized exact/numeric branches map directly to those candidate APIs.",
+      "needed_change": "Validate broader generated tasks and archived model-run workspaces before deployment; the fuzzy and list branches retain the source scorer rather than using a native exact/numeric comparator.",
       "primitive_candidates": [
         "numeric",
         "exact",
         "script"
       ],
-      "reason": "question_scorer routes numeric tolerances/percent extraction, ordered lists and fuzzy strings; exact/numeric only after original type normalization, fuzzy remains script. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "A generated ScriptSpec runs the original DABstep test.sh and protected question_scorer through verifyit's structured native-runtime bridge. Source numeric tolerances, order-independent lists and fuzzy strings remain intact for valid answers; nonfinite numeric and empty-answer source false positives fail closed.",
       "source_evidence": [
         {
           "functions": [
@@ -1254,8 +1257,8 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Eleven bounded generated-image cases ran pinned original test.sh, direct verifyit CLI and actual Harbor Verifier: numeric, text and list positives and negatives plus missing/blank candidates matched; overflowing trusted numbers, malformed protected scorer and punctuation-only trusted references became unscored without a reward. Broader task instances and saved model-run workspaces remain unvalidated."
     },
     {
       "entity_id": "harbor:dacode",
