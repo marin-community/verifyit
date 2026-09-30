@@ -107,3 +107,24 @@ source-hash mutation rejection. No named tracker/model artifacts were found for
 these tasks; evidence is campaign `evidence/e2e/wiring/harness-code-text/`.
 The dependency pin records the actual CodeXGLUE API checkpoint above; it remains
 local and unpublished.
+
+## Source-pinned XLSUM ROUGE
+
+The 36 XLSUM tasks (12 languages, three prompts) use the same metadata opt-in.
+The client accepts only the pinned passthrough/aggregation functions and the
+source default `none`/`take_first` filter; changed filters fail before execution.
+An observation stage preserves every ordered gold/prediction pair. At the normal
+per-task aggregation position, a complete ScriptSpec batch executes the actual
+source ROUGE aggregator. It transfers evaluate's uint32 seed from the current
+NumPy state; evaluate's temporary seed restores state, so the parent RNG is never
+mutated. Point metrics, subsequent framework stderr and task ordering remain
+source-compatible. Multi-task fixtures with nonzero bootstrap settings match
+metrics, stderr, observations and final RNG state, including preadvanced state.
+Missing references, failures and changed source hashes abort without an aggregate.
+All 36 source guard roundtrips pass. No named XLSUM run links were found in the
+tracker or local JSON/JSONL artifacts; this is fixture-only validation. Evidence
+is campaign `evidence/e2e/wiring/harness-rouge/`, including cached backend and
+seed-wrapper hashes. The initial estimate of five prompt families was corrected
+before coverage promotion; the pinned source has three. This extension requires
+its forthcoming actual API checkpoint pin. The optional evaluation environment
+must already supply evaluate, rouge_score and its cached ROUGE metric module.

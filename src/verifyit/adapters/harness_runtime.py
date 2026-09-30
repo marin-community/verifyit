@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from verifyit.grade import Reward, Status, invalid_task, run
+from verifyit.grade import InvalidTask, Reward, Status, invalid_task, run
 from verifyit.spec import ScriptSpec, render_spec
 
 
@@ -29,7 +29,7 @@ class BatchResult:
     verdict: Reward
 
 
-def _code_text_function(value: object, symbol: str, digest: str) -> bool:
+def _function_source(value: object, symbol: str) -> Path | None:
     module, name = symbol.split(".")
     if isinstance(value, Mapping):
         if (
@@ -37,23 +37,63 @@ def _code_text_function(value: object, symbol: str, digest: str) -> bool:
             or value.get("tag") != "function"
             or value.get("value") != symbol
         ):
-            return False
+            return None
         directory = value.get("source_dir")
-        if not isinstance(directory, str):
-            return False
-        path = Path(directory) / f"{module}.py"
-    elif callable(value) and getattr(value, "__name__", None) == name:
+        return Path(directory) / f"{module}.py" if isinstance(directory, str) else None
+    if callable(value) and getattr(value, "__name__", None) == name:
         code = getattr(value, "__code__", None)
-        if code is None:
-            return False
-        path = Path(code.co_filename)
-    else:
-        return False
+        return Path(code.co_filename) if code is not None else None
+    return None
+
+
+def _code_text_function(value: object, symbol: str, digest: str) -> bool:
+    path = _function_source(value, symbol)
     return (
-        path.as_posix().endswith(f"/lm_eval/tasks/code_x_glue/code-text/{module}.py")
+        path is not None
+        and path.as_posix().endswith(f"/lm_eval/tasks/code_x_glue/code-text/{symbol.split('.')[0]}.py")
         and path.is_file()
         and hashlib.sha256(path.read_bytes()).hexdigest() == digest
     )
+
+
+def _xlsum_rouge_profile(config: Mapping[str, Any]) -> bool:
+    definitions = config.get("metric_list")
+    if (
+        config.get("output_type") != "generate_until"
+        or config.get("doc_to_target") != "{{summary}}"
+        or config.get("doc_to_choice") is not None
+        or config.get("filter_list") is not None
+        or not isinstance(definitions, list)
+        or len(definitions) != 1
+    ):
+        return False
+    definition = definitions[0]
+    if not isinstance(definition, Mapping) or set(definition) != {"metric", "aggregation", "higher_is_better"}:
+        return False
+    if definition.get("higher_is_better") is not True:
+        return False
+    paths = [
+        _function_source(definition.get(key), symbol)
+        for key, symbol in (("metric", "utils.rougeL"), ("aggregation", "utils.rougeL_agg"))
+    ]
+    return all(
+        path is not None
+        and any(
+            path.as_posix().endswith(f"/lm_eval/tasks/afrobench/xlsum/prompt_{prompt}/utils.py")
+            for prompt in range(1, 4)
+        )
+        and path.is_file()
+        and hashlib.sha256(path.read_bytes()).hexdigest()
+        == "160a95e68f4d37927ccc46e1b5277162422e1b50b1ea7b93af0c44bc25269714"
+        for path in paths
+    )
+
+
+def validate_aggregation_seed(seed: object) -> int:
+    """Validate evaluate's task-owned uint32 aggregation seed."""
+    if type(seed) is not int or not 0 <= seed <= 2**32 - 1:
+        raise InvalidTask("aggregation seed must be a uint32 integer")
+    return seed
 
 
 def _code_text_profile(config: Mapping[str, Any]) -> bool:
@@ -87,6 +127,8 @@ def corpus_config_profile(config: Mapping[str, Any]) -> str | None:
     """
     if config.get("class") is not None or config.get("process_results") is not None:
         return None
+    if _xlsum_rouge_profile(config):
+        return "xlsum_rouge_corpus"
     if _code_text_profile(config):
         return "code_text_smoothed_bleu"
     output = config.get("output_type")
@@ -135,6 +177,8 @@ def score_corpus(
     samples: Sequence[Mapping[str, Any]],
     *,
     timeout: float = 600.0,
+    stage: str = "complete",
+    aggregation_seed: int | None = None,
 ) -> BatchResult:
     """Run the source checkout's trusted corpus producer with JSON-only samples.
 
@@ -148,8 +192,17 @@ def score_corpus(
     runner = source_root / "lm_eval" / "verifyit_runtime.py"
     if not config_path.is_relative_to(tasks_root) or not config_path.is_file() or not runner.is_file():
         return BatchResult((), {}, invalid_task("trusted harness config or corpus runner is missing"))
+    if not isinstance(stage, str) or stage not in {"complete", "observations"}:
+        return BatchResult((), {}, invalid_task("unknown corpus execution stage"))
     try:
-        serialized = json.dumps({"config": str(config_path), "samples": list(samples)}, allow_nan=False)
+        seed = validate_aggregation_seed(aggregation_seed) if aggregation_seed is not None else None
+    except InvalidTask as error:
+        return BatchResult((), {}, invalid_task(str(error)))
+    try:
+        serialized = json.dumps(
+            {"config": str(config_path), "samples": list(samples), "stage": stage, "aggregation_seed": seed},
+            allow_nan=False,
+        )
     except (TypeError, ValueError) as error:
         return BatchResult((), {}, invalid_task(f"corpus samples must be finite JSON data: {error}"))
     with tempfile.TemporaryDirectory(prefix="verifyit-harness-corpus-") as directory:
@@ -176,6 +229,10 @@ def score_corpus(
         raise RuntimeError("trusted corpus producer omitted samples or aggregate metrics")
     if verdict.reward != 0:
         raise RuntimeError("retained corpus runtime cannot imply a correctness reward")
+    if stage == "observations":
+        if aggregates or not observations or any(set(item) != set(observations[0]) for item in observations):
+            raise RuntimeError("observation stage returned inconsistent metrics or premature aggregates")
+        return BatchResult(tuple(observations), {}, verdict)
     if any(set(observation) != set(aggregates) for observation in observations):
         raise RuntimeError("trusted corpus producer returned inconsistent metric coverage")
     if any(

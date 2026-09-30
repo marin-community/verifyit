@@ -9,7 +9,17 @@
  from verifyit.adapters.lm_eval import score_task
  
  import itertools
-@@ -631,15 +634,62 @@
+@@ -610,6 +613,9 @@
+     # TODO: del model here, maybe (idea: allow user to specify device of e.g. reward model separately)
+     for (task_name, acc), limit in zip(eval_results_acc.items(), limits, strict=True):
+         task = acc["task"]
++        if getattr(task, "_verifyit_corpus_profile", None) == "xlsum_rouge_corpus":
++            from lm_eval.verifyit_runtime import enable_corpus_runtime
++            enable_corpus_runtime(task, task._verifyit_corpus_config)
+         task.apply_filters()
+ 
+         ### Collect values of metrics on all datapoints ###
+@@ -631,15 +637,62 @@
                  world_size=WORLD_SIZE,
                  samples=indices,
              )
@@ -21,19 +31,17 @@
 +                        "Retained corpus runtime currently requires a single evaluation rank"
 +                    )
 +                doc_iterator = list(doc_iterator)
++                corpus_samples = [
++                    {"doc": doc, "responses": [request.filtered_resps[filter_key] for request in instances_by_doc_id[doc_id]]}
++                    for doc_id, doc in doc_iterator
++                ]
++                deferred = getattr(task, "_verifyit_corpus_profile", None) == "xlsum_rouge_corpus"
++                if deferred:
++                    from lm_eval.verifyit_runtime import enable_corpus_runtime
++                    enable_corpus_runtime(task, corpus_config)
 +                batch = score_corpus(
-+                    Path(__file__).resolve().parents[1],
-+                    corpus_config,
-+                    [
-+                        {
-+                            "doc": doc,
-+                            "responses": [
-+                                request.filtered_resps[filter_key]
-+                                for request in instances_by_doc_id[doc_id]
-+                            ],
-+                        }
-+                        for doc_id, doc in doc_iterator
-+                    ],
++                    Path(__file__).resolve().parents[1], corpus_config, corpus_samples,
++                    stage="observations" if deferred else "complete",
 +                )
 +                if batch.verdict.status.value != "scored":
 +                    raise ValueError(
@@ -46,6 +54,8 @@
 +                        strict=True,
 +                    )
 +                )
++                if deferred:
++                    acc["verifyit_corpus_pending"] = {"config": corpus_config, "samples": corpus_samples, "filter": filter_key, "observations": batch.observations}
 +                acc.setdefault("verifyit_point_metrics", {}).update(
 +                    {
 +                        f"{metric},{filter_key}": value
@@ -104,7 +114,20 @@
          sample_len = len(items)  # TODO: reflects only the last metric's count
  
          if isinstance(bootstrap_iters, int) and bootstrap_iters > 0:
-@@ -245,7 +253,7 @@
+@@ -242,10 +250,20 @@
+     for task_name, acc in eval_results_acc.items():
+         task = acc["task"]
+ 
++        pending = acc.get("verifyit_corpus_pending")
++        if pending is not None:
++            from verifyit.adapters.harness_runtime import score_corpus
++            from lm_eval.verifyit_runtime import capture_aggregation_seed
++            batch = score_corpus(pathlib.Path(__file__).resolve().parents[1], pending["config"], pending["samples"], aggregation_seed=capture_aggregation_seed())
++            if batch.verdict.status.value != "scored":
++                raise ValueError(f"Unscored verifier corpus: {batch.verdict.detail}")
++            if batch.observations != pending["observations"]:
++                raise ValueError("Deferred source scoring changed ordered sample observations")
++            acc["verifyit_point_metrics"] = {f"{metric},{pending['filter']}": value for metric, value in batch.aggregates.items()}
          # Compute aggregated metrics
          # TODO: note: currently assume all metrics are scalar-valued
          agg_metrics, sample_len = _compute_task_aggregations(
@@ -143,7 +166,7 @@
                  task_cfg["metadata"] = task_cfg.get("metadata", {}) | self._meta
 --- /dev/null
 +++ b/lm_eval/verifyit_runtime.py
-@@ -0,0 +1,322 @@
+@@ -0,0 +1,431 @@
 +"""Trusted JSON-only corpus scorer used by verifyit's ScriptSpec integration."""
 +
 +import json
@@ -153,14 +176,20 @@
 +import os
 +import sys
 +from collections import Counter
++from functools import partial
 +from pathlib import Path
 +
 +from datasets import Dataset, DatasetDict
 +
 +from lm_eval.api import metrics as source_metrics
++from lm_eval.api.filter import FilterEnsemble
++from lm_eval.filters.selection import TakeFirstFilter
 +from lm_eval.api.task import ConfigurableTask
 +from lm_eval.tasks._yaml_loader import load_yaml
-+from verifyit.adapters.harness_runtime import corpus_config_profile
++from verifyit.adapters.harness_runtime import (
++    corpus_config_profile,
++    validate_aggregation_seed,
++)
 +from verifyit.grade import InvalidTask
 +
 +
@@ -219,8 +248,41 @@
 +            raise InvalidTask(
 +                f"runtime task differs from trusted source configuration: {key}"
 +            )
++    profile = corpus_config_profile(config)
++    if profile is None:
++        raise InvalidTask("unrecognized retained runtime profile")
++    if profile == "xlsum_rouge_corpus":
++        if task.config.filter_list is not None or len(task._filters) != 1:
++            raise InvalidTask("XLSUM requires its single default source filter")
++        ensemble = task._filters[0]
++        if (
++            type(ensemble) is not FilterEnsemble
++            or ensemble.name != "none"
++            or len(ensemble.filters) != 1
++        ):
++            raise InvalidTask("XLSUM requires its single default source filter")
++        factory = ensemble.filters[0]
++        if (
++            not isinstance(factory, partial)
++            or factory.func is not TakeFirstFilter
++            or factory.args
++            or factory.keywords
++        ):
++            raise InvalidTask("XLSUM filter differs from default take_first")
++    task._verifyit_corpus_profile = profile
 +    task._verifyit_corpus_config = config_path
 +    return task
++
++
++def capture_aggregation_seed():
++    import numpy as np
++
++    algorithm, keys, position, _, _ = np.random.get_state()
++    if algorithm != "MT19937":
++        raise InvalidTask("evaluate requires the legacy MT19937 random generator")
++    return validate_aggregation_seed(
++        int(keys[position] if position < len(keys) else keys[0])
++    )
 +
 +
 +def finite(value):
@@ -247,6 +309,11 @@
 +    }
 +    config = load_yaml(config_path, resolve_func=True)
 +    selected_profile = corpus_config_profile(config)
++    stage = payload.get("stage", "complete")
++    if not isinstance(stage, str) or stage not in {"observations", "complete"}:
++        raise InvalidTask("unrecognized corpus stage")
++    if stage == "observations" and selected_profile != "xlsum_rouge_corpus":
++        raise InvalidTask("observation-only stage requires the reviewed XLSUM profile")
 +    if selected_profile is None:
 +        raise InvalidTask("unrecognized corpus scoring configuration")
 +    if config.get("process_results") is not None or config.get("class") is not None:
@@ -276,6 +343,17 @@
 +        if set(definition) - {"metric", "aggregation", "higher_is_better"}:
 +            raise InvalidTask("unrecognized corpus metric options")
 +    for metric, function in task._metric_fn_list.items():
++        if selected_profile == "xlsum_rouge_corpus":
++            definition = config["metric_list"][0]
++            if (
++                metric != "rougeL"
++                or getattr(function, "__self__", None) is not definition["metric"]
++                or task.aggregation()[metric] is not definition["aggregation"]
++            ):
++                raise InvalidTask(
++                    "XLSUM requires its pinned source passthrough and aggregator"
++                )
++            continue
 +        if selected_profile == "code_text_smoothed_bleu":
 +            if (
 +                metric != "smoothed_bleu_4"
@@ -302,7 +380,25 @@
 +            raise InvalidTask(
 +                "corpus metric does not use the registered source aggregator"
 +            )
-+    if selected_profile == "code_text_smoothed_bleu":
++    if selected_profile == "xlsum_rouge_corpus":
++        profile = selected_profile
++        for sample in samples:
++            reference = task.doc_to_target(sample["doc"])
++            responses = sample["responses"]
++            if not isinstance(reference, str) or not reference.strip():
++                raise InvalidTask("XLSUM requires nonempty string references")
++            if (
++                not isinstance(responses, list)
++                or len(responses) != 1
++                or not isinstance(responses[0], str)
++            ):
++                raise InvalidTask("XLSUM requires one filtered string response")
++        source_file = Path(config["metric_list"][0]["metric"].__code__.co_filename)
++        provenance["metric_callable"] = {
++            "path": str(source_file),
++            "sha256": hashlib.sha256(source_file.read_bytes()).hexdigest(),
++        }
++    elif selected_profile == "code_text_smoothed_bleu":
 +        profile = selected_profile
 +        for sample in samples:
 +            doc = sample["doc"]
@@ -411,16 +507,50 @@
 +        observations.append(observation)
 +        for metric, value in observation.items():
 +            values[metric].append(value)
-+    aggregates = {
-+        metric: finite(task.aggregation()[metric](items))
-+        for metric, items in values.items()
-+    }
++    aggregation_seed = None
++    if profile == "xlsum_rouge_corpus" and stage == "complete":
++        import numpy as np
++
++        aggregation_seed = validate_aggregation_seed(payload.get("aggregation_seed"))
++        np.random.seed(aggregation_seed)
++    aggregates = (
++        {}
++        if stage == "observations"
++        else {
++            metric: finite(task.aggregation()[metric](items))
++            for metric, items in values.items()
++        }
++    )
++    if profile == "xlsum_rouge_corpus" and stage == "complete":
++        for module_name, module in tuple(sys.modules.items()):
++            source_path = getattr(module, "__file__", None)
++            if (
++                module_name.startswith(
++                    "evaluate_modules.metrics.evaluate-metric--rouge"
++                )
++                and source_path
++                and source_path.endswith("rouge.py")
++            ):
++                provenance["rouge_backend"] = {
++                    "path": source_path,
++                    "sha256": hashlib.sha256(
++                        Path(source_path).read_bytes()
++                    ).hexdigest(),
++                }
++    if (
++        stage != "observations"
++        and payload.get("aggregation_seed") is not None
++        and profile != "xlsum_rouge_corpus"
++    ):
++        raise InvalidTask("RNG transport is not defined for this corpus profile")
 +    return {
 +        "status": "scored",
 +        "reward": 0.0,
 +        "detail": {
 +            "coverage": "retained_runtime",
 +            "source_provenance": provenance,
++            "aggregation_seed": aggregation_seed,
++            "stage": stage,
 +            "dataset_origin": "supplied JSON documents via trusted custom_dataset factory; no dataset download",
 +            "profile": profile,
 +            "reward_policy": "no correctness projection; named source metrics are authoritative",
@@ -445,6 +575,8 @@
 +            module in {"lm_eval.api.task", "lm_eval.api.metrics"}
 +            or frame.f_code.co_filename.endswith("/code_x_glue/code-text/bleu.py")
 +            or frame.f_code.co_filename.endswith("/code_x_glue/code-text/utils.py")
++            or "/afrobench/xlsum/prompt_" in frame.f_code.co_filename
++            or frame.f_code.co_filename.endswith("/rouge.py")
 +        ):
 +            calls[f"{module}.{frame.f_code.co_name}"] += 1
 +

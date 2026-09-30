@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -91,3 +92,33 @@ def test_unreviewed_generation_callback_cannot_enable_runtime():
         "doc_to_target": "answer",
     }
     assert corpus_config_profile(config) is None
+
+
+@pytest.mark.parametrize("seed", [10**1000, True, -1, 2**32])
+def test_malformed_aggregation_seed_cannot_export_corpus_metrics(tmp_path, seed):
+    root, config = producer(
+        tmp_path, {"status": "scored", "reward": 0, "detail": {"observations": [{"acc": 1}], "aggregates": {"acc": 1}}}
+    )
+    result = score_corpus(root, config, [{"doc": {}, "responses": ["answer"]}], aggregation_seed=seed)
+    assert result.verdict.status == Status.INVALID_TASK
+    assert result.verdict.reward == 0
+    assert result.observations == ()
+    assert result.aggregates == {}
+
+
+def test_unhashable_execution_stage_is_invalid_task(tmp_path):
+    root, config = producer(
+        tmp_path, {"status": "scored", "reward": 0, "detail": {"observations": [{"acc": 1}], "aggregates": {"acc": 1}}}
+    )
+    result = score_corpus(root, config, [{"doc": {}, "responses": ["answer"]}], stage=cast(str, []))
+    assert result.verdict.status == Status.INVALID_TASK
+    assert result.verdict.reward == 0
+    assert not result.aggregates
+
+
+def test_observation_stage_rejects_premature_point_metrics(tmp_path):
+    root, config = producer(
+        tmp_path, {"status": "scored", "reward": 0, "detail": {"observations": [{"acc": 1}], "aggregates": {"acc": 1}}}
+    )
+    with pytest.raises(RuntimeError, match="premature aggregates"):
+        score_corpus(root, config, [{"doc": {}, "responses": ["answer"]}], stage="observations")

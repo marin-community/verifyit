@@ -468,6 +468,7 @@ def harness_entities(root, sources):
                 "rolling_likelihood_corpus",
                 "likelihood_corpus",
                 "code_text_smoothed_bleu",
+                "xlsum_rouge_corpus",
             }:
                 entity.update(
                     status="retained_runtime_available",
@@ -801,8 +802,8 @@ def main():
             )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 659
-    assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 942
+    assert len(harness_gaps) == 623
+    assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 978
     assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11091
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
