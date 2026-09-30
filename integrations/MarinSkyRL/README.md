@@ -70,3 +70,28 @@ Compiler errors, sorry and timeouts score zero; incomplete, unknown or truncated
 compiler results are infrastructure errors. Six HTTP boundary tests and three
 selected real refinement traces pass against pinned-native and recorded results.
 Evidence is under `evidence/e2e/wiring/skyrl-lean`.
+
+Apply `code-verifyit.patch` after the reasoning/MCQ, calendar and Lean patches.
+The LCB and Nemotron code-generation opt-in routes use ScriptSpec to own execution
+and exact comparison. Candidate Python runs in a disposable stateful IPython
+sandbox session; reference tests and verifier artifacts remain in the trusted
+checker. Configure `sandbox.host` and `sandbox.port` in the source environment.
+Trusted runtime imports finish before memory limits; candidate code then runs
+under lowered soft and hard limits. The host deletes the session even if the
+checker exceeds its total deadline. This intentionally strengthens the source's
+mutable soft limit and local reliability guard.
+
+Source last-fence extraction, compiled state across tests, binary/fractional
+aggregation and stop-on-failure remain. Wrong answers and runtime exceptions
+retain source sentinels; an explicit protocol timeout retains its timeout sentinel.
+Lost sessions and incomplete execution produce infrastructure zero, discarding
+prior partial credit. Boolean/numeric conflation, nonfinite outputs and unsupported
+output types reject conservatively. Source top-level tuple-to-list handling remains.
+
+The unchanged random sample is six real traces whose source extraction rejects
+missing code, now through verifyit. Two separately labeled supplemental positive
+traces exercise actual sandbox execution and match recorded/pinned-native results.
+Twenty-four boundary regression cases have focused passing evidence, including
+reference/verdict tampering, state, memory limits, cleanup and protocol errors.
+Artifacts are under `evidence/e2e/wiring/skyrl-code`; independent manager replays
+are in sibling `manager-code-positive` and `manager-code-random` directories.

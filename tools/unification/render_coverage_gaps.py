@@ -128,7 +128,7 @@ text += """
 
 ## SkyRL
 
-The 25 pending scoring routes comprise 18 active routes and 7 dormant implementations. Three dormant math variants are parity audits, not claims of a missing math API. Nineteen rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
+The 23 pending scoring routes comprise 16 active routes and 7 dormant implementations. Three dormant math variants are parity audits, not claims of a missing math API. Nineteen rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
 
 """ + table(
     "MarinSkyRL", {"not_integrated", "capability_gap"}

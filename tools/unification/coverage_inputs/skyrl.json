@@ -8,22 +8,22 @@
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 21,
-    "pending_scoring_routes": 25,
-    "pending_active_scoring_routes": 18,
+    "source_patched_routes": 23,
+    "pending_scoring_routes": 23,
+    "pending_active_scoring_routes": 16,
     "pending_dormant_scoring_routes": 7,
-    "zero_core_extension_unwired_routes": 3,
+    "zero_core_extension_unwired_routes": 1,
     "existing_class_behavior_gap_routes": 19,
-    "real_replayed_source_routes": 14,
+    "real_replayed_source_routes": 16,
     "implemented_routes_missing_real_traces": 7,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 14,
+      "implemented_validated": 16,
       "implemented_not_validated": 7,
-      "not_integrated": 6,
       "capability_gap": 19,
-      "not_a_correctness_verifier": 2
+      "not_a_correctness_verifier": 2,
+      "not_integrated": 4
     },
     "unwired_dormant_math_comparator_parity_audits": 3,
     "inherited_planning_existing_class_extension_routes": 23
@@ -378,20 +378,20 @@
     },
     {
       "id": "lcb",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_trusted_checker_with_isolated_sandbox_runtime",
       "native_fallback_in_cutover": false,
       "contract_family": "code",
       "existing_primitive_candidate": [
-        "stdio",
-        "pytest"
+        "script",
+        "exact"
       ],
       "resolution_strategy": "task_harness",
-      "needed_change": "stdio handles stdin binary all-pass; function-call tests compile pytest harness. Fractional reward and numeric/line output comparator require adapter; preserve per-test result/error metadata.",
+      "needed_change": "No remaining source wiring change; configured stateful IPython sandbox required.",
       "validation_gap": null,
       "source_contract": "Final fenced Python program; stdio or functional tests; binary all-pass or fractional pass ratio; memory and total/per-test deadlines.",
       "source": {
@@ -404,11 +404,17 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#code",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/code-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-code/checkpoint-summary.json",
+        "evidence/e2e/wiring/manager-code-positive/summary.json",
+        "evidence/e2e/wiring/manager-code-random/summary.json"
       ],
       "observed_verified_execution_links": 21,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "actual_replayed_links": 4,
+      "core_extension_requirement": "none_proposed",
+      "intentional_tightening": "Isolated candidate runtime has no reference/verdict paths; immutable hard memory bound; boolean/numeric, nonfinite/non-JSON values reject. Lost sessions fail infra0 rather than retain prior partial credit.",
+      "real_trace_selection_contract": "Three unchanged random missing-code rejection traces plus one separately selected recorded-positive supplemental trace; not four unbiased random traces."
     },
     {
       "id": "searchcode",
@@ -1185,20 +1191,20 @@
     },
     {
       "id": "nemotron_ultra/code_gen_simple_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Existing execution mode is available, but the source-specific task harness and dispatch integration have not been implemented.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_trusted_checker_with_isolated_sandbox_runtime",
       "native_fallback_in_cutover": false,
       "contract_family": "code",
       "existing_primitive_candidate": [
-        "stdio",
-        "pytest"
+        "script",
+        "exact"
       ],
       "resolution_strategy": "task_harness",
-      "needed_change": "Compile stdio/functional harness; preserve format penalty and per-test execution evidence.",
+      "needed_change": "No remaining source wiring change; configured stateful IPython sandbox required.",
       "validation_gap": null,
       "source_contract": "Final fenced code, binary all-tests, short circuit failure, think-tag violation penalty.",
       "source": {
@@ -1211,11 +1217,17 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#code",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/code-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-code/checkpoint-summary.json",
+        "evidence/e2e/wiring/manager-code-positive/summary.json",
+        "evidence/e2e/wiring/manager-code-random/summary.json"
       ],
       "observed_verified_execution_links": 116,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "none_proposed"
+      "actual_replayed_links": 4,
+      "core_extension_requirement": "none_proposed",
+      "intentional_tightening": "Isolated candidate runtime has no reference/verdict paths; immutable hard memory bound; boolean/numeric, nonfinite/non-JSON values reject. Lost sessions fail infra0 rather than retain prior partial credit.",
+      "real_trace_selection_contract": "Three unchanged random missing-code rejection traces plus one separately selected recorded-positive supplemental trace; not four unbiased random traces."
     },
     {
       "id": "nemotron_ultra/instruction_following_simple_agent",

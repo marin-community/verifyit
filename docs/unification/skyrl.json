@@ -113,15 +113,16 @@
       "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/lcb/livecodebench.py",
       "dispatch": "lcb",
       "verifyit_modes": [
-        "stdio",
-        "pytest"
+        "script",
+        "exact"
       ],
-      "mapping_status": "adapter_required",
+      "mapping_status": "implemented_client_adapter",
       "source_contract": "Final fenced Python program; stdio or functional tests; binary all-pass or fractional pass ratio; memory and total/per-test deadlines.",
-      "adapter_requirements": "stdio handles stdin binary all-pass; function-call tests compile pytest harness. Fractional reward and numeric/line output comparator require adapter; preserve per-test result/error metadata.",
+      "adapter_requirements": "Implemented trusted checker with isolated stateful sandbox candidate execution; source aggregation and explicit failure/cleanup contracts retained.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#code",
       "resolution_strategy": "task_harness",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "source_patch_implemented",
+      "integration_patch": "integrations/MarinSkyRL/code-verifyit.patch"
     },
     {
       "id": "searchcode",
@@ -479,15 +480,16 @@
       "source_url": "https://github.com/marin-community/MarinSkyRL/blob/91c7a60e85e31b6933ab0ee732125b3338e82b89/skyrl-gym/skyrl_gym/envs/nemotron_ultra/code_gen.py",
       "dispatch": "NemotronUltraEnv._step agent=code_gen_simple_agent",
       "verifyit_modes": [
-        "stdio",
-        "pytest"
+        "script",
+        "exact"
       ],
-      "mapping_status": "adapter_required",
+      "mapping_status": "implemented_client_adapter",
       "source_contract": "Final fenced code, binary all-tests, short circuit failure, think-tag violation penalty.",
-      "adapter_requirements": "Compile stdio/functional harness; preserve format penalty and per-test execution evidence.",
+      "adapter_requirements": "Implemented trusted checker with isolated stateful sandbox candidate execution; source aggregation and explicit failure/cleanup contracts retained.",
       "adapter_spec": "docs/unification/skyrl-adapter-specs.md#code",
       "resolution_strategy": "task_harness",
-      "runtime_migration": "proposed_composition_or_extension"
+      "runtime_migration": "source_patch_implemented",
+      "integration_patch": "integrations/MarinSkyRL/code-verifyit.patch"
     },
     {
       "id": "nemotron_ultra/instruction_following_simple_agent",
@@ -951,6 +953,7 @@
       "integrations/MarinSkyRL/calendar-verifyit.patch",
       "integrations/MarinSkyRL/sqlite-verifyit.patch",
       "integrations/MarinSkyRL/lean-verifyit.patch",
+      "integrations/MarinSkyRL/code-verifyit.patch",
       "integrations/MarinSkyRL/dependency-pin.patch"
     ],
     "covered_routes": [
@@ -974,7 +977,9 @@
       "dormant/qa_f1",
       "text2sql",
       "text_to_sql",
-      "nemotron_ultra/math_formal_lean_refinement_agent"
+      "nemotron_ultra/math_formal_lean_refinement_agent",
+      "lcb",
+      "nemotron_ultra/code_gen_simple_agent"
     ]
   },
   "installation": {
@@ -1026,13 +1031,15 @@
       "dormant/qa_f1",
       "text2sql",
       "text_to_sql",
-      "nemotron_ultra/math_formal_lean_refinement_agent"
+      "nemotron_ultra/math_formal_lean_refinement_agent",
+      "lcb",
+      "nemotron_ultra/code_gen_simple_agent"
     ],
-    "implemented_source_patch_route_count": 21,
+    "implemented_source_patch_route_count": 23,
     "notes": "Disjoint route populations; proposed composition is mapping, not deployed migration. A generic retained source callback is only runtime bridge, not primitive parity.",
     "intentional_tightening": "Invalid GSM8K expected decimals, nonfinite chemistry references and malformed reference grids are invalid_task0 rather than exploiting literal/Python equality; valid wrong source format reward retained.",
     "pending_concrete_existing_class_behavior_gaps": 19,
     "pending_dormant_math_parity_audits": 3,
-    "pending_client_or_harness_wiring_routes": 3
+    "pending_client_or_harness_wiring_routes": 1
   }
 }
