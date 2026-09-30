@@ -162,3 +162,10 @@ one half). Manager replays independently confirm both lanes and actual child
 IFEval grading. The final worker replay includes the conservative guards above;
 full-registry golden replay is not claimed. Evidence and rerun driver are in
 `evidence/e2e/wiring/skyrl-instructions/`.
+
+Apply `math-judge-verifyit.patch` after `instructions-verifyit.patch` and the
+dependency patch last. This adds opt-in partial terminal scoring for math-with-judge
+and NS-tools with existing MathSpec, JudgeSpec and a total ScriptSpec deadline.
+The bounded trusted reference domain and two missing external judge transcripts
+remain explicit gaps; neither source route is promoted to complete integration.
+See [the contract and evidence](math-judge.md).

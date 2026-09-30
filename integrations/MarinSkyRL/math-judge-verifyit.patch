@@ -1,0 +1,659 @@
+diff --git a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py
+index f6f4baa..8f44250 100644
+--- a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py
++++ b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py
+@@ -77,6 +77,7 @@ class NemotronUltraEnv(BaseTextEnv):
+     def __init__(self, env_config: DictConfig, extras: dict[str, Any] | None = None):
+         super().__init__()
+         self.verifyit_enabled = bool(env_config.get("verifyit_enabled", False))
++        self.math_verifier_timeout_seconds = env_config.get("verifyit_math_total_timeout_seconds", 60.0)
+         self.grading = NemotronUltraGrading(env_config.get("grading", NemotronUltraGrading.VERIFY))
+         judges = env_config.get("judges", {})
+         general_judge = judges.get("general") if isinstance(judges, Mapping) else None
+@@ -147,6 +148,16 @@ class NemotronUltraEnv(BaseTextEnv):
+                 return grading_message
+         return {"role": "assistant", "content": action, "tool_calls": []}
+ 
++    def _grade_math(self, action: str):
++        if self.verifyit_enabled:
++            from skyrl_gym.envs.nemotron_ultra.math_judge_verifyit import grade_math_verifyit
++
++            return grade_math_verifyit(
++                action, self.record, judge=self.general_judge,
++                timeout_seconds=self.math_verifier_timeout_seconds,
++            )
++        return grade_math(action, self.record, judge=self.general_judge)
++
+     def _require_general_judge(self) -> OpenAIJudge:
+         if self.general_judge is None:
+             raise RuntimeError(f"Nemotron Ultra verifier {self.agent!r} requires the general judge")
+@@ -217,7 +228,7 @@ class NemotronUltraEnv(BaseTextEnv):
+             reward = float(self.genrm_config.get("default_score", 3.0))
+             diagnostics["cohort_reward_pending"] = True
+         elif self.agent == _NS_TOOLS_AGENT:
+-            reward, details = grade_math(action, self.record, judge=self.general_judge)
++            reward, details = self._grade_math(action)
+             diagnostics.update(details)
+         elif self.agent == _LEAN_AGENT:
+             reward, details, correction_prompt = verify_lean_attempt(
+@@ -297,7 +308,7 @@ class NemotronUltraEnv(BaseTextEnv):
+             reward, details = instruction_scorer(action, self.record)
+             diagnostics.update(details)
+         elif self.agent == "math_with_judge_simple_agent":
+-            reward, details = grade_math(action, self.record, judge=self.general_judge)
++            reward, details = self._grade_math(action)
+             diagnostics.update(details)
+         elif self.agent == "abstention_simple_agent":
+             reward, details = grade_abstention(action, self.record, self._require_general_judge())
+diff --git a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_judge_verifyit.py b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_judge_verifyit.py
+new file mode 100644
+index 0000000..6d65a27
+--- /dev/null
++++ b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_judge_verifyit.py
+@@ -0,0 +1,364 @@
++"""Math and symmetric final-label judging through existing verifyit modes."""
++
++from __future__ import annotations
++
++import dataclasses
++import json
++import math
++import os
++from pathlib import Path
++import re
++import shlex
++import sys
++import tempfile
++from typing import Any
++
++from verifyit.grade import Status, run
++from verifyit.spec import JudgeSpec, MathProfile, MathSpec, ScriptSpec, render_spec
++
++from skyrl_gym.envs.nemotron_ultra.answer_extraction import (
++    final_answer_text,
++    last_boxed_answer,
++)
++from skyrl_gym.envs.nemotron_ultra.math_with_judge import (
++    _JUDGE_PROMPT,
++    _JUDGE_SYSTEM,
++    _strip_delimiters,
++)
++
++
++def _plain_prose_reference(reference: str) -> bool:
++    """Trusted natural-language references; mathematical syntax never takes this path."""
++    if any(
++        not (character.isalpha() or character.isdigit() or character in " .,;:'!?-")
++        for character in reference
++    ):
++        return False
++    words = re.findall(r"[^\W\d_]+", reference, flags=re.UNICODE)
++    return any(len(word) >= 2 for word in words) and reference.strip().lower() not in {
++        "pi",
++        "inf",
++        "infinity",
++        "nan",
++        "oo",
++        "zoo",
++    }
++
++
++def _balanced_reference_delimiters(reference: str) -> bool:
++    depth = 0
++    for index, character in enumerate(reference):
++        if index and reference[index - 1] == "\\":
++            continue
++        if character == "{":
++            depth += 1
++        elif character == "}":
++            depth -= 1
++            if depth < 0:
++                return False
++    if depth:
++        return False
++    sizes = re.findall(r"\\(?:big|Big|bigg|Bigg)([lr])(?![A-Za-z])", reference)
++    depth = 0
++    for side in sizes:
++        depth += 1 if side == "l" else -1
++        if depth < 0:
++            return False
++    return depth == 0
++
++
++def _evaluate(data: dict[str, Any], root: Path) -> dict[str, Any]:
++    record = data["record"]
++    text = final_answer_text(data["text"])
++    if (
++        not isinstance(record.get("expected_answer"), str)
++        or not record["expected_answer"].strip()
++        or not isinstance(record.get("question"), str)
++        or not _balanced_reference_delimiters(record["expected_answer"])
++    ):
++        return {
++            "schema_version": 1,
++            "status": "invalid_task",
++            "reward": 0.0,
++            "detail": {"reason": "Malformed math reference"},
++        }
++    from math_verify import parse
++    from math_verify.parser import LatexExtractionConfig
++
++    reference_values = parse(
++        r"\boxed{" + _strip_delimiters(record["expected_answer"]) + "}",
++        extraction_config=[LatexExtractionConfig()],
++        raise_on_error=True,
++    )
++    symbolic_reference = any(not isinstance(value, str) for value in reference_values)
++    prose_reference = not symbolic_reference and _plain_prose_reference(
++        record["expected_answer"]
++    )
++    typographic_reference = False
++    if not symbolic_reference and not prose_reference:
++        # These sizing commands change rendering, not the trusted mathematical value.
++        normalized_reference = re.sub(
++            r"\\(?:big|Big|bigg|Bigg)(?:l|r)?(?![A-Za-z])",
++            "",
++            _strip_delimiters(record["expected_answer"]),
++        )
++        if normalized_reference != _strip_delimiters(record["expected_answer"]):
++            normalized_values = parse(
++                r"\boxed{" + normalized_reference + "}",
++                extraction_config=[LatexExtractionConfig()],
++                raise_on_error=True,
++            )
++            typographic_reference = any(
++                not isinstance(value, str) for value in normalized_values
++            )
++    if not symbolic_reference and not prose_reference and not typographic_reference:
++        return {
++            "schema_version": 1,
++            "status": "invalid_task",
++            "reward": 0.0,
++            "detail": {"reason": "Unparsed mathematical reference"},
++        }
++    if not text:
++        return {
++            "schema_version": 1,
++            "status": "scored",
++            "reward": 0.0,
++            "detail": {
++                "source_feedback": {
++                    "result": "missing_final_answer",
++                    "extracted_answer": None,
++                }
++            },
++        }
++    candidate_path = root / "answer.txt"
++    spec_path = root / "verifier.toml"
++    boxed = last_boxed_answer(text)
++    pure = re.fullmatch(r"[\\\w\s{}()+*/^.,=+\-]+", text) and not re.search(
++        r"\b[A-Za-z]{3,}\b", text
++    )
++    reward = 0.0
++    extracted = None
++    if (prose_reference or typographic_reference) and (boxed is not None or pure):
++        # Source feedback is metadata: parsing does not determine correctness.
++        from math_verify import parse
++        from math_verify.parser import ExprExtractionConfig, LatexExtractionConfig
++
++        candidate = r"\boxed{" + boxed + "}" if boxed is not None else text
++        predictions = parse(
++            candidate,
++            extraction_config=[ExprExtractionConfig(), LatexExtractionConfig()],
++            raise_on_error=True,
++        )
++        extracted = str(predictions[0]) if predictions else None
++    if symbolic_reference and (boxed is not None or pure):
++        candidate = r"\boxed{" + boxed + "}" if boxed is not None else text
++        candidate_path.write_text(candidate)
++        integration = bool(
++            re.search(r"indefinite|antiderivative|primitive", record["question"], re.I)
++        )
++        spec_path.write_text(
++            render_spec(
++                MathSpec(
++                    expected=_strip_delimiters(record["expected_answer"]),
++                    output=str(candidate_path),
++                    profile=MathProfile.RAW,
++                    allow_additive_constant=integration,
++                )
++            )
++        )
++        result = run(spec_path, root)
++        if result.status is not Status.SCORED:
++            return {
++                "schema_version": 1,
++                "status": result.status.value,
++                "reward": 0.0,
++                "detail": {
++                    "reason": "Math verifier failed",
++                    "math_verdict": dataclasses.asdict(result),
++                },
++            }
++        reward = result.reward
++        extracted = result.detail.get("parsed_candidate")
++    diagnostics = {"library_reward": reward, "extracted_answer": extracted}
++    if reward > 0.5:
++        return {
++            "schema_version": 1,
++            "status": "scored",
++            "reward": reward,
++            "detail": {"source_feedback": diagnostics},
++        }
++    judge = data.get("judge")
++    if not judge:
++        return {
++            "schema_version": 1,
++            "status": "infra_error",
++            "reward": 0.0,
++            "detail": {"reason": "General judge is required"},
++        }
++    os.environ["VERIFYIT_JUDGE_BASE_URL"] = judge["base_url"]
++    os.environ["VERIFYIT_JUDGE_MODEL"] = judge["model"]
++    os.environ["VERIFYIT_JUDGE_API_KEY"] = os.environ.get(
++        judge.get("api_key_env") or "", judge.get("api_key", "dummy_key")
++    )
++    diagnostics["judge_outputs"] = []
++    template = _JUDGE_PROMPT.replace("{first}", "{reference}").replace(
++        "{second}", "{candidate}"
++    )
++    for reference, candidate in (
++        (record["expected_answer"], text),
++        (text, record["expected_answer"]),
++    ):
++        candidate_path.write_text(candidate)
++        spec_path.write_text(
++            render_spec(
++                JudgeSpec(
++                    rubric="labels",
++                    references=(reference,),
++                    question=record["question"],
++                    system_prompt=_JUDGE_SYSTEM,
++                    prompt_template=template,
++                    label_scores={"[[A=B]]": 1.0, "[[A!=B]]": 0.0},
++                    strip_reasoning_blocks=True,
++                    output=str(candidate_path),
++                    request_timeout=judge["timeout_seconds"],
++                    max_completion_tokens=8192,
++                    incomplete_retry_tokens=16384,
++                    reasoning_effort=judge.get("reasoning_effort") or "",
++                )
++            )
++        )
++        result = run(spec_path, root)
++        if result.status is not Status.SCORED:
++            return {
++                "schema_version": 1,
++                "status": result.status.value,
++                "reward": 0.0,
++                "detail": {
++                    "reason": "Judge verifier failed",
++                    "judge_verdict": dataclasses.asdict(result),
++                },
++            }
++        diagnostics["judge_outputs"].append(result.detail["completion"])
++        if result.reward == 0.0:
++            return {
++                "schema_version": 1,
++                "status": "scored",
++                "reward": 0.0,
++                "detail": {"source_feedback": diagnostics},
++            }
++    return {
++        "schema_version": 1,
++        "status": "scored",
++        "reward": 1.0,
++        "detail": {"source_feedback": diagnostics},
++    }
++
++
++def grade_math_verifyit(
++    text: str, record: dict[str, Any], *, judge, timeout_seconds: float = 60.0
++) -> tuple[float, dict[str, Any]]:
++    if (
++        isinstance(timeout_seconds, bool)
++        or not isinstance(timeout_seconds, (int, float))
++        or not 0 < timeout_seconds <= 3600
++        or not math.isfinite(timeout_seconds)
++    ):
++        return 0.0, {
++            "error_type": "schema_error",
++            "error_message": "Invalid total verifier deadline",
++        }
++    with tempfile.TemporaryDirectory(prefix="skyrl-math-judge-") as directory:
++        root = Path(directory)
++        payload = root / "input.json"
++        try:
++            payload.write_text(
++                json.dumps(
++                    {
++                        "text": text,
++                        "record": record,
++                        "judge": dataclasses.asdict(judge) if judge else None,
++                    },
++                    allow_nan=False,
++                )
++            )
++        except (TypeError, ValueError):
++            return 0.0, {
++                "error_type": "schema_error",
++                "error_message": "Invalid math verifier reference/configuration",
++            }
++        checker = root / "check.sh"
++        checker.write_text(
++            "set -eu\nexec "
++            + shlex.quote(sys.executable)
++            + " "
++            + "-m skyrl_gym.envs.nemotron_ultra.math_judge_verifyit"
++            + " --check "
++            + shlex.quote(str(payload))
++            + "\n"
++        )
++        spec_path = root / "outer.toml"
++        spec_path.write_text(
++            render_spec(
++                ScriptSpec(
++                    path=checker.name,
++                    timeout=float(timeout_seconds),
++                    verdict_file="math-judge-verdict.json",
++                )
++            )
++        )
++        result = run(spec_path, root)
++        if result.status is not Status.SCORED:
++            return 0.0, {
++                "error_type": (
++                    "schema_error"
++                    if result.status is Status.INVALID_TASK
++                    else "verification_error"
++                ),
++                "error_message": "Math/judge verification failed",
++                "verifyit_verdict": dataclasses.asdict(result),
++            }
++        return result.reward, result.detail["source_feedback"]
++
++
++def _main() -> None:
++    data = json.loads(Path(sys.argv[2]).read_text())
++    calls = []
++    active = {}
++
++    def observe(frame, event, arg):
++        if frame.f_code.co_name != "grade" or not frame.f_code.co_filename.endswith(
++            ("/verifyit/modes/grade_math.py", "/verifyit/modes/grade_judge.py")
++        ):
++            return
++        if event == "call":
++            item = {
++                "path": frame.f_code.co_filename,
++                "spec": dataclasses.asdict(frame.f_locals["spec"]),
++                "candidate": Path(frame.f_locals["spec"].output).read_text(),
++            }
++            calls.append(item)
++            active[id(frame)] = item
++        elif event == "return" and id(frame) in active:
++            active.pop(id(frame))["verdict"] = dataclasses.asdict(arg) if arg else None
++
++    sys.setprofile(observe)
++    directory = Path(sys.argv[2]).parent / "inner"
++    directory.mkdir()
++    try:
++        verdict = _evaluate(data, directory)
++    except Exception as error:
++        verdict = {
++            "schema_version": 1,
++            "status": "infra_error",
++            "reward": 0.0,
++            "detail": {"reason": type(error).__name__},
++        }
++    finally:
++        sys.setprofile(None)
++    verdict["detail"]["primitive_calls"] = calls
++    destination = Path(os.environ["VERIFYIT_LOGS_DIR"]) / "math-judge-verdict.json"
++    destination.write_text(json.dumps(verdict, allow_nan=False))
++
++
++if __name__ == "__main__":
++    _main()
+diff --git a/skyrl-gym/tests/test_math_judge_verifyit.py b/skyrl-gym/tests/test_math_judge_verifyit.py
+new file mode 100644
+index 0000000..486c82d
+--- /dev/null
++++ b/skyrl-gym/tests/test_math_judge_verifyit.py
+@@ -0,0 +1,236 @@
++"""Math and symmetric judge contracts at the actual source boundary."""
++
++import json
++import threading
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++
++import pytest
++
++from skyrl_gym.envs.nemotron_ultra.judge import OpenAIJudge
++from skyrl_gym.envs.nemotron_ultra.math_judge_verifyit import grade_math_verifyit
++from skyrl_gym.envs.nemotron_ultra.math_with_judge import grade_math
++
++
++@pytest.fixture
++def judge_server():
++    class Handler(BaseHTTPRequestHandler):
++        def do_POST(self):
++            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
++            server.requests.append(body)
++            index = min(len(server.requests) - 1, len(server.replies) - 1)
++            response = {
++                "id": "source-judge",
++                "object": "chat.completion",
++                "created": 0,
++                "model": body["model"],
++                "choices": [
++                    {
++                        "index": 0,
++                        "finish_reason": server.finish_reason,
++                        "message": {
++                            "role": "assistant",
++                            "content": server.replies[index],
++                        },
++                    }
++                ],
++            }
++            encoded = json.dumps(response).encode()
++            self.send_response(200)
++            self.send_header("Content-Type", "application/json")
++            self.send_header("Content-Length", str(len(encoded)))
++            self.end_headers()
++            self.wfile.write(encoded)
++
++        def log_message(self, *args):
++            pass
++
++    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
++    server.requests = []
++    server.replies = ["[[A=B]]"]
++    server.finish_reason = "stop"
++    thread = threading.Thread(target=server.serve_forever, daemon=True)
++    thread.start()
++    judge = OpenAIJudge(
++        base_url=f"http://127.0.0.1:{server.server_port}/v1",
++        model="recorded-test-judge",
++        timeout_seconds=2,
++    )
++    try:
++        yield server, judge
++    finally:
++        server.shutdown()
++        server.server_close()
++        thread.join(timeout=5)
++
++
++@pytest.mark.parametrize(
++    "candidate,expected,question,score",
++    [
++        (r"\boxed{2}", "2", "1+1?", 1.0),
++        (r"\boxed{xy}", "xy", "Product?", 1.0),
++        (r"\boxed{x-y}", "x-y", "Difference?", 1.0),
++        (r"\boxed{\sin x}", r"\sin x", "Function?", 1.0),
++        (r"\boxed{cat}", "cat", "Symbolic letters?", 1.0),
++        (r"\boxed{x^2+3}", "x^2", "Find an antiderivative", 1.0),
++        (r"\boxed{2x}", "x", "Find an antiderivative", 0.0),
++        ("<think>unfinished", "2", "1+1?", 0.0),
++    ],
++)
++def test_actual_source_math_before_after(
++    candidate, expected, question, score, judge_server
++):
++    server, judge = judge_server
++    server.replies = ["[[A!=B]]"]
++    record = {"expected_answer": expected, "question": question}
++    native_score, native_detail = grade_math(candidate, record, judge=judge)
++    server.requests.clear()
++    cutover_score, cutover_detail = grade_math_verifyit(candidate, record, judge=judge)
++    assert native_score == cutover_score == score
++    assert native_detail == cutover_detail
++
++
++@pytest.mark.parametrize(
++    "replies,score",
++    [
++        (["reasoning\n[[A=B]]", "[[A=B]]"], 1.0),
++        (["[[A=B]]", "[[A!=B]]"], 0.0),
++        (["[[A!=B]]"], 0.0),
++    ],
++)
++def test_source_symmetric_judge_before_after(judge_server, replies, score):
++    server, judge = judge_server
++    server.replies = replies
++    record = {"question": "Which animal?", "expected_answer": "cat"}
++    native_score, native_detail = grade_math("It is a feline.", record, judge=judge)
++    native_requests = list(server.requests)
++    server.requests.clear()
++    cutover_score, cutover_detail = grade_math_verifyit(
++        "It is a feline.", record, judge=judge
++    )
++    assert native_score == cutover_score == score
++    assert native_detail == cutover_detail
++    assert server.requests == native_requests
++
++
++def test_second_judge_failure_discards_first_positive(judge_server):
++    server, judge = judge_server
++    server.replies = ["[[A=B]]", "ambiguous [[A=B]] and [[A!=B]]"]
++    reward, detail = grade_math_verifyit(
++        "a feline", {"question": "Which animal?", "expected_answer": "cat"}, judge=judge
++    )
++    assert reward == 0.0
++    assert detail["error_type"] == "verification_error"
++
++
++def test_malformed_reference_is_not_judged(judge_server):
++    server, judge = judge_server
++    reward, detail = grade_math_verifyit(
++        "cat", {"question": "Which animal?", "expected_answer": ""}, judge=judge
++    )
++    assert reward == 0.0
++    assert detail["error_type"] == "schema_error"
++    assert server.requests == []
++
++
++@pytest.mark.parametrize("label,score", [("[[A=B]]", 1.0), ("[[A!=B]]", 0.0)])
++def test_trusted_prose_reference_routes_to_judge_before_after(
++    judge_server, label, score
++):
++    server, judge = judge_server
++    server.replies = [label]
++    record = {
++        "question": "Which strategy?",
++        "expected_answer": "Always choose the next box until reaching Box 8.",
++    }
++    native_score, native_detail = grade_math(r"\boxed{977}", record, judge=judge)
++    native_requests = list(server.requests)
++    server.requests.clear()
++    reward, detail = grade_math_verifyit(r"\boxed{977}", record, judge=judge)
++    assert native_score == reward == score
++    assert native_detail == detail
++    assert server.requests == native_requests
++
++
++@pytest.mark.parametrize(
++    "candidate", [r"\boxed{2}", "I think the answer is two.", "<think>unfinished"]
++)
++def test_malformed_mathematical_reference_cannot_fall_back_to_positive_judge(
++    judge_server, candidate
++):
++    server, judge = judge_server
++    server.replies = ["[[A=B]]"]
++    reward, detail = grade_math_verifyit(
++        candidate,
++        {"question": "Compute", "expected_answer": r"\unknownmacro{???}"},
++        judge=judge,
++    )
++    assert reward == 0.0
++    assert detail["error_type"] == "schema_error"
++    assert server.requests == []
++
++
++def test_symbolic_infrastructure_failure_cannot_fall_back_to_positive_judge(
++    judge_server, tmp_path, monkeypatch
++):
++    import dataclasses
++    from verifyit.modes import grade_math as primitive
++    from skyrl_gym.envs.nemotron_ultra.math_judge_verifyit import _evaluate
++
++    def broken_backend(*args, **kwargs):
++        raise RuntimeError("symbolic backend failed")
++
++    server, judge = judge_server
++    server.replies = ["[[A=B]]"]
++    monkeypatch.setattr(primitive, "_verify", broken_backend)
++    result = _evaluate(
++        {
++            "text": r"\boxed{2}",
++            "record": {"question": "Compute", "expected_answer": "2"},
++            "judge": dataclasses.asdict(judge),
++        },
++        tmp_path,
++    )
++    assert (result["status"], result["reward"]) == ("infra_error", 0.0)
++    assert server.requests == []
++
++
++@pytest.mark.parametrize(
++    "candidate,replies,score",
++    [
++        (r"\boxed{1}", ["[[A=B]]"], 1.0),
++        (r"\boxed{1}", ["[[A!=B]]"], 0.0),
++        ("<think>unfinished", [], 0.0),
++    ],
++)
++def test_valid_typographic_reference_retains_native_fallback(
++    judge_server, candidate, replies, score
++):
++    server, judge = judge_server
++    server.replies = replies
++    record = {
++        "question": "Evaluate integral",
++        "expected_answer": r"\displaystyle \frac{\pi}{4}\,\arctan\!\Bigl(\sqrt{\frac{\sqrt{2}-1}{2}}\Bigr)",
++    }
++    native_score, native_detail = grade_math(candidate, record, judge=judge)
++    native_requests = list(server.requests)
++    server.requests.clear()
++    reward, detail = grade_math_verifyit(candidate, record, judge=judge)
++    assert native_score == reward == score
++    assert native_detail == detail
++    assert server.requests == native_requests
++
++
++@pytest.mark.parametrize("expected", [r"\frac{1}{2", r"\Bigl(2", r"\unknownmacro{???}"])
++def test_malformed_math_reference_is_invalid_before_any_candidate_gate(
++    judge_server, expected
++):
++    server, judge = judge_server
++    server.replies = ["[[A=B]]"]
++    reward, detail = grade_math_verifyit(
++        "The correct answer is two.",
++        {"question": "Compute", "expected_answer": expected},
++        judge=judge,
++    )
++    assert reward == 0.0
++    assert detail["error_type"] == "schema_error"
++    assert server.requests == []
