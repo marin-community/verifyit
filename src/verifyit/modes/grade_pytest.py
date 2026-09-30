@@ -73,7 +73,8 @@ def _outcomes(report: dict, workspace: Path) -> dict[str, bool]:
     for test in report.get("tests", []):
         outcome = test.get("outcome")
         if outcome in PASS_OUTCOMES:
-            outcomes[_rebase(test["nodeid"], root, workspace)] = True
+            test_id = _rebase(test["nodeid"], root, workspace)
+            outcomes[test_id] = outcomes.get(test_id, True)
         elif outcome in FAIL_OUTCOMES:
             outcomes[_rebase(test["nodeid"], root, workspace)] = False
     return outcomes

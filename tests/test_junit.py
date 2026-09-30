@@ -99,3 +99,20 @@ def test_junit_command_timeout_scores_zero_with_reason(tmp_path):
     reward = grade_junit.grade(JunitSpec(command="sleep 30", timeout=0.5), tmp_path, workspace)
     assert reward.reward == 0.0
     assert reward.detail["reason"] == "timeout"
+
+
+def test_junit_duplicate_failure_cannot_be_overwritten_by_later_pass(tmp_path):
+    workspace = _workspace(
+        tmp_path,
+        '<testsuite><testcase classname="Suite" name="same"><failure/></testcase>'
+        '<testcase classname="Suite" name="same"/></testsuite>',
+        name="a.xml",
+    )
+    (workspace / "b.xml").write_text(
+        '<testsuite><testcase classname="Suite" name="same"/>' '<testcase classname="Other" name="same"/></testsuite>'
+    )
+    protected = JunitSpec(command="true", report="*.xml", must_not_break=("Suite.same",))
+    reward = grade_junit.grade(protected, tmp_path, workspace)
+    assert (reward.reward, reward.detail["first_failure"]) == (0.0, "Suite.same")
+    distinct = JunitSpec(command="true", report="*.xml", must_pass=("Other.same",))
+    assert grade_junit.grade(distinct, tmp_path, workspace).reward == 1.0

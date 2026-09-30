@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from verifyit.grade import Status
+from verifyit.grade import Status, run, write_reward
 from verifyit.modes import grade_judge
-from verifyit.spec import Constraint, JudgeSpec
+from verifyit.spec import Constraint, JudgeSpec, render_spec
 
 # The dataset's own reference answer, apostrophe included: the gate must fold case, spacing and
 # punctuation without mangling non-ASCII text.
@@ -29,6 +29,7 @@ class FakeJudgeServer(ThreadingHTTPServer):
 
     replies: list[str]
     prompts: list[str]
+    finish_reason: str
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -44,7 +45,13 @@ class _Handler(BaseHTTPRequestHandler):
                 "object": "chat.completion",
                 "created": 0,
                 "model": request["model"],
-                "choices": [{"index": 0, "message": {"role": "assistant", "content": reply}, "finish_reason": "stop"}],
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {"role": "assistant", "content": reply},
+                        "finish_reason": server.finish_reason,
+                    }
+                ],
             }
         ).encode()
         self.send_response(200)
@@ -62,6 +69,7 @@ def fake_judge(monkeypatch):
     server = FakeJudgeServer(("127.0.0.1", 0), _Handler)
     server.replies = ["SCORE: 1"]
     server.prompts = []
+    server.finish_reason = "stop"
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     monkeypatch.setenv("VERIFYIT_JUDGE_BASE_URL", f"http://127.0.0.1:{server.server_port}/v1")
@@ -132,15 +140,17 @@ def test_spec_model_overrides_the_environment(tmp_path, fake_judge):
     fake_judge.replies = ["Wrong answer.\nSCORE: 0"]
     spec = JudgeSpec(references=(REFERENCE,), model="override/judge-70b", exact_gate=False)
     reward = grade_judge.grade(spec, tmp_path, _workspace(tmp_path, "The moon is made of cheese."))
-    assert (reward.reward, reward.detail["model"]) == (0.0, "override/judge-70b")
+    assert (reward.reward, reward.status, reward.detail["model"]) == (0.0, Status.SCORED, "override/judge-70b")
 
 
-def test_unparseable_reply_is_retried_once_then_scores_zero(tmp_path, fake_judge):
+@pytest.mark.parametrize("rubric", ["reference", "checklist"])
+def test_unparseable_reply_is_retried_once_then_masks_candidate(tmp_path, fake_judge, rubric):
     fake_judge.replies = ["I cannot grade this."]
-    spec = JudgeSpec(references=(REFERENCE,), exact_gate=False)
-    reward = grade_judge.grade(spec, tmp_path, _workspace(tmp_path, "something else"))
-    assert (reward.reward, reward.status) == (0.0, Status.SCORED)
-    assert reward.detail["reason"] == "unparseable_judge_response"
+    spec = JudgeSpec(rubric=rubric, references=(REFERENCE,), criteria=("Be correct",), exact_gate=False)
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(spec))
+    reward = run(spec_path, _workspace(tmp_path, "something else"))
+    assert reward.status == Status.INFRA_ERROR
     assert len(fake_judge.prompts) == 2
 
 
@@ -224,3 +234,24 @@ def test_constraints_that_pass_hand_over_to_the_judge(tmp_path, fake_judge):
 def test_checklist_without_criteria_is_an_invalid_task(tmp_path, unconfigured_judge):
     with pytest.raises(grade_judge.InvalidTask):
         grade_judge.grade(JudgeSpec(rubric="checklist"), tmp_path, _workspace(tmp_path, "text"))
+
+
+@pytest.mark.parametrize("rubric", ["reference", "checklist"])
+@pytest.mark.parametrize("finish_reason", ["length", "content_filter"])
+def test_incomplete_judge_score_is_unscored_and_removes_stale_rewards(tmp_path, fake_judge, rubric, finish_reason):
+    fake_judge.replies = ["SCORE: 1"]
+    fake_judge.finish_reason = finish_reason
+    spec = JudgeSpec(rubric=rubric, references=(REFERENCE,), criteria=("Be correct",), exact_gate=False)
+    workspace = _workspace(tmp_path, "a candidate paraphrase")
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "reward.json").write_text('{"reward": 1.0}')
+    (logs / "reward.txt").write_text("1.0")
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(spec))
+    verdict = run(spec_path, workspace)
+    write_reward(logs, verdict)
+    assert verdict.status == Status.INFRA_ERROR
+    assert json.loads((logs / "verdict.json").read_text())["status"] == "infra_error"
+    assert not (logs / "reward.json").exists()
+    assert not (logs / "reward.txt").exists()

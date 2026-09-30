@@ -162,8 +162,6 @@ def _judge_reference(spec: JudgeSpec, references: tuple[str, ...], candidate: st
         candidate=candidate.strip(),
     )
     score, reply = _ask(client, model, prompt, spec.request_timeout)
-    if score is None:
-        return scored(0.0, reason="unparseable_judge_response", model=model, response=reply[-REASONING_LIMIT:])
     return scored(score, model=model, reasoning=_reasoning(reply))
 
 
@@ -176,14 +174,12 @@ def _judge_checklist(spec: JudgeSpec, criteria: tuple[str, ...], context: str, c
             context=context_block, question=_question(spec), candidate=candidate.strip(), criterion=criterion.strip()
         )
         score, reply = _ask(client, model, prompt, spec.request_timeout)
-        results.append(
-            {"criterion": criterion, "passed": score is not None and score >= 1.0, "reasoning": _reasoning(reply)}
-        )
+        results.append({"criterion": criterion, "passed": score >= 1.0, "reasoning": _reasoning(reply)})
     passed = sum(1 for result in results if result["passed"])
     return scored(passed / len(results), model=model, passed=passed, total=len(results), criteria=results)
 
 
-def _ask(client: openai.OpenAI, model: str, prompt: str, timeout: float) -> tuple[float | None, str]:
+def _ask(client: openai.OpenAI, model: str, prompt: str, timeout: float) -> tuple[float, str]:
     """The parsed score and raw reply, retrying once when the model leaves out the SCORE line."""
     reply = ""
     for attempt in range(1, ATTEMPTS + 1):
@@ -192,7 +188,7 @@ def _ask(client: openai.OpenAI, model: str, prompt: str, timeout: float) -> tupl
         if score is not None:
             return score, reply
         logger.warning("judge %s returned no SCORE line on attempt %d", model, attempt)
-    return None, reply
+    raise RuntimeError(f"judge {model!r} returned no valid SCORE after {ATTEMPTS} attempts")
 
 
 def _complete(client: openai.OpenAI, model: str, prompt: str, timeout: float) -> str:
@@ -202,7 +198,10 @@ def _complete(client: openai.OpenAI, model: str, prompt: str, timeout: float) ->
         temperature=0.0,
         timeout=timeout,
     )
-    return response.choices[0].message.content or ""
+    choice = response.choices[0]
+    if choice.finish_reason in {"length", "content_filter"}:
+        raise RuntimeError(f"judge response is incomplete: finish_reason={choice.finish_reason!r}")
+    return choice.message.content or ""
 
 
 def _score(reply: str) -> float | None:

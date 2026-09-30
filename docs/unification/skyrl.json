@@ -17,7 +17,9 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Last 300 characters; final Answer line normalized; exact rational decimals/fractions/ratios; strict box compares literal last-100-char extraction. Correctness \u00b11. Separate token budget and length shaping.",
-      "adapter_requirements": "Use source extraction plus exact rational normalization; transform 0/1 to 2r-1 only in SkyRL reward policy. Preserve token/stop evidence. math symbolic equivalence is broader than rational-only."
+      "adapter_requirements": "Use source Minerva normalization/extraction plus implemented exact rational boundary for normal mode, project correctness to2r-1 in SkyRL policy. Strict-box route is spec-needed: shared EXACT-HARNESS whitespace-sensitive profile with no transforms; raw last100 box content literal equality, missing/malformed box scored0. Default exact always outer-strips and is not equivalent.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#arithmetic",
+      "additional_spec": "docs/unification/evalchemy_mapping.md#exact-harness-exact-normalization-and-alternative-references"
     },
     {
       "id": "gsm8k",
@@ -30,7 +32,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Strict first #### numeric marker, or flexible last numeric match, or standalone final #### line Decimal equality; env uses final_line.",
-      "adapter_requirements": "Preserve chosen extraction and Decimal equality (numeric float conversion may lose precision); validate prepared ground_truth."
+      "adapter_requirements": "Preserve chosen extraction and Decimal equality (numeric float conversion may lose precision); validate prepared ground_truth.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#arithmetic"
     },
     {
       "id": "gsm8k_multi_turn",
@@ -42,8 +45,9 @@
         "numeric"
       ],
       "mapping_status": "adapter_required",
-      "source_contract": "GSM8K rewards per terminal attempt with turn feedback.",
-      "adapter_requirements": "Keep turn state/feedback in harness; score extracted answer only; inspect policy before projection."
+      "source_contract": "Each turn uses GSM8K strict first #### marker: correct answer earns 1.0, well-formatted wrong answer earns 0.2/max_turns, missing marker earns 0.0. Stop on reward1.0 or configured max_turns; otherwise provide feedback and continue.",
+      "adapter_requirements": "Preserve per-turn source strict-first-marker extraction, literal ground-truth comparison, format reward0.2/max_turns, feedback and stop criteria. Standalone grade_gsm8k_final_line is not equivalent and does not implement this route.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#arithmetic"
     },
     {
       "id": "text2sql",
@@ -56,7 +60,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Format invalid => -1; valid candidate/reference SQL return frozenset rows (duplicates/order discarded), equality => 1 else 0; reference/query errors become 0, rollback transaction; timeout 30 seconds.",
-      "adapter_requirements": "Script comparator must preserve set semantics and explicit -1 formatting reward projection; classify broken reference as unscored only with reviewed harness change."
+      "adapter_requirements": "Script comparator must preserve set semantics and explicit -1 formatting reward projection; classify broken reference as unscored only with reviewed harness change.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#sqlite"
     },
     {
       "id": "text_to_sql",
@@ -69,7 +74,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Read-only deterministic SQLite result equivalence on seeded and every-third-row-deleted database; ordered rows only if top-level ORDER BY; 6 decimal normalization; bounded rows/query.",
-      "adapter_requirements": "Reusable executable SQL scorer script; broken seed/reference => invalid_task or infra_error; candidate query rejection => scored zero."
+      "adapter_requirements": "Reusable executable SQL scorer script; broken seed/reference => invalid_task or infra_error; candidate query rejection => scored zero.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#sqlite"
     },
     {
       "id": "search",
@@ -82,7 +88,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Last answer XML tag; lowercase, remove punctuation/articles, collapse whitespace; target alternatives; EM/subEM helpers.",
-      "adapter_requirements": "Normalize both sides with source QA rules; exact spec alternatives cannot be encoded as list (that means multiset); preserve substring route separately."
+      "adapter_requirements": "Normalize both sides with source QA rules; exact spec alternatives cannot be encoded as list (that means multiset); preserve substring route separately.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#qa"
     },
     {
       "id": "lcb",
@@ -96,7 +103,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Final fenced Python program; stdio or functional tests; binary all-pass or fractional pass ratio; memory and total/per-test deadlines.",
-      "adapter_requirements": "stdio handles stdin binary all-pass; function-call tests compile pytest harness. Fractional reward and numeric/line output comparator require adapter; preserve per-test result/error metadata."
+      "adapter_requirements": "stdio handles stdin binary all-pass; function-call tests compile pytest harness. Fractional reward and numeric/line output comparator require adapter; preserve per-test result/error metadata.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#code"
     },
     {
       "id": "searchcode",
@@ -109,7 +117,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Terminal concatenated chat history scored by GSM8K strict marker extraction.",
-      "adapter_requirements": "Harness owns search/Python tools and transcript; preserve first #### extraction."
+      "adapter_requirements": "Harness owns search/Python tools and transcript; preserve first #### extraction.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#arithmetic"
     },
     {
       "id": "mcq",
@@ -122,7 +131,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "First boxed A-Z/a-z letter uppercased; binary equality.",
-      "adapter_requirements": "Call grade_mcq_candidate with source extraction and options=26; preserve first-box policy."
+      "adapter_requirements": "Call grade_mcq_candidate with source extraction and options=26; preserve first-box policy.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#mcq"
     },
     {
       "id": "ifeval",
@@ -136,7 +146,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "26 func_name registry entries (25 original plus frequency relation); fraction satisfied; malformed/checker errors currently zero.",
-      "adapter_requirements": "Translate each constraint only after checking checker equivalence; registry names/quantifiers are not interchangeable. Unknown or malformed task becomes invalid_task."
+      "adapter_requirements": "Translate each constraint only after checking checker equivalence; registry names/quantifiers are not interchangeable. Unknown or malformed task becomes invalid_task.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#instruction"
     },
     {
       "id": "reasoning_gym",
@@ -149,7 +160,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Complete task+entry metadata; text after last Answer: marker; task-native fractional scorer.",
-      "adapter_requirements": "Exact task/entry port plus source extraction; package version pin and scorer availability."
+      "adapter_requirements": "Exact task/entry port plus source extraction; package version pin and scorer availability.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#reasoning-gym"
     },
     {
       "id": "preference",
@@ -162,7 +174,8 @@
       ],
       "mapping_status": "not_a_verifier",
       "source_contract": "Placeholder terminal zero; actual reward model supplied outside env.",
-      "adapter_requirements": "No deterministic verifier exists; retain external reward model hook, never interpret placeholder zero as verification."
+      "adapter_requirements": "No deterministic verifier exists; retain external reward model hook, never interpret placeholder zero as verification.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#no-verifier"
     },
     {
       "id": "prompt_only",
@@ -175,7 +188,8 @@
       ],
       "mapping_status": "not_a_verifier",
       "source_contract": "Terminal zero; objectives supplied outside verifier.",
-      "adapter_requirements": "No correctness mapping; skipped/unavailable verification."
+      "adapter_requirements": "No correctness mapping; skipped/unavailable verification.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#no-verifier"
     },
     {
       "id": "nemotron_ultra/ns_tools_simple_agent",
@@ -190,7 +204,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
-      "adapter_requirements": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness."
+      "adapter_requirements": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#math-judge"
     },
     {
       "id": "nemotron_ultra/math_with_judge_simple_agent",
@@ -205,7 +220,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
-      "adapter_requirements": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness."
+      "adapter_requirements": "Compose math with source judge prompt/protocol; up-to-constant symbolic adapter; bounded retry on truncated judge response. ns_tools sandbox turns remain in harness.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#math-judge"
     },
     {
       "id": "nemotron_ultra/math_formal_lean_refinement_agent",
@@ -218,7 +234,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Lean proof compilation and up to three correction turns.",
-      "adapter_requirements": "Compile source proof artifact in task environment; preserve correction prompt and unavailable intermediate verdict."
+      "adapter_requirements": "Compile source proof artifact in task environment; preserve correction prompt and unavailable intermediate verdict.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#lean"
     },
     {
       "id": "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
@@ -231,7 +248,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
-      "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances."
+      "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#typed-equality"
     },
     {
       "id": "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
@@ -244,7 +262,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
-      "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances."
+      "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#typed-equality"
     },
     {
       "id": "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent",
@@ -257,7 +276,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Exactly one tool call, exact name/recursive key and type equality; strict absolute float threshold <1e-6; expected chat action requires nonempty content and no calls.",
-      "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances."
+      "adapter_requirements": "Serialize assistant_message including tool calls; executable typed equality comparator. JSON Schema alone does not compare exact values/tolerances.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#typed-equality"
     },
     {
       "id": "nemotron_ultra/calendar_simple_agent",
@@ -270,7 +290,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "JSON event schedule exact IDs/count, durations, windows and pairwise conflicts; rejects think marker.",
-      "adapter_requirements": "Executable schedule constraints; schema validation alone insufficient."
+      "adapter_requirements": "Executable schedule constraints; schema validation alone insufficient.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#calendar"
     },
     {
       "id": "nemotron_ultra/citation_format_simple_agent",
@@ -284,7 +305,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Regex/inline prose counts matching lines; string markers present with no spurious regex matches.",
-      "adapter_requirements": "Source-compatible deterministic constraint script; not generic exact equality."
+      "adapter_requirements": "Source-compatible deterministic constraint script; not generic exact equality.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#format"
     },
     {
       "id": "nemotron_ultra/freeform_formatting_simple_agent",
@@ -298,7 +320,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Regex/inline prose counts matching lines; string markers present with no spurious regex matches.",
-      "adapter_requirements": "Source-compatible deterministic constraint script; not generic exact equality."
+      "adapter_requirements": "Source-compatible deterministic constraint script; not generic exact equality.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#format"
     },
     {
       "id": "nemotron_ultra/mcqa_simple_agent",
@@ -311,7 +334,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Allowed options + strict/lenient boxed, option text, Answer colon/markdown, or template regex; Arabic/Bengali/fullwidth normalizations.",
-      "adapter_requirements": "Source extraction precedes grade_mcq_candidate; options may be noncontiguous, so validate source allowed set explicitly."
+      "adapter_requirements": "Source extraction precedes grade_mcq_candidate; options may be noncontiguous, so validate source allowed set explicitly.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#mcq"
     },
     {
       "id": "nemotron_ultra/structured_outputs_simple_agent",
@@ -325,7 +349,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "OpenAPI schema; JSON/YAML/TOML/XML/CSV; XML/CSV schema-directed scalar coercion; one named tool payload.",
-      "adapter_requirements": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings."
+      "adapter_requirements": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#schema"
     },
     {
       "id": "nemotron_ultra/structured_outputs_v3_simple_agent",
@@ -339,7 +364,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "OpenAPI schema; JSON/YAML/TOML/XML/CSV; XML/CSV schema-directed scalar coercion; one named tool payload.",
-      "adapter_requirements": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings."
+      "adapter_requirements": "JSON/YAML/TOML may translate schema after dialect proof; XML/CSV typed schema needs parser adapter. xml-elements/csv-columns are weaker and not clean mappings.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#schema"
     },
     {
       "id": "nemotron_ultra/rdkit_chemistry_agent",
@@ -353,7 +379,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Required box/double-parenthesis numeric extraction; Python round(predicted)==round(expected).",
-      "adapter_requirements": "Use source rounding adapter; numeric tolerance interval is not equivalent at banker-round boundaries."
+      "adapter_requirements": "Use source rounding adapter; numeric tolerance interval is not equivalent at banker-round boundaries.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#rounded-scalar"
     },
     {
       "id": "nemotron_ultra/nvarc_inductive_simple_agent",
@@ -367,7 +394,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Extract fenced or unfenced transform with imports; execute on input; valid integer palette 0..9 rectangular grid; exact expected output.",
-      "adapter_requirements": "Python transform harness and structural validation, sandbox status distinguished from bad code."
+      "adapter_requirements": "Python transform harness and structural validation, sandbox status distinguished from bad code.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#grid"
     },
     {
       "id": "nemotron_ultra/nvarc_transductive_simple_agent",
@@ -381,7 +409,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "JSON grid or digit rows; strict rectangular palette 0..9 integer grid equality.",
-      "adapter_requirements": "Parse/validate source grid then canonical JSON exact match; schema alone would not equal expected grid."
+      "adapter_requirements": "Parse/validate source grid then canonical JSON exact match; schema alone would not equal expected grid.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#grid"
     },
     {
       "id": "nemotron_ultra/code_gen_simple_agent",
@@ -395,7 +424,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Final fenced code, binary all-tests, short circuit failure, think-tag violation penalty.",
-      "adapter_requirements": "Compile stdio/functional harness; preserve format penalty and per-test execution evidence."
+      "adapter_requirements": "Compile stdio/functional harness; preserve format penalty and per-test execution evidence.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#code"
     },
     {
       "id": "nemotron_ultra/instruction_following_simple_agent",
@@ -409,7 +439,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Pinned NVIDIA verifiable_instructions registry with instruction kwargs; binary or fraction aggregation.",
-      "adapter_requirements": "Registry checker equivalence audit required; pinned script scorer covers unmatched IDs without new category."
+      "adapter_requirements": "Registry checker equivalence audit required; pinned script scorer covers unmatched IDs without new category.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#instruction"
     },
     {
       "id": "nemotron_ultra/abstention_simple_agent",
@@ -423,7 +454,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Normalized IDK receives .5; judge A/B/C maps 1/0/.5; omniscience diagnostic.",
-      "adapter_requirements": "Custom three-label prompt parser and reward projection; binary judge cannot represent abstention directly."
+      "adapter_requirements": "Custom three-label prompt parser and reward projection; binary judge cannot represent abstention directly.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#rubric"
     },
     {
       "id": "nemotron_ultra/multichallenge_simple_agent",
@@ -436,7 +468,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Per-rubric question YES/NO source prompt; average reward.",
-      "adapter_requirements": "Preserve context/expected pass criteria per item and source prompt/verdict parser."
+      "adapter_requirements": "Preserve context/expected pass criteria per item and source prompt/verdict parser.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#rubric"
     },
     {
       "id": "nemotron_ultra/jailbreak_engagement_with_disclaimer",
@@ -450,7 +483,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
-      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product."
+      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#rubric"
     },
     {
       "id": "nemotron_ultra/jailbreak_hard_refusal_no_redirection",
@@ -464,7 +498,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
-      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product."
+      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#rubric"
     },
     {
       "id": "nemotron_ultra/jailbreak_hard_refusal_with_helplines",
@@ -478,7 +513,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
-      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product."
+      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#rubric"
     },
     {
       "id": "nemotron_ultra/jailbreak_refusal_with_explanation",
@@ -492,7 +528,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
-      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product."
+      "adapter_requirements": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#rubric"
     },
     {
       "id": "nemotron_ultra/reasoning_gym_simple_agent",
@@ -505,7 +542,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Source_dataset task-native scorer; last answer tag, then last box, then text; complete entry.",
-      "adapter_requirements": "Preserve final_answer_text and extraction ordering, full metadata."
+      "adapter_requirements": "Preserve final_answer_text and extraction ordering, full metadata.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#reasoning-gym"
     },
     {
       "id": "nemotron_ultra/genrm_simple_agent",
@@ -519,7 +557,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Circular cohort pair comparisons, simple tiebreaker aggregate, reasoning/answer bonuses and group length penalties; placeholder replaced in runner.",
-      "adapter_requirements": "Batch/cohort adapter required; a single-output judge is not equivalent. Keep scorer external to per-candidate grade API."
+      "adapter_requirements": "Batch/cohort adapter required; a single-output judge is not equivalent. Keep scorer external to per-candidate grade API.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#cohort"
     },
     {
       "id": "nemotron_ultra/genrm_simple_agent_reasoning_off",
@@ -533,7 +572,8 @@
       ],
       "mapping_status": "adapter_required",
       "source_contract": "Circular cohort pair comparisons, simple tiebreaker aggregate, reasoning/answer bonuses and group length penalties; placeholder replaced in runner.",
-      "adapter_requirements": "Batch/cohort adapter required; a single-output judge is not equivalent. Keep scorer external to per-candidate grade API."
+      "adapter_requirements": "Batch/cohort adapter required; a single-output judge is not equivalent. Keep scorer external to per-candidate grade API.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#cohort"
     },
     {
       "id": "dormant/torl",
@@ -546,7 +586,8 @@
       ],
       "mapping_status": "dormant_adapter_required",
       "source_contract": "Math extraction with reward_type and symbolic evaluator.",
-      "adapter_requirements": "Preserve source extraction and reward_type."
+      "adapter_requirements": "Preserve source extraction and reward_type.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#math-judge"
     },
     {
       "id": "dormant/naive_dapo",
@@ -559,7 +600,8 @@
       ],
       "mapping_status": "dormant_adapter_required",
       "source_contract": "Extract answer; normalization then symbolic fallback including pi=3.14; binary score.",
-      "adapter_requirements": "Approximate pi policy differs from math-verify, use explicit adapter."
+      "adapter_requirements": "Approximate pi policy differs from math-verify, use explicit adapter.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#math-judge"
     },
     {
       "id": "dormant/coder1",
@@ -574,7 +616,8 @@
       ],
       "mapping_status": "dormant_adapter_required",
       "source_contract": "Ground truth pytest/functional/solution_file/stdin-out; prefix injection, fuzzy output, format+answer reward.",
-      "adapter_requirements": "Use appropriate execution primitive with source extraction/prefix; preserve custom comparator and scoring."
+      "adapter_requirements": "Use appropriate execution primitive with source extraction/prefix; preserve custom comparator and scoring.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#code"
     },
     {
       "id": "dormant/qa_em",
@@ -587,7 +630,8 @@
       ],
       "mapping_status": "dormant_adapter_required",
       "source_contract": "Answer extraction and QA EM target normalization.",
-      "adapter_requirements": "Normalize both sides; explicit accepted alternatives."
+      "adapter_requirements": "Normalize both sides; explicit accepted alternatives.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#qa"
     },
     {
       "id": "dormant/qa_browsecomp",
@@ -600,7 +644,8 @@
       ],
       "mapping_status": "dormant_adapter_required",
       "source_contract": "External LLM judge question+answer.",
-      "adapter_requirements": "Source judge prompt and parser."
+      "adapter_requirements": "Source judge prompt and parser.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#rubric"
     },
     {
       "id": "dormant/qa_ruler",
@@ -613,7 +658,8 @@
       ],
       "mapping_status": "dormant_adapter_required",
       "source_contract": "External LLM judge long-context QA.",
-      "adapter_requirements": "Source judge prompt and parser."
+      "adapter_requirements": "Source judge prompt and parser.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#rubric"
     },
     {
       "id": "dormant/qa_f1",
@@ -626,7 +672,8 @@
       ],
       "mapping_status": "dormant_adapter_required",
       "source_contract": "Token overlap F1 after QA normalization.",
-      "adapter_requirements": "Fractional token scorer executable; no exact primitive equivalence."
+      "adapter_requirements": "Fractional token scorer executable; no exact primitive equivalence.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#qa"
     },
     {
       "id": "dormant/prime_math",
@@ -639,7 +686,8 @@
       ],
       "mapping_status": "dormant_adapter_required",
       "source_contract": "Extract answer and grade_answer/math_equal fallback.",
-      "adapter_requirements": "Source extraction and equivalence policies differ."
+      "adapter_requirements": "Source extraction and equivalence policies differ.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#math-judge"
     },
     {
       "id": "dormant/stem_llm_judge",
@@ -652,7 +700,8 @@
       ],
       "mapping_status": "dormant_adapter_required",
       "source_contract": "External STEM reference judge.",
-      "adapter_requirements": "Preserve prompt, parser and tuple transport."
+      "adapter_requirements": "Preserve prompt, parser and tuple transport.",
+      "adapter_spec": "docs/unification/skyrl-adapter-specs.md#rubric"
     }
   ],
   "ifeval_func_names": [
@@ -753,18 +802,34 @@
     "arithmetic_adapter_tests": 17,
     "arithmetic_source_tests": 40,
     "patch_apply_checks": "Both patches apply cleanly to pinned source; source clone unchanged",
-    "dependency_pin": "Pending implementation checkpoint commit"
+    "dependency_pin": "545ae96c553b171b09d4ee108df7c3d06879497d",
+    "implementation_install": "Isolated uv install from local Git repository at exact 545ae96c553b171b09d4ee108df7c3d06879497d succeeded; real rational and MCQ grading passed.",
+    "judge_regressions": "6 real HTTP regression cases failed before fix: completed malformed replies and incomplete valid-looking SCORE labels for reference/checklist rubrics. Core now masks judge failures; source larger-budget retry still adapter-specific."
   },
   "implementation": {
     "module": "src/verifyit/adapters/skyrl.py",
     "patches": [
-      "patches/MarinSkyRL/mcq-verifyit.patch",
-      "patches/MarinSkyRL/arithmetic-verifyit.patch"
+      "integrations/MarinSkyRL/mcq-verifyit.patch",
+      "integrations/MarinSkyRL/arithmetic-verifyit.patch",
+      "integrations/MarinSkyRL/dependency-pin.patch"
     ],
     "covered_routes": [
       "mcq",
       "aime normalized rational equality",
       "gsm8k final_line"
     ]
-  }
+  },
+  "installation": {
+    "dependency": "verifyit @ git+https://github.com/marin-community/verifyit@545ae96c553b171b09d4ee108df7c3d06879497d",
+    "implementation_revision": "545ae96c553b171b09d4ee108df7c3d06879497d",
+    "source_revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
+    "python": "Root Python 3.12; standalone gym >=3.11 after patch",
+    "patch_order": [
+      "dependency-pin.patch",
+      "mcq-verifyit.patch",
+      "arithmetic-verifyit.patch"
+    ],
+    "lockfiles": "Regenerate root and standalone gym uv.lock after publishing implementation revision; remote Git install is not verified because this commit is local only."
+  },
+  "reusable_gap_specs": "docs/unification/skyrl-adapter-specs.md"
 }

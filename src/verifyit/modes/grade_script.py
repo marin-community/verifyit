@@ -6,9 +6,10 @@
 This is the fallback for converters whose original ``test.sh`` logic fits no other mode. The script
 runs in the agent's workspace with ``VERIFYIT_TESTS_DIR``, ``VERIFYIT_WORKSPACE`` and
 ``VERIFYIT_LOGS_DIR`` exported, and reports its reward through one of three channels, checked in
-this order: ``$VERIFYIT_LOGS_DIR/reward.json`` holding ``{"reward": <float>, ...}``,
+this order: ``$VERIFYIT_LOGS_DIR/reward.json`` holding the finite numeric ``spec.reward_key``,
 ``$VERIFYIT_LOGS_DIR/reward.txt`` holding a bare float, or a float on the last non-empty line of
-stdout. A script that exits without reporting a reward returns an infrastructure failure.
+stdout. Named keys require reward.json. Numeric auxiliary metrics are retained in verdict detail.
+Malformed authoritative files and scripts reporting no reward produce infrastructure failures.
 """
 
 import json
@@ -23,7 +24,7 @@ from pathlib import Path
 from verifyit.grade import REWARD_JSON, REWARD_TXT, InvalidTask, Reward, scored
 from verifyit.modes.extract import last_line
 from verifyit.modes.run import STDERR_TAIL, run_command
-from verifyit.spec import DEFAULT_WORKSPACE, ScriptSpec, Spec
+from verifyit.spec import DEFAULT_REWARD_KEY, DEFAULT_WORKSPACE, ScriptSpec, Spec
 
 SHELL = "bash"
 PYTHON = "python3"
@@ -102,7 +103,7 @@ def _reported_reward(logs_dir: Path, stdout: str, reward_key: str) -> Reported |
     json_path = logs_dir / REWARD_JSON
     if json_path.is_file():
         return _json_reward(json_path, reward_key)
-    if reward_key != "reward":
+    if reward_key != DEFAULT_REWARD_KEY:
         raise RuntimeError(f"named reward {reward_key!r} requires reward.json")
     text_path = logs_dir / REWARD_TXT
     if text_path.is_file():

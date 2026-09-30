@@ -37,7 +37,8 @@ def grade(spec: JunitSpec, tests_dir: Path, workspace: Path) -> Reward:
         return scored(0.0, reason="no_report", passed=0, total=0, exit_code=result.returncode)
     outcomes: dict[str, bool] = {}
     for report in reports:
-        outcomes.update(_outcomes(report))
+        for test_id, passed in _outcomes(report).items():
+            outcomes[test_id] = outcomes.get(test_id, True) and passed
     return check_ids(outcomes, spec.must_pass, spec.must_not_break, exit_code=result.returncode, reports=len(reports))
 
 
@@ -52,5 +53,6 @@ def _outcomes(report: Path) -> dict[str, bool]:
         test_id = f"{classname}.{name}" if classname else name
         if case.find(SKIP_TAG) is not None:
             continue
-        outcomes[test_id] = all(case.find(tag) is None for tag in FAILURE_TAGS)
+        passed = all(case.find(tag) is None for tag in FAILURE_TAGS)
+        outcomes[test_id] = outcomes.get(test_id, True) and passed
     return outcomes

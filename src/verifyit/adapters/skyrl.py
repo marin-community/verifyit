@@ -32,7 +32,7 @@ def grade_aime_candidate(expected: str, candidate: str) -> Reward:
     """Score source-normalized AIME answers by literal or exact rational equality.
 
     The caller retains AIME's tail extraction and text normalization. Strict-box
-    scoring remains literal and must use the exact primitive directly.
+    scoring is a separate whitespace-sensitive contract; this helper does not implement it.
     """
     spec = ExactSpec(expected=(expected,))
     if candidate == expected:

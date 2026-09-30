@@ -16,6 +16,7 @@ from typing import Any
 
 import tomlkit
 
+DEFAULT_REWARD_KEY = "reward"
 DEFAULT_OUTPUT = "/app/answer.txt"
 DEFAULT_WORKSPACE = "/app"
 
@@ -229,7 +230,7 @@ class ScriptSpec:
     args: tuple[str, ...] = ()
     timeout: float = 600.0
     workspace: str = DEFAULT_WORKSPACE
-    reward_key: str = "reward"
+    reward_key: str = DEFAULT_REWARD_KEY
 
 
 Spec = (

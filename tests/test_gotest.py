@@ -112,3 +112,15 @@ def test_gotest_real_go_module_passes(tmp_path):
     (workspace / "calc_test.go").write_text(CALC_TEST_GO)
     reward = grade_gotest.grade(GotestSpec(must_pass=("example.com/m.TestAdd",)), tmp_path, workspace)
     assert reward.reward == 1.0
+
+
+@pytest.mark.parametrize("actions", [("fail", "pass"), ("pass", "fail"), ("fail", "skip", "pass")])
+def test_gotest_repeated_test_failure_is_not_erased(tmp_path, monkeypatch, actions):
+    stream = (
+        "\n".join(f'{{"Action": "{action}", "Package": "one", "Test": "TestRepeated"}}' for action in actions)
+        + '\n{"Action": "pass", "Package": "two", "Test": "TestRepeated"}\n'
+    )
+    workspace = _use_fake_go(monkeypatch, tmp_path, stream)
+    reward = grade_gotest.grade(GotestSpec(must_not_break=("one.TestRepeated",)), tmp_path, workspace)
+    assert (reward.reward, reward.detail["first_failure"]) == (0.0, "one.TestRepeated")
+    assert grade_gotest.grade(GotestSpec(must_pass=("two.TestRepeated",)), tmp_path, workspace).reward == 1.0

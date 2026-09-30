@@ -3,12 +3,14 @@
 """Inventory every tracked Harbor adapter and verifier entrypoint at a pinned head."""
 
 import argparse
+import ast
 import hashlib
 import json
 import subprocess
 from pathlib import Path
 
 REVISION = "6f94f2237224869a49c249a737d701147afc33b6"
+ENTRYPOINTS = {"test.sh", "test.bat", "run-tests.sh"}
 
 
 def inventory(source: Path) -> dict:
@@ -19,10 +21,15 @@ def inventory(source: Path) -> dict:
     adapter_names = sorted(
         {path.split("/")[1] for path in files if path.startswith("adapters/") and len(path.split("/")) > 2}
     )
+    semantics_path = Path(__file__).resolve().parents[2] / "docs/unification/harbor_semantics.json"
+    semantics = json.loads(semantics_path.read_text())
+    contracts = {record["adapter"]: record for record in semantics["adapters"]}
+    if semantics["revision"] != revision or set(contracts) != set(adapter_names):
+        raise ValueError("curated semantics do not cover the pinned adapter population")
     records = []
     for name in adapter_names:
         adapter_files = [path for path in files if path.startswith(f"adapters/{name}/")]
-        entries = [path for path in adapter_files if Path(path).name in {"test.sh", "test.bat", "run-tests.sh"}]
+        entries = [path for path in adapter_files if Path(path).name in ENTRYPOINTS]
         # Include generators: some adapters download the upstream grader or render a
         # dynamic test.sh rather than storing a static template in the repository.
         evidence = []
@@ -33,13 +40,25 @@ def inventory(source: Path) -> dict:
             text = data.decode(errors="replace")
             if not any(
                 token in text for token in ("reward.json", "reward.txt", "test.sh", "test.bat", "tests/", "tests_dir")
-            ):
+            ) and not ("template" in path and Path(path).suffix == ".py"):
                 continue
+            functions = []
+            if Path(path).suffix == ".py":
+                try:
+                    syntax = ast.parse(text)
+                    functions = [
+                        {"name": node.name, "line": node.lineno}
+                        for node in ast.walk(syntax)
+                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    ]
+                except SyntaxError:
+                    functions = [{"name": "rendered-template", "line": 1}]
             evidence.append(
                 {
                     "path": path,
                     "sha256": hashlib.sha256(data).hexdigest(),
                     "reward_channels": [channel for channel in ("reward.json", "reward.txt") if channel in text],
+                    "functions": functions,
                 }
             )
         if not evidence:
@@ -53,16 +72,10 @@ def inventory(source: Path) -> dict:
                 "adapter": name,
                 "entrypoints": entries,
                 "evidence": evidence,
-                "verifyit_mode": "script" if any(item["reward_channels"] for item in evidence) or entries else None,
-                "classification": (
-                    "adapter"
-                    if any(item["reward_channels"] for item in evidence) or entries
-                    else "external-contract-needed"
-                ),
-                "mapping_basis": (
-                    "retain benchmark's executable harness behind the existing script primitive; "
-                    "no inference from adapter name"
-                ),
+                "primitives": contracts[name]["primitives"],
+                "classification": contracts[name]["classification"],
+                "contract": contracts[name]["contract"],
+                "specification": contracts[name].get("specification"),
                 "requirements": [
                     "retain task image, cwd, services, protected test upload and declared environment",
                     "redirect /logs/verifier reward artifacts into VERIFYIT_LOGS_DIR or copy them after execution",
@@ -76,11 +89,11 @@ def inventory(source: Path) -> dict:
             }
         )
     configs = [path for path in files if Path(path).name == "task.toml"]
-    scripts = [path for path in files if Path(path).name in {"test.sh", "test.bat", "run-tests.sh"}]
+    scripts = [path for path in files if Path(path).name in ENTRYPOINTS]
     return {
         "repository": "https://github.com/marin-community/harbor",
         "revision": revision,
-        "scope": "discovery and script adapter routing; per-adapter cleanest primitive semantics not yet reviewed",
+        "scope": "curated semantic routes for every adapter; per-task execution parity not yet established",
         "adapters": len(records),
         "tracked_task_configs": len(configs),
         "tracked_test_entrypoints": len(scripts),

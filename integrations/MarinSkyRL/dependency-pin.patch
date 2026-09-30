@@ -1,0 +1,24 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -11,6 +11,7 @@
+ description = "Marin's typed launcher and RL training runtime"
+ requires-python = "==3.12.*"
+ dependencies = [
++    "verifyit @ git+https://github.com/marin-community/verifyit@545ae96c553b171b09d4ee108df7c3d06879497d",
+     "aiohttp>=3.13.3",
+     "boto3",
+     "datasets>=4.0.0",
+--- a/skyrl-gym/pyproject.toml
++++ b/skyrl-gym/pyproject.toml
+@@ -11,9 +11,10 @@
+ ]
+ license = { text = "MIT" }
+ readme = "README.md"
+-requires-python = ">=3.10"
++requires-python = ">=3.11"
+ 
+ dependencies = [
++    "verifyit @ git+https://github.com/marin-community/verifyit@545ae96c553b171b09d4ee108df7c3d06879497d",
+     "func_timeout",
+     "loguru",
+     "numpy",

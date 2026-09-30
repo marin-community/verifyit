@@ -46,5 +46,6 @@ def parse_events(stream: str) -> dict[str, bool]:
         passed = ACTION_OUTCOMES.get(event.get("Action"))
         if test is None or passed is None:
             continue
-        outcomes[f"{event.get('Package', '')}.{test}"] = passed
+        test_id = f"{event.get('Package', '')}.{test}"
+        outcomes[test_id] = outcomes.get(test_id, True) and passed
     return outcomes

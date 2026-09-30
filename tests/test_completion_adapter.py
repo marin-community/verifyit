@@ -1,6 +1,6 @@
 import pytest
 
-from verifyit.adapters.completion import Completion, CompletionStatus, answer_text
+from verifyit.adapters.completion import Completion, CompletionStatus, answer_text, math_answer_text
 from verifyit.modes.grade_mcq import answer_letters, grade_mcq_candidate
 from verifyit.spec import McqSpec
 
@@ -15,7 +15,7 @@ from verifyit.spec import McqSpec
     ],
 )
 def test_final_completion_choice_overrides_tentative_reasoning(completion, expected):
-    letters = answer_letters(answer_text(completion, require_reasoning_box=False))
+    letters = answer_letters(answer_text(completion))
     result = grade_mcq_candidate(McqSpec(expected="B"), letters[-1] if letters else "")
     assert result.reward == expected
 
@@ -31,4 +31,4 @@ def test_final_completion_choice_overrides_tentative_reasoning(completion, expec
     ],
 )
 def test_completed_reasoning_only_math_requires_box_and_final_content_wins(completion, expected):
-    assert answer_text(completion, require_reasoning_box=True) == expected
+    assert math_answer_text(completion) == expected

@@ -216,3 +216,18 @@ def test_constraint_missing_its_parameters_fails_the_candidate(tmp_path, workspa
     reward = reward_for(workspace, tmp_path, constraints, "Two.\n\nParagraphs.")
     assert reward.reward == 0.0
     assert reward.detail["constraints"][0]["detail"] == "missing num_paragraphs"
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("First answer.******Second answer.", 1.0),
+        ("******First answer.******Second answer.******", 1.0),
+        ("Same answer.****** Same answer. ", 0.0),
+        ("First.******Second.******Third.", 0.0),
+        ("First.************Second.", 0.0),
+    ],
+)
+def test_two_responses_requires_exactly_two_distinct_answers(tmp_path, workspace, text, expected):
+    result = reward_for(workspace, tmp_path, (Constraint("combination:two_responses", {}),), text)
+    assert (result.reward, result.status) == (expected, Status.SCORED)

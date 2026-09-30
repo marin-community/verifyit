@@ -18,3 +18,12 @@ benchmark's own box parser and stop-sequence handling.
 This patch does not replace mathematical equivalence or judge prompts. Their
 normalization/fallback contracts require additional parity work described in
 [the mapping](../../docs/unification/evalchemy_mapping.md).
+
+
+The initial bridge implementation is local verifyit commit
+`545ae96c553b171b09d4ee108df7c3d06879497d` on `codex/verifier-unification`.
+It has not been pushed and is not installable from a GitHub revision URL.
+Use a local checkout or built wheel for validation. The current Evalchemy patch
+also requires the subsequent `math_answer_text` API refinement; its final
+implementation revision must be recorded after that checkpoint is committed.
+Do not pin only the initial commit for the latest patch.

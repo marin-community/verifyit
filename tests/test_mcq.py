@@ -104,3 +104,21 @@ def test_cli_grades_an_mcq_task_and_writes_the_verdict(tmp_path):
     }
     assert json.loads((logs / "reward.json").read_text()) == {"reward": 1.0}
     assert (logs / "reward.txt").read_text() == "1.0\n"
+
+
+@pytest.mark.parametrize(
+    ("response", "expected_reward"),
+    [
+        ("Answer: Banana", 0.0),
+        ("Answer: BC", 0.0),
+        ("Answer: B2", 0.0),
+        ("Answer: B.", 1.0),
+        ("Answer: (B)", 1.0),
+        (r"Answer: \boxed{B}", 1.0),
+        ("Answer: B because the evidence supports it", 1.0),
+    ],
+)
+def test_mcq_option_must_be_a_complete_alphanumeric_token(tmp_path, response, expected_reward):
+    _answer(tmp_path, response)
+    verdict = dispatch(McqSpec(expected="B"), tmp_path, tmp_path)
+    assert (verdict.reward, verdict.status) == (expected_reward, Status.SCORED)

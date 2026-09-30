@@ -16,3 +16,12 @@ weighted perplexity. Selecting an absent, structured, unbounded or nonfinite
 metric returns `invalid_task` while retaining metrics. Scorer/aggregator exceptions
 propagate to the integration's infrastructure boundary. A wrong candidate's valid
 zero metric produces `scored`, never an infrastructure failure.
+
+
+The initial bridge implementation is local verifyit commit
+`545ae96c553b171b09d4ee108df7c3d06879497d` on `codex/verifier-unification`.
+It has not been pushed and is not installable from a GitHub revision URL.
+Use a local checkout or built wheel for validation. The current Evalchemy patch
+also requires the subsequent `math_answer_text` API refinement; its final
+implementation revision must be recorded after that checkpoint is committed.
+Do not pin only the initial commit for the latest patch.

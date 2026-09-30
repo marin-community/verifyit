@@ -174,3 +174,19 @@ def test_unparsable_toml_scores_zero_without_raising(tests_dir, workspace):
     reward = grade_json_schema.grade(JsonSchemaSpec(format=SchemaFormat.TOML), tests_dir, workspace)
     assert (reward.reward, reward.status) == (0.0, Status.SCORED)
     assert reward.detail["reason"] == "parse_error"
+
+
+def test_grid_schema_rejects_boolean_cells_even_when_python_equality_matches(tests_dir, workspace):
+    # ARC's original row comparison accepts False == 0 and True == 1.
+    # A typed JSON schema keeps the expected integer-grid contract.
+    schema = {
+        "type": "array",
+        "items": {"type": "array", "items": {"type": "integer"}},
+        "const": [[0, 1]],
+    }
+    (tests_dir / "schema.json").write_text(json.dumps(schema))
+    answer(workspace, "[[0, 1]]")
+    assert grade_json_schema.grade(JsonSchemaSpec(), tests_dir, workspace).reward == 1.0
+    answer(workspace, "[[false, true]]")
+    reward = grade_json_schema.grade(JsonSchemaSpec(), tests_dir, workspace)
+    assert (reward.reward, reward.status) == (0.0, Status.SCORED)

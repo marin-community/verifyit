@@ -55,7 +55,7 @@
  from typing import TypedDict
  
  from lm_eval.tasks.hendrycks_math.utils import last_boxed_only_string, remove_boxed
-+from verifyit.adapters.completion import Completion, CompletionStatus, answer_text, final_text
++from verifyit.adapters.completion import Completion, CompletionStatus, final_text, math_answer_text
  
  from eval.completion_response import CompletionClassification, CompletionText
  from eval.generation_stops import END_OF_TURN_SEQUENCES, truncate_at_stop
@@ -64,7 +64,7 @@
  
  
  class AnswerExtractionError(ValueError):
-@@ -38,25 +37,22 @@
+@@ -38,25 +37,21 @@
  
  def final_response_text(response: str) -> str:
      """Return final answer content without a preceding reasoning trace."""
@@ -93,9 +93,8 @@
 +            if completion.classification == CompletionClassification.REASONING_ONLY or completion.content
 +            else CompletionStatus.TRUNCATED
 +        )
-+        response = answer_text(
++        response = math_answer_text(
 +            Completion(completion.content or "", completion.reasoning_content or "", status),
-+            require_reasoning_box=True,
 +        )
      try:
          return remove_boxed(last_boxed_only_string(truncate_at_stop(final_response_text(response))))

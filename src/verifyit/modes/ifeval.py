@@ -619,5 +619,9 @@ def repeat_phrase(text: str, params: dict) -> tuple[bool, str]:
 
 @constraint("combination:two_responses")
 def two_responses(text: str, params: dict) -> tuple[bool, str]:
-    parts = [p for p in text.split(TWO_RESPONSE_SEPARATOR) if p.strip()]
-    return len(parts) >= 2, f"sections_by_******={len(parts)}"
+    sections = text.split(TWO_RESPONSE_SEPARATOR)
+    if any(not section.strip() for section in sections[1:-1]):
+        return False, "empty section between responses"
+    parts = [section.strip() for section in sections if section.strip()]
+    passed = len(parts) == 2 and parts[0] != parts[1]
+    return passed, f"sections_by_******={len(parts)}"

@@ -63,5 +63,192 @@ Recent patches reviewed and regression consequences:
 
 No additional verifier category is proposed. The implemented reusable gaps are a
 provider completion boundary and a metric-preserving bridge, both independent of
-benchmark dependencies. Remaining candidate mappings need parity work before a
-fork can remove its original scorer.
+benchmark dependencies. The following contract specifications cover the remaining non-clean mappings.
+They extend existing modes; implementation is separate from the current API.
+
+
+## EXACT-HARNESS: exact normalization and alternative references
+
+Extend `exact` with an explicit `profile="harness"`; retain existing defaults for
+other tasks. Inputs are already-filtered candidate strings and one or more
+reference strings. Reference cardinality is explicit: `alternatives` means any
+reference can match, whereas the existing mode's multiple entries represent a
+sequence. Preserve empty strings and every whitespace character at this boundary;
+missing candidate artifacts still score zero.
+
+The profile performs `regexes_to_ignore` substitutions in order on both sides,
+then optional Unicode `lower`, ASCII punctuation removal, and ASCII digit removal,
+in that order. Compare the resulting strings by equality. No implicit stripping,
+casefolding, boxing or list splitting is permitted. The existing `ignore_case`
+flag selects lowercasing only within this profile. Compile supplied regexes before
+scoring; malformed patterns/references are `invalid_task`. Candidate nonmatch is
+`scored` zero. Return the source `exact_match` metric and the chosen filter name;
+multiple filter chains remain separate outputs.
+
+Evidence: harness `lm_eval/api/metrics.py:exact_match_hf_evaluate` and
+`ConfigurableTask.process_results` implement these rules. GSM8K's `strict-match`
+uses the first `####` match, while `flexible-extract` uses the last regex match;
+retain those extraction chains before calling the shared exact candidate API.
+
+Acceptance cases: `" x "` versus `"x"` must differ; `"Straße"` versus `"STRASSE"`
+must differ under lowercasing; empty versus empty must match; the four GSM8K regex
+substitutions must run in their source order; any-reference matching must retain
+references as alternatives rather than split them into a list answer. Compare
+all transformed candidates against the actual pinned source metric function.
+
+## MATH-PROFILES: symbolic and normalization comparators
+
+Extend `math` with a named comparison profile; retain today's symbolic profile
+and its invalid-reference behavior. Inputs are an extracted answer string and an
+ordered tuple of accepted references. Extraction remains explicit: first or last
+box, final-content selection, provider completion status, and stop sequences are
+separate from equivalence.
+
+The `boxed-equivalence` profile ports
+`eval/graders/answer_equivalence.py:math_answers_equivalent`: normalize the candidate
+with the pinned Minerva substitutions; parse candidate/reference inside
+`\boxed{...}` using the pinned math-verify engine; when both parses are nonempty,
+use its `verify(gold=reference,target=candidate)` result even when false. Only when
+one parse is empty may the normalized Minerva comparator run. Any accepted
+reference matching produces one. Non-symbolic references remain valid in this
+profile; they must not inherit the default mode's `invalid_task` rejection.
+
+Two other reusable profiles cover harness scorers: `hendrycks-normalized` preserves
+its ordered string rewrite chain and raw-equality fallback on normalization
+exceptions; `minerva-normalized` preserves appendix-D normalization, rational
+comparison shortcuts, tuple rejection, symbolic subtraction/simplification and
+source timeout behavior. They are distinct named profiles within `math`, not
+additional modes. Parser/runtime versions and normalization code hashes are
+recorded in the task integration manifest. Missing optional engines are
+`infra_error`; task profile/configuration errors are `invalid_task`; valid
+unparseable candidates and comparison timeouts follow the selected source profile
+and remain scored outcomes. Engine programming errors are not blanket-caught.
+
+Acceptance cases include every upstream MATH500 representation regression:
+formatted grouped integers, 0.09 versus 9/100, text answers such as ellipse,
+ordered comma-separated answers, matrices, exponent formatting and reordered
+algebraic sums. Also test distinct tuple/grouping commas, malformed references,
+first-versus-last boxes and parsed-but-unequal pairs that must not use fallback.
+Run AIME/MATH500 patched suites and compare candidate/reference cross-products to
+the source profile, including a timeout case. Any judge fallback in OlympiadBench
+is a separate classifier contract; deterministic variants never invoke it.
+
+## IFEVAL-REGISTRY: official checker profile and result vectors
+
+Extend `ifeval` with a versioned registry profile. The current TaskTrove profile
+keeps its existing paragraph/token/language semantics. The official profile takes
+`instruction_id_list`, aligned kwargs, prompt, response and an immutable registry
+revision. Instantiate each official checker, build its description using source
+kwargs filtering, and apply prompt-dependent description updates exactly once as
+in the source. Freeze random defaults from the source description phase in the
+converted task; missing material arguments without recorded source state are
+`invalid_task`, never invented random defaults.
+
+Return four metrics: strict/loose prompt pass and strict/loose ordered instruction
+vectors. Strict checks require nonblank response and every registered predicate.
+Loose checks OR each predicate across the source's eight response variants:
+original, asterisks removed, first/last/both lines removed, and those three line
+variants with asterisks removed. Dataset prompt rate averages prompt booleans;
+instruction rate pools all instruction booleans rather than averaging per-prompt
+rates. A scalar reward key is explicit. Checker registry, tokenization assets and
+language detection live in optional extras. Unknown instruction/invalid kwargs
+are `invalid_task`; missing dependencies/assets are `infra_error`; a failed
+candidate predicate is `scored` zero with its vector retained.
+
+Evidence: Evalchemy IFEval registry/evaluation files and harness
+`lm_eval/tasks/ifeval/{instructions,instructions_registry,utils}.py`. Official
+paragraphs split on `***`, while current verifyit paragraphs split blank lines;
+`combination:repeat_prompt` is absent from the current registry. These differences
+require the profile rather than silently changing legacy scoring. The shared
+`two_responses` defect is fixed independently: exactly two distinct answers with
+no interior empty section, matching the source predicate.
+
+Acceptance cases: run official source tests for every registry class, test `***`
+versus blank-line paragraphs, repeat-prompt checks, duplicates/three responses,
+strict failure that passes one loose transform, prompt-dependent kwargs, and two
+prompts containing different numbers of instructions to verify pooled weighting.
+No language-detection or tokenizer approximation may claim official parity.
+
+## JUDGE-CLASSIFIER: explicit prompt and label protocol
+
+Extend `judge` with a classifier rubric configured by a task-owned prompt template,
+label parser and label-to-reward table. Inputs are question, references, candidate,
+template hash, exact allowed labels, model/endpoint and retry/token budget policy.
+Preserve the template bytes, messages, temperature and response parser. Disable
+reference/checklist exact gates unless the source explicitly uses them; empty
+candidate handling is declared as judge-or-zero rather than inherited implicitly.
+
+For SimpleQA, the template in `eval/graders/simpleqa.py` requests exactly A/B/C;
+its parser strips and uppercases the response and rejects other text. Retain raw
+response and semantic labels `correct`, `incorrect`, `not_attempted`. A maps to
+reward one, B/C to zero, but C remains distinct in metrics. Dataset accuracy,
+accuracy given attempted and F1 use source formulas and attempted denominators.
+This is not equivalent to today's reference rubric's 0/0.5/1 prompt.
+
+Invalid template/label table is `invalid_task`. Authentication, transport,
+exhausted empty completions and invalid judge labels are `infra_error` for the
+trial; they remain separate records when other trials succeed. A source judge's
+valid negative label is `scored` zero. Optional `openai` dependencies remain in the
+judge extra. FinanceBench, HLE and semantic answer equivalence supply their own
+pinned templates/parsers through the same profile; MTBench/pairwise evaluations
+retain turns/reference orchestration and source aggregators in the metric bridge.
+
+Acceptance cases use the existing local HTTP fixture: A/B/C, lowercase/whitespace,
+unknown labels, transient failure, all retries empty, configured model and exact
+request prompt. Verify C versus B attempted counts, partial trial failure records,
+and source aggregate denominators. No live model is needed or accepted as parity
+proof for deterministic transport/parser behavior.
+
+## EXECUTION-CONTRACT: preserve source cases and metric outputs
+
+Executable/custom evaluations use existing `script`, `stdio` or `pytest`
+primitives with a declared task adapter. Inputs name the task's trusted scorer,
+reference files, candidate artifact, case protocol and resource limits. A scorer
+entry point is identified by source revision and function/class path; its
+execution environment and optional dependencies belong in the task image.
+A candidate source file is installed/restored separately from protected tests.
+
+For stdin cases, map each source input/expected pair to `StdioCase`; retain source
+exact/token/float comparison, per-case status and explicit weighting. For callable
+cases, serialize positional/keyword arguments and expected return value with a
+versioned codec, choose the source import or solution-class entry point, and apply
+the source output-comparison protocol. This is an extension to `stdio`'s case
+protocol, not a new code-verification mode. If cases require arbitrary source
+harness state or toolchains, use `script` with the original trusted grader rather
+than infer Python tests from benchmark names.
+
+Every adapter retains code extraction, dedentation, compilation outcomes,
+per-case timeouts, process cleanup, numerical tolerance and source test order.
+Store all named/vector metrics through the
+[metric contract](lm_eval_mapping.md#metric-contract-response-and-aggregation-artifacts).
+Pass@k stays dataset aggregation over independently recorded trial successes.
+Unknown language, missing tests or incompatible task metadata are `invalid_task`;
+missing compiler/runtime, failed worker or task setup is `infra_error`; candidate
+compile/runtime errors, failed assertions and case timeouts follow source scored
+labels. A task timeout must not hide an infrastructure timeout under candidate zero.
+
+Acceptance cases cover an indented Plus solution (#148), stdin and callable
+LiveCodeBench modes (#150), a passing/failed case mixture, compilation error,
+process-group cleanup, sample-trial order, protected-test restoration and source
+pass@k. MultiPLE language dispatch and SWEbench image/setup retain their existing
+orchestration. Source checkers such as MRCR character similarity, NUPA digit/format
+metrics and LiveBench scorer families are trusted script functions with their
+explicit original aggregation, not approximate numeric/exact comparisons.
+
+## Coverage classification
+
+A clean native mapping requires source-scoring equivalence plus the required
+extraction/configuration adapter. `adapter` currently identifies the two
+implemented MCQ benchmark integrations. `spec-needed` identifies a non-clean
+mapping covered by a concrete existing-mode profile/contract above; it does not
+claim that profile is implemented. Groups/templates remain orchestration. The
+inventory generator fails on unknown custom benchmark names and unknown native
+output types. Its per-record specification anchors and aggregated counts are the
+coverage evidence; discovering a source record alone is not semantic validation.
+
+
+The current classified population is 42 custom benchmarks: two implemented MCQ
+adapters and 40 explicit existing-mode specifications, with zero unknown
+benchmarks. Local harness overrides add 21 task configurations covered by the
+same profiles and one orchestration group. Native harness population and inline
+group definitions are counted separately in the harness manifest.

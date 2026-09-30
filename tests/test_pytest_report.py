@@ -167,3 +167,16 @@ def test_setup_runs_in_the_workspace_before_the_tests(tmp_path):
     failing = PytestSpec(paths=("test_marker.py",), setup="exit 3")
     reward = grade_pytest.grade(failing, tests_dir, workspace)
     assert reward.reward == 0.0 and reward.detail["reason"] == "setup_failed"
+
+
+def test_pytest_report_repeated_pass_does_not_erase_required_failure(tmp_path):
+    workspace = _project(tmp_path, BROKEN)
+    # Retry/reporting plugins can emit several observations of one node ID.
+    (workspace / "conftest.py").write_text(
+        "def pytest_json_modifyreport(json_report):\n"
+        '    failed = next(test for test in json_report["tests"] if test["outcome"] == "failed")\n'
+        '    json_report["tests"].append({**failed, "outcome": "passed"})\n'
+    )
+    reward = grade_pytest.grade(_spec(must_not_break=(REGRESSION,)), tmp_path, workspace)
+    assert (reward.reward, reward.detail["first_failure"]) == (0.0, REGRESSION)
+    assert grade_pytest.grade(_spec(must_pass=(PASSING,)), tmp_path, workspace).reward == 1.0

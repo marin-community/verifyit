@@ -65,23 +65,78 @@ def resolve_config(path, seen=None):
     return merged, evidence
 
 
+def callable_record(root, path, node):
+    return {
+        **source_record(root, path),
+        "function": node.name,
+        "line": node.lineno,
+        "calls": sorted({ast.unparse(call.func) for call in ast.walk(node) if isinstance(call, ast.Call)}),
+    }
+
+
+SPECIFICATIONS = {
+    "metric": "lm_eval_mapping.md#metric-contract-response-and-aggregation-artifacts",
+    "exact": "evalchemy_mapping.md#exact-harness-exact-normalization-and-alternative-references",
+    "math": "evalchemy_mapping.md#math-profiles-symbolic-and-normalization-comparators",
+    "ifeval": "evalchemy_mapping.md#ifeval-registry-official-checker-profile-and-result-vectors",
+    "judge": "evalchemy_mapping.md#judge-classifier-explicit-prompt-and-label-protocol",
+    "execution": "evalchemy_mapping.md#execution-contract-preserve-source-cases-and-metric-outputs",
+}
+
+
 def callables(root, directory):
     records = []
     for path in sorted(directory.rglob("*.py")):
         tree = ast.parse(path.read_text())
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-                records.append(
-                    {
-                        **source_record(root, path),
-                        "function": node.name,
-                        "line": node.lineno,
-                        "calls": sorted(
-                            {ast.unparse(call.func) for call in ast.walk(node) if isinstance(call, ast.Call)}
-                        ),
-                    }
-                )
+                records.append(callable_record(root, path, node))
     return records
+
+
+def harness_classification(path, config):
+    task = config.get("task")
+    custom = config.get("process_results")
+    output = config.get("output_type", "class-defined" if config.get("class") else "generate_until")
+    if output not in ("generate_until", "multiple_choice", "loglikelihood", "loglikelihood_rolling", "class-defined"):
+        raise ValueError(f"Unclassified output type {output!r}: {path}")
+    if isinstance(task, list) or (config.get("group") and not isinstance(task, str)):
+        mapping = "orchestration"
+        reason = "Task group expansion and dataset aggregation stay in harness."
+    elif custom or config.get("class"):
+        mapping = "metric_bridge"
+        reason = "Preserve source callable and every structured per-sample/aggregate metric."
+    elif output == "multiple_choice":
+        mapping = "metric_bridge"
+        reason = "Likelihood argmax, character/byte normalization, greedy flags and optional mutual " "information."
+    elif output in ("loglikelihood", "loglikelihood_rolling"):
+        mapping = "metric_bridge"
+        reason = "Raw likelihood and weighted perplexity/bits aggregates are not bounded candidate rewards."
+    else:
+        mapping = "metric_bridge"
+        reason = (
+            "Generation filters and configured metrics require exact source semantics; text "
+            "primitive equivalence unproven."
+        )
+    metrics = config.get("metric_list") or []
+    metric_names = [item.get("metric") for item in metrics if isinstance(item, dict)]
+    candidates = []
+    if output == "generate_until" and "exact_match" in metric_names:
+        candidates.append("exact")
+        reason += (
+            " Exact primitive differs on stripping, casefold versus lower, regex/punctuation "
+            "normalization and multiple-reference reduction."
+        )
+    if "ifeval" in path.parts:
+        candidates.append("ifeval")
+        reason += (
+            " Compare strict/loose instruction-level and prompt-level vectors separately; native "
+            "IFEval registry coverage requires parity."
+        )
+    if any(name in path.parts for name in ("hendrycks_math", "minerva_math", "math_verify", "hrm8k")):
+        candidates.append("math")
+        reason += " Preserve benchmark box selection, normalization and fallback equivalence."
+    return mapping, reason, candidates, output
 
 
 def harness_records(root, directory):
@@ -94,43 +149,7 @@ def harness_records(root, directory):
             continue
         task = config.get("task")
         custom = config.get("process_results")
-        output = config.get("output_type", "generate_until")
-        if isinstance(task, list) or (config.get("group") and not isinstance(task, str)):
-            mapping = "orchestration"
-            reason = "Task group expansion and dataset aggregation stay in harness."
-        elif custom or config.get("class"):
-            mapping = "metric_bridge"
-            reason = "Preserve source callable and every structured per-sample/aggregate metric."
-        elif output == "multiple_choice":
-            mapping = "metric_bridge"
-            reason = "Likelihood argmax, character/byte normalization, greedy flags and optional mutual " "information."
-        elif output in ("loglikelihood", "loglikelihood_rolling"):
-            mapping = "metric_bridge"
-            reason = "Raw likelihood and weighted perplexity/bits aggregates are not bounded candidate rewards."
-        else:
-            mapping = "metric_bridge"
-            reason = (
-                "Generation filters and configured metrics require exact source semantics; text "
-                "primitive equivalence unproven."
-            )
-        metrics = config.get("metric_list") or []
-        metric_names = [item.get("metric") for item in metrics if isinstance(item, dict)]
-        candidates = []
-        if output == "generate_until" and "exact_match" in metric_names:
-            candidates.append("exact")
-            reason += (
-                " Exact primitive differs on stripping, casefold versus lower, regex/punctuation "
-                "normalization and multiple-reference reduction."
-            )
-        if "ifeval" in path.parts:
-            candidates.append("ifeval")
-            reason += (
-                " Compare strict/loose instruction-level and prompt-level vectors separately; native "
-                "IFEval registry coverage requires parity."
-            )
-        if any(name in path.parts for name in ("hendrycks_math", "minerva_math", "math_verify", "hrm8k")):
-            candidates.append("math")
-            reason += " Preserve benchmark box selection, normalization and fallback equivalence."
+        mapping, reason, candidates, output = harness_classification(path, config)
         callable_evidence = []
         for value in (custom, config.get("class")):
             if isinstance(value, dict) and value.get("tag") == "function":
@@ -140,7 +159,10 @@ def harness_records(root, directory):
                 if not module_path.exists():
                     module_path = root / (module.replace(".", "/") + ".py")
                 callable_evidence.append(
-                    {"symbol": symbol, "path": str(module_path.relative_to(root)) if module_path.exists() else None}
+                    {
+                        "symbol": symbol,
+                        **(source_record(root, module_path) if module_path.exists() else {"external_module": module}),
+                    }
                 )
         records.append(
             {
@@ -158,7 +180,9 @@ def harness_records(root, directory):
                 "reason": reason,
                 "primitive_candidates": candidates,
                 "callable_evidence": callable_evidence,
-                "classification": "orchestration" if mapping == "orchestration" else "adapter",
+                "classification": "orchestration" if not isinstance(task, str) else "spec-needed",
+                "required_specs": ([] if not isinstance(task, str) else ["metric", *candidates]),
+                "existing_mode": candidates[0] if candidates else "script",
                 "source_scorer": custom or config.get("class") or "lm_eval.api.task.ConfigurableTask.process_results",
             }
         )
@@ -246,17 +270,7 @@ def evalchemy_records(root):
                 for statement in node.body
                 if isinstance(statement, ast.FunctionDef) and statement.name == "evaluate_responses"
             ]
-            evidence = [
-                {
-                    "path": str(path.relative_to(root)),
-                    "function": statement.name,
-                    "line": statement.lineno,
-                    "calls": sorted(
-                        {ast.unparse(call.func) for call in ast.walk(statement) if isinstance(call, ast.Call)}
-                    ),
-                }
-                for statement in scoring
-            ]
+            evidence = [callable_record(root, path, statement) for statement in scoring]
             primitive = PRIMITIVES[name]
             caveats = {
                 "math": (
@@ -296,22 +310,36 @@ def evalchemy_records(root):
                     "bases": bases,
                     "declared_metrics": metrics,
                     "primitive_candidate": PRIMITIVES.get(name),
-                    "mapping": "mcq" if primitive == "mcq" else "adapter_required",
-                    "classification": "adapter",
+                    "mapping": primitive,
+                    "classification": "adapter" if primitive == "mcq" else "spec-needed",
+                    "required_specs": (
+                        []
+                        if primitive == "mcq"
+                        else [
+                            primitive if primitive in SPECIFICATIONS else "execution",
+                            "metric",
+                        ]
+                    ),
                     "clean_equivalence": primitive == "mcq",
                     "scoring_evidence": evidence,
                     "contract": caveats[primitive],
                 }
             )
+    classes = {record["class"]: record for record in records}
+    for record in records:
+        if record["scoring_evidence"]:
+            continue
+        for base in record["bases"]:
+            inherited = classes.get(base.rsplit(".", 1)[-1])
+            if inherited is not None:
+                record["scoring_evidence"] = inherited["scoring_evidence"]
+                record["inherited_scorer"] = inherited["class"]
+                break
     return records
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--sources", type=Path, required=True)
-    parser.add_argument("--output", type=Path, default=Path("docs/unification"))
-    args = parser.parse_args()
-    roots = {name: args.sources / name for name in ("evalchemy", "lm-eval-harness")}
+def source_inventory(sources):
+    roots = {name: sources / name for name in ("evalchemy", "lm-eval-harness")}
     outputs = {
         "evalchemy": {
             "revision": revision(roots["evalchemy"]),
@@ -324,64 +352,139 @@ def main():
             "grading_callables": callables(roots["lm-eval-harness"], roots["lm-eval-harness"] / "lm_eval/tasks"),
         },
     }
+    for payload in outputs.values():
+        payload["specifications"] = SPECIFICATIONS
     outputs["evalchemy"]["harness_overrides"] = harness_records(
         roots["evalchemy"], roots["evalchemy"] / "eval/lm_eval_tasks"
     )
-    evidence_dir = args.sources.parent / "evidence"
+    return outputs
+
+
+def prepare_inventory(payload, evidence_path):
+    functions = payload["grading_callables"]
+    evidence_path.write_text("".join(json.dumps(record, sort_keys=True) + "\n" for record in functions))
+    payload["python_functions_discovered"] = len(functions)
+    payload["grading_callables"] = [
+        record
+        for record in functions
+        if "process_results" in record["function"]
+        or record["function"] == "evaluate_responses"
+        or record["function"].startswith(("grade", "score"))
+    ]
+    contracts = {}
+    for records_key in ("configs", "benchmarks", "harness_overrides"):
+        for record in payload.get(records_key, []):
+            for field in ("reason", "contract"):
+                if field not in record:
+                    continue
+                contract = record.pop(field)
+                identifier = hashlib.sha256(contract.encode()).hexdigest()[:12]
+                contracts[identifier] = contract
+                record["contract_id"] = identifier
+    payload["contracts"] = contracts
+    metric_contracts = {}
+    filter_contracts = {}
+    for records_key in ("configs", "harness_overrides"):
+        for record in payload.get(records_key, []):
+            for field, catalog in (("metric_list", metric_contracts), ("filters", filter_contracts)):
+                value = record.pop(field)
+                if value is not None:
+                    encoded = json.dumps(value, sort_keys=True)
+                    identifier = hashlib.sha256(encoded.encode()).hexdigest()[:12]
+                    catalog[identifier] = value
+                    record[field + "_id"] = identifier
+            for key in list(record):
+                if record[key] is None or record[key] == []:
+                    del record[key]
+    payload["metric_contracts"] = metric_contracts
+    payload["filter_contracts"] = filter_contracts
+
+
+def write_inventory(path, payload):
+    lines = []
+    for key, value in sorted(payload.items()):
+        if isinstance(value, list):
+            body = ",\n".join(json.dumps(record, sort_keys=True, separators=(",", ":")) for record in value)
+            lines.append(json.dumps(key) + ":[\n" + body + "\n]")
+        else:
+            lines.append(json.dumps(key) + ":" + json.dumps(value, sort_keys=True, separators=(",", ":")))
+    path.write_text("{\n" + ",\n".join(lines) + "\n}\n")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--sources", type=Path, required=True)
+    parser.add_argument("--output", type=Path, default=Path("docs/unification"))
+    parser.add_argument("--runtime-index", type=Path, help="Verified TaskManager discovery JSON")
+    parser.add_argument("--evidence", type=Path, help="Directory for transient full function graphs")
+    args = parser.parse_args()
+
+    outputs = source_inventory(args.sources)
+    if args.runtime_index is not None:
+        runtime = json.loads(args.runtime_index.read_text())
+        records = {record["path"]: record for record in outputs["lm_eval"]["configs"]}
+        scoring_entries = [entry for entry in runtime["entries"] if entry["kind"] in ("TASK", "PY_TASK")]
+        missing = [entry for entry in scoring_entries if entry["path"] not in records]
+        if missing:
+            raise ValueError(f"Runtime tasks absent from inventory: {missing}")
+        for inline in runtime["inline_tasks"]:
+            source_path = args.sources / "lm-eval-harness" / inline["source_path"]
+            _, reason, candidates, output = harness_classification(source_path, inline["config"])
+            inline.update(
+                classification="spec-needed",
+                required_specs=["metric", *candidates],
+                source_scorer="lm_eval.api.task.ConfigurableTask.process_results",
+                output_type=output,
+                existing_mode=candidates[0] if candidates else "script",
+                contract=reason,
+            )
+            if set(inline["config"]) == {"task"}:
+                inline.update(
+                    classification="invalid-task-configuration",
+                    source_failure="Group references unknown task name without task configuration",
+                )
+            declared_include = inline["config"].get("include")
+            if isinstance(declared_include, str):
+                include_path = source_path.parent / declared_include
+                inline["declared_include"] = (
+                    source_record(args.sources / "lm-eval-harness", include_path)
+                    if include_path.exists()
+                    else {"missing": declared_include}
+                )
+                inline["include_resolved_by_source_factory"] = False
+        for member in runtime["invalid_group_members"]:
+            member.update(
+                classification="invalid-task-configuration",
+                required_specs=["metric"],
+                source_failure="TaskFactory requires task or group key in group member",
+            )
+        outputs["lm_eval"]["runtime_discovery"] = {
+            "counts": runtime["counts"],
+            "implementation_hashes": runtime["implementation_hashes"],
+            "runtime_tasks_matched": len(scoring_entries),
+            "unmatched_runtime_tasks": len(missing),
+            "inline_tasks": runtime["inline_tasks"],
+            "invalid_group_members": runtime["invalid_group_members"],
+            "group_overrides": runtime["group_overrides"],
+        }
+    evidence_dir = args.evidence or args.sources.parent / "evidence"
     evidence_dir.mkdir(parents=True, exist_ok=True)
-    for name, payload in outputs.items():
-        functions = payload["grading_callables"]
-        (evidence_dir / f"{name}_function_graph.jsonl").write_text(
-            "".join(json.dumps(record, sort_keys=True) + "\n" for record in functions)
-        )
-        payload["python_functions_discovered"] = len(functions)
-        payload["grading_callables"] = [
-            record
-            for record in functions
-            if "process_results" in record["function"]
-            or record["function"] == "evaluate_responses"
-            or record["function"].startswith(("grade", "score"))
-        ]
-        contracts = {}
-        for records_key in ("configs", "benchmarks", "harness_overrides"):
-            for record in payload.get(records_key, []):
-                for field in ("reason", "contract"):
-                    if field not in record:
-                        continue
-                    contract = record.pop(field)
-                    identifier = hashlib.sha256(contract.encode()).hexdigest()[:12]
-                    contracts[identifier] = contract
-                    record["contract_id"] = identifier
-        payload["contracts"] = contracts
-        metric_contracts = {}
-        filter_contracts = {}
-        for records_key in ("configs", "harness_overrides"):
-            for record in payload.get(records_key, []):
-                for field, catalog in (("metric_list", metric_contracts), ("filters", filter_contracts)):
-                    value = record.pop(field)
-                    if value is not None:
-                        encoded = json.dumps(value, sort_keys=True)
-                        identifier = hashlib.sha256(encoded.encode()).hexdigest()[:12]
-                        catalog[identifier] = value
-                        record[field + "_id"] = identifier
-                for key in list(record):
-                    if record[key] is None or record[key] == []:
-                        del record[key]
-        payload["metric_contracts"] = metric_contracts
-        payload["filter_contracts"] = filter_contracts
     args.output.mkdir(parents=True, exist_ok=True)
     for name, payload in outputs.items():
-        # One source record per line keeps the complete corpus reviewable.
-        lines = []
-        for key, value in sorted(payload.items()):
-            if isinstance(value, list):
-                body = ",\n".join(json.dumps(record, sort_keys=True, separators=(",", ":")) for record in value)
-                lines.append(json.dumps(key) + ":[\n" + body + "\n]")
-            else:
-                lines.append(json.dumps(key) + ":" + json.dumps(value, sort_keys=True, separators=(",", ":")))
-        (args.output / f"{name}_inventory.json").write_text("{\n" + ",\n".join(lines) + "\n}\n")
-        print(name, {key: len(value) for key, value in payload.items() if isinstance(value, list)})
-    print(Counter(record["kind"] for record in outputs["lm_eval"]["configs"]))
+        prepare_inventory(payload, evidence_dir / f"{name}_function_graph.jsonl")
+        counts = Counter(
+            record["classification"]
+            for key in ("benchmarks", "configs", "harness_overrides")
+            for record in payload.get(key, [])
+            if key == "benchmarks" or record["kind"] == "task"
+        )
+        payload["coverage_counts"] = {"adapter": counts["adapter"], "spec-needed": counts["spec-needed"], "unknown": 0}
+        for records_key in ("benchmarks", "configs", "harness_overrides"):
+            if records_key in payload:
+                population = Counter(record["classification"] for record in payload[records_key])
+                payload[records_key + "_coverage"] = {**dict(population), "unknown": 0}
+        write_inventory(args.output / f"{name}_inventory.json", payload)
+        print(name, dict(counts))
 
 
 if __name__ == "__main__":

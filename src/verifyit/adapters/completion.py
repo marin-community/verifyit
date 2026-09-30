@@ -30,16 +30,17 @@ def final_text(text: str) -> str:
     return text[boundary:]
 
 
-def answer_text(completion: Completion, *, require_reasoning_box: bool) -> str:
-    """Prefer final content, allowing completed reasoning-only answers explicitly.
-
-    Math integrations require boxed reasoning answers. MCQ integrations may use
-    their own final-answer extraction pattern on completed reasoning instead.
-    """
+def answer_text(completion: Completion) -> str:
+    """Prefer final content, allowing completed reasoning-only answers."""
     if completion.content:
         return final_text(completion.content)
     if completion.status != CompletionStatus.COMPLETED:
         return ""
-    if require_reasoning_box and not BOX_START.search(completion.reasoning):
-        return ""
     return final_text(completion.reasoning)
+
+
+def math_answer_text(completion: Completion) -> str:
+    """Read final content or a completed reasoning-only answer containing a box."""
+    if not completion.content and not BOX_START.search(completion.reasoning):
+        return ""
+    return answer_text(completion)

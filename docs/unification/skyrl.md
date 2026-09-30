@@ -15,11 +15,11 @@ code remains an adapter. The source's XML/CSV OpenAPI validation is stronger tha
 aggregation adapters. Source extraction must remain at the boundary: first boxed
 MCQ, final GSM8K line, and last answer-tag Reasoning Gym have different policies.
 
-`patches/MarinSkyRL/mcq-verifyit.patch` replaces the simplest native comparison
+`integrations/MarinSkyRL/mcq-verifyit.patch` replaces the simplest native comparison
 with `grade_mcq_candidate` while retaining first-box extraction and all 26 option
-letters. It applies cleanly to the pinned source. The fork must install verifyit
-at the integration commit; this patch intentionally does not invent an unpublished
-Git dependency pin. Valid prepared tasks retain 0/1 scores. An invalid expected
+letters. It applies cleanly to the pinned source. `dependency-pin.patch` adds verifyit to both the root distribution and standalone
+gym at implementation commit `545ae96c553b171b09d4ee108df7c3d06879497d` and raises
+standalone gym Python support to >=3.11. Valid prepared tasks retain 0/1 scores. An invalid expected
 letter becomes a task error rather than silently producing zero. The patch includes first-versus-last box, lowercase, missing/malformed boxes, and Z
 regressions; all 18 source MCQ tests pass in a disposable patched source copy.
 
@@ -41,7 +41,7 @@ completeness for identity-aware shaping; scalar scores alone do not supply this.
 | `5a7ede7` | standalone final GSM8K line | Numeric last-number extraction is different; `test_gsm8k_requires_exact_value_on_standalone_final_line` covers prose-tail, malformed comma, multiple markers, and exact huge decimals. |
 | `0cdccc9` | first boxed MCQ and options >4 | `test_mcq_fifth_option_is_gradable_when_declared` and candidate helper tests cover core range; patched source tests cover first-box extraction and options through Z; all 18 pass. |
 | `400f598` | JSON grid and unfenced transforms | Structural parsing/execution adapter required; generic exact mode cannot prove palette/rectangular validation. |
-| `cdc6600` | truncated math judge retry with larger budget | Source two-call retry policy must remain explicit; core judge local HTTP tests do not prove this adapter policy. |
+| `cdc6600` | truncated math judge retry with larger budget | Source two-call retry policy must remain explicit; real HTTP regressions now reject length/content-filtered SCORE replies as infra_error and remove stale rewards; existing once-only malformed-score retry retained. Source doubled-token retry remains a distinct adapter policy. |
 | `fc65842` | binary code short circuit | stdio stops at first failure and existing first_failure/passed tests cover counterpart; functional adapter and fractional mode still need tests. |
 | `196143f` | Snowball reasoning stripping, bounded chat output | Provider/harness evidence extraction remains outside string primitive; add boundary tests. |
 | `a5df364` | Ultra configuration versus candidate failures | Core verdict statuses cover distinction; each Ultra script must map schema/registry failures to unscored states. |
@@ -60,3 +60,23 @@ review before changing it.
 answers through the exact rational adapter. Strict-box extraction and AIME reward
 shaping remain in the harness. All 40 source AIME/GSM8K tests pass after applying
 the patch to a disposable copy; both patches apply cleanly to the pinned revision.
+
+The implementation commit is local and has not been published. After publication,
+regenerate both source lockfiles before frozen installation. The Git dependency
+install and updated lockfiles remain unverified. The machine-readable installation
+record in `skyrl.json` supplies the dependency and patch order.
+
+The Ultra `mcqa.py` Markdown answer regex rejects alphanumeric continuation with
+`(?![a-zA-Z0-9])`. Core MCQ now applies the same boundary: `Answer: Banana`, `BC`,
+and `B2` score zero; valid B punctuation, wrappers, and explanations remain valid.
+All three negative regressions failed before the change; 35 MCQ and 9 completion
+adapter cases pass afterward.
+
+[Reusable adapter contracts](skyrl-adapter-specs.md) specify request fields, scoring,
+failure distinctions, dependencies, and regression fixtures for the remaining gaps.
+These are unimplemented specs, not claims of direct primitive equivalence.
+
+An isolated uv installation from the local Git repository at the exact pinned
+implementation SHA succeeded and graded real rational/MCQ candidates. This proves
+that commit packages the required helpers; it does not prove remote availability
+or resolve either complete SkyRL environment.
