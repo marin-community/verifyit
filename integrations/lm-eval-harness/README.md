@@ -201,3 +201,21 @@ Evidence and reproducible scripts are under `evidence/e2e/wiring/harness-crows`:
 all 22 config guards, three seeded actual evaluator witnesses, fresh source
 metric/stderr parity, and malformed/overflow/drift failures. No named matching
 tracker or local saved runs were found; this is source-fixture validation.
+
+Babilong substring scoring
+-------------------------
+Apply `babilong-substring-verifyit.patch` after CrowS-Pairs. The 20 pinned configs
+run the original response preprocessor exactly once, then source target
+strip/lower and response lower feed `ExactSpec(substring=True)` with casefold
+and whitespace normalization disabled. Internal newlines remain significant.
+This is literal substring containment, with no keyword boundary added. The new
+exact option defaults to false and requires a single nonempty normalized target.
+Empty targets previously scored one in the source; they now abort the whole
+mixed batch without a partial aggregate. Reference preprocessing never uses
+the response control-character transformation.
+
+All-config guards, three seeded actual evaluator witnesses, source preprocessing
+call counts, source-empty-target regression and before/after evidence are under
+`evidence/e2e/wiring/harness-babilong`. Scorer/helper/metric/filter drift aborts
+before filters execute. The tracker/local artifact census found no named matching
+saved runs; validation uses source fixtures rather than archived traces.

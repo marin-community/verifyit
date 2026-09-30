@@ -439,6 +439,7 @@ def harness_entities(root, sources):
             or ("/okapi/truthfulqa_multilingual/" in record["path"] and record["path"].endswith("_mc2.yaml"))
             or ("/tasks/hendrycks_math/" in record["path"])
             or ("/tasks/crows_pairs/" in record["path"])
+            or ("/tasks/babilong/" in record["path"])
             or ("/tasks/agieval/" in record["path"] and record.get("output_type") == "multiple_choice")
         ):
             route = record.get("native_route")
@@ -454,6 +455,7 @@ def harness_entities(root, sources):
                     "hendrycks_literal_exact",
                     "agieval_mcqa",
                     "crows_pair_preference",
+                    "babilong_substring",
                 }, record["path"]
             entity.update(
                 status="native_route_available",
@@ -491,6 +493,25 @@ def harness_entities(root, sources):
                     else "configuration_eligible_not_dataset_validated"
                 ),
             )
+            if route == "babilong_substring":
+                entity.update(
+                    primitive_candidates=["exact"],
+                    reason=(
+                        "Pinned source response preprocessing runs exactly once; target strip/lower and "
+                        "response lower feed explicit single-reference ExactSpec substring containment. "
+                        "Internal whitespace and source lower semantics remain. Empty/malformed targets "
+                        "abort; the original empty target scored one by vacuous containment."
+                    ),
+                    evidence=[
+                        "integrations/lm-eval-harness/babilong-substring-verifyit.patch",
+                        "evidence/e2e/wiring/harness-babilong/guards/guard-audit.json",
+                        "evidence/e2e/wiring/harness-babilong/cutover/evaluator-roundtrip.json",
+                        "evidence/e2e/wiring/harness-babilong/source-empty/source-empty-reference.json",
+                        "evidence/e2e/wiring/harness-babilong/manager-cutover/evaluator-roundtrip.json",
+                        "evidence/e2e/wiring/harness-babilong/trace-census.json",
+                    ],
+                    validation_status="registered_guards_and_actual_evaluator_fixtures_no_named_saved_trace",
+                )
             if route == "crows_pair_preference":
                 entity.update(
                     primitive_candidates=["mcq"],
@@ -918,9 +939,9 @@ def main():
             )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 543
+    assert len(harness_gaps) == 523
     assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 978
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11171
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11191
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {

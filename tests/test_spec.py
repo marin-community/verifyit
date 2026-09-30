@@ -55,3 +55,14 @@ def test_single_string_becomes_tuple_and_none_is_omitted():
 def test_malformed_specs_are_rejected(text, message):
     with pytest.raises(ValueError, match=message):
         parse_spec(text)
+
+
+def test_exact_substring_roundtrip_and_default_compatibility():
+    spec = ExactSpec(("Paris",), substring=True)
+    assert parse_spec(render_spec(spec)) == spec
+    assert parse_spec('mode = "exact"\nexpected = "Paris"\n').substring is False
+
+
+def test_exact_substring_rejects_non_boolean_toml():
+    with pytest.raises(ValueError, match="expects bool"):
+        parse_spec('mode = "exact"\nexpected = "Paris"\nsubstring = 1\n')

@@ -85,3 +85,33 @@ def test_exact_literal_boundary_preserves_whitespace(candidate, expected, reward
 def test_invalid_direct_normalization_flag_cannot_award_correct_answer():
     with pytest.raises(InvalidTask, match="booleans"):
         grade_exact.grade_exact_candidate(ExactSpec(("2",), ignore_case="false"), "2")
+
+
+@pytest.mark.parametrize(
+    "candidate,score",
+    [("The capital is Paris.", 1.0), ("Parisian", 1.0), ("Lyon", 0.0), ("", 0.0)],
+)
+def test_explicit_substring_contract_grades_containment(candidate, score):
+    spec = ExactSpec(("Paris",), substring=True)
+    assert grade_exact.grade_exact_candidate(spec, candidate).reward == score
+
+
+@pytest.mark.parametrize("expected", [("",), ("  \n",), ("Paris", "Lyon")])
+def test_substring_vacuous_or_multi_reference_task_invalid_before_missing_output(tmp_path, expected):
+    spec = ExactSpec(expected, substring=True)
+    with pytest.raises(InvalidTask, match="one nonempty"):
+        grade_exact.grade(spec, tmp_path, tmp_path)
+    result = dispatch(spec, tmp_path, tmp_path)
+    assert result.status == Status.INVALID_TASK
+    assert result.reward == 0.0
+
+
+def test_substring_boolean_flag_is_strict():
+    with pytest.raises(InvalidTask, match="booleans"):
+        grade_exact.grade_exact_candidate(ExactSpec(("Paris",), substring=1), "Paris")
+
+
+def test_source_lower_semantics_are_separate_from_casefold():
+    spec = ExactSpec(("ß".lower(),), ignore_case=False, ignore_whitespace=False, substring=True)
+    assert grade_exact.grade_exact_candidate(spec, "SS".lower()).reward == 0.0
+    assert grade_exact.grade_exact_candidate(spec, "Straße".lower()).reward == 1.0

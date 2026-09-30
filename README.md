@@ -31,7 +31,7 @@ shaping belong in the client rather than this bounded correctness scalar.
 | `mcq` | expected option letter |
 | `math` | expression equality through math-verify |
 | `numeric` | numeric equality with explicit tolerances |
-| `exact` | normalized string equality |
+| `exact` | normalized string equality; optional single-reference substring containment |
 | `json-schema` | JSON, YAML, or TOML checked against JSON Schema |
 | `xml-elements` | required XML elements and attributes |
 | `csv-columns` | required CSV header columns |
@@ -145,3 +145,10 @@ uv build
 This repository was extracted from [`lib/tasktrove-verify` in Marin](https://github.com/marin-community/marin/tree/9c2d1a0be3cd1b7d71f8af3b22231038acb213e9/lib/tasktrove-verify).
 The package's commit history and author attribution are preserved. The standalone package,
 Python import, and command are named `verifyit`.
+
+Exact specs default to equality. `substring = true` explicitly grades whether one
+nonempty normalized reference occurs in the candidate. Multiple references or
+a reference emptied by normalization are invalid tasks, even when no candidate
+output exists. This option preserves the existing case/whitespace controls;
+clients requiring source `lower()` semantics should lowercase their inputs and
+set `ignore_case = false` rather than relying on casefold normalization.

@@ -96,6 +96,7 @@ class ExactSpec:
     ordered: bool = True
     output: str = DEFAULT_OUTPUT
     strip_outer_whitespace: bool = True
+    substring: bool = False
 
 
 @dataclass(frozen=True)
