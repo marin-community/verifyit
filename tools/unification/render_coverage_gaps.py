@@ -137,7 +137,7 @@ text += "\n\nThe two external objectives are not correctness verifiers:\n\n" + t
     "MarinSkyRL", {"not_a_correctness_verifier"}
 )
 text += (
-    "\n\n## Harbor\n\nThe HARBOR_PENDING_COUNT unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval and HumanEvalFix invoke the existing all-suite pytest route. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; HARBOR_NATIVE_COUNT primitive clients are now implemented.\n\n"
+    "\n\n## Harbor\n\nThe HARBOR_PENDING_COUNT unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval, HumanEvalFix and BigCodeBench-Hard invoke the existing all-suite pytest route. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; HARBOR_NATIVE_COUNT primitive clients are now implemented.\n\n"
     + table("harbor", {"not_integrated"})
 )
 text += "\n\n### Wired exact, MCQ and pytest clients\n\n" + table("harbor", {"native_route_available"})
@@ -157,6 +157,8 @@ Harbor AIME, GAIA, GPQA Diamond and SATBench match 12 original-source task-scrip
 Harbor EvoEval's generated PytestSpec preserves the original binary all-tests policy. A generated task image matched original test.sh, direct verifyit CLI and the actual Harbor Verifier for one passing and one failing candidate; malformed protected-test collection produced infra_error and removed stale reward output. No matching saved model trace was available.
 
 Harbor HumanEvalFix's generated PytestSpec likewise matched original test.sh, verifyit CLI and the actual Harbor Verifier on one passing and one failing generated task image. A malformed protected test produced infra_error without a reward. No matching saved model trace was available.
+
+Harbor BigCodeBench-Hard keeps benchmark pytest on Python 3.10 while verifyit runs in a separate Python 3.11 environment. Its generated image matched original test.sh, direct CLI and Harbor Verifier for passing and failing candidates; a malformed protected test remained unscored without a reward. No matching saved model trace was available.
 
 SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Seven patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, two dormant QA APIs and legacy text2sql. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
 

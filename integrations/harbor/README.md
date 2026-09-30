@@ -34,6 +34,17 @@ the pinned source script, verifyit CLI and actual Harbor Verifier on passing
 and failing candidate files. Malformed protected-test collection remained
 unscored. No matching saved model trace was available.
 
+Apply `bigcodebench-hard-pytest-verifyit.patch` after the Harbor dispatcher
+patch. Its generated task invokes protected `/tests/test_outputs.py` with
+`PytestSpec.python` fixed to `/usr/local/bin/python3.10`; benchmark dependencies
+and candidate code stay on Python 3.10. Verifyit runs in an isolated Python 3.11
+environment. A generated image matched the pinned source test.sh, direct CLI and
+actual Harbor Verifier for passing and failing candidates. Malformed protected
+test collection remained unscored with no reward. No matching saved model trace
+was available. The image proof substituted a wheel built from the pinned local
+`1dd6292b54dd1c2525a1c1354d49940ba5ba6dbf` commit for the unpublished
+remote Git install; the benchmark dependency layers were unchanged.
+
 Apply `verifyit.patch` to Harbor
 `6f94f2237224869a49c249a737d701147afc33b6`. Install verifyit and the extras
 required by each task's `tests/verifier.toml` inside the verifier image. The

@@ -8,7 +8,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Evalchemy 42 custom benchmarks | 5 native integrations + 3 math hybrids | 34 not integrated (23 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 GSM hybrid | 18 not integrated; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 23 source-patched (16 with selected real traces, 7 without eligible real traces) | 4 client/parity-audit routes + 19 native profile gaps; 2 external-objective placeholders separate |
-| Harbor 87 adapters | 6 exact/MCQ/pytest clients + 1 structured native-runtime bridge | 80 not integrated; tau3 retains native evaluator |
+| Harbor 87 adapters | 7 exact/MCQ/pytest clients + 1 structured native-runtime bridge | 79 not integrated; tau3 retains native evaluator |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
@@ -143,7 +143,7 @@ The two external objectives are not correctness verifiers:
 
 ## Harbor
 
-The 80 unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval and HumanEvalFix invoke the existing all-suite pytest route. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; 6 primitive clients are now implemented.
+The 79 unwired adapters are named individually. Four answer-file clients invoke exact or MCQ grading; EvoEval, HumanEvalFix and BigCodeBench-Hard invoke the existing all-suite pytest route. The historical 52 primitive-route and 34 runtime-bridge specifications remain a planning inventory; 7 primitive clients are now implemented.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
@@ -156,7 +156,6 @@ The 80 unwired adapters are named individually. Four answer-file clients invoke 
 | arc_agi_2 | not_integrated | json-schema | JSON output grid structural equality maps to schema const expected grid. Generate schema const plus integer cell types from the exact expected grid; provide the task file discovery/configuration. |
 | autocodebench | not_integrated | pytest | Binary all-pass pytest test_outputs.py; restore generated tests and retain environment dependencies. Generate task-specific PytestSpec with pinned hidden tests, restore/setup/import paths and complete report IDs; preserve native all-pass binary policy instead of substituting partial pass fraction; test the native task environment. |
 | bfcl | not_integrated | script | Generated evaluate.py uses official BFCL AST/function-call evaluator; preserve execution/multi-turn task-type routing and native correctness result. Add a structured ScriptSpec producer around adapters/bfcl/src/bfcl_adapter/task-template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary. |
-| bigcodebench_hard | not_integrated | pytest | Binary all-pass pytest test_outputs.py running generated functional assertions; keep solution import setup and hidden tests. Generate task-specific PytestSpec with pinned hidden tests, restore/setup/import paths and complete report IDs; preserve native all-pass binary policy instead of substituting partial pass fraction; test the native task environment. |
 | bird_bench | not_integrated | script | Execute predicted and ground-truth SQL against task database and compare result sets; retain SQL progress timeout and database state. Add a structured ScriptSpec producer around adapters/bird_bench/src/bird_bench/task-template/tests/evaluate.py, adapters/bird_bench/src/bird_bench/task-template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary. |
 | bixbench | not_integrated | judge | Binary OpenAI semantic question/target/prediction judge; retain prompts and existing answer discovery. Port source question/target/prediction prompt and answer discovery into a status-preserving script client; classify unavailable API/model as infra_error rather than zero. |
 | bixbench-verified-50 | not_integrated | numeric, judge | Declared precision_policy selects deterministic rounded numeric comparison or semantic judge. Dispatch precision_policy: round both normalized finite numbers to the declared decimal precision before exact comparison; keep the native semantic judge only for judge policies, with explicit status translation. |
@@ -233,6 +232,7 @@ The 80 unwired adapters are named individually. Four answer-file clients invoke 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
 | aime | native_route_available | exact | The generated script strips the whole answer and compares the decimal reference with exact grading; boxed extraction is never applied. No missing client integration; validate model-run traces and each task image before wider deployment. |
+| bigcodebench_hard | native_route_available | pytest | The generated task declares PytestSpec for protected /tests/test_outputs.py and invokes the benchmark tests under Python 3.10, while verifyit runs separately under Python 3.11. Validate saved model traces and more generated task instances before wider deployment. |
 | evoeval | native_route_available | pytest | The generated task emits PytestSpec for its protected test_outputs.py. No missing pytest client integration; validate saved model traces and further dataset tasks before wider deployment. |
 | gaia | native_route_available | exact | The generated script removes newlines, lowercases ASCII letters and trims outer whitespace on both files before exact grading. No missing client integration; validate model-run traces and each task image before wider deployment. |
 | gpqa-diamond | native_route_available | mcq | The generated script removes whitespace and uppercases the full answer before strict A-D MCQ grading. No missing client integration; validate model-run traces and each task image before wider deployment. |
@@ -268,6 +268,8 @@ Harbor AIME, GAIA, GPQA Diamond and SATBench match 12 original-source task-scrip
 Harbor EvoEval's generated PytestSpec preserves the original binary all-tests policy. A generated task image matched original test.sh, direct verifyit CLI and the actual Harbor Verifier for one passing and one failing candidate; malformed protected-test collection produced infra_error and removed stale reward output. No matching saved model trace was available.
 
 Harbor HumanEvalFix's generated PytestSpec likewise matched original test.sh, verifyit CLI and the actual Harbor Verifier on one passing and one failing generated task image. A malformed protected test produced infra_error without a reward. No matching saved model trace was available.
+
+Harbor BigCodeBench-Hard keeps benchmark pytest on Python 3.10 while verifyit runs in a separate Python 3.11 environment. Its generated image matched original test.sh, direct CLI and Harbor Verifier for passing and failing candidates; a malformed protected test remained unscored without a reward. No matching saved model trace was available.
 
 SkyRL AIME normal scoring has real replay evidence, but its strict-box subprofile has source-test validation only. Seven patched routes lack eligible replay links: three earlier routes, the Nemotron SWE pivot tool route, two dormant QA APIs and legacy text2sql. The latter have source-fixture parity; the SWE pivot dispatches to Harbor in the observed population.
 
