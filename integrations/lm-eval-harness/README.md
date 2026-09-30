@@ -26,7 +26,7 @@ zero metric produces `scored`, never an infrastructure failure.
 
 
 The integration requires verifyit implementation commit
-`767816a40bb687280f0076e8645032e3476dc9cc`, including the AfroBench and corpus runtime APIs.
+`7cf470dbf54008778104be8d4eb434a852868490`, including the AfroBench and corpus runtime APIs.
 Apply `dependency-pin.patch` to declare that exact implementation in the source
 project metadata. This commit remains local and unpublished: the remote Git URL
 in the dependency patch is a publication target, not an available installation.
@@ -36,7 +36,7 @@ dependencies installed, use the local Git commit and install the patched source
 without resolving the unpublished remote dependency:
 
 ```bash
-uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@767816a40bb687280f0076e8645032e3476dc9cc'
+uv pip install --python /path/to/environment/bin/python 'verifyit @ git+file:///path/to/verifyit@7cf470dbf54008778104be8d4eb434a852868490'
 uv pip install --python /path/to/environment/bin/python --no-deps /path/to/patched-project
 ```
 
@@ -125,6 +125,5 @@ All 36 source guard roundtrips pass. No named XLSUM run links were found in the
 tracker or local JSON/JSONL artifacts; this is fixture-only validation. Evidence
 is campaign `evidence/e2e/wiring/harness-rouge/`, including cached backend and
 seed-wrapper hashes. The initial estimate of five prompt families was corrected
-before coverage promotion; the pinned source has three. This extension requires
-its forthcoming actual API checkpoint pin. The optional evaluation environment
+before coverage promotion; the pinned source has three. The dependency pin records this extension at its actual API checkpoint. The optional evaluation environment
 must already supply evaluate, rouge_score and its cached ROUGE metric module.
