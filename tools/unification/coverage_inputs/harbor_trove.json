@@ -5,16 +5,22 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#aa-lcr",
         "docs/unification/harbor_inventory.json#aa-lcr",
-        "docs/unification/harbor_specs.md#judge-profile"
+        "integrations/harbor/judge-extensions-verifyit.patch",
+        "evidence/e2e/wiring/harbor-judge-extensions/implementation-provenance.json",
+        "evidence/e2e/wiring/harbor-judge-extensions/source-contract-census.json",
+        "evidence/e2e/wiring/harbor-judge-extensions/worker/summary.json",
+        "evidence/e2e/wiring/harbor-judge-extensions/supplemental/summary.json"
       ],
-      "gap_kind": "native_judge_profile",
-      "implementation_present": false,
+      "gap_kind": "implemented_native_runtime_bridge",
+      "implementation_present": true,
       "name": "aa-lcr",
-      "needed_change": "Wire original grade_answer prompt and CORRECT/INCORRECT parser into a structured ScriptSpec producer; a custom JudgeSpec prompt/parser extension is optional, since the existing fixed reference/checklist rubrics are not this native prompt.",
+      "needed_change": "Validate actual benchmark tasks and matching archived model traces; current actual Harbor execution evidence uses controlled HTTP fixtures.",
       "primitive_candidates": [
-        "judge"
+        "script",
+        "json_schema",
+        "exact"
       ],
-      "reason": "Binary semantic equivalence judge; retain original prompt and CORRECT/INCORRECT parser, model and answer-file discovery. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in source generator retains original prompts, request bodies and answer extraction in ScriptSpec in a separate verifier image. Core schema/exact validates raw judge output before source SDK coercion or substring credit. Only completed CORRECT/INCORRECT labels score; malformed or negated output remains unscored.",
       "source_evidence": [
         {
           "functions": [
@@ -47,8 +53,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Nine primary source/cutover actual Harbor Trial pairs cover three AA-LCR, three relation and three bound fixtures with exact HTTP-byte and reward parity. Four supplemental malformed-output cases remain unscored at zero, including source false positives for NOT CORRECT and a coerced string boolean. The native malformed-relation random result was retained without resampling. All 13 grading containers match the pinned 41-file core and task hashes. Source-generated fixtures only, not archived model-score replay or full dataset/production-image validation. Core a086108 requires exact local archive-wheel substitution until publication.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_validated",
+        "trusted_assets": "Source grader, reference data, prompt examples and verifier.toml in the separate verifier image; candidate answer/log text is transferred.",
+        "needed_change": "Validate production images, full datasets and matching archived traces."
+      }
     },
     {
       "entity_id": "harbor:abc-bench",
@@ -2674,17 +2686,22 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#ineqmath",
         "docs/unification/harbor_inventory.json#ineqmath",
-        "docs/unification/harbor_specs.md#native-score"
+        "integrations/harbor/judge-extensions-verifyit.patch",
+        "evidence/e2e/wiring/harbor-judge-extensions/implementation-provenance.json",
+        "evidence/e2e/wiring/harbor-judge-extensions/source-contract-census.json",
+        "evidence/e2e/wiring/harbor-judge-extensions/worker/summary.json",
+        "evidence/e2e/wiring/harbor-judge-extensions/supplemental/summary.json"
       ],
-      "gap_kind": "signed_sentinel_and_judge",
-      "implementation_present": false,
+      "gap_kind": "implemented_native_runtime_bridge",
+      "implementation_present": true,
       "name": "ineqmath",
-      "needed_change": "Preserve bound/relation extraction and judge prompt; translate native -1 infrastructure/failure sentinel into an unscored status and declare any legitimate score-domain transformation before exposing unit reward.",
+      "needed_change": "Validate actual benchmark tasks and matching archived model traces; current actual Harbor execution evidence uses controlled HTTP fixtures.",
       "primitive_candidates": [
-        "judge",
+        "script",
+        "json_schema",
         "exact"
       ],
-      "reason": "Relation/bound extraction uses model plus literal comparison; rewards include -1 infra/failure sentinel. Translate errors into infra_error and choose explicit native-score transform rather than silently clamp. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in source generator retains original prompts, request bodies and answer extraction in ScriptSpec in a separate verifier image. Core schema/exact validates raw judge output before source SDK coercion or substring credit. Both relation and bound contracts are wired: deterministic relation shortcuts, chat extraction, normalized bound equality and structured equivalence. Invalid relation extraction cannot fall back to random credit; judge failure remains unscored at minimum reward.",
       "source_evidence": [
         {
           "functions": [
@@ -2722,8 +2739,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Nine primary source/cutover actual Harbor Trial pairs cover three AA-LCR, three relation and three bound fixtures with exact HTTP-byte and reward parity. Four supplemental malformed-output cases remain unscored at zero, including source false positives for NOT CORRECT and a coerced string boolean. The native malformed-relation random result was retained without resampling. All 13 grading containers match the pinned 41-file core and task hashes. Source-generated fixtures only, not archived model-score replay or full dataset/production-image validation. Core a086108 requires exact local archive-wheel substitution until publication.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_validated",
+        "trusted_assets": "Source grader, reference data, prompt examples and verifier.toml in the separate verifier image; candidate answer/log text is transferred.",
+        "needed_change": "Validate production images, full datasets and matching archived traces."
+      }
     },
     {
       "entity_id": "harbor:kramabench",

@@ -502,3 +502,31 @@ images were built with the local-wheel substitution described above. These are
 synthetic adapter fixtures, not actual USACO dataset or archived model coverage.
 Candidate execution in the grader remains an unverified trust boundary. Evidence
 is in `evidence/e2e/wiring/harbor-usaco/final-manifest.json`.
+
+
+## AA-LCR and IneqMath
+
+Apply `judge-extensions-verifyit.patch` after `judge-families-verifyit.patch`
+and its dependencies. Both adapters accept `--verifyit`. The existing separate
+Script runtime retains the source prompts and SDK request parameters, with raw
+HTTP/schema checks before SDK coercion. AA-LCR accepts completed CORRECT or
+INCORRECT labels; negated, ambiguous and malformed responses remain unscored.
+
+IneqMath preserves both relation and bound contracts. Relation scoring retains
+the six deterministic source shortcuts and chat extraction; invalid extraction
+raises instead of choosing a random answer. Bound scoring retains extraction,
+normalized equality and the structured equivalence judge. Empty normalized
+trusted references and malformed boolean fields cannot receive credit. Judge
+errors propagate through the Script verdict as unscored minimum reward, rather
+than source negative sentinels or candidate-wrong scores.
+
+Nine actual Harbor source/cutover fixture pairs match rewards and exact HTTP
+request bytes. Four malformed-output fixtures record the intended corrections,
+including native credit for “NOT CORRECT” and string-to-boolean coercion. The
+native random fallback result is preserved without resampling. All thirteen
+cutover containers include installed core and task hash witnesses. The tests use
+controlled HTTP responses and bounded source-generated tasks, not archived model
+scores or full production datasets. Use the same pinned local wheel substitution
+as the preceding judge family. The complete source contract census, patch order,
+source hashes and roundtrips are in
+`evidence/e2e/wiring/harbor-judge-extensions/implementation-provenance.json`.
