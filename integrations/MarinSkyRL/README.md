@@ -236,3 +236,14 @@ inputs. This does not prove every valid parameter domain or recover historical
 hidden references, so the instruction route remains partial. Reproduction
 scripts and the complete constructor audit are in
 `evidence/e2e/wiring/skyrl-instruction-preparation/`.
+
+Apply `math-reference-contract-verifyit.patch` after the instruction preparation
+patch and before the dependency pin. Each public Nemotron source builder accepts
+`math_reference_kind="semantic"` or `"symbolic"`; the trusted choice is serialized
+before candidate generation. Semantic references use validated nonempty text and
+the original symmetric judge prompts. Symbolic references require successful math
+parsing. Existing explicit row metadata is preserved; conflicting contracts fail
+preparation. Untagged legacy records retain bounded automatic admission, so both
+routes remain partial. Sixteen prepared framework roundtrips match source scores
+and HTTP requests, including the exact installed package. The frozen 18-archive
+replay still has two missing judge transcripts. See [the contract](math-judge.md).

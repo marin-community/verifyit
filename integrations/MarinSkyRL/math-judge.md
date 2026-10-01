@@ -2,7 +2,7 @@
 
 `math-judge-verifyit.patch` applies after `instructions-verifyit.patch` at MarinSkyRL
 `91c7a60e85e31b6933ab0ee732125b3338e82b89`. Apply `dependency-pin.patch` last.
-The dependency is verifyit `67db341c77449f0977bb034c6d7fca034038b98f`, using its
+The dependency is verifyit `eaa768d773885c597c03e708690b57034490ba91`, using its
 `answer` and `judge` extras. The optional judge SDK requires OpenAI >=1.59.9.
 Local installation from this exact implementation commit was tested; remote
 publication of that commit is not claimed.
@@ -24,7 +24,20 @@ differences and nonfinite differences. Equations and matrices do not use additiv
 fallback. Original parsed objects determine correctness; source stringified
 extraction diagnostics remain metadata.
 
-Trusted reference validation precedes candidate gating. Parsed mathematical
+`math-reference-contract-verifyit.patch` follows the instruction preparation
+patch in the cumulative integration stack. The three public Nemotron source
+builders accept `math_reference_kind="semantic"` or `"symbolic"`, or preserve an
+explicit kind already present in the trusted source row. This choice is serialized
+before candidate generation. Conflicting or malformed kinds fail preparation.
+
+Semantic references require nonempty, transport-valid question and answer text;
+they use the original symmetric judge directly, without guessing a mathematical
+meaning from the answer's spelling. Unicode punctuation, multiline prose and TeX
+text are allowed. Symbolic references require the parsed mathematical contract;
+a parser miss cannot silently switch them into semantic judging. Empty references
+and malformed metadata return invalid-task zero before judge calls.
+
+For untagged legacy records, trusted reference validation precedes candidate gating. Parsed mathematical
 expressions retain symbolic scoring even when their spelling resembles words.
 References yielding only strings may use the judge when they belong to a bounded
 natural-language domain: Unicode letters/digits, spaces and ordinary sentence
@@ -46,18 +59,18 @@ budget. HTTP retries are disabled for this rubric. A failure in the second judge
 discards any first-judge positive credit. Full archived external judge text is
 retained in diagnostic metadata.
 
-These are partial integrations. They do not claim arbitrary natural-language
-references or all mathematically valid but parser-unsupported reference syntax.
-The remaining domain needs an explicit trusted reference representation or
-further reviewed syntax validation; an arbitrary parser miss must not become
-unrestricted positive judge fallback. The comprehensive pending register retains
-both source routes.
+These remain partial integrations for the full legacy source population. Prepared
+semantic and symbolic contracts are integrated, but untagged references outside
+the bounded legacy domains still need an explicit trusted contract selection.
+No backward compatibility for arbitrary untagged references is inferred.
 
-Twenty-five source before/after and failure-boundary tests pass. They include
-plain symbolic names, typography-only references, positive/negative symmetric
-judge requests, malformed trusted references independent of candidate form and
-backend failure that must not reach a positive judge. The core checkpoint passed
-155 focused tests and 760 full-suite tests (one Go skip).
+Thirty-seven math source tests and nine instruction preparation regressions pass.
+Sixteen prepared source/Env roundtrips cover both routes and all three builders,
+including positive and negative semantic and symbolic answers. Native and cutover
+scores and HTTP requests match. The manager independently checked the roundtrips;
+the same cases pass with the exact installed verifyit revision and fresh exported
+source stack. Evidence and the 22-patch provenance manifest are in
+`evidence/e2e/wiring/skyrl-math-reference-contract/`.
 
 The full real-trace population contains 294 verified links in six benchmark groups.
 Three seeded selections per group were frozen before scoring, producing 18 actual

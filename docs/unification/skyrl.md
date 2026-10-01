@@ -249,8 +249,11 @@ Sixty exported-source tests pass. See the integration README and
 
 Math-with-judge and NS-tools terminal math now have partial source integration
 through existing RAW/additive MathSpec, configured final-label JudgeSpec and a
-total ScriptSpec deadline. Trusted references outside the reviewed parsed, prose
-and typography-only domains remain pending. Twenty-five source tests pass; 16 of 18
-frozen Env replay items match native/archive score and framework reward. The
+total ScriptSpec deadline. Trusted preparation now selects an explicit semantic
+or symbolic reference contract before candidate generation. Sixteen prepared Env
+roundtrips match source scores and HTTP requests; 37 math and 9 preparation tests
+pass. Untagged legacy references outside bounded automatic admission still need
+trusted contract selection. Sixteen of 18 frozen Env replay items match
+native/archive score and framework reward. The
 other two lack archived external judge transcripts and remain incomplete. See
 [integration contracts](../../integrations/MarinSkyRL/math-judge.md).
