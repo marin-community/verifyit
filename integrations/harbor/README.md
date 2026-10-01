@@ -146,23 +146,25 @@ missing. The full image has source-only score evidence, not a verifier cutover.
 No archived model workspaces were replayed. Exact commands, hashes, and
 failure evidence are in `evidence/e2e/wiring/harbor-ds1000/README.md`.
 
-Apply `codepde-pytest-verifyit.patch` after the Harbor dispatcher patch. Its
-generated tasks declare PytestSpec against a protected `/tests/verifyit/` copy
-of each upstream nRMSE evaluator. The original `test.sh` and evaluator remain
-separate, so source grading keeps its existing import path. The patched image
-pins verifyit `3f21d36306c86861e5fdff0718bd72029328e752` and preflights
-Linux Landlock before scoring. An unprivileged candidate child receives public
-initial inputs but cannot read the reference HDF5 or write reward files;
-trusted code checks exact array shapes and finite values before the unchanged
-upstream evaluator applies its binary nRMSE threshold. The evaluator reaps
-detached children before consuming output. All five PDE variants matched
-source `test.sh`, direct CLI and Harbor Verifier for reference and wrong solvers
-in a generated image using bounded HDF5 fixtures. Seven adversarial cases
-cover forged stdout, reference reads, reward writes, malformed arrays, and
-missing or empty solvers. The image used a wheel from the exact local API
-commit instead of the unpublished Git install. Full-size PDE data and matching
-saved model traces remain unvalidated. Evidence is in
-`evidence/e2e/wiring/harbor-codepde/`.
+Apply `codepde-isolation-verifyit.patch` after the Harbor dispatcher and
+`answer-isolation-verifyit.patch`; it replaces `codepde-pytest-verifyit.patch`.
+Generated tasks declare PytestSpec against the protected upstream nRMSE
+evaluator in a separate verifier image. Only `/app/solver.py` transfers from
+the stopped agent environment. Production Dockerfiles download the same
+upstream HDF5 URL during the private image build, instead of accepting a file
+from the agent workspace. Verifyit is pinned to
+`ca7fce7c50f61a3b4b26fe1f9609853effadb87c`.
+
+The existing unprivileged Landlock proxy passes public numerical inputs to
+the candidate and validates returned shapes and finite values. The unchanged
+upstream evaluator applies the binary 0.05 nRMSE threshold. Sandbox preflight
+uses the protected worker file, so a missing candidate scores zero instead of
+becoming an infrastructure failure. Ten actual isolated Harbor Trials matched
+positive and wrong solvers across all five PDE families. These use existing
+bounded HDF5 fixtures and the scientific fixture runtime with an exact-commit
+wheel. Full production image builds, full-size datasets and archived model
+traces remain unvalidated. Evidence and installed hashes are in
+`evidence/e2e/wiring/harbor-codepde/isolation-final-manifest.json`.
 
 Apply `replicationbench-isolation-verifyit.patch` after the Harbor dispatcher
 and `answer-isolation-verifyit.patch` patches. It replaces the earlier

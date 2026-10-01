@@ -1,0 +1,485 @@
+diff --git a/adapters/codepde/src/codepde/adapter.py b/adapters/codepde/src/codepde/adapter.py
+index 863ac14..2710e3d 100755
+--- a/adapters/codepde/src/codepde/adapter.py
++++ b/adapters/codepde/src/codepde/adapter.py
+@@ -5,6 +5,7 @@ CodePDE Adapter for Terminal-Bench Harbor
+ This adapter generates CodePDE benchmark tasks in the new harbor format.
+ """
+ 
++import json
+ import logging
+ import re
+ import shutil
+@@ -13,6 +14,8 @@ import tempfile
+ from pathlib import Path
+ from typing import Any, Dict
+ 
++from harbor.tasks.verifyit_answer_isolation import VERIFYIT_REVISION
++
+ # Setup logging
+ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+ logger = logging.getLogger(__name__)
+@@ -284,6 +287,40 @@ class CodePDEAdapter:
+ 
+         # Create test files
+         self._create_test_files(output_dir, pde_name, pde_config)
++        self._isolate_verifier(output_dir, pde_name)
++
++    def _isolate_verifier(self, task_dir: Path, pde_name: str) -> None:
++        """Keep reference data and the evaluator outside the agent environment."""
++        config_path = task_dir / "task.toml"
++        config = config_path.read_text()
++        if config.count("[verifier]\n") != 1 or "artifacts =" in config:
++            raise ValueError("unreviewed CodePDE task configuration")
++        config_path.write_text(
++            'artifacts = ["/app/solver.py"]\n'
++            + config.replace(
++                "[verifier]\n", '[verifier]\nenvironment_mode = "separate"\n', 1
++            )
++            + "\n[verifier.environment]\n"
++            + "build_timeout_sec = 1800.0\ncpus = 1\nmemory_mb = 2048\nstorage_mb = 10240\nallow_internet = false\n"
++        )
++        dockerfile = task_dir / "environment/Dockerfile"
++        source = dockerfile.read_text()
++        old_pin = "3f21d36306c86861e5fdff0718bd72029328e752"
++        if source.count(old_pin) != 1:
++            raise ValueError("unreviewed CodePDE verifyit installation")
++        agent_lines = [
++            line for line in source.splitlines(keepends=True) if old_pin not in line
++        ]
++        dockerfile.write_text("".join(agent_lines))
++        data_file = self.data_files[pde_name]
++        data_url = f"https://huggingface.co/datasets/LDA1020/codepde-data/resolve/main/{pde_name}/{data_file}"
++        (task_dir / "tests/Dockerfile").write_text(
++            source.replace(old_pin, VERIFYIT_REVISION)
++            + "\nCOPY . /tests/\n"
++            + "RUN mkdir -p /app/data && "
++            + f"curl --fail -L -o /app/data/{data_file} {data_url} "
++            + f"&& chmod 0600 /app/data/{data_file}\n"
++        )
+ 
+     def _create_instruction_md(
+         self, output_dir: Path, pde_name: str, pde_config: Dict[str, Any]
+@@ -381,12 +418,58 @@ class CodePDEAdapter:
+         if nrmse_source.exists():
+             shutil.copy2(nrmse_source, tests_dir / "nRMSE_evaluator.py")
+ 
++        verifyit_dir = tests_dir / "verifyit"
++        verifyit_dir.mkdir(exist_ok=True)
++        if nrmse_source.exists():
++            shutil.copy2(nrmse_source, verifyit_dir / "nRMSE_evaluator.py")
++
+         # Create test_outputs.py
+         self._create_test_outputs_py(tests_dir, pde_name, pde_config)
+ 
++        # The verifier runs the upstream evaluator with an unprivileged
++        # candidate proxy, keeping reference data and scoring in trusted code.
++        data_file = self.data_files[pde_name]
++        pde_args_mapping = {
++            "advection": "--beta 0.1",
++            "burgers": "--nu 0.01",
++            "reacdiff1d": "--nu 0.5 --rho 1.0",
++            "cns1d": "--eta 0.1",
++            "darcy": "",
++        }
++        for filename in ("verifyit_test_outputs.py", "solver.py"):
++            content = self._render_template(
++                f"tests/verifyit/{filename}",
++                template_data_file=data_file,
++                template_pde_args=pde_args_mapping[pde_name],
++                template_pde_name=pde_name,
++                template_timeout=str(pde_config["test_timeout"]),
++            )
++            (verifyit_dir / filename).write_text(content)
++        shutil.copy2(
++            self.template_dir / "tests/verifyit/verifyit_worker.py",
++            verifyit_dir / "verifyit_worker.py",
++        )
++        shutil.copy2(
++            self.template_dir / "tests/verifyit/landlock.py",
++            verifyit_dir / "landlock.py",
++        )
++
+         # Create test.sh
+         self._create_test_sh(tests_dir, pde_name, pde_config)
+ 
++        data_path = f"/app/data/{data_file}"
++        setup = f"test -s {data_path!r} && python /tests/verifyit/landlock.py"
++        (tests_dir / "verifier.toml").write_text(
++            'mode = "pytest"\n'
++            'paths = ["/tests/verifyit/verifyit_test_outputs.py::test_nrmse_accuracy"]\n'
++            'args = ["-v", "-s", "--tb=short", "-rA"]\n'
++            'workspace = "/app"\n'
++            'python = "/usr/local/bin/python3.11"\n'
++            f"timeout = {int(pde_config['test_timeout'])}\n"
++            "setup_failure_is_infra = true\n"
++            f"setup = {json.dumps(setup)}\n"
++        )
++
+         logger.debug("Created test files")
+ 
+     def _create_test_outputs_py(
+diff --git a/adapters/codepde/src/codepde/task-template/environment/Dockerfile b/adapters/codepde/src/codepde/task-template/environment/Dockerfile
+index 420d742..9a9ecc6 100644
+--- a/adapters/codepde/src/codepde/task-template/environment/Dockerfile
++++ b/adapters/codepde/src/codepde/task-template/environment/Dockerfile
+@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir \
+     matplotlib \
+     h5py \
+     pytest \
++    pytest-json-report \
+     pandas
+ 
+ # Install TensorFlow (CPU version for compatibility)
+@@ -28,6 +29,8 @@ RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://
+ # Try to install JAX (CPU version)
+ RUN pip install --no-cache-dir jax jaxlib
+ 
++RUN pip install --no-cache-dir "verifyit @ git+https://github.com/marin-community/verifyit@3f21d36306c86861e5fdff0718bd72029328e752"
++
+ # Set environment variables
+ ENV PYTHONPATH=/app:$PYTHONPATH
+ ENV T_BENCH_TEST_DIR=/app/tests
+diff --git a/adapters/codepde/src/codepde/task-template/tests/verifyit/landlock.py b/adapters/codepde/src/codepde/task-template/tests/verifyit/landlock.py
+new file mode 100644
+index 0000000..071e063
+--- /dev/null
++++ b/adapters/codepde/src/codepde/task-template/tests/verifyit/landlock.py
+@@ -0,0 +1,85 @@
++"""Restrict the CodePDE candidate to its source and public solver inputs."""
++
++import ctypes
++import os
++from pathlib import Path
++
++
++_READ_FILE = 1 << 2
++_READ_DIR = 1 << 3
++_WRITE_FILE = 1 << 1
++_EXECUTE = 1 << 0
++_HANDLED = (1 << 15) - 1
++_RULE_PATH_BENEATH = 1
++_PR_SET_NO_NEW_PRIVS = 38
++_CREATE_RULESET = 444
++_ADD_RULE = 445
++_RESTRICT_SELF = 446
++
++
++class _RulesetAttr(ctypes.Structure):
++    _fields_ = [("handled_access_fs", ctypes.c_uint64)]
++
++
++class _PathBeneathAttr(ctypes.Structure):
++    _fields_ = [("allowed_access", ctypes.c_uint64), ("parent_fd", ctypes.c_int32)]
++
++
++def _syscall(libc, number, *arguments):
++    result = libc.syscall(number, *arguments)
++    if result < 0:
++        error = ctypes.get_errno()
++        raise OSError(error, os.strerror(error))
++    return result
++
++
++def restrict_candidate(
++    input_path: Path, candidate_path: Path = Path("/app/solver.py")
++) -> None:
++    """Fail closed if the kernel cannot enforce this filesystem allowlist."""
++    libc = ctypes.CDLL(None, use_errno=True)
++    abi = _syscall(libc, _CREATE_RULESET, 0, 0, 1)
++    if abi < 3:
++        raise RuntimeError("Landlock ABI 3 or newer is required")
++    attr = _RulesetAttr(_HANDLED)
++    ruleset = _syscall(
++        libc, _CREATE_RULESET, ctypes.byref(attr), ctypes.sizeof(attr), 0
++    )
++    try:
++        rights = _READ_FILE | _READ_DIR | _EXECUTE
++        allowed = {
++            Path("/usr"): rights,
++            Path("/lib"): rights,
++            Path("/bin"): rights,
++            Path("/etc"): _READ_FILE | _READ_DIR,
++            Path("/dev"): _READ_FILE | _READ_DIR,
++            Path("/dev/null"): _READ_FILE | _WRITE_FILE,
++            Path("/app"): _READ_DIR,
++            candidate_path: _READ_FILE,
++            Path("/tests"): _READ_DIR,
++            Path("/tests/verifyit"): _READ_DIR,
++            Path("/tests/verifyit/verifyit_worker.py"): _READ_FILE,
++            input_path.parent: _READ_DIR,
++            input_path: _READ_FILE,
++        }
++        for path, access in allowed.items():
++            descriptor = os.open(path, os.O_PATH | os.O_CLOEXEC)
++            try:
++                rule = _PathBeneathAttr(access, descriptor)
++                _syscall(
++                    libc, _ADD_RULE, ruleset, _RULE_PATH_BENEATH, ctypes.byref(rule), 0
++                )
++            finally:
++                os.close(descriptor)
++        if libc.prctl(_PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0:
++            error = ctypes.get_errno()
++            raise OSError(error, os.strerror(error))
++        _syscall(libc, _RESTRICT_SELF, ruleset, 0)
++    finally:
++        os.close(ruleset)
++
++
++if __name__ == "__main__":
++    # PytestSpec.setup treats an unavailable sandbox as infrastructure failure.
++    worker = Path("/tests/verifyit/verifyit_worker.py")
++    restrict_candidate(worker, candidate_path=worker)
+diff --git a/adapters/codepde/src/codepde/task-template/tests/verifyit/solver.py b/adapters/codepde/src/codepde/task-template/tests/verifyit/solver.py
+new file mode 100644
+index 0000000..241d5f0
+--- /dev/null
++++ b/adapters/codepde/src/codepde/task-template/tests/verifyit/solver.py
+@@ -0,0 +1,130 @@
++"""Trusted solver proxy for CodePDE's upstream nRMSE evaluator."""
++
++import ctypes
++import os
++import json
++import resource
++import signal
++import subprocess
++import tempfile
++import time
++from pathlib import Path
++
++import numpy as np
++
++from landlock import restrict_candidate
++
++
++_UID = 65534
++_GID = 65534
++
++
++def _expected_shapes(arguments):
++    pde = "{template_pde_name}"
++    if pde == "darcy":
++        return (arguments[0].shape,)
++    if pde == "cns1d":
++        shape = (len(arguments[0]), len(arguments[3]), arguments[0].shape[1])
++        return (shape, shape, shape)
++    shape = (len(arguments[0]), len(arguments[1]), arguments[0].shape[1])
++    return (shape,)
++
++
++def _limit_output(max_bytes):
++    resource.setrlimit(resource.RLIMIT_FSIZE, (max_bytes, max_bytes))
++
++
++def _prepare_candidate(max_bytes, input_path):
++    _limit_output(max_bytes)
++    restrict_candidate(input_path)
++
++
++def _enable_subreaper():
++    # This evaluator process adopts detached candidate descendants as well.
++    libc = ctypes.CDLL(None, use_errno=True)
++    if libc.prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
++        error = ctypes.get_errno()
++        raise OSError(error, os.strerror(error))
++
++
++def _cleanup_descendants():
++    children_file = Path(f"/proc/self/task/{os.getpid()}/children")
++    deadline = time.monotonic() + 5
++    while True:
++        children = [int(pid) for pid in children_file.read_text().split()]
++        if not children:
++            return
++        for pid in children:
++            try:
++                os.kill(pid, signal.SIGKILL)
++            except ProcessLookupError:
++                pass
++        while True:
++            try:
++                reaped, _ = os.waitpid(-1, os.WNOHANG)
++            except ChildProcessError:
++                break
++            if not reaped:
++                break
++        if time.monotonic() >= deadline:
++            raise RuntimeError("candidate descendants could not be stopped")
++        time.sleep(0.01)
++
++
++def solver(*arguments):
++    expected_shapes = _expected_shapes(arguments)
++    expected_bytes = sum(int(np.prod(shape)) * 8 for shape in expected_shapes)
++    with tempfile.TemporaryDirectory(prefix="codepde-candidate-") as temporary:
++        directory = Path(temporary)
++        os.chown(directory, _UID, _GID)
++        os.chmod(directory, 0o700)
++        input_path = directory / "input.npz"
++        np.savez(input_path, **{
++            f"arg_{index}": argument for index, argument in enumerate(arguments)
++        })
++        os.chown(input_path, _UID, _GID)
++        os.chmod(input_path, 0o400)
++        with tempfile.TemporaryFile() as output:
++            _enable_subreaper()
++            process = subprocess.Popen(
++                [
++                    "setpriv", "--no-new-privs", "--reuid", str(_UID),
++                    "--regid", str(_GID), "--clear-groups", "python",
++                    "/tests/verifyit/verifyit_worker.py", str(input_path),
++                    json.dumps(expected_shapes),
++                ],
++                stdout=output,
++                stderr=subprocess.DEVNULL,
++                start_new_session=True,
++                preexec_fn=lambda: _prepare_candidate(expected_bytes, input_path),
++            )
++            try:
++                status = process.wait(timeout={template_timeout})  # noqa: F821
++            except subprocess.TimeoutExpired:
++                raise ValueError("candidate solver timed out") from None
++            finally:
++                try:
++                    os.killpg(process.pid, signal.SIGKILL)
++                except ProcessLookupError:
++                    pass
++                if process.poll() is None:
++                    process.wait()
++                _cleanup_descendants()
++            if status:
++                raise ValueError("candidate solver failed")
++            if output.tell() != expected_bytes:
++                raise ValueError("candidate solver returned a malformed array")
++            output.seek(0)
++            payload = output.read(expected_bytes + 1)
++            if len(payload) != expected_bytes:
++                raise ValueError("candidate solver returned a malformed array")
++            values = []
++            cursor = 0
++            for shape in expected_shapes:
++                length = int(np.prod(shape)) * 8
++                value = np.frombuffer(payload[cursor:cursor + length], dtype="<f8").reshape(shape)
++                cursor += length
++                if not np.isfinite(value).all():
++                    raise ValueError("candidate solver returned invalid numerical values")
++                values.append(value)
++            return tuple(values) if len(values) != 1 else values[0]
+diff --git a/adapters/codepde/src/codepde/task-template/tests/verifyit/verifyit_test_outputs.py b/adapters/codepde/src/codepde/task-template/tests/verifyit/verifyit_test_outputs.py
+new file mode 100644
+index 0000000..0ea61b9
+--- /dev/null
++++ b/adapters/codepde/src/codepde/task-template/tests/verifyit/verifyit_test_outputs.py
+@@ -0,0 +1,55 @@
++"""Grade CodePDE with the upstream evaluator and isolated candidate proxy."""
++
++import math
++import errno
++import os
++import re
++import stat
++import subprocess
++from pathlib import Path
++
++
++def test_nrmse_accuracy():
++    data_file = Path("/app/data/{template_data_file}")
++    assert data_file.is_file()
++    candidate_path = Path("/app/solver.py")
++    assert stat.S_ISREG(candidate_path.lstat().st_mode)
++    protected = [Path("/app"), Path("/app/data"), data_file,
++                 Path("/tests"), Path("/tests/verifyit"),
++                 Path("/logs"), Path("/logs/verifier")]
++    original_modes = [(path, path.stat().st_mode & 0o777)
++                      for path in protected if path.exists()]
++    changed = []
++    try:
++        for path, mode in original_modes:
++            if path.stat().st_uid == 65534:
++                raise ValueError(f"candidate owns protected path: {path}")
++            try:
++                os.chmod(path, 0o600 if path == data_file else 0o755)
++                changed.append((path, mode))
++            except OSError as error:
++                if path not in (Path("/tests"), Path("/tests/verifyit")) or error.errno != errno.EROFS:
++                    raise
++        result = subprocess.run(
++            [
++                "python", "/tests/verifyit/nRMSE_evaluator.py",
++                "--dataset-path-for-eval", str(data_file),
++                *"{template_pde_args}".split(),
++            ],
++            capture_output=True,
++            text=True,
++            timeout={template_timeout},  # noqa: F821
++            check=False,
++        )
++    finally:
++        for path, mode in reversed(changed):
++            os.chmod(path, mode)
++    assert result.returncode == 0, result.stderr[-2000:]
++    scores = re.findall(r"^nRMSE:\s*([0-9.eE+-]+)\s*\|", result.stdout, re.MULTILINE)
++    assert len(scores) == 1, "trusted evaluator returned no unique nRMSE"
++    score = float(scores[0])
++    assert math.isfinite(score) and score >= 0
++    Path("/app/evaluation_results.txt").write_text(
++        f"nRMSE: {score:.6f}\n"
++    )
++    assert score < 0.05, f"nRMSE {score:.6f} exceeds 0.05"
+diff --git a/adapters/codepde/src/codepde/task-template/tests/verifyit/verifyit_worker.py b/adapters/codepde/src/codepde/task-template/tests/verifyit/verifyit_worker.py
+new file mode 100644
+index 0000000..b9e2201
+--- /dev/null
++++ b/adapters/codepde/src/codepde/task-template/tests/verifyit/verifyit_worker.py
+@@ -0,0 +1,49 @@
++"""Execute the candidate solver with only the public initial state available."""
++
++import importlib.util
++import json
++import os
++import sys
++from pathlib import Path
++
++import numpy as np
++
++
++def main() -> None:
++    input_path = Path(sys.argv[1])
++    expected_shapes = [tuple(shape) for shape in json.loads(sys.argv[2])]
++    with np.load(input_path, allow_pickle=False) as inputs:
++        arguments = [inputs[f"arg_{index}"] for index in range(len(inputs.files))]
++        arguments = [arg.item() if arg.ndim == 0 else arg for arg in arguments]
++
++    output_fd = os.dup(1)
++    discard_fd = os.open(os.devnull, os.O_WRONLY)
++    try:
++        os.dup2(discard_fd, 1)
++        spec = importlib.util.spec_from_file_location("candidate_solver", "/app/solver.py")
++        if spec is None or spec.loader is None:
++            raise RuntimeError("candidate solver could not be loaded")
++        module = importlib.util.module_from_spec(spec)
++        spec.loader.exec_module(module)
++        candidate = getattr(module, "solver", None)
++        if not callable(candidate):
++            raise ValueError("candidate solver is missing")
++        result = candidate(*arguments)
++        sys.stdout.flush()
++    finally:
++        os.dup2(output_fd, 1)
++        os.close(output_fd)
++        os.close(discard_fd)
++    values = result if isinstance(result, (tuple, list)) else (result,)
++    if len(values) != len(expected_shapes):
++        raise ValueError("candidate returned the wrong number of arrays")
++    for value, shape in zip(values, expected_shapes):
++        array = np.asarray(value)
++        if array.shape != shape or array.dtype.kind not in "iuf":
++            raise ValueError("candidate returned an invalid array")
++        sys.stdout.buffer.write(array.astype("<f8").tobytes(order="C"))
++    sys.stdout.buffer.flush()
++
++
++if __name__ == "__main__":
++    main()
