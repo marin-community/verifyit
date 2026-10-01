@@ -3,12 +3,13 @@
 
 import json
 import threading
+from dataclasses import replace
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
 
-from verifyit.grade import Status
+from verifyit.grade import Status, grade
 from verifyit.modes import grade_judge
 from verifyit.spec import Constraint, JudgeSpec
 
@@ -224,3 +225,60 @@ def test_constraints_that_pass_hand_over_to_the_judge(tmp_path, fake_judge):
 def test_checklist_without_criteria_is_an_invalid_task(tmp_path, unconfigured_judge):
     with pytest.raises(grade_judge.InvalidTask):
         grade_judge.grade(JudgeSpec(rubric="checklist"), tmp_path, _workspace(tmp_path, "text"))
+
+
+@pytest.mark.parametrize(
+    "spec, candidate, reply, expected",
+    [
+        (JudgeSpec(references=("Mars",)), "Mars", "SCORE: 0", 1.0),
+        (JudgeSpec(references=("Mars",)), "the red planet", "SCORE: 0.75", 0.75),
+        (JudgeSpec(rubric="checklist", criteria=("Names Mars",)), "Mars", "SCORE: 1", 1.0),
+        (JudgeSpec(references=("Mars",)), " \n", "SCORE: 1", 0.0),
+        (
+            JudgeSpec(references=("Mars",), constraints=(Constraint("startend:end_checker", {"end_phrase": "."}),)),
+            "Mars",
+            "SCORE: 1",
+            0.0,
+        ),
+    ],
+)
+def test_in_memory_and_file_grading_match(tmp_path, fake_judge, spec, candidate, reply, expected):
+    fake_judge.replies = [reply]
+    memory_reward = grade_judge.grade_candidate(spec, candidate, context="Private setting")
+    (tmp_path / "context.txt").write_text("Private setting")
+    file_reward = grade_judge.grade(replace(spec, context="context.txt"), tmp_path, _workspace(tmp_path, candidate))
+    assert memory_reward == file_reward
+    assert (memory_reward.reward, memory_reward.status) == (expected, Status.SCORED)
+    if spec.rubric == "checklist":
+        assert all("Private setting" in prompt for prompt in fake_judge.prompts)
+
+
+def test_invalid_rubric_precedes_candidate_file_failure(tmp_path):
+    spec = JudgeSpec(rubric="unsupported", output="x" * 5000)
+    with pytest.raises(grade_judge.InvalidTask):
+        grade_judge.grade(spec, tmp_path, tmp_path)
+
+
+def test_missing_context_remains_invalid_when_candidate_is_unreadable(tmp_path, monkeypatch):
+    (tmp_path / "answer.txt").write_text("candidate")
+
+    def unreadable_file(_path, *args, **kwargs):
+        raise PermissionError("candidate cannot be read")
+
+    monkeypatch.setattr(Path, "read_text", unreadable_file)
+    spec = JudgeSpec(references=("Mars",), context="missing-context.txt")
+    reward = grade(spec, tests_dir=tmp_path, workspace=tmp_path)
+
+    assert (reward.reward, reward.status) == (0.0, Status.INVALID_TASK)
+
+
+@pytest.mark.parametrize("candidate", ["Mars", "the red planet"])
+def test_missing_runtime_keeps_exact_gate_and_blocks_environment_endpoint(fake_judge, candidate):
+    spec = JudgeSpec(references=("Mars",))
+    if candidate == "Mars":
+        reward = grade_judge.grade_candidate(spec, candidate, runtime=None)
+        assert (reward.reward, reward.status) == (1.0, Status.SCORED)
+    else:
+        with pytest.raises(RuntimeError, match="explicit endpoint selection"):
+            grade_judge.grade_candidate(spec, candidate, runtime=None)
+    assert fake_judge.prompts == []
