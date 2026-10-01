@@ -2908,17 +2908,19 @@
       "entity_id": "harbor:livecodebench",
       "evidence": [
         "docs/unification/harbor_semantics.json#livecodebench",
-        "docs/unification/harbor_inventory.json#livecodebench"
+        "docs/unification/harbor_inventory.json#livecodebench",
+        "integrations/harbor/livecodebench-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-livecodebench/final-manifest.json",
+        "evidence/e2e/wiring/harbor-livecodebench/manager-positive.json"
       ],
-      "gap_kind": "decoded_cases_and_entrypoint",
-      "implementation_present": false,
+      "gap_kind": "implemented_native_runtime_bridge",
+      "implementation_present": true,
       "name": "livecodebench",
-      "needed_change": "Generate real decoded stdio or function-call cases, preserve entrypoint/import injection and case timeouts, then apply all-case conjunction rather than a fractional generic score.",
+      "needed_change": "Validate actual benchmark tasks and archived model traces; candidate execution inside the grader remains unverified.",
       "primitive_candidates": [
-        "stdio",
-        "pytest"
+        "script"
       ],
-      "reason": "Functional cases call function entrypoint, stdin cases run subprocess; preserve case decoding/import injection, all-case conjunction and per-case timeout. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "The opt-in generator validates trusted public/private cases then runs the source stdin/functional evaluator through ScriptSpec in a separate image. Score transport is emitted only at the final aggregate; source Python equality remains unchanged. The existing source decoder handles trusted compressed references, never candidate pickle data.",
       "source_evidence": [
         {
           "functions": [
@@ -2971,8 +2973,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Six positive/wrong source/Harbor comparisons match across three synthetic adapter tasks sampled from five: functional reverse/sum and stdin product, all using compressed private cases. Missing candidate scores zero. Five ordinary regressions include source zero-test success now rejected and malformed reference decoding rejected. Full source runtime images built with an exact local source wheel; no actual LiveCodeBench dataset or archived replay coverage.",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Source evaluator, config.json and verifier.toml in the separate image",
+        "remaining_gap": "candidate_execution_in_grader",
+        "needed_change": "Candidate code executes within the source grader runtime; candidate/assertion isolation has not been established."
+      }
     },
     {
       "entity_id": "harbor:llmsr_bench",

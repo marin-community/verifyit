@@ -429,3 +429,25 @@ The manifests record the exact local wheel hash. ResearchCodeBench proof images
 also used a bounded pytest-only dependency image; the wheel substitution above
 alone preserves its larger production image and does not claim that image has
 been validated.
+
+## LiveCodeBench
+
+Apply `livecodebench-runtime-verifyit.patch` after
+`research-code-bench-runtime-verifyit.patch`, which supplies the shared helper.
+Pass `--verifyit` to the adapter. ScriptSpec retains the source stdin and
+functional evaluators, including its Python equality rules. Generation strictly
+validates trusted public/private case lists and rejects empty evaluated tasks;
+compressed private references use the source-owned decoder. Candidate data does
+not enter that decoder. Only completed aggregate scoring writes a reward;
+missing and wrong candidates score zero, while incomplete grader runs remain
+unscored.
+
+Six source/Harbor positive/wrong pairs match across functional reverse, functional
+sum and stdin product fixtures, each with compressed private cases. A missing
+candidate also scores zero. The three tasks were sampled from five synthetic
+operations, not actual LiveCodeBench data or archived model traces. Five ordinary
+regressions cover malformed references and the source's zero-test success.
+The source runtime image was built with the exact local core wheel substitution
+shown above. Evidence is in
+`evidence/e2e/wiring/harbor-livecodebench/final-manifest.json`. Candidate execution
+inside the grader remains an unverified trust boundary.
