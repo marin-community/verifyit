@@ -95,17 +95,23 @@ collection also remained unscored. No matching saved model trace was available.
 The image proof substituted a wheel from the exact local API commit for its
 unpublished remote Git install.
 
-Apply `mmau-pytest-verifyit.patch` after the Harbor dispatcher patch. The
-generated task runs protected `/tests/test_outputs.py` in its uv-managed
-`/app/.venv` Python; PytestSpec also passes source `--workdir /tests` and writes
-the original `/logs/verifier/ctrf.json` alongside verifyit's JSON report.
-The task image pins uv 0.7.13 and verifyit
-`3f21d36306c86861e5fdff0718bd72029328e752`. A generated image matched
-the pinned source script, direct CLI and actual Harbor Verifier on passing and
-failing candidates. Source and verifyit CTRF pass/fail counts matched, and
-Harbor retained the artifact. Malformed protected-test collection remained
-unscored without a reward. No matching saved model trace was available. The
-image proof substituted an exact-commit wheel for the unpublished Git install.
+Apply `mmau-isolation-verifyit.patch` after the Harbor dispatcher and
+`answer-isolation-verifyit.patch`; it replaces `mmau-pytest-verifyit.patch`.
+The generated PytestSpec runs the protected source token comparator in a
+separate Python 3.13 verifier image, transferring only `/app/answer.txt`.
+The image installs pytest 8.4.1, pytest-json-ctrf 0.3.5 and verifyit
+`ca7fce7c50f61a3b4b26fe1f9609853effadb87c`; the proof substitutes that commit's
+local wheel for the unpublished Git install. The source `--workdir /tests`
+and CTRF report remain intact. Candidate text uses verifyit's bounded regular
+file reader. Setup rejects empty or malformed trusted references before grading;
+these produce `infra_error` with zero reward and no Harbor reward file.
+
+Three seeded source dataset tasks matched original pytest and isolated Harbor
+scoring for positive and wrong answers. A wrong answer scored one after a live
+agent rewrote the shared reference, then zero after isolation. Linked candidate
+answers score zero. All 1,000 source references pass the added validation.
+No matching saved model trace was available. Evidence and installed file hashes
+are in `evidence/e2e/wiring/harbor-mmau/isolation-final-manifest.json`.
 
 Apply `compilebench-pytest-verifyit.patch` after the Harbor dispatcher patch.
 With `--verifyit-enabled`, the adapter fetches the pinned 15 CompileBench tasks

@@ -8,7 +8,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Evalchemy 42 custom benchmarks | 8 native integrations + 3 math hybrids | 31 not integrated (20 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 16 retained-runtime overrides | 1 not integrated; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 37 source-patched (27 with selected real traces, 10 without eligible real traces) | 4 partial client/harness routes + 5 native profile gaps; 2 external-objective placeholders separate |
-| Harbor 87 adapters | 13 native primitive clients + 3 structured source-runtime bridges | 71 not integrated; 8 wired routes need verifier isolation |
+| Harbor 87 adapters | 13 native primitive clients + 3 structured source-runtime bridges | 71 not integrated; 7 wired routes need verifier isolation |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
@@ -206,7 +206,7 @@ The 71 unwired adapters are named individually. Four answer-file clients invoke 
 | gaia | native_route_available | exact | The generated script removes newlines, lowercases ASCII letters and trims outer whitespace on both files before exact grading. Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available. |
 | gpqa-diamond | native_route_available | mcq | The generated script removes whitespace and uppercases the full answer before strict A-D MCQ grading. Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available. |
 | humanevalfix | native_route_available | pytest | The generated task declares PytestSpec for protected /tests/test_outputs.py with candidate workspace /workspace. Isolate protected verifier files from the live agent process before deployment. |
-| mmau | native_route_available | pytest | The generated PytestSpec runs protected /tests/test_outputs.py in the task's uv-managed Python, preserving the source all-tests policy and CTRF report via pytest arguments. Isolate protected verifier files from the live agent process before deployment. |
+| mmau | native_route_available | pytest | The generated PytestSpec runs protected /tests/test_outputs.py in a separate Python 3.13 verifier image, preserving the source all-tests policy and CTRF report via pytest arguments. Validate archived model traces and additional task instances before wider deployment. |
 | replicationbench | native_route_available | pytest | The generated PytestSpec runs the protected source comparator and retains its binary all-tests reward, comparison artifact and task Python environment. Validate additional generated task instances, broader data dependencies and saved model traces before wider deployment. |
 | satbench | native_route_available | exact | The generated script takes the last case-sensitive [SAT] or [UNSAT] marker and grades that label exactly. Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available. |
 
@@ -220,7 +220,7 @@ The 71 unwired adapters are named individually. Four answer-file clients invoke 
 
 ### Shared verifier boundary
 
-8 wired clients still grade in Harbor's shared agent container. Harbor uploads trusted files after the agent phase, while a surviving candidate process can modify them. A generated GAIA task reproduced a wrong answer scoring one after its uploaded reference changed. This establishes the shared-container failure mode, not a per-route exploit for every row. These routes have client wiring but require a protected verifier environment before deployment. ARC-AGI-2, AIME, GAIA, GPQA Diamond, SATBench, DABstep, ReplicationBench and BFCL now use separate verifier images on bounded generated fixtures; GAIA, DABstep, ReplicationBench and BFCL passed corresponding mutation replays.
+7 wired clients still grade in Harbor's shared agent container. Harbor uploads trusted files after the agent phase, while a surviving candidate process can modify them. A generated GAIA task reproduced a wrong answer scoring one after its uploaded reference changed. This establishes the shared-container failure mode, not a per-route exploit for every row. These routes have client wiring but require a protected verifier environment before deployment. ARC-AGI-2, AIME, GAIA, GPQA Diamond, SATBench, DABstep, ReplicationBench, BFCL and MMAU now use separate verifier images on bounded generated fixtures; GAIA, DABstep, ReplicationBench, BFCL and MMAU passed corresponding mutation replays.
 
 | Wired route | Candidate-reachable trusted assets |
 | --- | --- |
@@ -230,7 +230,6 @@ The 71 unwired adapters are named individually. Four answer-file clients invoke 
 | compilebench | /tests/test_outputs.py and protected tests |
 | evoeval | /tests/test_outputs.py and source test fixtures |
 | humanevalfix | /tests/test_outputs.py and protected tests |
-| mmau | /tests/test_outputs.py and protected tests |
 | tau3-bench | /tests native evaluator and tau2-assets.json manifest |
 
 

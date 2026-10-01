@@ -3281,18 +3281,21 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#mmau",
         "docs/unification/harbor_inventory.json#mmau",
-        "integrations/harbor/mmau-pytest-verifyit.patch",
+        "integrations/harbor/mmau-isolation-verifyit.patch",
         "evidence/e2e/wiring/harbor-mmau/image-results-final.json",
-        "evidence/e2e/wiring/harbor-mmau/manager-image-results.json"
+        "evidence/e2e/wiring/harbor-mmau/manager-image-results.json",
+        "evidence/e2e/wiring/harbor-mmau/isolation-final-manifest.json",
+        "evidence/e2e/wiring/harbor-mmau/manager-shared-attack.json",
+        "evidence/e2e/wiring/harbor-mmau/manager-isolated-attack.json"
       ],
       "gap_kind": "implemented_pytest_client",
       "implementation_present": true,
       "name": "mmau",
-      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate saved model traces and more generated task instances before wider deployment.",
+      "needed_change": "Validate archived model traces and additional task instances before wider deployment.",
       "primitive_candidates": [
         "pytest"
       ],
-      "reason": "The generated PytestSpec runs protected /tests/test_outputs.py in the task's uv-managed Python, preserving the source all-tests policy and CTRF report via pytest arguments. Task-owned setup failures are unscored.",
+      "reason": "The generated PytestSpec runs protected /tests/test_outputs.py in a separate Python 3.13 verifier image, preserving the source all-tests policy and CTRF report via pytest arguments. Only the candidate answer file transfers from the stopped agent environment.",
       "source_evidence": [
         {
           "functions": [
@@ -3349,11 +3352,11 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_route_available",
-      "validation_limit": "A generated task image matched source test.sh, direct CLI and actual Harbor Verifier on passing and failing candidates. Source and verifyit CTRF pass/fail counts matched and Harbor retained CTRF. Malformed protected-test collection produced infra_error with no reward. No matching saved model trace was found. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "validation_limit": "Three seeded source dataset tasks each matched original pytest scoring and separate-environment Harbor Trials on passing and wrong answers. A surviving agent forged the shared trusted reference to make a wrong answer score one; isolation returned zero. Linked candidate answers score zero. Empty trusted gold previously admitted unrelated answers; setup validation now returns infra_error zero and no Harbor reward. All 1000 source references pass validation. These are source-generated fixtures; no matching saved model traces were found.",
       "boundary_hardening": {
-        "status": "shared_candidate_reachable",
-        "trusted_assets": "/tests/test_outputs.py and protected tests",
-        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+        "status": "separate_verifier_validated",
+        "trusted_assets": "/tests/test_outputs.py and /tests/data/info.json",
+        "needed_change": "No known boundary change; validate archived model traces and more task instances before deployment."
       }
     },
     {
