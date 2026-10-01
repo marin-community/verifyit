@@ -1635,17 +1635,19 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#deepsynth",
         "docs/unification/harbor_inventory.json#deepsynth",
-        "docs/unification/harbor_specs.md#judge-profile"
+        "docs/unification/harbor_specs.md#judge-profile",
+        "integrations/harbor/deepsynth-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-deepsynth/final-manifest.json"
       ],
-      "gap_kind": "composite_f1_and_judge",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "deepsynth",
-      "needed_change": "Keep native flattening/key-value precision-recall F1 calculation; compose it with an explicit native semantic-judge override-to-one and documented judge-failure policy instead of replacing F1 with schema acceptance.",
+      "needed_change": "Validate official gated dataset rows, archived candidates and live judge quality after access/deployment; production core pin remains unpublished.",
       "primitive_candidates": [
         "script",
         "judge"
       ],
-      "reason": "Flattened JSON key/value precision-recall F1, upgraded to1 if semantic judge accepts; schema validity cannot replace soft F1. Preserve optional judge failure policy. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in separate-image ScriptSpec retains native JSON repair, flattened key/value F1 and optional Anthropic upgrade. Absent judge configuration preserves F1; configured judge failure/malformed complete envelope returns infra_error0. Trusted malformed/non-dict/nonfinite gold is invalid_task0; valid empty dictionaries remain valid.",
       "source_evidence": [
         {
           "functions": [
@@ -1682,8 +1684,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "26initial source-contract fixture pairs plus15finalv2 actual Harbor checks;17judge scenarios have exact raw HTTP request-body/response parity including retrycounts. Finalv2 only changes judge handling, with26deterministic AST-equivalence proofs and targeted final positive/partial/reference checks.12regressions pass;31final immutable image witnesses. Official dev/test files returned403 with configured token, so no real-row/archive claim. Source emits scalar reward and stdout diagnostics, no auxiliary reward payload or cross-task aggregate. Local controlled judge responses do not establish live model quality.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Source scorer, embedded gold/question and verifier.toml in separate image; candidate answer JSON only",
+        "needed_change": "Validate production deployment and archived traces; no new security tests performed."
+      }
     },
     {
       "entity_id": "harbor:deveval",

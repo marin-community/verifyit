@@ -750,3 +750,38 @@ The tracker has no eligible spreadsheet archive links. This is source-oracle
 and workbook-fixture evidence, not archived model parity. No new security tests
 were run. Use the exact local wheel recipe above while the production verifyit
 pin is unpublished.
+
+
+## DeepSynth
+
+Apply `deepsynth-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate with `--verifyit`.
+Existing ScriptSpec transfers `/app/answer.json` to a separate verifier image
+and retains the source JSON repairs, flattened key/value F1 and optional judge
+upgrade. With no configured judge key, scoring remains deterministic F1.
+Configure `ANTHROPIC_API_KEY` through Harbor's verifier environment to enable the
+source judge; `ANTHROPIC_BASE_URL` can select its endpoint. Secrets are not baked
+into generated tasks.
+
+A configured judge failure now returns infrastructure error at score 0 instead
+of retaining a positive fallback F1. The entire Anthropic response must contain
+one A/B/C text block without errors, refusals or tool output. Both `end_turn` and
+`max_tokens` are accepted for a complete label because the source requests one
+token. Valid B/C responses preserve F1; A upgrades it to 1. The client closes
+after each request. Trusted malformed, non-dictionary or nonfinite references
+are invalid tasks; valid empty dictionaries preserve the source contract.
+
+The official dev/test files returned HTTP 403 with the configured token. The
+manifest at `evidence/e2e/wiring/harbor-deepsynth/final-manifest.json` records 26
+initial source-contract fixture pairs and 15 final-image checks. Final v2 only
+changes the judge function and adds envelope validation; deterministic scoring
+functions remain AST-identical. Seventeen judge scenarios have exact native and
+cutover HTTP request-body/response parity, using a local controlled endpoint.
+Twelve regressions pass, and 31 final verifier images have installed-file hashes.
+The source emits a scalar reward and stdout diagnostics, without auxiliary
+reward metrics or a cross-task aggregate.
+
+These are declared synthetic fixtures, not real dataset rows, archived model
+traces or live model-quality evidence. No new security tests were run. Use the
+exact local core wheel recipe above while the production verifyit pin remains
+unpublished.
