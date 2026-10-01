@@ -586,3 +586,30 @@ Cargo completion regressions pass. Candidate code still executes inside the
 source grader, so candidate/assertion isolation remains unverified. No new
 security tests were run. Use the exact local core wheel recipe above for the
 unpushed verifyit pin.
+
+
+## Pixiu
+
+Apply `pixiu-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate with `--verifyit`.
+The existing ScriptSpec bridge transfers `/app/answer.txt` into a separate image
+and retains Pixiu's eight per-task scoring branches and auxiliary metrics.
+Classification with an empty answer now scores 0 instead of matching the first
+choice. Trusted references are checked before candidate parsing; invalid setup
+returns an unscored minimum. Empty relation references remain valid, including
+an empty answer that correctly denotes no relations.
+
+The source census maps 29 documented dataset names to eight scoring branches.
+The 27-case fixture suite has 26 exact score and auxiliary-metric matches and
+one intentional empty-classification change from 1 to 0. A malformed NER candidate
+is retained as 0/0; a supplemental candidate with correct BIO labels scores 1/1.
+Five output regressions pass. Final v6 differs from the full v5 suite only in
+AST-identical formatting and has separate installed-image hashes and actual
+framework checks. The manifest at
+`evidence/e2e/wiring/harbor-pixiu/final-manifest.json` records the source, patch,
+task and result hashes, plus independent manager Trials.
+
+These are bounded scoring fixtures, not actual dataset conversions or archived
+model replays. Aggregate metrics, including ROUGE and BARTScore, remain
+source-owned and were not validated here. No new security tests were run.
+Use the local core wheel recipe above for the unpublished verifyit revision.

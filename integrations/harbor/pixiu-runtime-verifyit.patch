@@ -1,0 +1,276 @@
+diff --git a/adapters/pixiu/src/pixiu/adapter.py b/adapters/pixiu/src/pixiu/adapter.py
+index f231808..45b8fc7 100644
+--- a/adapters/pixiu/src/pixiu/adapter.py
++++ b/adapters/pixiu/src/pixiu/adapter.py
+@@ -66,6 +66,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
+ from datasets import Dataset, load_dataset
+ from tqdm import tqdm
+ 
++from harbor.tasks.verifyit_source_runtime import package_source_runtime
++
+ TEMPLATE_DIR = Path(__file__).parent / "task-template"
+ 
+ 
+@@ -134,6 +136,7 @@ class PixiuAdapter:
+         task_ids: list[str] | None = None,
+         **kwargs,
+     ) -> None:
++        self.verifyit_enabled = bool(kwargs.get("verifyit", False))
+         self.task_dir = Path(output_dir)
+         self.output_dir = self.task_dir
+         self.dataset_name = kwargs.get("dataset_name", "TheFinAI/flare-headlines")
+@@ -1013,6 +1016,24 @@ class PixiuAdapter:
+         self._update_task_toml(out_dir, record)
+         self._update_solution(out_dir, record)
+         self._update_tests(out_dir, record)
++        if self.verifyit_enabled:
++            tests = out_dir / "tests"
++            dockerfile = (out_dir / "environment/Dockerfile").read_text()
++            for name in ("write_answer.py", "check_answer.py"):
++                shutil.copy2(out_dir / "environment" / name, tests / name)
++            package_source_runtime(
++                out_dir,
++                artifacts=["/app/answer.txt"],
++                dockerfile=dockerfile,
++                timeout=300,
++            )
++            bridge = tests / "native_bridge.sh"
++            bridge.write_text(
++                bridge.read_text().replace(
++                    "exec /opt/verifyit",
++                    "export VERIFYIT_PIXIU_STRICT=1\nexec /opt/verifyit",
++                )
++            )
+ 
+     def generate_all(self) -> List[str]:
+         return self.run()
+diff --git a/adapters/pixiu/src/pixiu/main.py b/adapters/pixiu/src/pixiu/main.py
+index 8cb2ab0..1473ab4 100644
+--- a/adapters/pixiu/src/pixiu/main.py
++++ b/adapters/pixiu/src/pixiu/main.py
+@@ -61,6 +61,9 @@ def parse_args() -> argparse.Namespace:
+         "TheFinAI/flare-fsrl; "
+         "Summarization: TheFinAI/flare-ectsum, TheFinAI/flare-edtsum",
+     )
++    parser.add_argument(
++        "--verifyit", action="store_true", help="Use verifyit for source scoring"
++    )
+     return parser.parse_args()
+ 
+ 
+@@ -74,6 +77,7 @@ def main() -> None:
+         shuffle=args.shuffle,
+         overwrite=args.overwrite,
+         task_ids=args.task_ids,
++        verifyit=args.verifyit,
+     )
+     written = adapter.run()
+     print(f"Generated {len(written)} PIXIU tasks under {args.output_dir}")
+diff --git a/adapters/pixiu/src/pixiu/task-template/tests/test.sh b/adapters/pixiu/src/pixiu/task-template/tests/test.sh
+index 1ffeab6..465ff56 100755
+--- a/adapters/pixiu/src/pixiu/task-template/tests/test.sh
++++ b/adapters/pixiu/src/pixiu/task-template/tests/test.sh
+@@ -13,6 +13,9 @@ if pytest -q test_pixiu.py; then
+     
+     # Copy full metrics.json to verifier logs
+     cp /app/metrics.json /logs/verifier/metrics.json
++    if [ "${VERIFYIT_PIXIU_STRICT:-0}" = "1" ]; then
++      cp /app/metrics.json /logs/verifier/reward.json
++    fi
+     
+     # Also print formatted metrics to stdout for visibility
+     echo "=== Metrics ===" >&2
+@@ -33,6 +36,7 @@ for key, value in sorted(metrics.items()):
+   fi
+   exit 0
+ else
++  if [ "${VERIFYIT_PIXIU_STRICT:-0}" = "1" ]; then exit 1; fi
+   echo "0.0" > /logs/verifier/reward.txt
+   echo "{}" > /logs/verifier/metrics.json
+   exit 0
+diff --git a/adapters/pixiu/src/pixiu/task-template/tests/test_pixiu.py b/adapters/pixiu/src/pixiu/task-template/tests/test_pixiu.py
+index 51a750c..ed57e6b 100644
+--- a/adapters/pixiu/src/pixiu/task-template/tests/test_pixiu.py
++++ b/adapters/pixiu/src/pixiu/task-template/tests/test_pixiu.py
+@@ -1,6 +1,8 @@
+ from __future__ import annotations
+ 
+ import json
++import math
++import os
+ import re
+ from pathlib import Path
+ from sklearn.metrics import f1_score
+@@ -10,6 +12,7 @@ import pytest
+ 
+ ROOT = Path(__file__).resolve().parents[1]
+ ANSWER_PATH = Path("/app/answer.txt")
++METRICS_PATH = Path("/app/metrics.json")
+ 
+ 
+ def _load_answer() -> str:
+@@ -345,6 +348,51 @@ def _compute_sequential_labeling_metrics(
+     }
+ 
+ 
++def _validate_verifyit_config(cfg, task_type: str) -> None:
++    """Reject incomplete trusted references before scoring a candidate."""
++
++    def strings(value):
++        return isinstance(value, list) and all(
++            isinstance(item, str) and bool(item.strip()) for item in value
++        )
++
++    if task_type == "Classification":
++        choices = cfg.ALLOWED_CHOICES
++        if (
++            not strings(choices)
++            or not choices
++            or not isinstance(cfg.EXPECTED_LABEL, str)
++        ):
++            raise ValueError("Classification requires nonempty choices and gold label")
++        normalized = [choice.strip().lower() for choice in choices]
++        if cfg.EXPECTED_LABEL.strip().lower() not in normalized:
++            raise ValueError("Classification gold label must be an allowed choice")
++    elif task_type == "TSA":
++        score = cfg.EXPECTED_SCORE
++        if isinstance(score, bool) or not isinstance(score, (float, int)):
++            raise ValueError("TSA gold score must be numeric")
++        if not math.isfinite(score) or not -1 <= score <= 1:
++            raise ValueError("TSA gold score must be finite and within [-1, 1]")
++    elif task_type in {"QA", "AbstractiveSummarization", "ExtractiveSummarization"}:
++        if not isinstance(cfg.EXPECTED_ANSWER, str) or not cfg.EXPECTED_ANSWER.strip():
++            raise ValueError("Text scoring requires a nonempty reference")
++    elif task_type in {"NER", "SequentialLabeling"}:
++        if not strings(cfg.TOKENS) or not strings(cfg.EXPECTED_LABELS):
++            raise ValueError("Sequence scoring requires tokens and labels")
++        if len(cfg.TOKENS) != len(cfg.EXPECTED_LABELS):
++            raise ValueError("Reference token and label counts differ")
++        if task_type == "SequentialLabeling" and (
++            not isinstance(cfg.LABEL_MAP, dict)
++            or any(label not in cfg.LABEL_MAP for label in cfg.EXPECTED_LABELS)
++        ):
++            raise ValueError("Reference labels must be present in label map")
++    elif task_type == "RelationExtraction":
++        if not strings(cfg.EXPECTED_RELATIONS):
++            raise ValueError("Relation scoring requires a list of reference relations")
++    else:
++        raise ValueError(f"Unknown PIXIU scoring contract: {task_type}")
++
++
+ def test_pixiu_output_matches_expected() -> None:
+     """Check that the agent's answer matches the PIXIU oracle expectations.
+ 
+@@ -353,8 +401,18 @@ def test_pixiu_output_matches_expected() -> None:
+     """
+     import test_outputs as cfg  # type: ignore
+ 
+-    answer = _load_answer()
+     task_type = getattr(cfg, "TASK_TYPE", "Classification")
++    if os.environ.get("VERIFYIT_PIXIU_STRICT") == "1":
++        _validate_verifyit_config(cfg, task_type)
++    answer = _load_answer()
++
++    if (
++        os.environ.get("VERIFYIT_PIXIU_STRICT") == "1"
++        and task_type == "Classification"
++        and not answer
++    ):
++        METRICS_PATH.write_text(json.dumps({"reward": 0.0, "missing": 1}))
++        return
+ 
+     metrics = {}
+ 
+@@ -460,7 +518,7 @@ def test_pixiu_output_matches_expected() -> None:
+             )
+ 
+     # Write metrics to a file for Harbor to read
+-    metrics_path = Path("/app/metrics.json")
++    metrics_path = METRICS_PATH
+     metrics_path.write_text(json.dumps(metrics, indent=2))
+ 
+     # For Harbor compatibility, the test should pass if reward >= 0
+diff --git a/adapters/pixiu/tests/test_empty_prediction.py b/adapters/pixiu/tests/test_empty_prediction.py
+new file mode 100644
+index 0000000..80c2a30
+--- /dev/null
++++ b/adapters/pixiu/tests/test_empty_prediction.py
+@@ -0,0 +1,78 @@
++"""Empty classification answers must not inherit the first choice's score."""
++
++import importlib.util
++import json
++import sys
++from pathlib import Path
++from types import SimpleNamespace
++
++import pytest
++
++
++@pytest.mark.parametrize(
++    "answer, expected", [("", 0.0), ("   ", 0.0), ("positive", 1.0)]
++)
++def test_cutover_classification_empty_answer(tmp_path, monkeypatch, answer, expected):
++    source = Path(__file__).parents[1] / "src/pixiu/task-template/tests/test_pixiu.py"
++    spec = importlib.util.spec_from_file_location("pixiu_source_score", source)
++    scorer = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(scorer)
++    scorer.ANSWER_PATH = tmp_path / "answer.txt"
++    scorer.METRICS_PATH = tmp_path / "metrics.json"
++    scorer.ANSWER_PATH.write_text(answer)
++    monkeypatch.setenv("VERIFYIT_PIXIU_STRICT", "1")
++    monkeypatch.setitem(
++        sys.modules,
++        "test_outputs",
++        SimpleNamespace(
++            TASK_TYPE="Classification",
++            EXPECTED_LABEL="positive",
++            ALLOWED_CHOICES=["positive", "negative"],
++            LABEL_TYPE="sentiment",
++        ),
++    )
++    scorer.test_pixiu_output_matches_expected()
++    assert json.loads(scorer.METRICS_PATH.read_text())["reward"] == expected
++
++
++def test_invalid_reference_precedes_missing_candidate(tmp_path, monkeypatch):
++    source = Path(__file__).parents[1] / "src/pixiu/task-template/tests/test_pixiu.py"
++    spec = importlib.util.spec_from_file_location("pixiu_source_score", source)
++    scorer = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(scorer)
++    scorer.ANSWER_PATH = tmp_path / "absent-answer.txt"
++    scorer.METRICS_PATH = tmp_path / "metrics.json"
++    monkeypatch.setenv("VERIFYIT_PIXIU_STRICT", "1")
++    monkeypatch.setitem(
++        sys.modules,
++        "test_outputs",
++        SimpleNamespace(
++            TASK_TYPE="Classification",
++            EXPECTED_LABEL="missing",
++            ALLOWED_CHOICES=["positive", "negative"],
++        ),
++    )
++    with pytest.raises(ValueError, match="gold label must be an allowed choice"):
++        scorer.test_pixiu_output_matches_expected()
++    assert not scorer.METRICS_PATH.exists()
++
++
++def test_empty_relation_reference_is_valid_negative(tmp_path, monkeypatch):
++    source = Path(__file__).parents[1] / "src/pixiu/task-template/tests/test_pixiu.py"
++    spec = importlib.util.spec_from_file_location("pixiu_source_score", source)
++    scorer = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(scorer)
++    scorer.ANSWER_PATH = tmp_path / "answer.txt"
++    scorer.METRICS_PATH = tmp_path / "metrics.json"
++    scorer.ANSWER_PATH.write_text("")
++    monkeypatch.setenv("VERIFYIT_PIXIU_STRICT", "1")
++    monkeypatch.setitem(
++        sys.modules,
++        "test_outputs",
++        SimpleNamespace(
++            TASK_TYPE="RelationExtraction",
++            EXPECTED_RELATIONS=[],
++        ),
++    )
++    scorer.test_pixiu_output_matches_expected()
++    assert json.loads(scorer.METRICS_PATH.read_text())["reward"] == 1.0

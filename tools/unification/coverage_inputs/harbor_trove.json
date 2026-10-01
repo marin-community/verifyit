@@ -3661,16 +3661,18 @@
       "entity_id": "harbor:pixiu",
       "evidence": [
         "docs/unification/harbor_semantics.json#pixiu",
-        "docs/unification/harbor_inventory.json#pixiu"
+        "docs/unification/harbor_inventory.json#pixiu",
+        "integrations/harbor/pixiu-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-pixiu/final-manifest.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "pixiu",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/pixiu/src/pixiu/task-template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate real dataset conversions and archived model answers; aggregate metrics remain source-owned and untested in this per-task integration.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Per-task classification, QA, NER, relation extraction and sentiment metrics; continuous F1/RMSE-to-reward transforms. Pytest merely emits metrics and cannot replace them with pass/fail. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "The opt-in generator transfers answer.txt into a separate verifier image and retains all eight source scoring branches through existing ScriptSpec, including auxiliary metrics. Empty classification answers score0 instead of inheriting the first choice. Trusted-reference preflight rejects malformed configuration before candidate parsing while preserving legitimate empty relation references.",
       "source_evidence": [
         {
           "functions": [
@@ -3772,8 +3774,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "29 documented dataset dispatch names and eight scoring branches audited. Full27 fixture source/Harbor pairs have26 exact score/auxiliary-metric matches plus intentional classification-empty1 to0. Original malformed NER candidate0/0 retained; corrected BIO supplemental scores1/1. Five output regressions pass. Finalv6 is AST-identical formatting of the fullv5 suite with final image hashes and independent Trials. No actual dataset conversion, archived model replay or aggregate ROUGE/BARTScore claim.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Source scorer, trusted reference configuration and verifier.toml in the separate verifier image; candidate answer.txt is transferred.",
+        "needed_change": "Ordinary score parity validated; production datasets, archived traces and security scope remain unverified."
+      }
     },
     {
       "entity_id": "harbor:qcircuitbench",
