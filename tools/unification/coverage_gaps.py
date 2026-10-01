@@ -1114,11 +1114,31 @@ def main():
                     "../evidence/e2e/wiring/harness-libra/trace-census.json",
                 ],
             )
+    mlqa_manifest = json.loads((root / "integrations/lm-eval-harness/mlqa-source.json").read_text())
+    mlqa_ids = {f"lm-eval-harness:{task['path']}" for task in mlqa_manifest["tasks"]}
+    for entity in entities:
+        if entity["entity_id"] in mlqa_ids:
+            entity.update(
+                status="native_route_available",
+                reason_id="mlqa_exact_token_composition",
+                reason="Pinned source language normalization feeds existing strict exact and token-F1 grading.",
+                primitive_candidates=["exact"],
+                needed_change="Enable verifyit_mlqa metadata; archived replay remains unvalidated.",
+                validation_status="all_forty_nine_source_evaluator_fixtures_no_archived_replay",
+                blockers=[],
+                evidence=[
+                    "integrations/lm-eval-harness/mlqa-primitives-verifyit.patch",
+                    "integrations/lm-eval-harness/mlqa-source.json",
+                    "../evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json",
+                    "../evidence/e2e/wiring/harness-mlqa/negative/negative-batches.json",
+                    "../evidence/e2e/wiring/harness-mlqa/trace-census.json",
+                ],
+            )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 453
+    assert len(harness_gaps) == 404
     assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 980
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11259
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11308
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {

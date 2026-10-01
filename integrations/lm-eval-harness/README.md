@@ -280,3 +280,20 @@ This behavior remains sensitive to Python's hash seed: the same F1 example
 scores 0.8 under seeds 0/3 and 0.857142857 under seeds 1/2 in both implementations.
 Evidence is in `evidence/e2e/wiring/harness-libra`. These are source fixtures;
 archived replay is not claimed.
+
+## MLQA language pairs
+
+Apply `mlqa-primitives-verifyit.patch` after the LIBRA patch and set task
+metadata `verifyit_mlqa: true`. The 49 configurations listed in
+`mlqa-source.json` retain source language-specific article removal, Unicode
+punctuation handling and Chinese segmentation. Normalized answers feed strict
+exact comparison and the existing token-F1 primitive; each metric selects the
+best reference independently and uses source mean aggregation.
+
+References that normalize to empty text invalidate the task instead of awarding
+an empty response an exact match. Malformed predictions and changed scoring,
+filter or aggregation contracts abort the whole evaluation before results return.
+All 49 configurations match source per-sample and aggregate scores on evaluator
+fixtures. Seven language-specific empty-reference regressions and 49 invalid
+batches pass. Evidence is in `evidence/e2e/wiring/harness-mlqa`; archived replay
+remains unvalidated because the tracker contains no matching MLQA runs.
