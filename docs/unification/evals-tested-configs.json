@@ -2,10 +2,10 @@
   "summary": {
     "lm-eval-harness": {
       "total": 12692,
-      "e2e_tested": 160,
+      "e2e_tested": 224,
       "archive_score_parity": 3,
-      "fixture_tested": 157,
-      "fixture_only": 156,
+      "fixture_tested": 221,
+      "fixture_only": 220,
       "real_response_source_parity_not_archive_score": 1,
       "route_available": 12322
     },
@@ -28,7 +28,7 @@
       "route_available": 11
     }
   },
-  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit.",
+  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics.",
   "records": [
     {
       "entity_id": "evalchemy-custom:eval/chat_benchmarks/AIME24/eval_instruct.py",
@@ -488,6 +488,171 @@
       ]
     },
     {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_amharic.yaml",
+      "name": "xlsum_amharic_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_arabic.yaml",
+      "name": "xlsum_arabic_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_hausa.yaml",
+      "name": "xlsum_hausa_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_igbo.yaml",
+      "name": "xlsum_igbo_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_kirundi.yaml",
+      "name": "xlsum_kirundi_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_oromo.yaml",
+      "name": "xlsum_oromo_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_pidgin.yaml",
+      "name": "xlsum_pidgin_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_somali.yaml",
+      "name": "xlsum_somali_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_swahili.yaml",
+      "name": "xlsum_swahili_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_telugu.yaml",
+      "name": "xlsum_telugu_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_tigrinya.yaml",
+      "name": "xlsum_tigrinya_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
       "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_yoruba.yaml",
       "name": "xlsum_yoruba_prompt_1",
       "source": "lm-eval-harness",
@@ -495,6 +660,149 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/harness-rouge/filter-seed-replay/evaluator-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_amharic.yaml",
+      "name": "xlsum_amharic_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_arabic.yaml",
+      "name": "xlsum_arabic_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_hausa.yaml",
+      "name": "xlsum_hausa_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_igbo.yaml",
+      "name": "xlsum_igbo_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_kirundi.yaml",
+      "name": "xlsum_kirundi_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_oromo.yaml",
+      "name": "xlsum_oromo_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_pidgin.yaml",
+      "name": "xlsum_pidgin_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_somali.yaml",
+      "name": "xlsum_somali_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_swahili.yaml",
+      "name": "xlsum_swahili_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
         }
       ]
     },
@@ -506,6 +814,224 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/harness-rouge/filter-seed-replay/evaluator-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_tigrinya.yaml",
+      "name": "xlsum_tigrinya_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_yoruba.yaml",
+      "name": "xlsum_yoruba_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_amharic.yaml",
+      "name": "xlsum_amharic_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_arabic.yaml",
+      "name": "xlsum_arabic_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_hausa.yaml",
+      "name": "xlsum_hausa_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_igbo.yaml",
+      "name": "xlsum_igbo_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_kirundi.yaml",
+      "name": "xlsum_kirundi_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_oromo.yaml",
+      "name": "xlsum_oromo_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_pidgin.yaml",
+      "name": "xlsum_pidgin_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_somali.yaml",
+      "name": "xlsum_somali_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_swahili.yaml",
+      "name": "xlsum_swahili_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_telugu.yaml",
+      "name": "xlsum_telugu_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_tigrinya.yaml",
+      "name": "xlsum_tigrinya_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_3/xlsum_yoruba.yaml",
+      "name": "xlsum_yoruba_prompt_3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
         }
       ]
     },
@@ -561,6 +1087,149 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/harness-likelihood/installed-replay/evaluator-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/arithmetic/arithmetic_2da.yaml",
+      "name": "arithmetic_2da",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/arithmetic/arithmetic_2dm.yaml",
+      "name": "arithmetic_2dm",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/arithmetic/arithmetic_2ds.yaml",
+      "name": "arithmetic_2ds",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/arithmetic/arithmetic_3da.yaml",
+      "name": "arithmetic_3da",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/arithmetic/arithmetic_3ds.yaml",
+      "name": "arithmetic_3ds",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/arithmetic/arithmetic_4da.yaml",
+      "name": "arithmetic_4da",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/arithmetic/arithmetic_4ds.yaml",
+      "name": "arithmetic_4ds",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/arithmetic/arithmetic_5da.yaml",
+      "name": "arithmetic_5da",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/arithmetic/arithmetic_5ds.yaml",
+      "name": "arithmetic_5ds",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
         }
       ]
     },
@@ -572,6 +1241,14 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/harness-likelihood/installed-replay/evaluator-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
         }
       ]
     },
@@ -730,6 +1407,66 @@
       ]
     },
     {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/code_x_glue/code-text/go.yaml",
+      "name": "code2text_go",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/code_x_glue/code-text/java.yaml",
+      "name": "code2text_java",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/code_x_glue/code-text/javascript.yaml",
+      "name": "code2text_javascript",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/code_x_glue/code-text/php.yaml",
+      "name": "code2text_php",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
       "entity_id": "lm-eval-harness:lm_eval/tasks/code_x_glue/code-text/python.yaml",
       "name": "code2text_python",
       "source": "lm-eval-harness",
@@ -737,6 +1474,29 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/harness-code-text/installed-replay/evaluator-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/code_x_glue/code-text/ruby.yaml",
+      "name": "code2text_ruby",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
         }
       ]
     },
@@ -973,6 +1733,239 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/harness-likelihood/installed-replay/evaluator-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada/lambada_standard.yaml",
+      "name": "lambada_standard",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_cloze/lambada_openai_cloze.yaml",
+      "name": "lambada_openai_cloze_yaml",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_cloze/lambada_standard_cloze.yaml",
+      "name": "lambada_standard_cloze_yaml",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual/lambada_mt_de.yaml",
+      "name": "lambada_openai_mt_de",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual/lambada_mt_en.yaml",
+      "name": "lambada_openai_mt_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual/lambada_mt_es.yaml",
+      "name": "lambada_openai_mt_es",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual/lambada_mt_fr.yaml",
+      "name": "lambada_openai_mt_fr",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual/lambada_mt_it.yaml",
+      "name": "lambada_openai_mt_it",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual_stablelm/lambada_mt_stablelm_de.yaml",
+      "name": "lambada_openai_mt_stablelm_de",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual_stablelm/lambada_mt_stablelm_en.yaml",
+      "name": "lambada_openai_mt_stablelm_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual_stablelm/lambada_mt_stablelm_es.yaml",
+      "name": "lambada_openai_mt_stablelm_es",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual_stablelm/lambada_mt_stablelm_fr.yaml",
+      "name": "lambada_openai_mt_stablelm_fr",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual_stablelm/lambada_mt_stablelm_it.yaml",
+      "name": "lambada_openai_mt_stablelm_it",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual_stablelm/lambada_mt_stablelm_nl.yaml",
+      "name": "lambada_openai_mt_stablelm_nl",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada_multilingual_stablelm/lambada_mt_stablelm_pt.yaml",
+      "name": "lambada_openai_mt_stablelm_pt",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
         }
       ]
     },
@@ -2232,6 +3225,21 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/harness-runtime/installed-replay/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/ulqa/lambada_uyghur.yaml",
+      "name": "lambada_uyghur",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-retained-seventy/manager/roundtrip.json"
         }
       ]
     },
