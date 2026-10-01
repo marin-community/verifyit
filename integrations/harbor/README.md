@@ -665,3 +665,31 @@ These are real source-oracle runs, conservatively counted as fixtures rather
 than archived model traces. Candidate code executes within the grader, and its
 trust boundary remains unverified. No new security tests were run. Use the exact
 local wheel recipe above while the production verifyit pin remains unpublished.
+
+
+## LawBench
+
+Apply `lawbench-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate with `--verifyit`.
+Existing ScriptSpec runs the 19 native scoring functions for all 20 task keys
+in a separate verifier image. The three supported answer paths have distinct
+artifact destinations. Missing answers score zero; partial submissions retain
+the complete reference denominator. Explicit empty entity answers remain valid,
+but omitted empty-reference answers receive no credit. Invalid reference data
+and unavailable scorer assets produce distinct unscored verdicts. Finite
+negative imprisonment scores receive zero reward with raw metrics retained.
+
+Forty final Harbor Trials use three seeded source records per task key:
+39 primary rewards match exactly and one negative roundoff score becomes zero.
+All 19 native functions execute, and their raw scores are preserved. Supplemental
+Trials distinguish missing, malformed, and partial submissions, including the
+correction from 1 to 0.5 for one omitted empty-entity answer out of two. Twelve
+relevant tests pass. All 40 installed verifier images match the generated task
+assets, and all 41 installed core Python files match the pinned wheel.
+`evidence/e2e/wiring/harbor-lawbench/final-summary.json` records the final matrix;
+`final-agent-manifest.json`, `installed-image-hashes.json`, and
+`fresh-apply-hashes.json` record the evidence and implementation hashes.
+
+The tracker has no eligible LawBench archive links. These are source-contract
+fixtures, not archived model replays. No new security tests were run. Use the
+exact local wheel recipe above while the production verifyit pin is unpublished.

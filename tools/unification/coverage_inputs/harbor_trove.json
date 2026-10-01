@@ -2934,16 +2934,21 @@
       "entity_id": "harbor:lawbench",
       "evidence": [
         "docs/unification/harbor_semantics.json#lawbench",
-        "docs/unification/harbor_inventory.json#lawbench"
+        "docs/unification/harbor_inventory.json#lawbench",
+        "integrations/harbor/lawbench-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-lawbench/final-summary.json",
+        "evidence/e2e/wiring/harbor-lawbench/final-agent-manifest.json",
+        "evidence/e2e/wiring/harbor-lawbench/installed-image-hashes.json",
+        "evidence/e2e/wiring/harbor-lawbench/fresh-apply-hashes.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "lawbench",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/lawbench/template/tests/test.py preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate archived model candidates and production deployment using the published core pin.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Official per-subtask evaluation returns score (classification/QA/ROUGE-style variants); preserve task index/evaluator instead of treating all answers as exact. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "Opt-in generation retains all 19 native LawBench scoring functions across 20 task keys through existing ScriptSpec in a separate verifier image. Complete-reference shortcuts require every answer; missing empty-entity answers receive no native empty-map credit. Finite negative imprisonment scores map to scored0 while native metrics remain available.",
       "source_evidence": [
         {
           "functions": [
@@ -2968,8 +2973,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "40 final actual Harbor Trials across 60 seeded source records: 39 primary rewards match exactly and one negative imprisonment roundoff score is floored to0; all19 native scoring functions execute with raw metrics preserved. Ordinary supplemental cases distinguish missing and partial candidate scores from invalid-task and infrastructure statuses, preserve legitimate empty-entity answers, and correct omitted empty-reference credit from1 to0.5. Twelve relevant tests pass; all40 installed verifier images and all41 installed core Python files match generated assets and pinned wheel. No eligible LawBench archive links exist in TRACKER.md, so this is source-contract fixture coverage, not archive parity. Production core pin remains unpublished.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Native LawBench evaluators, reference records and verifier.toml in the separate image; answer JSONL files use distinct artifact destinations.",
+        "needed_change": "Ordinary source-contract score parity validated with stated negative-score and missing-answer corrections; archived traces and security scope remain unverified."
+      }
     },
     {
       "entity_id": "harbor:livecodebench",

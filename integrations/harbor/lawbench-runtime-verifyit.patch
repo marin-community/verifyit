@@ -1,0 +1,351 @@
+diff --git a/adapters/lawbench/README.md b/adapters/lawbench/README.md
+index ab34b35..651183b 100644
+--- a/adapters/lawbench/README.md
++++ b/adapters/lawbench/README.md
+@@ -198,3 +198,11 @@ This adapter is developed and maintained by [Han Xu](mailto:hanxu8@illinois.edu)
+ **Issues and Contributions:**
+ - Submit Issues and Pull Requests to the main repository
+ - Follow the project's coding style and commit guidelines
++
++Pass `--verifyit` to generate a separate verifier environment using verifyit's
++Script mode. The native LawBench functions and their aggregate metrics are
++retained. Missing answers score zero; incomplete answers cannot trigger the
++complete-reference exact-match shortcut. Empty entity references accept explicit
++empty answers; omitted answers receive no credit. Invalid reference data and scorer
++failures produce unscored verdicts with a minimum reward of zero. Finite negative
++imprisonment scores retain their native metric and receive zero reward.
+diff --git a/adapters/lawbench/adapter.py b/adapters/lawbench/adapter.py
+index 62e1054..7a04b19 100644
+--- a/adapters/lawbench/adapter.py
++++ b/adapters/lawbench/adapter.py
+@@ -15,6 +15,8 @@ import shutil
+ from pathlib import Path
+ from typing import Any, Mapping, Sequence
+ 
++from harbor.tasks.verifyit_source_runtime import package_source_runtime
++
+ TEMPLATE_DIR = Path(__file__).parent / "template"
+ 
+ EVAL_FUNC_MAP = {
+@@ -67,7 +69,13 @@ class LawBenchAdapter:
+         normalized = source_id.lower().replace("_", "-")
+         return f"lawbench-{normalized}"
+ 
+-    def __init__(self, task_dir: Path, chunk_count: int = 20, **kwargs: object):
++    def __init__(
++        self,
++        task_dir: Path,
++        chunk_count: int = 20,
++        verifyit_enabled: bool = False,
++        **kwargs: object,
++    ):
+         """Initialize the LawBenchAdapter.
+ 
+         Args:
+@@ -75,6 +83,7 @@ class LawBenchAdapter:
+             chunk_count: Number of chunks per base task (used when slicing task JSON)
+             **kwargs: Adapter-specific configuration
+         """
++        self.verifyit_enabled = verifyit_enabled
+         self.task_dir = Path(task_dir)
+         self._config = kwargs
+         self._chunk_count = max(1, chunk_count)
+@@ -104,7 +113,7 @@ class LawBenchAdapter:
+         chunked_tasks = self._slice_chunk(task_json, chunk_index)
+         self.generate_task_files(task_key, local_task_id, chunked_tasks, output_dir)
+ 
+-    def _parse_source_id(self, source_id: str) -> tuple[str, str, int]:
++    def _parse_source_id(self, source_id: str) -> tuple[str, int, str]:
+         """Return the task key, chunk index, and shot variant for this source identifier."""
+         normalized = source_id.lower().replace("_", "-")
+         parts = normalized.split("-")
+@@ -142,6 +151,8 @@ class LawBenchAdapter:
+             raise ValueError(
+                 f"Unknown LawBench task key {task_key} for local task id {local_task_id}"
+             )
++        if self.verifyit_enabled and not task_json:
++            raise ValueError("LawBench task has no reference records")
+         eval_module, eval_func = EVAL_FUNC_MAP[task_key]
+ 
+         input_lines = []
+@@ -200,3 +211,32 @@ class LawBenchAdapter:
+         (output_dir / "tests" / "ground_truths.json").write_text(
+             json.dumps(ground_truths, ensure_ascii=False, indent=2)
+         )
++
++        if self.verifyit_enabled:
++            runtime = (TEMPLATE_DIR / "tests" / "verifyit_score.py").read_text()
++            runtime = runtime.replace("{EVAL_MODULE}", eval_module)
++            runtime = runtime.replace("{EVAL_FUNC}", eval_func)
++            (output_dir / "tests" / "verifyit_score.py").write_text(runtime)
++            package_source_runtime(
++                output_dir,
++                artifacts=[],
++                dockerfile=(env_dir / "Dockerfile").read_text()
++                + "\nRUN mkdir -p /root/app\n",
++                timeout=3540,
++            )
++            (output_dir / "tests" / "native_bridge.sh").write_text(
++                "#!/bin/sh\ncd /tests\nexec python3 /tests/verifyit_score.py\n"
++            )
++            config_path = output_dir / "task.toml"
++            config = config_path.read_text().removeprefix("artifacts = []\n")
++            for source in (
++                "/app/answer.jsonl",
++                "/root/app/answer.jsonl",
++                "/root/answer.jsonl",
++            ):
++                config += (
++                    "\n[[artifacts]]\n"
++                    f'source = "{source}"\n'
++                    f'destination = "{source.lstrip("/")}"\n'
++                )
++            config_path.write_text(config)
+diff --git a/adapters/lawbench/run_adapter.py b/adapters/lawbench/run_adapter.py
+index 7127c98..7a922fc 100644
+--- a/adapters/lawbench/run_adapter.py
++++ b/adapters/lawbench/run_adapter.py
+@@ -131,6 +131,7 @@ def _parse_args() -> argparse.Namespace:
+         default=None,
+         help="Generate only the first N tasks from the provided ids",
+     )
++    parser.add_argument("--verifyit", action="store_true")
+     return parser.parse_args()
+ 
+ 
+@@ -157,7 +158,10 @@ def _expand_ids(
+ 
+ 
+ def _process_benchmark(
+-    benchmark_root: Path, output_dir: Path, task_ids: list[str]
++    benchmark_root: Path,
++    output_dir: Path,
++    task_ids: list[str],
++    verifyit_enabled: bool = False,
+ ) -> None:
+     """Process benchmark repository with the adapter."""
+     if not benchmark_root.exists():
+@@ -165,7 +169,11 @@ def _process_benchmark(
+         raise FileNotFoundError(f"Invalid benchmark repository: {benchmark_root}")
+ 
+     # Create adapter instance
+-    adapter = LawBenchAdapter(task_dir=output_dir, chunk_count=DEFAULT_CHUNK_COUNT)
++    adapter = LawBenchAdapter(
++        task_dir=output_dir,
++        chunk_count=DEFAULT_CHUNK_COUNT,
++        verifyit_enabled=verifyit_enabled,
++    )
+     logger.info(f"Processing {len(task_ids)} tasks...")
+     for source_id in task_ids:
+         try:
+@@ -213,7 +221,7 @@ def main() -> None:
+             logger.info(f"Using temporary directory for cloning: {temp_path}")
+             try:
+                 cloned_repo_root = _clone_repo(temp_path)
+-                _process_benchmark(cloned_repo_root, output_dir, all_ids)
++                _process_benchmark(cloned_repo_root, output_dir, all_ids, args.verifyit)
+             except Exception as e:
+                 logger.error(
+                     f"Error during processing with cloned repo: {e}", exc_info=True
+@@ -228,7 +236,7 @@ def main() -> None:
+             logger.error(f"Specified repository path does not exist: {benchmark_root}")
+             sys.exit(1)
+         try:
+-            _process_benchmark(benchmark_root, output_dir, all_ids)
++            _process_benchmark(benchmark_root, output_dir, all_ids, args.verifyit)
+         except Exception as e:
+             logger.error(
+                 f"Error during processing with existing repo: {e}", exc_info=True
+diff --git a/adapters/lawbench/template/tests/verifyit_score.py b/adapters/lawbench/template/tests/verifyit_score.py
+new file mode 100644
+index 0000000..8e5917b
+--- /dev/null
++++ b/adapters/lawbench/template/tests/verifyit_score.py
+@@ -0,0 +1,115 @@
++"""Retain LawBench metrics while distinguishing task and runtime failures."""
++
++import importlib
++import json
++import math
++import os
++from pathlib import Path
++
++EVAL_MODULE = "{EVAL_MODULE}"
++EVAL_FUNC = "{EVAL_FUNC}"
++
++
++def score(tests: Path, candidates: list[Path]) -> dict:
++    try:
++        references = json.loads((tests / "ground_truths.json").read_text())
++        if not isinstance(references, list) or not references:
++            raise ValueError("LawBench requires nonempty reference records")
++        if any(
++            not isinstance(row, dict)
++            or not isinstance(row.get("refr"), str)
++            or (not row["refr"].strip() and EVAL_MODULE != "xxcq")
++            or not isinstance(row.get("origin_prompt"), str)
++            for row in references
++        ):
++            raise ValueError("Malformed LawBench reference record")
++    except OSError as error:
++        return {"status": "infra_error", "reward": 0.0, "detail": {"error": str(error)}}
++    except ValueError as error:
++        return {
++            "status": "invalid_task",
++            "reward": 0.0,
++            "detail": {"error": str(error)},
++        }
++
++    try:
++        answers = {}
++        answer_file = next((path for path in candidates if path.is_file()), None)
++        if answer_file is None:
++            return {
++                "status": "scored",
++                "reward": 0.0,
++                "detail": {"missing_answer": True},
++            }
++        for line in answer_file.read_text().splitlines():
++            try:
++                row = json.loads(line)
++            except ValueError:
++                continue
++            if (
++                isinstance(row, dict)
++                and "id" in row
++                and isinstance(row.get("answer"), str)
++            ):
++                answers[str(row["id"])] = row["answer"]
++        if not any(str(index) in answers for index in range(len(references))):
++            return {
++                "status": "scored",
++                "reward": 0.0,
++                "detail": {"missing_answer": True},
++            }
++        for index, row in enumerate(references):
++            prediction = answers.get(str(index), "")
++            row["prediction"] = prediction if isinstance(prediction, str) else ""
++        if all(
++            str(index) in answers and row["prediction"] == row["refr"]
++            for index, row in enumerate(references)
++        ):
++            return {"status": "scored", "reward": 1.0, "detail": {"exact_match": True}}
++        module = importlib.import_module(f"evaluation_functions.{EVAL_MODULE}")
++        metrics = getattr(module, EVAL_FUNC)(references)
++        reward = metrics["score"]
++        if isinstance(reward, bool) or not isinstance(reward, (int, float)):
++            raise ValueError("LawBench score must be numeric")
++        if (
++            not math.isfinite(reward)
++            or reward > 1
++            or (reward < 0 and EVAL_MODULE != "ljp_imprison")
++        ):
++            raise ValueError("LawBench score must be finite and in [0, 1]")
++        json.dumps(metrics, allow_nan=False)
++        missing_empty_references = sum(
++            str(index) not in answers and not row["refr"].strip()
++            for index, row in enumerate(references)
++        )
++        detail = {"native_metrics": metrics}
++        if missing_empty_references:
++            # Entity F1 averages one point for each matching empty entity map.
++            # Omitted answers must not receive that explicit-empty-answer credit.
++            reward -= missing_empty_references / len(references)
++            detail["missing_empty_references"] = missing_empty_references
++        return {
++            "status": "scored",
++            "reward": max(0.0, reward),
++            "detail": detail,
++        }
++    except Exception as error:
++        return {
++            "status": "infra_error",
++            "reward": 0.0,
++            "detail": {"error": f"{type(error).__name__}: {error}"},
++        }
++
++
++if __name__ == "__main__":
++    verdict = score(
++        Path("/tests"),
++        [
++            Path("/app/answer.jsonl"),
++            Path("/root/app/answer.jsonl"),
++            Path("/root/answer.jsonl"),
++        ],
++    )
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "native-verdict.json").write_text(
++        json.dumps(verdict, allow_nan=False)
++    )
+diff --git a/tests/unit/test_verifyit_lawbench_runtime.py b/tests/unit/test_verifyit_lawbench_runtime.py
+new file mode 100644
+index 0000000..d570c99
+--- /dev/null
++++ b/tests/unit/test_verifyit_lawbench_runtime.py
+@@ -0,0 +1,66 @@
++"""LawBench candidate omissions differ from broken trusted task data."""
++
++import importlib.util
++import json
++from pathlib import Path
++
++import pytest
++
++ROOT = Path(__file__).resolve().parents[2]
++
++
++@pytest.fixture
++def grader():
++    path = ROOT / "adapters/lawbench/template/tests/verifyit_score.py"
++    spec = importlib.util.spec_from_file_location("lawbench_grader", path)
++    assert spec is not None and spec.loader is not None
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++@pytest.mark.parametrize(
++    "candidate", [None, "", "not json\n", '{"id":"9","answer":"A"}\n', '{"id":"0"}\n']
++)
++def test_missing_usable_answer_scores_zero(grader, tmp_path, candidate):
++    (tmp_path / "ground_truths.json").write_text(
++        json.dumps([{"origin_prompt": "Choose A or B", "refr": "A"}])
++    )
++    answer = tmp_path / "answer.jsonl"
++    if candidate is not None:
++        answer.write_text(candidate)
++    verdict = grader.score(tmp_path, [answer])
++    assert (verdict["status"], verdict["reward"]) == ("scored", 0.0)
++
++
++def test_reference_validation_precedes_exact_match(grader, tmp_path):
++    reference = tmp_path / "ground_truths.json"
++    answer = tmp_path / "answer.jsonl"
++    reference.write_text(json.dumps([{"origin_prompt": "Choose A or B", "refr": "A"}]))
++    answer.write_text('{"id":"0","answer":"A"}\n')
++    verdict = grader.score(tmp_path, [answer])
++    assert (verdict["status"], verdict["reward"]) == ("scored", 1.0)
++    reference.write_text("[]")
++    verdict = grader.score(tmp_path, [answer])
++    assert (verdict["status"], verdict["reward"]) == ("invalid_task", 0.0)
++
++
++def test_unavailable_reference_is_infrastructure_failure(grader, tmp_path):
++    verdict = grader.score(tmp_path, [tmp_path / "answer.jsonl"])
++    assert (verdict["status"], verdict["reward"]) == ("infra_error", 0.0)
++
++
++@pytest.mark.parametrize(
++    "module, status, reward", [("jec_kd", "invalid_task", 0.0), ("xxcq", "scored", 1.0)]
++)
++def test_empty_entity_reference_differs_from_missing_classification_reference(
++    grader, tmp_path, module, status, reward
++):
++    grader.EVAL_MODULE = module
++    (tmp_path / "ground_truths.json").write_text(
++        json.dumps([{"origin_prompt": "Extract entities", "refr": ""}])
++    )
++    answer = tmp_path / "answer.jsonl"
++    answer.write_text('{"id":"0","answer":""}\n')
++    verdict = grader.score(tmp_path, [answer])
++    assert (verdict["status"], verdict["reward"]) == (status, reward)
