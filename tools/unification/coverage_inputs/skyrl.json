@@ -8,22 +8,22 @@
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 44,
-    "pending_scoring_routes": 2,
-    "pending_active_scoring_routes": 1,
+    "source_patched_routes": 45,
+    "pending_scoring_routes": 1,
+    "pending_active_scoring_routes": 0,
     "pending_dormant_scoring_routes": 1,
-    "zero_core_extension_unwired_routes": 2,
+    "zero_core_extension_unwired_routes": 1,
     "existing_class_behavior_gap_routes": 0,
-    "real_replayed_source_routes": 29,
+    "real_replayed_source_routes": 30,
     "implemented_routes_missing_real_traces": 15,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 29,
+      "implemented_validated": 30,
       "implemented_not_validated": 15,
       "capability_gap": 0,
       "not_a_correctness_verifier": 2,
-      "not_integrated": 2
+      "not_integrated": 1
     },
     "unwired_dormant_math_comparator_parity_audits": 0,
     "inherited_planning_existing_class_extension_routes": 23
@@ -39,7 +39,7 @@
     "Eight additional opt-in cutovers comprise two Reasoning Gym routes, Nemotron MCQA, three tool-comparison routes, and two dormant exported QA APIs. Five have selected real framework traces; pivot and QA lack eligible trace links. Typed tool comparison intentionally rejects JSON boolean for expected integer despite source Python bool/int equality.",
     "Structured-output policy is implemented entirely in a client dialect registration using existing json-schema grading; source XML/CSV parsing and tool extraction require no core extension. Fifteen selected archived links match pinned native and archive; four reach schema grading and eleven reject in client parsing.",
     "Citation/freeform format rules are source-owned parameterized IFEval constraint extensions with ScriptSpec deadline orchestration; they are not built-in comparator coverage. Twelve selected real links match source/archive and reach actual child IFEval grading. Vacuous configurations and regex deadlines fail closed.",
-    "Standalone26 IFEval predicates are integrated with source-owned registry extensions under a total ScriptSpec deadline. NVIDIA instruction dispatch is partially wired and remains pending: deterministic explicit references replay successfully, but exclude_word_harder intrinsically randomizes its hidden reference. Fifteen selected real traces validate the implemented subset, not full registry coverage.",
+    "Standalone26 IFEval predicates and the pinned NVIDIA registry execute through source-owned IFEval extensions under ScriptSpec deadlines. NVIDIA runtime preserves source Python RNG advancement; deterministic language detection is a documented client fix. Missing historical hidden state is a replay limitation, not missing dispatch.",
     "Dormant BrowseComp/RULER/STEM use existing core schema/exact primitives for raw external judge output; both GenRM routes retain the full source cohort runtime inside ScriptSpec. These five routes have fixture evidence only; GenRM training-loop initialization and archived cohort replay are not claimed.",
     "Legacy math policy is the pinned source hybrid contract, not inferred solely from successful parsing. Ordinary parser rejection requires a real symmetric judge verdict; raised parser failures are unscored zero. All18 frozen archives match after correcting nested judge transcript extraction; previous missing-transcript reports are superseded."
   ],
@@ -1427,12 +1427,12 @@
     },
     {
       "id": "nemotron_ultra/instruction_following_simple_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Partial source integration: explicit and newly prepared frozen references are wired; historical random references without saved construction state cannot be recovered, and arbitrary valid parameter domains beyond the constructor audit are not yet validated.",
+      "status": "implemented_validated",
+      "not_covered_reason": "Pinned source instruction registry executes through ScriptSpec and IFEval with source-owned runtime RNG transfer; prepared explicit references remain supported.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "bounded_script_executes_source_owned_ifeval_constraint_extensions_partial",
+      "source_runtime": "bounded_script_executes_source_owned_ifeval_constraint_extensions",
       "native_fallback_in_cutover": false,
       "contract_family": "instruction",
       "existing_primitive_candidate": [
@@ -1440,8 +1440,8 @@
         "script"
       ],
       "resolution_strategy": "existing_ifeval_client_registry_extension",
-      "needed_change": "Validate remaining valid parameter domains and migrate legacy task records from their original trusted construction state when available; never resample hidden references at grading.",
-      "validation_gap": "All 54 default constructors resolve and pass admission with required text inputs; this is not every valid parameter contract or historical stochastic replay.",
+      "needed_change": "None for source dispatch. Historical stochastic records need their original RNG/detector state for exact old-score reproduction.",
+      "validation_gap": "Historical hidden RNG/detector state cannot be reconstructed when absent; runtime parity is prospective. Language detection now uses an explicit deterministic source-client seed.",
       "source_contract": "Pinned NVIDIA verifiable_instructions registry with instruction kwargs; binary or fraction aggregation.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1461,19 +1461,27 @@
         "integrations/MarinSkyRL/instruction-preparation-verifyit.patch",
         "evidence/e2e/wiring/skyrl-instruction-preparation/implementation-provenance.json",
         "evidence/e2e/wiring/skyrl-instruction-preparation/manager-default-audit.json",
-        "evidence/e2e/wiring/skyrl-instruction-preparation/manager-final/roundtrip.json"
+        "evidence/e2e/wiring/skyrl-instruction-preparation/manager-final/roundtrip.json",
+        "integrations/MarinSkyRL/instruction-runtime-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-instruction-runtime/implementation-provenance.json",
+        "evidence/e2e/wiring/skyrl-instruction-runtime/installed-final/roundtrip.json",
+        "evidence/e2e/wiring/skyrl-instruction-runtime/installed-archive-final/summary.json",
+        "evidence/e2e/wiring/skyrl-instruction-runtime/difference-classification.json",
+        "evidence/e2e/wiring/skyrl-instruction-runtime/parameter-audit-final.json",
+        "evidence/e2e/wiring/skyrl-instruction-runtime/final-tests4.stdout"
       ],
       "observed_verified_execution_links": 23,
       "actual_replayed_links": 9,
       "core_extension_requirement": "none_proposed",
-      "integration_patch": "integrations/MarinSkyRL/instructions-verifyit.patch",
-      "validation_scope": "Existing frozen real trace subset plus 68 source tests, 12 preparation-to-Env fixture roundtrips and reproducible 54-default-constructor reconstruction/admission audit. No full parameter-domain or historical hidden-state claim.",
-      "intentional_tightening": "Strict bool results; empty/vacuous references and random-default construction rejected; detector/checker/dependency/deadline errors discard all credit; nonfinite JSON rejected.",
-      "remaining_contracts": [
-        "Historical randomized references without their original trusted construction state",
-        "Valid parameter domains beyond the audited default constructors and focused boundary tests"
-      ],
-      "preparation_patch": "integrations/MarinSkyRL/instruction-preparation-verifyit.patch"
+      "integration_patch": "integrations/MarinSkyRL/instruction-runtime-verifyit.patch",
+      "validation_scope": "76 source regressions pass;20 actual Env fixtures match source rewards and final Python RNG state, including exact installed execution and independent manager runs. All15 frozen instruction-family archive traces match.403 constructor boundary cases cover54 registry entries;279 accepted cases preserve source checker/RNG state,23 malformed/vacuous cases remain rejected.",
+      "intentional_tightening": "Malformed/vacuous references, nonfinite JSON and checker/transport failures discard all credit. Full scored feedback and returned RNG state are validated before host RNG mutation. Deterministic language-detector seed is an explicit reproducibility fix.",
+      "remaining_contracts": [],
+      "preparation_patch": "integrations/MarinSkyRL/instruction-preparation-verifyit.patch",
+      "implemented_primitive_modes": [
+        "ifeval",
+        "script"
+      ]
     },
     {
       "id": "nemotron_ultra/abstention_simple_agent",
@@ -2251,12 +2259,12 @@
   ],
   "tested_cutover_reporting": {
     "denominator": 46,
-    "wired_routes": 44,
-    "tested_complete_routes": 44,
-    "real_trace_routes": 29,
+    "wired_routes": 45,
+    "tested_complete_routes": 45,
+    "real_trace_routes": 30,
     "source_fixture_routes": 15,
     "route_specific_witness_pending": [],
-    "partial_routes_reported_separately": 2,
-    "definition": "Actual source/framework cutovers:29 real trace routes and15 source fixture routes. Instruction and coder1 partial routes remain separate."
+    "partial_routes_reported_separately": 1,
+    "definition": "Actual source/framework cutovers:30 real trace routes and15 source fixture routes. Coder1 remains partial because arbitrary trusted Python tests cannot be moved into candidate execution while preserving isolation."
   }
 }

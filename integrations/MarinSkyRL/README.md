@@ -225,15 +225,15 @@ Nemotron source builders accept `instruction_reference_seed=<integer>` to resolv
 registry defaults in an isolated process before candidate generation. Prepared
 records contain the resolved kwargs, seed and pinned registry revision. The
 resolver rebuilds each checker and requires identical state with no additional
-random sampling. Unresolved legacy records still fail closed at grading.
+random sampling. The later runtime patch transfers trusted source RNG state for prospective legacy grading; missing historical state still cannot reproduce old random choices.
 
 The source client corrects three reference-construction defects: a supplied zero
 span index was treated as missing, the paragraph sampler could select an index
 past the last paragraph, and two generated keyword defaults were lists instead
 of strings. Sixty-eight source tests and twelve actual environment roundtrips
 pass; all 54 default constructors resolve and pass admission with required text
-inputs. This does not prove every valid parameter domain or recover historical
-hidden references, so the instruction route remains partial. Reproduction
+inputs. This preparation audit does not recover historical hidden references. The later
+runtime patch integrates source registry construction at the grading boundary. Reproduction
 scripts and the complete constructor audit are in
 `evidence/e2e/wiring/skyrl-instruction-preparation/`.
 
@@ -255,13 +255,13 @@ candidate execution. Sixty-nine source tests pass and twelve actual GeneralReact
 witnesses agree across native, cutover and exact-installed execution. Coder1 remains
 partial for arbitrary Python interoperability; see [the contract](coder1-partial.md).
 
-All 44 wired scoring routes now have actual source-boundary cutover witnesses:
-29 have real trace replay and 15 have source fixtures. The last five fixture gaps
+All 45 wired scoring routes now have actual source-boundary cutover witnesses:
+30 have real trace replay and 15 have source fixtures. The last five fixture gaps
 were GSM8K multi-turn, search, searchcode, legacy text2sql and SWE-pivot tool
 comparison. Each now has three registered Env terminal-grading cases matching
 pinned native and independent manager execution, with raw verifyit calls. This
 covers terminal grading, not retrieval, tool execution or SWE Harbor preparation.
-Evidence is in `evidence/e2e/wiring/skyrl-route-witnesses/`. Instruction and coder1 remain partial and outside the complete tested-route count.
+Evidence is in `evidence/e2e/wiring/skyrl-route-witnesses/`. Coder1 remains partial and outside the complete tested-route count.
 
 Apply `math-hybrid-reference-verifyit.patch` after the coder protocol patch and
 before the dependency pin. Legacy text references retain the original symmetric
@@ -269,3 +269,24 @@ judge contract; unexpected parser failures remain unscored zero. Forty-seven
 source regressions, twelve actual Env fixtures and all eighteen frozen archived
 roundtrips pass, including independent manager and exact installed-package runs.
 See [the math contract](math-judge.md) for the transcript correction and evidence.
+
+Apply `instruction-runtime-verifyit.patch` after the hybrid math patch and before
+the dependency pin. ScriptSpec executes the pinned instruction registry through
+actual IFEval predicates. The client captures Python RNG state at the source
+grading boundary and accepts the child state only after validating the complete
+scored feedback. Failure returns minimum reward without committing partial state.
+All constructor randomness uses Python random; language detection has a separate
+fixed detector seed on both native and cutover paths. That seed is an explicit
+source reproducibility correction, not unchanged historical detector behavior.
+
+Seventy-six regressions, twenty actual Env fixtures and fifteen frozen archive
+roundtrips pass, including independent manager and exact installed-package runs.
+The fixtures cover omitted/None/empty defaults, signed nonempty copy spans and
+language detection, with identical source/cutover rewards and final RNG state.
+The 403-case audit spans all 54 registry entries: 302 constructors accept inputs,
+279 preserve admitted checker/RNG state and 23 malformed or vacuous contracts
+remain rejected. Constructor acceptance alone is not a positive scoring proof.
+Each admission difference includes actual source predicate outcomes. Historical
+records without their RNG/detector state remain unreproducible; they are not
+classified as missing verifier dispatch. Evidence and the 25-patch manifest are
+under `evidence/e2e/wiring/skyrl-instruction-runtime/`.
