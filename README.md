@@ -99,6 +99,13 @@ spec = parse_spec((tests_dir / "verifier.toml").read_text())
 reward = grade(spec, tests_dir=tests_dir, workspace=Path("/app"))
 ```
 
+Shell-output checkers can call `verifyit.modes.grade_nl2bash.score_capture(actual, expected)`
+to compare newline- or NUL-delimited records. The helper returns a binary reward and error
+details. It normalizes ANSI escapes, path prefixes, size units, and whitespace; ignores record
+order; and preserves duplicate counts. Extra records are accepted unless they contain `error`,
+`failed`, `failure`, `no such file`, `not found`, `permission denied`, or `traceback`, matched
+case-insensitively at word boundaries. An empty normalized reference requires no normalized records.
+
 For development, see [CONTRIBUTING.md](CONTRIBUTING.md),
 [AGENTS.md](AGENTS.md), and the [repository skills](.agents/skills).
 Run the package checks from the repository root:

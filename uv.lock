@@ -2211,7 +2211,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "jsonschema", marker = "extra == 'schema'", specifier = ">=4.20" },
-    { name = "math-verify", marker = "extra == 'answer'", specifier = ">=0.7" },
+    { name = "math-verify", marker = "extra == 'answer'", specifier = ">=0.9.0" },
     { name = "openai", marker = "extra == 'judge'", specifier = ">=1.40" },
     { name = "pyyaml", marker = "extra == 'schema'", specifier = ">=6.0" },
     { name = "reasoning-gym", marker = "extra == 'reasoning-gym'", specifier = ">=0.1" },
