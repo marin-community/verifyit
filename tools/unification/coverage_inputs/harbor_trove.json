@@ -2787,16 +2787,23 @@
       "entity_id": "harbor:kramabench",
       "evidence": [
         "docs/unification/harbor_semantics.json#kramabench",
-        "docs/unification/harbor_inventory.json#kramabench"
+        "docs/unification/harbor_inventory.json#kramabench",
+        "integrations/harbor/kramabench-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-kramabench/final-summary.json",
+        "evidence/e2e/wiring/harbor-kramabench/final-manifest.json",
+        "evidence/e2e/wiring/harbor-kramabench/installed-image-hashes.json",
+        "evidence/e2e/wiring/harbor-kramabench/provenance.json",
+        "evidence/e2e/wiring/harbor-kramabench/census.json",
+        "evidence/e2e/wiring/harbor-kramabench/selection.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "kramabench",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/kramabench/template/tests/evaluate.py preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate archived model candidates and production deployment using a published core pin.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Source-specific official evaluator with typed int/float/string/list answer conversion; preserve evaluator score, no name-based exact/numeric substitution. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "Opt-in generation retains the source Evaluator and answer normalization through existing ScriptSpec in a separate verifier image. All six answer types, five primary score channels, auxiliary metrics and token counters are preserved. Missing or empty candidates score zero; task defects and judge/runtime failures remain distinct.",
       "source_evidence": [
         {
           "functions": [
@@ -2821,8 +2828,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "The pinned source census covers 104 unique tasks, retaining source duplicate-ID overwrite behavior. Three seeded source-reference rows and declared ordinary fixtures yield 26 exact reward and full-native-metric matches through actual Harbor Trials across all six types and five primary channels. Twelve paired edge cases and four optional-environment/artifact Trials validate strict complete yes/no judge replies, missing/empty candidates, reference defects, optional credentials and both answer locations. Seven regressions pass. All 28 inspected verifier images match source scorer/assets and all 41 core Python files in the pinned wheel. No eligible KramaBench archive links exist in TRACKER.md; this is source-contract/local HTTP judge fixture evidence, not archived agent parity or live judge quality evidence. Domain dataset pipelines were not executed. Production core pin remains unpublished.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Pinned source evaluator and fixtures, reference workload and verifier.toml in the separate image; candidate answer file/output directory are transferred.",
+        "needed_change": "Ordinary source-contract and judge failure semantics are validated; archived traces and security scope remain unverified."
+      }
     },
     {
       "entity_id": "harbor:kumo",

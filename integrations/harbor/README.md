@@ -785,3 +785,35 @@ These are declared synthetic fixtures, not real dataset rows, archived model
 traces or live model-quality evidence. No new security tests were run. Use the
 exact local core wheel recipe above while the production verifyit pin remains
 unpublished.
+
+
+## KramaBench
+
+Apply `kramabench-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate with `--verifyit`.
+Existing ScriptSpec restores `/app/answer.txt` and `/app/output` in a separate
+verifier image; the root answer takes precedence. The retained source evaluator
+preserves all six answer types, five primary score channels, auxiliary metrics,
+and token counters. Missing or empty answers score zero. Trusted task defects and
+runtime failures produce distinct unscored verdicts at minimum zero.
+
+Approximate string/list routes require `OPENAI_API_KEY`; `OPENAI_BASE_URL` is
+optional. The four deterministic routes do not call a judge. Judge replies must
+contain one completed text choice with only yes or no, as the source prompt
+requests. Truncated, contradictory, refusal, or tool replies produce an
+infrastructure error even when the original substring parser gave credit; native
+scores and token metrics remain available in the verdict.
+
+The pinned census contains 104 unique source tasks, including the source loader's
+duplicate-ID overwrite behavior. Three seeded source-reference rows and declared
+fixtures yield 26 exact primary-score and full-metric comparisons through actual
+Harbor Trials. Twelve paired edge cases and four bounded credential/artifact
+Trials pass, along with seven regressions. All 28 inspected verifier images match
+the source assets and all 41 core Python files in the pinned wheel.
+
+`evidence/e2e/wiring/harbor-kramabench/final-manifest.json` links the raw evidence,
+census, frozen selection, and installed-image hashes. No eligible tracker archive
+links exist. These are source-contract and local HTTP judge fixtures; they do not
+establish archived model parity, live judge quality, or dataset pipeline behavior.
+Use the exact local wheel recipe above while the production core pin remains
+unpublished. No new security tests were run.
