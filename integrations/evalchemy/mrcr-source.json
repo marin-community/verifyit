@@ -1,0 +1,29 @@
+{
+  "benchmarks": [
+    "MRCR"
+  ],
+  "fixture_only": true,
+  "applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/mrcr-evalchemy-applied",
+  "patch": "integrations/evalchemy/mrcr-verifyit.patch",
+  "patch_sha256": "89d1ada3e0f7f697a6ac1f9fe1e134797c164e5b95ef480faf0f0803b84d9002",
+  "files": {
+    "eval/chat_benchmarks/MRCR/eval_instruct.py": "326ab4d5d4625645c22173012d745789336f9741b92f45e6d6eaf0e489c3b6dd",
+    "eval/graders/verifyit_mrcr.py": "e5d0d970f9513fcbed47578f4f6d78ecbacb518ba0264e72a6863f7ac1d80e6d",
+    "tests/graders/test_verifyit_mrcr.py": "171965ff1d22db0d0600f3a04551a9512cfcb9972881b31620f8703cff7c13b9"
+  },
+  "source_contract": "ExactSpec compares actual candidate prefix with nonce; ScriptSpec preserves Python difflib.SequenceMatcher default fractional ratio. Generation scorer and evaluate_responses both call verifyit; evaluation always recomputes raw output instead of trusting precomputed fields. Source per-bin/needle aggregates remain.",
+  "proof": {
+    "samples": 74,
+    "published_cells": 24,
+    "actual_script_calls": 148,
+    "durable_tests": 13,
+    "negative_scenarios": 7
+  },
+  "scoring_fixes": [
+    "Empty/invalid trusted nonce or answer is rejected. Nontext candidate does not gain credit through str coercion. Stale precomputed positive scores cannot override raw output."
+  ],
+  "limitations": [
+    "Fixture-only. Actual generate_responses and evaluate_responses methods execute, while dataset selection and model outputs are supplied as fixtures; no model inference or source dataset-selection validation claimed.",
+    "Fourteen tracker MRCR links exist; three are frozen, CoreWeave credentials unavailable, no archived-score replay claimed."
+  ]
+}

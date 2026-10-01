@@ -1,0 +1,224 @@
+diff --git a/eval/chat_benchmarks/MRCR/eval_instruct.py b/eval/chat_benchmarks/MRCR/eval_instruct.py
+--- a/eval/chat_benchmarks/MRCR/eval_instruct.py
++++ b/eval/chat_benchmarks/MRCR/eval_instruct.py
+@@ -111,10 +111,12 @@
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
+         cache_dir: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         if system_instruction is not None:
+             raise ValueError("MRCR does not accept a system instruction because it changes the canonical prompt")
+         super().__init__(logger=logger)
++        self.verifyit_enabled = verifyit_enabled
+         self.n_needles = tuple(n_needles) if n_needles is not None else MRCR_NEEDLE_COUNTS
+         unknown_needles = set(self.n_needles) - set(MRCR_NEEDLE_COUNTS)
+         if unknown_needles:
+@@ -210,10 +212,14 @@
+ 
+         examples = [example for example, _ in selected]
+         for example, output in zip(examples, outputs):
+-            score, prefix_hit = score_response(
++            if self.verifyit_enabled:
++                from eval.graders.verifyit_mrcr import score_response as scorer
++            else:
++                scorer = score_response
++            score, prefix_hit = scorer(
+                 output,
+-                str(example["answer"]),
+-                str(example["random_string_to_prepend"]),
++                example["answer"] if self.verifyit_enabled else str(example["answer"]),
++                example["random_string_to_prepend"] if self.verifyit_enabled else str(example["random_string_to_prepend"]),
+             )
+             example["model_output"] = output
+             example["model_answer"] = output
+@@ -227,6 +233,14 @@
+         examples = results["examples"]
+         if not examples:
+             raise ValueError("MRCR cannot aggregate an empty result set")
++
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_mrcr import score_response as scorer
++
++            scores = [scorer(example.get("model_output"), example.get("answer"), example.get("random_string_to_prepend")) for example in examples]
++            for example, (score, prefix_hit) in zip(examples, scores):
++                example["score"] = score
++                example["prefix_hit"] = prefix_hit
+ 
+         for example in examples:
+             record_sample_metrics(example, accuracy=float(example["score"]), prefix_hit=float(example["prefix_hit"]))
+diff --git a/eval/graders/verifyit_mrcr.py b/eval/graders/verifyit_mrcr.py
+new file mode 100644
+--- /dev/null
++++ b/eval/graders/verifyit_mrcr.py
+@@ -0,0 +1,82 @@
++"""Nonce gating and source MRCR fractional similarity through existing modes."""
++
++import ast
++import dataclasses
++from difflib import SequenceMatcher
++import hashlib
++import json
++import os
++from pathlib import Path
++import sys
++import tempfile
++
++from verifyit.grade import InvalidTask, Status, run
++from verifyit.modes.grade_exact import grade_exact_candidate
++from verifyit.spec import ExactSpec, ScriptSpec, render_spec
++
++SOURCE_SCORER_SHA256 = "a1cd14bcb2de4c9f94b9e23ed4431d7c6730db63e7c5630a02eaa3c3fc1422d2"
++
++
++def score_response(response, answer, nonce):
++    if not isinstance(nonce, str) or not nonce.strip():
++        raise InvalidTask("MRCR nonce must be nonempty text")
++    if not isinstance(answer, str) or not answer.removeprefix(nonce).strip():
++        raise InvalidTask("MRCR reference must contain nonempty answer text")
++    with tempfile.TemporaryDirectory(prefix="verifyit-mrcr-") as directory:
++        root = Path(directory)
++        (root / "input.json").write_text(
++            json.dumps({"response": response, "answer": answer, "nonce": nonce}, allow_nan=False)
++        )
++        (root / "run.sh").write_text('exec "$@"\n')
++        spec = ScriptSpec(
++            "run.sh",
++            args=(sys.executable, "-m", "eval.graders.verifyit_mrcr", str(root / "input.json")),
++            timeout=120,
++            verdict_file="result.json",
++        )
++        (root / "verifier.toml").write_text(render_spec(spec))
++        verdict = run(root / "verifier.toml", root)
++    if verdict.status == Status.INVALID_TASK:
++        raise InvalidTask(str(verdict.detail))
++    if verdict.status != Status.SCORED:
++        raise RuntimeError(f"MRCR verifier did not score: {verdict.status}")
++    prefix = verdict.detail["prefix_hit"]
++    if type(prefix) not in (int, float) or prefix not in (0, 1) or prefix == 0 and verdict.reward != 0:
++        raise RuntimeError("Inconsistent MRCR prefix verdict")
++    return verdict.reward, float(prefix)
++
++
++def main():
++    source = Path(__file__).resolve().parent.parent / "chat_benchmarks/MRCR/eval_instruct.py"
++    text = source.read_text()
++    functions = [
++        node for node in ast.parse(text).body if isinstance(node, ast.FunctionDef) and node.name == "score_response"
++    ]
++    if (
++        len(functions) != 1
++        or hashlib.sha256(ast.get_source_segment(text, functions[0]).encode()).hexdigest() != SOURCE_SCORER_SHA256
++    ):
++        raise InvalidTask("MRCR source scorer changed")
++    payload = json.loads(Path(sys.argv[1]).read_text())
++    response, answer, nonce = payload["response"], payload["answer"], payload["nonce"]
++    prefix = grade_exact_candidate(
++        ExactSpec(expected=(nonce,), ignore_case=False, ignore_whitespace=False, strip_outer_whitespace=False),
++        response[: len(nonce)] if isinstance(response, str) else "",
++    )
++    if prefix.status != Status.SCORED:
++        raise RuntimeError("MRCR prefix was not scored")
++    score = (
++        float(SequenceMatcher(None, response.removeprefix(nonce), answer.removeprefix(nonce)).ratio())
++        if prefix.reward == 1
++        else 0.0
++    )
++    verdict = {
++        "status": "scored",
++        "reward": score,
++        "detail": {"prefix_hit": prefix.reward, "prefix_verdict": dataclasses.asdict(prefix)},
++    }
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(json.dumps(verdict, allow_nan=False))
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tests/graders/test_verifyit_mrcr.py b/tests/graders/test_verifyit_mrcr.py
+new file mode 100644
+--- /dev/null
++++ b/tests/graders/test_verifyit_mrcr.py
+@@ -0,0 +1,83 @@
++"""MRCR raw-output scoring and malformed-reference regressions."""
++
++import pytest
++
++from eval.chat_benchmarks.MRCR.eval_instruct import MRCRBenchmark
++from eval.graders.verifyit_mrcr import score_response
++from verifyit.grade import InvalidTask
++
++
++@pytest.mark.parametrize(
++    ("candidate", "answer", "expected"),
++    [
++        ("N:ab", "N:ab", (1.0, 1.0)),
++        ("N:ac", "N:ab", (0.5, 1.0)),
++        ("n:ab", "N:ab", (0.0, 0.0)),
++        ("N:ab", "ab", (1.0, 1.0)),
++        ("", "N:ab", (0.0, 0.0)),
++        ("N:", "N:ab", (0.0, 1.0)),
++    ],
++)
++def test_nonce_gate_preserves_fractional_similarity(candidate, answer, expected):
++    assert score_response(candidate, answer, "N:") == expected
++
++
++def test_nontext_candidate_is_not_coerced_to_a_correct_answer():
++    assert score_response(None, "None", "N") == (0.0, 0.0)
++
++
++@pytest.mark.parametrize(("answer", "nonce"), [("", ""), ("N:", "N:"), (None, "N:"), ("answer", None)])
++def test_invalid_reference_cannot_award_vacuous_credit(answer, nonce):
++    with pytest.raises(InvalidTask):
++        score_response("", answer, nonce)
++
++
++def test_evaluator_recomputes_raw_output_despite_missing_or_stale_scores():
++    benchmark = MRCRBenchmark(verifyit_enabled=True)
++    examples = [
++        {
++            "answer": "N:ab",
++            "random_string_to_prepend": "N:",
++            "model_output": "wrong",
++            "mrcr_bin_upper": 8192,
++            "n_needles": 2,
++            "score": 1.0,
++            "prefix_hit": 1.0,
++        },
++        {
++            "answer": "N:ab",
++            "random_string_to_prepend": "N:",
++            "model_output": "N:ac",
++            "mrcr_bin_upper": 8192,
++            "n_needles": 2,
++        },
++    ]
++    result = benchmark.evaluate_responses({"examples": examples})
++    assert result["mrcr_accuracy"] == 0.25
++    assert result["prefix_hit_rate"] == 0.5
++    assert result["mrcr_8192_2needle"] == 0.25
++    assert [example["score"] for example in examples] == [0.0, 0.5]
++
++
++def test_invalid_reference_aborts_batch_without_committing_earlier_scores():
++    benchmark = MRCRBenchmark(verifyit_enabled=True)
++    examples = [
++        {
++            "answer": "N:ab",
++            "random_string_to_prepend": "N:",
++            "model_output": "wrong",
++            "mrcr_bin_upper": 8192,
++            "n_needles": 2,
++            "score": 0.7,
++        },
++        {
++            "answer": "N:",
++            "random_string_to_prepend": "N:",
++            "model_output": "N:",
++            "mrcr_bin_upper": 8192,
++            "n_needles": 2,
++        },
++    ]
++    with pytest.raises(InvalidTask):
++        benchmark.evaluate_responses({"examples": examples})
++    assert examples[0]["score"] == 0.7

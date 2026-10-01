@@ -892,6 +892,33 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-instructions/archive-census.json",
                 ],
             )
+        elif name == "MRCR":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_nonce_similarity_runtime",
+                reason=(
+                    "ExactSpec compares actual candidate prefix text with the nonce; ScriptSpec "
+                    "retains source fractional SequenceMatcher similarity. Both generation scoring "
+                    "and evaluate_responses call verifyit; evaluation recomputes raw output instead "
+                    "of trusting stale or missing score fields. Source bin/needle aggregates remain."
+                ),
+                primitive_candidates=["exact", "script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True. Seventy-four fixture samples cover all24 published "
+                    "bin/needle cells and source unprefixed-reference behavior. Dataset selection "
+                    "and model outputs are fixtures; no live inference or archive replay is claimed. "
+                    "Three of fourteen tracker links are frozen but CoreWeave credentials unavailable."
+                ),
+                validation_status="source_generation_and_evaluator_fixtures_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/mrcr-verifyit.patch",
+                    "integrations/evalchemy/mrcr-source.json",
+                    "../evidence/e2e/wiring/evalchemy-mrcr/manager/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-mrcr/manager-negative/negative.json",
+                    "../evidence/e2e/wiring/evalchemy-mrcr/archive-census.json",
+                ],
+            )
         elif record["classification"] == "adapter-hybrid":
             entity.update(
                 status="native_fallback",
