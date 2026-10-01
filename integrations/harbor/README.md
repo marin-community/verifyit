@@ -420,7 +420,8 @@ source = dockerfile.read_text()
 requirement = "'verifyit @ git+https://github.com/marin-community/verifyit@a0861089947096aabe456ca4308ca46b1b001d7c'"
 assert source.count(requirement) == 1
 shutil.copy2(wheel, tests / wheel.name)
-source = source.replace("RUN python3 -m venv /opt/verifyit", f"COPY {wheel.name} /tmp/{wheel.name}\nRUN python3 -m venv /opt/verifyit")
+first, rest = source.split("\n", 1)
+source = first + f"\nCOPY {wheel.name} /tmp/{wheel.name}\n" + rest
 dockerfile.write_text(source.replace(requirement, f"/tmp/{wheel.name}"))
 PY
 ```
@@ -530,3 +531,30 @@ scores or full production datasets. Use the same pinned local wheel substitution
 as the preceding judge family. The complete source contract census, patch order,
 source hashes and roundtrips are in
 `evidence/e2e/wiring/harbor-judge-extensions/implementation-provenance.json`.
+
+
+## Aider Polyglot
+
+Apply `aider-polyglot-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate tasks with `--verifyit`.
+All six source language runtimes use the existing ScriptSpec bridge. The separate
+verifier receives the declared solution files and retains source test merging,
+dependencies and binary all-pass scoring. Java resolves JAVA_HOME from its installed
+JDK; the original amd64-only path failed on the ARM proof host.
+
+The frozen sample contains one real upstream exercise for each language:
+Python hangman, JavaScript connect, Java food-chain, C++ space-age, Go say and
+Rust macros. Actual Harbor OracleAgent and NopAgent trials match eleven numeric
+source scores. The C++ unfinished starter fails compilation before the source
+publishes a reward; verifyit reports infra_error with minimum reward0 and Harbor
+raises VerifyitUnscoredError. This remains an unscored result, not a scored zero.
+All six reference solutions score1, including the corrected Java runtime.
+
+`evidence/e2e/wiring/harbor-aider-polyglot/final-manifest.json` records the pinned
+upstream selection, twelve final comparisons, original Java failure, separate
+Java v2 proof, image/source hashes and independent manager Trials. Two malformed
+exercise-reference regressions pass. These are real exercise fixtures, not archived
+model replays or coverage of all225 exercises. Candidate code executes inside the
+source grader; candidate/assertion isolation remains unverified. No new security
+tests were run. The local wheel substitution above is required for the unpushed
+core pin; both source and verifier runtime images were built.

@@ -1,0 +1,175 @@
+diff --git a/adapters/aider_polyglot/src/aider_polyglot/adapter.py b/adapters/aider_polyglot/src/aider_polyglot/adapter.py
+index bd364b1..0b9d6e7 100644
+--- a/adapters/aider_polyglot/src/aider_polyglot/adapter.py
++++ b/adapters/aider_polyglot/src/aider_polyglot/adapter.py
+@@ -9,6 +9,8 @@ import tempfile
+ from pathlib import Path
+ from typing import Dict, List, Optional, Union
+ 
++from harbor.tasks.verifyit_source_runtime import package_source_runtime
++
+ if __package__ in (None, ""):
+     from utils import (
+         ALL_LANGUAGES,
+@@ -80,8 +82,10 @@ class AiderPolyglotAdapter:
+         polyglot_repo_path: Path,
+         languages: Optional[Union[str, List[str]]] = None,
+         templates_dir: Optional[Path] = None,
++        verifyit_enabled: bool = False,
+     ):
+         self.task_dir = Path(task_dir)
++        self.verifyit_enabled = verifyit_enabled
+         self.polyglot_repo_path = Path(polyglot_repo_path)
+         self.templates_dir = templates_dir or Path(__file__).parent / "task-template"
+ 
+@@ -205,6 +209,22 @@ class AiderPolyglotAdapter:
+         if not task:
+             raise ValueError(f"Task {task_id} not found")
+ 
++        if self.verifyit_enabled:
++            if not task.solution_files or not task.test_files:
++                raise ValueError(
++                    "Aider Polyglot requires declared solution and test files"
++                )
++            for name in task.solution_files + task.test_files:
++                path = Path(name)
++                if (
++                    path.is_absolute()
++                    or ".." in path.parts
++                    or not (task.exercise_path / path).is_file()
++                ):
++                    raise ValueError(
++                        f"Missing or invalid declared exercise file: {name}"
++                    )
++
+         output_dir = self.task_dir / local_task_id
+         environment_dir = output_dir / "environment"
+         workspace_dir = environment_dir / "workspace"
+@@ -227,6 +247,36 @@ class AiderPolyglotAdapter:
+             self._create_test_script(task, tests_dir)
+             self._create_solution_script(task, solution_dir, workspace_dir, tests_dir)
+             self._create_dockerfile(task, environment_dir)
++            if self.verifyit_enabled:
++                shutil.copytree(workspace_dir, tests_dir / "workspace")
++                dockerfile = (environment_dir / "Dockerfile").read_text()
++                if task.language != "python":
++                    dockerfile += (
++                        "\nRUN apt-get update && apt-get install -y software-properties-common "
++                        "&& add-apt-repository -y ppa:deadsnakes/ppa && apt-get update "
++                        "&& apt-get install -y python3.11 python3.11-venv "
++                        "&& rm -rf /var/lib/apt/lists/*\n"
++                    )
++                config_path = output_dir / "task.toml"
++                config_path.write_text(
++                    config_path.read_text().replace("artifacts = []\n", "", 1)
++                )
++                package_source_runtime(
++                    output_dir,
++                    artifacts=[f"/app/{name}" for name in task.solution_files],
++                    dockerfile=dockerfile,
++                    timeout=1800,
++                )
++                # Non-Python source images use Ubuntu's Python 3.10 by default;
++                # verifyit's separate CLI requires Python >=3.11.
++                grader_dockerfile = tests_dir / "Dockerfile"
++                grader_dockerfile.write_text(
++                    grader_dockerfile.read_text().replace(
++                        "RUN python3 -m venv /opt/verifyit",
++                        "RUN python3.11 -m venv /opt/verifyit",
++                        1,
++                    )
++                )
+ 
+             print(f"Generated Harbor task: {local_task_id}")
+         except Exception:
+diff --git a/adapters/aider_polyglot/src/aider_polyglot/main.py b/adapters/aider_polyglot/src/aider_polyglot/main.py
+index 154bf7a..87001f4 100644
+--- a/adapters/aider_polyglot/src/aider_polyglot/main.py
++++ b/adapters/aider_polyglot/src/aider_polyglot/main.py
+@@ -53,6 +53,7 @@ def process_polyglot(
+     languages_arg: str | None,
+     limit: int | None,
+     overwrite: bool,
++    verifyit_enabled: bool = False,
+ ) -> None:
+     """
+     Build tasks using a given polyglot repo root.
+@@ -61,6 +62,7 @@ def process_polyglot(
+         task_dir=output_dir,
+         polyglot_repo_path=polyglot_root,
+         languages=languages_arg,
++        verifyit_enabled=verifyit_enabled,
+     )
+ 
+     if task_ids_arg:
+@@ -145,6 +147,7 @@ def main() -> None:
+         help="Accepted for standard adapter CLI compatibility; tasks are regenerated.",
+     )
+ 
++    parser.add_argument("--verifyit", action="store_true")
+     args = parser.parse_args()
+ 
+     if args.clone_polyglot:
+@@ -160,6 +163,7 @@ def main() -> None:
+                     languages_arg=args.languages,
+                     limit=args.limit,
+                     overwrite=args.overwrite,
++                    verifyit_enabled=args.verifyit,
+                 )
+             except Exception as e:
+                 logger.error(
+@@ -183,6 +187,7 @@ def main() -> None:
+                 languages_arg=args.languages,
+                 limit=args.limit,
+                 overwrite=args.overwrite,
++                verifyit_enabled=args.verifyit,
+             )
+         except Exception as e:
+             logger.error(
+diff --git a/adapters/aider_polyglot/src/aider_polyglot/utils.py b/adapters/aider_polyglot/src/aider_polyglot/utils.py
+index 9cfcdc2..7b15295 100644
+--- a/adapters/aider_polyglot/src/aider_polyglot/utils.py
++++ b/adapters/aider_polyglot/src/aider_polyglot/utils.py
+@@ -142,7 +142,8 @@ RUN apt-get update && apt-get install -y \
+     ca-certificates-java \
+     openjdk-21-jdk \
+     && rm -rf /var/lib/apt/lists/*"""
+-        env = """ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
++        env = """RUN ln -s "$(dirname "$(dirname "$(readlink -f /usr/bin/javac)")")" /opt/java
++ENV JAVA_HOME=/opt/java
+ ENV PATH=$JAVA_HOME/bin:$PATH"""
+         post = """RUN if [ -f ./gradlew ]; then chmod +x ./gradlew; fi"""
+         verify = "RUN java -version && javac -version"
+diff --git a/adapters/aider_polyglot/tests/test_verifyit_route.py b/adapters/aider_polyglot/tests/test_verifyit_route.py
+new file mode 100644
+index 0000000..c7da81a
+--- /dev/null
++++ b/adapters/aider_polyglot/tests/test_verifyit_route.py
+@@ -0,0 +1,27 @@
++"""Reject incomplete exercise references before generating a scoring task."""
++
++import json
++import sys
++from pathlib import Path
++
++import pytest
++
++sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
++from aider_polyglot.adapter import AiderPolyglotAdapter
++
++
++@pytest.mark.parametrize("test_files", [[], ["missing_test.py"]])
++def test_incomplete_exercise_tests_cannot_generate_scoring_task(tmp_path, test_files):
++    exercise = tmp_path / "upstream/python/exercises/practice/example"
++    (exercise / ".meta").mkdir(parents=True)
++    (exercise / "solution.py").write_text("pass\n")
++    (exercise / ".meta/config.json").write_text(
++        json.dumps({"files": {"solution": ["solution.py"], "test": test_files}})
++    )
++    output = tmp_path / "tasks"
++    adapter = AiderPolyglotAdapter(
++        output, tmp_path / "upstream", languages="python", verifyit_enabled=True
++    )
++    with pytest.raises(ValueError):
++        adapter.generate_task("python_example", "example")
++    assert not (output / "example").exists()

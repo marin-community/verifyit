@@ -201,19 +201,20 @@
       "entity_id": "harbor:aider_polyglot",
       "evidence": [
         "docs/unification/harbor_semantics.json#aider_polyglot",
-        "docs/unification/harbor_inventory.json#aider_polyglot"
+        "docs/unification/harbor_inventory.json#aider_polyglot",
+        "integrations/harbor/aider-polyglot-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-aider-polyglot/final-manifest.json",
+        "evidence/e2e/wiring/harbor-aider-polyglot/manager-rust-positive.json",
+        "evidence/e2e/wiring/harbor-aider-polyglot/manager-java-positive.json"
       ],
-      "gap_kind": "language_report_dispatch",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "aider_polyglot",
-      "needed_change": "Port test-source merge and route Python pytest, Go terminal events, Java JUnit and custom Rust/native execution according to actual reports; preserve per-language setup and native binary all-pass policy.",
+      "needed_change": "Validate more exercises and archived model traces; candidate execution inside the source grader remains unverified.",
       "primitive_candidates": [
-        "pytest",
-        "gotest",
-        "junit",
         "script"
       ],
-      "reason": "Generated language-specific test commands and test-source merge; Python pytest, Go tests and XML-reporting Java suites map to their primitives; Rust/native custom exits retain script. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "The opt-in generator retains all six language-specific source runtimes behind ScriptSpec in a separate verifier image, transferring declared solution files. Source test merge and binary all-pass policy remain unchanged; Java resolves its installed JDK portably.",
       "source_evidence": [
         {
           "functions": [
@@ -265,8 +266,15 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "One frozen real upstream exercise per supported language: Python, JavaScript, Java, C++, Go and Rust. Twelve actual source/Harbor cases: eleven numeric score matches and one C++ starter compilation failure with no source reward and verifyit infra_error minimum0. All six source oracles pass1, including Java after the observed ARM JAVA_HOME correction. No archived model replay or all225 exercise claim.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Source tests, workspace scaffold and verifier.toml in separate image",
+        "remaining_gap": "candidate_execution_in_grader",
+        "needed_change": "Candidate code executes within each source language grader runtime; candidate/assertion isolation remains unverified."
+      }
     },
     {
       "entity_id": "harbor:aime",
