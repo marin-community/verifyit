@@ -243,10 +243,10 @@ patch and before the dependency pin. Each public Nemotron source builder accepts
 before candidate generation. Semantic references use validated nonempty text and
 the original symmetric judge prompts. Symbolic references require successful math
 parsing. Existing explicit row metadata is preserved; conflicting contracts fail
-preparation. Untagged legacy records retain bounded automatic admission, so both
-routes remain partial. Sixteen prepared framework roundtrips match source scores
-and HTTP requests, including the exact installed package. The frozen 18-archive
-replay still has two missing judge transcripts. See [the contract](math-judge.md).
+preparation. The later hybrid-reference patch extends the pinned source policy to untagged
+legacy text contracts. Sixteen prepared framework roundtrips match source scores
+and HTTP requests, including the exact installed package. The corrected frozen 18-archive replay matches all recorded scores; the two
+previously reported missing transcripts were nested in multi-turn diagnostics. See [the contract](math-judge.md).
 
 Apply `coder1-protocols-verifyit.patch` after the math reference contract patch and
 before the dependency pin. It adds bytes value transport and common numeric
@@ -255,11 +255,17 @@ candidate execution. Sixty-nine source tests pass and twelve actual GeneralReact
 witnesses agree across native, cutover and exact-installed execution. Coder1 remains
 partial for arbitrary Python interoperability; see [the contract](coder1-partial.md).
 
-All 42 wired scoring routes now have actual source-boundary cutover witnesses:
-27 have real trace replay and 15 have source fixtures. The last five fixture gaps
+All 44 wired scoring routes now have actual source-boundary cutover witnesses:
+29 have real trace replay and 15 have source fixtures. The last five fixture gaps
 were GSM8K multi-turn, search, searchcode, legacy text2sql and SWE-pivot tool
 comparison. Each now has three registered Env terminal-grading cases matching
 pinned native and independent manager execution, with raw verifyit calls. This
 covers terminal grading, not retrieval, tool execution or SWE Harbor preparation.
-Evidence is in `evidence/e2e/wiring/skyrl-route-witnesses/`. Four partial routes
-remain outside the complete tested-route count.
+Evidence is in `evidence/e2e/wiring/skyrl-route-witnesses/`. Instruction and coder1 remain partial and outside the complete tested-route count.
+
+Apply `math-hybrid-reference-verifyit.patch` after the coder protocol patch and
+before the dependency pin. Legacy text references retain the original symmetric
+judge contract; unexpected parser failures remain unscored zero. Forty-seven
+source regressions, twelve actual Env fixtures and all eighteen frozen archived
+roundtrips pass, including independent manager and exact installed-package runs.
+See [the math contract](math-judge.md) for the transcript correction and evidence.

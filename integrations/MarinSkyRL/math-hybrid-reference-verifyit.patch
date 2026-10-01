@@ -1,0 +1,195 @@
+diff --git a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_judge_verifyit.py b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_judge_verifyit.py
+index 64ce904..d95d678 100644
+--- a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_judge_verifyit.py
++++ b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_judge_verifyit.py
+@@ -28,24 +28,6 @@ from skyrl_gym.envs.nemotron_ultra.math_with_judge import (
+ )
+ 
+ 
+-def _plain_prose_reference(reference: str) -> bool:
+-    """Trusted natural-language references; mathematical syntax never takes this path."""
+-    if any(
+-        not (character.isalpha() or character.isdigit() or character in " .,;:'!?-")
+-        for character in reference
+-    ):
+-        return False
+-    words = re.findall(r"[^\W\d_]+", reference, flags=re.UNICODE)
+-    return any(len(word) >= 2 for word in words) and reference.strip().lower() not in {
+-        "pi",
+-        "inf",
+-        "infinity",
+-        "nan",
+-        "oo",
+-        "zoo",
+-    }
+-
+-
+ def _balanced_reference_delimiters(reference: str) -> bool:
+     depth = 0
+     for index, character in enumerate(reference):
+@@ -85,7 +67,7 @@ def _evaluate(data: dict[str, Any], root: Path) -> dict[str, Any]:
+         or not record["expected_answer"].strip()
+         or not isinstance(record.get("question"), str)
+         or (
+-            kind != "semantic"
++            kind == "symbolic"
+             and not _balanced_reference_delimiters(record["expected_answer"])
+         )
+     ):
+@@ -100,17 +82,26 @@ def _evaluate(data: dict[str, Any], root: Path) -> dict[str, Any]:
+ 
+     reference_values = []
+     if kind != "semantic":
+-        reference_values = parse(
+-            r"\boxed{" + _strip_delimiters(record["expected_answer"]) + "}",
+-            extraction_config=[LatexExtractionConfig()],
+-            raise_on_error=True,
+-        )
++        try:
++            reference_values = parse(
++                r"\boxed{" + _strip_delimiters(record["expected_answer"]) + "}",
++                extraction_config=[LatexExtractionConfig()],
++                raise_on_error=True,
++            )
++        except Exception:
++            # Normal syntax rejection is an empty/string parse. Raised failures
++            # are not distinguishable from parser infrastructure errors here.
++            return {
++                "schema_version": 1,
++                "status": "infra_error",
++                "reward": 0.0,
++                "detail": {"reason": "Mathematical reference parser failed"},
++            }
+     symbolic_reference = any(not isinstance(value, str) for value in reference_values)
+-    prose_reference = kind == "semantic" or (
+-        kind is None
+-        and not symbolic_reference
+-        and _plain_prose_reference(record["expected_answer"])
+-    )
++    # The pinned source is a semantic-reference judge with a symbolic shortcut.
++    # A parser miss in the legacy route remains subject to the actual symmetric
++    # judge, never a positive reward derived from admission itself.
++    prose_reference = kind != "symbolic" and not symbolic_reference
+     typographic_reference = False
+     if not symbolic_reference and not prose_reference:
+         # These sizing commands change rendering, not the trusted mathematical value.
+diff --git a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_references.py b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_references.py
+index 04bd49c..d91b7d6 100644
+--- a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_references.py
++++ b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/math_references.py
+@@ -8,10 +8,10 @@ REFERENCE_KINDS = frozenset({"semantic", "symbolic"})
+ 
+ def reference_kind(record: Mapping[str, Any]) -> str | None:
+     """Validate explicit reference metadata without guessing from answer content."""
+-    if "math_reference_kind" not in record:
+-        return None
+-    kind = record["math_reference_kind"]
+-    if not isinstance(kind, str) or kind not in REFERENCE_KINDS:
++    kind = record.get("math_reference_kind")
++    if "math_reference_kind" in record and (
++        not isinstance(kind, str) or kind not in REFERENCE_KINDS
++    ):
+         raise ValueError("math_reference_kind must be semantic or symbolic")
+     reference = record.get("expected_answer")
+     question = record.get("question")
+diff --git a/skyrl-gym/tests/test_math_judge_verifyit.py b/skyrl-gym/tests/test_math_judge_verifyit.py
+index 200e8d0..d412916 100644
+--- a/skyrl-gym/tests/test_math_judge_verifyit.py
++++ b/skyrl-gym/tests/test_math_judge_verifyit.py
+@@ -154,14 +154,18 @@ def test_trusted_prose_reference_routes_to_judge_before_after(
+ @pytest.mark.parametrize(
+     "candidate", [r"\boxed{2}", "I think the answer is two.", "<think>unfinished"]
+ )
+-def test_malformed_mathematical_reference_cannot_fall_back_to_positive_judge(
++def test_explicit_symbolic_reference_cannot_fall_back_to_positive_judge(
+     judge_server, candidate
+ ):
+     server, judge = judge_server
+     server.replies = ["[[A=B]]"]
+     reward, detail = grade_math_verifyit(
+         candidate,
+-        {"question": "Compute", "expected_answer": r"\unknownmacro{???}"},
++        {
++            "question": "Compute",
++            "expected_answer": r"\unknownmacro{???}",
++            "math_reference_kind": "symbolic",
++        },
+         judge=judge,
+     )
+     assert reward == 0.0
+@@ -228,7 +232,11 @@ def test_malformed_math_reference_is_invalid_before_any_candidate_gate(
+     server.replies = ["[[A=B]]"]
+     reward, detail = grade_math_verifyit(
+         "The correct answer is two.",
+-        {"question": "Compute", "expected_answer": expected},
++        {
++            "question": "Compute",
++            "expected_answer": expected,
++            "math_reference_kind": "symbolic",
++        },
+         judge=judge,
+     )
+     assert reward == 0.0
+@@ -335,3 +343,62 @@ def test_declared_symbolic_reference_still_uses_math_without_judge(judge_server)
+     assert reward == 1.0
+     assert detail["library_reward"] == 1.0
+     assert server.requests == []
++
++
++@pytest.mark.parametrize(
++    "reference",
++    [
++        "Choose a box (unless it is empty).\nThen stop — there is no unique answer.",
++        r"\unknownmacro{???}",
++    ],
++)
++@pytest.mark.parametrize("label,score", [("[[A=B]]", 1.0), ("[[A!=B]]", 0.0)])
++def test_native_hybrid_reference_policy_requires_actual_symmetric_judge(
++    reference, label, score, judge_server
++):
++    server, judge = judge_server
++    server.replies = [label]
++    record = {
++        "question": "Compare the supplied answer with the reference.",
++        "expected_answer": reference,
++    }
++    candidate = "The candidate answer is the supplied reference interpretation."
++    native_score, native_detail = grade_math(candidate, record, judge=judge)
++    native_requests = list(server.requests)
++    server.requests.clear()
++    reward, detail = grade_math_verifyit(candidate, record, judge=judge)
++    assert reward == native_score == score
++    assert detail == native_detail
++    assert server.requests == native_requests
++    assert len(server.requests) == (2 if score else 1)
++
++
++@pytest.mark.parametrize("kind", [None, "symbolic"])
++@pytest.mark.parametrize("failure", [RuntimeError, OSError, MemoryError])
++def test_unexpected_reference_parser_failure_is_unscored(
++    kind, failure, monkeypatch, tmp_path, judge_server
++):
++    import dataclasses
++    import math_verify
++    from skyrl_gym.envs.nemotron_ultra.math_judge_verifyit import _evaluate
++
++    def failed_parse(*args, **kwargs):
++        raise failure("Reference parser failed")
++
++    monkeypatch.setattr(math_verify, "parse", failed_parse)
++    server, judge = judge_server
++    server.replies = ["[[A=B]]"]
++    record = {"question": "Explain the result.", "expected_answer": "A textual answer."}
++    if kind is not None:
++        record["math_reference_kind"] = kind
++    verdict = _evaluate(
++        {
++            "record": record,
++            "text": "The supplied textual answer.",
++            "judge": dataclasses.asdict(judge),
++        },
++        tmp_path,
++    )
++    assert verdict["status"] == "infra_error"
++    assert verdict["reward"] == 0.0
++    assert server.requests == []

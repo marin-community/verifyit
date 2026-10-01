@@ -8,22 +8,22 @@
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 42,
-    "pending_scoring_routes": 4,
-    "pending_active_scoring_routes": 3,
+    "source_patched_routes": 44,
+    "pending_scoring_routes": 2,
+    "pending_active_scoring_routes": 1,
     "pending_dormant_scoring_routes": 1,
-    "zero_core_extension_unwired_routes": 4,
+    "zero_core_extension_unwired_routes": 2,
     "existing_class_behavior_gap_routes": 0,
-    "real_replayed_source_routes": 27,
+    "real_replayed_source_routes": 29,
     "implemented_routes_missing_real_traces": 15,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 27,
+      "implemented_validated": 29,
       "implemented_not_validated": 15,
       "capability_gap": 0,
       "not_a_correctness_verifier": 2,
-      "not_integrated": 4
+      "not_integrated": 2
     },
     "unwired_dormant_math_comparator_parity_audits": 0,
     "inherited_planning_existing_class_extension_routes": 23
@@ -40,7 +40,8 @@
     "Structured-output policy is implemented entirely in a client dialect registration using existing json-schema grading; source XML/CSV parsing and tool extraction require no core extension. Fifteen selected archived links match pinned native and archive; four reach schema grading and eleven reject in client parsing.",
     "Citation/freeform format rules are source-owned parameterized IFEval constraint extensions with ScriptSpec deadline orchestration; they are not built-in comparator coverage. Twelve selected real links match source/archive and reach actual child IFEval grading. Vacuous configurations and regex deadlines fail closed.",
     "Standalone26 IFEval predicates are integrated with source-owned registry extensions under a total ScriptSpec deadline. NVIDIA instruction dispatch is partially wired and remains pending: deterministic explicit references replay successfully, but exclude_word_harder intrinsically randomizes its hidden reference. Fifteen selected real traces validate the implemented subset, not full registry coverage.",
-    "Dormant BrowseComp/RULER/STEM use existing core schema/exact primitives for raw external judge output; both GenRM routes retain the full source cohort runtime inside ScriptSpec. These five routes have fixture evidence only; GenRM training-loop initialization and archived cohort replay are not claimed."
+    "Dormant BrowseComp/RULER/STEM use existing core schema/exact primitives for raw external judge output; both GenRM routes retain the full source cohort runtime inside ScriptSpec. These five routes have fixture evidence only; GenRM training-loop initialization and archived cohort replay are not claimed.",
+    "Legacy math policy is the pinned source hybrid contract, not inferred solely from successful parsing. Ordinary parser rejection requires a real symmetric judge verdict; raised parser failures are unscored zero. All18 frozen archives match after correcting nested judge transcript extraction; previous missing-transcript reports are superseded."
   ],
   "real_trace_replay": {
     "verified_population": 5460,
@@ -702,12 +703,12 @@
     },
     {
       "id": "nemotron_ultra/ns_tools_simple_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Partial source integration: explicit trusted semantic/text and symbolic/math reference contracts are wired through existing primitives. Untagged legacy references outside bounded automatic admission still require trusted contract selection; no automatic parser-miss fallback is permitted.",
+      "status": "implemented_validated",
+      "not_covered_reason": "Source-owned legacy hybrid reference policy is integrated through MathSpec, symmetric JudgeSpec and ScriptSpec; frozen real archive replay validates both routes.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "bounded_script_executes_math_and_symmetric_labels_partial",
+      "source_runtime": "bounded_script_executes_math_and_symmetric_labels",
       "native_fallback_in_cutover": false,
       "contract_family": "math-judge",
       "existing_primitive_candidate": [
@@ -716,8 +717,8 @@
         "script"
       ],
       "resolution_strategy": "existing_math_judge_client_composition",
-      "needed_change": "Select semantic or symbolic reference contracts during trusted preparation for unsupported legacy records, without deriving that choice from the candidate. Obtain the two missing archived NS-tools judge transcripts to complete replay.",
-      "validation_gap": "Sixteen of eighteen frozen actual Env traces match source/archive scores and framework rewards; two NS-tools traces lack archived external judge responses and cannot be completed without those transcripts.",
+      "needed_change": "None for source terminal scoring; NS tool execution remains the existing source runtime.",
+      "validation_gap": "None in the frozen eighteen-trace sample; this is not an exhaustive claim over future inputs.",
       "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -739,32 +740,41 @@
         "evidence/e2e/wiring/skyrl-math-reference-contract/worker/roundtrip.json",
         "evidence/e2e/wiring/skyrl-math-reference-contract/manager-final/roundtrip.json",
         "evidence/e2e/wiring/skyrl-math-reference-contract/installed/roundtrip.json",
-        "evidence/e2e/wiring/skyrl-math-reference-contract/implementation-provenance.json"
+        "evidence/e2e/wiring/skyrl-math-reference-contract/implementation-provenance.json",
+        "integrations/MarinSkyRL/math-hybrid-reference-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-math-transcript-correction/manager-archives/summary.json",
+        "evidence/e2e/wiring/skyrl-math-transcript-correction/installed-archive-failclosed/summary.json",
+        "evidence/e2e/wiring/skyrl-math-transcript-correction/installed-failclosed/roundtrip.json",
+        "evidence/e2e/wiring/skyrl-math-transcript-correction/implementation-provenance.json",
+        "evidence/e2e/wiring/skyrl-math-transcript-correction/manager-final-tests.stdout"
       ],
       "observed_verified_execution_links": 16,
       "actual_replayed_links": 9,
-      "core_extension_requirement": "none_for_implemented_subset",
-      "integration_patch": "integrations/MarinSkyRL/math-judge-verifyit.patch",
-      "validation_scope": "37 math source tests plus 9 preparation regression tests pass. Sixteen prepared semantic/symbolic Env roundtrips across both routes and all three builders match native scores and HTTP requests, including exact installed-package execution. Frozen archive replay remains 16/18 complete; two NS-tools judge transcripts are missing.",
-      "remaining_contracts": [
-        "Untagged legacy references outside bounded automatic admission require explicit trusted reference-kind selection; full backward compatibility is not inferred."
-      ],
+      "core_extension_requirement": "none_proposed",
+      "integration_patch": "integrations/MarinSkyRL/math-hybrid-reference-verifyit.patch",
+      "validation_scope": "47 source regressions pass. Twelve legacy/symbolic actual Env fixtures and eighteen frozen archives match source rewards and HTTP requests, including independent manager and exact installed-package runs. Nested multi-turn judge transcripts were recovered without resampling or generation.",
+      "remaining_contracts": [],
       "intentional_tightening": "Finite scalar additive policy removes set/interval/nonfinite false positives; malformed/contradictory/refused/tool completions and backend/HTTP failures invalidate the full composition.",
-      "completed_replayed_links": 7,
-      "incomplete_replayed_links": 2,
+      "completed_replayed_links": 9,
+      "incomplete_replayed_links": 0,
       "prepared_reference_contracts": [
         "semantic: explicit trusted nonempty transport-valid text, symmetric original-prompt JudgeSpec",
         "symbolic: strict parsed reference, MathSpec with symmetric JudgeSpec fallback"
+      ],
+      "implemented_primitive_modes": [
+        "math",
+        "judge",
+        "script"
       ]
     },
     {
       "id": "nemotron_ultra/math_with_judge_simple_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Partial source integration: explicit trusted semantic/text and symbolic/math reference contracts are wired through existing primitives. Untagged legacy references outside bounded automatic admission still require trusted contract selection; no automatic parser-miss fallback is permitted.",
+      "status": "implemented_validated",
+      "not_covered_reason": "Source-owned legacy hybrid reference policy is integrated through MathSpec, symmetric JudgeSpec and ScriptSpec; frozen real archive replay validates both routes.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "bounded_script_executes_math_and_symmetric_labels_partial",
+      "source_runtime": "bounded_script_executes_math_and_symmetric_labels",
       "native_fallback_in_cutover": false,
       "contract_family": "math-judge",
       "existing_primitive_candidate": [
@@ -773,8 +783,8 @@
         "script"
       ],
       "resolution_strategy": "existing_math_judge_client_composition",
-      "needed_change": "Select semantic or symbolic reference contracts during trusted preparation for unsupported legacy records, without deriving that choice from the candidate. Obtain the two missing archived NS-tools judge transcripts to complete replay.",
-      "validation_gap": "Sixteen of eighteen frozen actual Env traces match source/archive scores and framework rewards; two NS-tools traces lack archived external judge responses and cannot be completed without those transcripts.",
+      "needed_change": "None for source terminal scoring; NS tool execution remains the existing source runtime.",
+      "validation_gap": "None in the frozen eighteen-trace sample; this is not an exhaustive claim over future inputs.",
       "source_contract": "Symbolic boxed/pure expression; indefinite integrals equal up to constant; fallback judge must agree in both answer orders; bounded symbolic subprocess.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -796,22 +806,31 @@
         "evidence/e2e/wiring/skyrl-math-reference-contract/worker/roundtrip.json",
         "evidence/e2e/wiring/skyrl-math-reference-contract/manager-final/roundtrip.json",
         "evidence/e2e/wiring/skyrl-math-reference-contract/installed/roundtrip.json",
-        "evidence/e2e/wiring/skyrl-math-reference-contract/implementation-provenance.json"
+        "evidence/e2e/wiring/skyrl-math-reference-contract/implementation-provenance.json",
+        "integrations/MarinSkyRL/math-hybrid-reference-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-math-transcript-correction/manager-archives/summary.json",
+        "evidence/e2e/wiring/skyrl-math-transcript-correction/installed-archive-failclosed/summary.json",
+        "evidence/e2e/wiring/skyrl-math-transcript-correction/installed-failclosed/roundtrip.json",
+        "evidence/e2e/wiring/skyrl-math-transcript-correction/implementation-provenance.json",
+        "evidence/e2e/wiring/skyrl-math-transcript-correction/manager-final-tests.stdout"
       ],
       "observed_verified_execution_links": 278,
       "actual_replayed_links": 9,
-      "core_extension_requirement": "none_for_implemented_subset",
-      "integration_patch": "integrations/MarinSkyRL/math-judge-verifyit.patch",
-      "validation_scope": "37 math source tests plus 9 preparation regression tests pass. Sixteen prepared semantic/symbolic Env roundtrips across both routes and all three builders match native scores and HTTP requests, including exact installed-package execution. Frozen archive replay remains 16/18 complete; two NS-tools judge transcripts are missing.",
-      "remaining_contracts": [
-        "Untagged legacy references outside bounded automatic admission require explicit trusted reference-kind selection; full backward compatibility is not inferred."
-      ],
+      "core_extension_requirement": "none_proposed",
+      "integration_patch": "integrations/MarinSkyRL/math-hybrid-reference-verifyit.patch",
+      "validation_scope": "47 source regressions pass. Twelve legacy/symbolic actual Env fixtures and eighteen frozen archives match source rewards and HTTP requests, including independent manager and exact installed-package runs. Nested multi-turn judge transcripts were recovered without resampling or generation.",
+      "remaining_contracts": [],
       "intentional_tightening": "Finite scalar additive policy removes set/interval/nonfinite false positives; malformed/contradictory/refused/tool completions and backend/HTTP failures invalidate the full composition.",
       "completed_replayed_links": 9,
       "incomplete_replayed_links": 0,
       "prepared_reference_contracts": [
         "semantic: explicit trusted nonempty transport-valid text, symmetric original-prompt JudgeSpec",
         "symbolic: strict parsed reference, MathSpec with symmetric JudgeSpec fallback"
+      ],
+      "implemented_primitive_modes": [
+        "math",
+        "judge",
+        "script"
       ]
     },
     {
@@ -2232,12 +2251,12 @@
   ],
   "tested_cutover_reporting": {
     "denominator": 46,
-    "wired_routes": 42,
-    "tested_complete_routes": 42,
-    "real_trace_routes": 27,
+    "wired_routes": 44,
+    "tested_complete_routes": 44,
+    "real_trace_routes": 29,
     "source_fixture_routes": 15,
     "route_specific_witness_pending": [],
-    "partial_routes_reported_separately": 4,
-    "definition": "Count actual source/framework cutovers, not helper-only parity or wiring availability; four partial routes have separate evidence but are not included as complete tested routes."
+    "partial_routes_reported_separately": 2,
+    "definition": "Actual source/framework cutovers:29 real trace routes and15 source fixture routes. Instruction and coder1 partial routes remain separate."
   }
 }

@@ -7,7 +7,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Harness 12,692 indexed task configs | 11,329 guarded native routes + 993 retained-runtime routes available | 370 configs have no cutover; breakdown below |
 | Evalchemy 42 custom benchmarks | 8 native integrations + 3 math hybrids | 31 not integrated (20 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 17 retained-runtime overrides | 0 unwired; GSM hybrid retains its fallback; plus 1 orchestration group |
-| SkyRL 46 scoring routes | 42 source-patched (27 with selected real traces, 15 without eligible real traces) | 4 partial client/harness routes + 0 native profile gaps; 2 external-objective placeholders separate |
+| SkyRL 46 scoring routes | 44 source-patched (29 with selected real traces, 15 without eligible real traces) | 2 partial client/harness routes + 0 native profile gaps; 2 external-objective placeholders separate |
 | Harbor 87 adapters | 18 native primitive clients + 3 structured source-runtime bridges | 66 not integrated; 6 wired routes need verifier isolation |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
@@ -106,12 +106,10 @@ Fifteen Uncheatable category overrides now have an explicit trusted-installation
 
 ## SkyRL
 
-The 4 pending scoring routes comprise 3 active routes and 1 dormant implementations. Three dormant math variants now have opt-in source integrations and fixture evidence; archived traces remain unavailable. 0 rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
+The 2 pending scoring routes comprise 1 active routes and 1 dormant implementations. Three dormant math variants now have opt-in source integrations and fixture evidence; archived traces remain unavailable. 0 rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
-| nemotron_ultra/ns_tools_simple_agent | not_integrated | math, judge, script | Partial source integration: explicit trusted semantic/text and symbolic/math reference contracts are wired through existing primitives. Select semantic or symbolic reference contracts during trusted preparation for unsupported legacy records, without deriving that choice from the candidate. |
-| nemotron_ultra/math_with_judge_simple_agent | not_integrated | math, judge, script | Partial source integration: explicit trusted semantic/text and symbolic/math reference contracts are wired through existing primitives. Select semantic or symbolic reference contracts during trusted preparation for unsupported legacy records, without deriving that choice from the candidate. |
 | nemotron_ultra/instruction_following_simple_agent | not_integrated | ifeval, script | Partial source integration: explicit and newly prepared frozen references are wired; historical random references without saved construction state cannot be recovered, and arbitrary valid parameter domains beyond the constructor audit are not yet validated. Validate remaining valid parameter domains and migrate legacy task records from their original trusted construction state when available; never resample hidden references at grading. |
 | dormant/coder1 | not_integrated | stdio, pytest, script | All four payload forms are wired with trusted tests outside the candidate sandbox. Preserve explicit bounded Python contracts and extend only semantics that keep trusted assertions outside candidate execution. |
 

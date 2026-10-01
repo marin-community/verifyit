@@ -37,17 +37,14 @@ text are allowed. Symbolic references require the parsed mathematical contract;
 a parser miss cannot silently switch them into semantic judging. Empty references
 and malformed metadata return invalid-task zero before judge calls.
 
-For untagged legacy records, trusted reference validation precedes candidate gating. Parsed mathematical
-expressions retain symbolic scoring even when their spelling resembles words.
-References yielding only strings may use the judge when they belong to a bounded
-natural-language domain: Unicode letters/digits, spaces and ordinary sentence
-punctuation, with a multi-letter word and no reserved mathematical constant.
-Known paired TeX sizing commands can be removed solely to validate a reference
-that the original extraction cannot parse; such a reference retains the source
-judge fallback. Its original spelling is preserved in the prompt. Unbalanced
-braces/sizing pairs, unknown unparsed mathematical syntax and empty references
-are invalid tasks. Actual parsing/checker errors are infrastructure failures;
-they cannot retain credit or become positive judge fallback.
+Apply `math-hybrid-reference-verifyit.patch` after `coder1-protocols-verifyit.patch`
+and before the dependency pin. Untagged legacy rows use the pinned source's fixed
+hybrid policy: nonempty transport-valid reference text, an optional symbolic
+shortcut, then the actual symmetric semantic judge. Ordinary parser rejection
+does not invalidate an otherwise valid textual reference. Unknown TeX macros and
+multiline prose remain text contracts. Explicit symbolic contracts still reject
+unparsed references. Raised parser failures return unscored zero and never
+become positive judge fallback. Reference policy does not depend on the candidate.
 
 The symmetric judge performs the original two orientations with the original
 trusted source system/user prompts, temperature 0, token budgets 8192/16384 and
@@ -59,26 +56,20 @@ budget. HTTP retries are disabled for this rubric. A failure in the second judge
 discards any first-judge positive credit. Full archived external judge text is
 retained in diagnostic metadata.
 
-These remain partial integrations for the full legacy source population. Prepared
-semantic and symbolic contracts are integrated, but untagged references outside
-the bounded legacy domains still need an explicit trusted contract selection.
-No backward compatibility for arbitrary untagged references is inferred.
+Both terminal-scoring routes are integrated and validated. Forty-seven source
+regressions pass, including unexpected parser failures, malformed contracts and
+judge transport failures. Twelve source/Env fixtures cover legacy prose, unknown
+TeX and explicit symbolic references with positive and negative answers. Native,
+cutover, independent manager and exact installed-package scores and HTTP requests
+match. The 24-patch manifest proves fresh-stack source byte equivalence.
 
-Thirty-seven math source tests and nine instruction preparation regressions pass.
-Sixteen prepared source/Env roundtrips cover both routes and all three builders,
-including positive and negative semantic and symbolic answers. Native and cutover
-scores and HTTP requests match. The manager independently checked the roundtrips;
-the same cases pass with the exact installed verifyit revision and fresh exported
-source stack. Evidence and the 22-patch provenance manifest are in
-`evidence/e2e/wiring/skyrl-math-reference-contract/`.
-
-The full real-trace population contains 294 verified links in six benchmark groups.
-Three seeded selections per group were frozen before scoring, producing 18 actual
-Env roundtrips. Sixteen match recorded and pinned-native score and framework
-reward. Two NS-tools items lack archived external judge transcripts and remain
-explicitly incomplete; both native and patched replay fail closed with zero
-framework reward, without inventing responses or resampling. The manager
-independently reran the repaired prose and typography cases and the 25 source
-tests. Evidence, input hashes, local HTTP transcript transport and rerun driver
-are under `evidence/e2e/wiring/skyrl-math-judge/`. Historical RAW/reference-routing
-discrepancies remain separate from `patched-final/`.
+The real-trace population contains 294 verified links in six benchmark groups.
+The original three seeded selections per group remain frozen: all 18 now match
+recorded and pinned-native scores and framework rewards. The two NS-tools judge
+transcripts previously reported missing were present under nested multi-turn
+diagnostics; the replay extractor was wrong. Corrected transport matches exact
+source prompts to those archived responses, with no generation or resampling.
+Original failed evidence is preserved and superseded by
+`evidence/e2e/wiring/skyrl-math-transcript-correction/`, including independent
+manager and exact installed-package reruns. NS tool execution remains in the
+source runtime; this validates terminal grading, not sandbox execution itself.
