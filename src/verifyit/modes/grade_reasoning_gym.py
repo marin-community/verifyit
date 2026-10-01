@@ -3,13 +3,14 @@
 
 """Mode reasoning-gym: score the answer file with the reasoning-gym dataset's own scorer.
 
-The task ships the generated entry (its gold answer and metadata) as JSON under tests/; the spec
+The task ships the generated entry (its reference answer or null and metadata) as JSON under tests/; the spec
 names the dataset it came from. ``score_answer`` returns a float in [0, 1], which becomes the
 reward directly -- several reasoning-gym datasets award partial credit. A dataset name the library
 does not know, or an entry file that is missing or not an entry, is a task defect.
 """
 
 import json
+import math
 from pathlib import Path
 
 import reasoning_gym
@@ -33,23 +34,31 @@ def load_entry(path: Path) -> dict:
     return entry
 
 
-def grade(spec: ReasoningGymSpec, tests_dir: Path, workspace: Path) -> Reward:
-    entry = load_entry(tests_dir / spec.entry)
+def grade_reasoning_gym_candidate(spec: ReasoningGymSpec, entry: dict, candidate: str | None) -> Reward:
+    """Score extracted text with the dataset's scorer, retaining partial credit.
+
+    The caller owns isolation: upstream scorers can parse or execute candidate
+    expressions. Scorer failures propagate; they are not incorrect answers.
+    """
     try:
         score_answer = reasoning_gym.get_score_answer_fn(spec.dataset)
     except ValueError as error:
         raise InvalidTask(f"unknown reasoning-gym dataset {spec.dataset!r}") from error
-
-    text = read_output(spec, workspace)
-    if text is None:
+    metadata = entry.get("metadata")
+    if not isinstance(metadata, dict) or metadata.get("source_dataset") != spec.dataset:
+        raise InvalidTask("reasoning-gym entry dataset differs from its verifier")
+    if "answer" not in entry or (entry["answer"] is not None and not isinstance(entry["answer"], str)):
+        raise InvalidTask("reasoning-gym entry requires an answer field containing a string or null")
+    if candidate is None or not candidate.strip():
         return scored(0.0, reason="no_output")
-    answer = text.strip()
-    try:
-        # pyrefly: ignore[bad-argument-count]  # reasoning-gym annotates the factory's return as
-        # Callable[[], float]; the bound score_answer takes (answer, entry).
-        score = score_answer(answer, entry)
-    except Exception as error:
-        return scored(0.0, reason="scorer_error", error=f"{type(error).__name__}: {error}")
-    if not isinstance(score, int | float):
-        raise TypeError(f"reasoning-gym scorer for {spec.dataset} returned {type(score).__name__}")
+    answer = candidate.strip()
+    # pyrefly: ignore[bad-argument-count]  # The upstream bound scorer accepts answer and entry.
+    score = score_answer(answer, entry)
+    if isinstance(score, bool) or not isinstance(score, int | float) or not math.isfinite(score) or not 0 <= score <= 1:
+        raise InvalidTask(f"reasoning-gym scorer for {spec.dataset} returned an invalid reward")
     return scored(float(score), dataset=spec.dataset, answer=answer[:CANDIDATE_DETAIL_CHARS])
+
+
+def grade(spec: ReasoningGymSpec, tests_dir: Path, workspace: Path) -> Reward:
+    entry = load_entry(tests_dir / spec.entry)
+    return grade_reasoning_gym_candidate(spec, entry, read_output(spec, workspace))
