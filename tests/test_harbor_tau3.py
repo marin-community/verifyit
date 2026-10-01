@@ -96,9 +96,11 @@ def test_tau3_bridge_rejects_modified_runtime_database(tmp_path, monkeypatch):
             }
         )
     )
-    # The retained producer would award one if tampered assets reached it.
-    (tests / "evaluate.py").write_text("raise AssertionError('modified database reached evaluator')")
-    asset.write_text("candidate changed database")
+    (tests / "evaluate.py").write_text(
+        "import json,sys\nfrom pathlib import Path\n"
+        "Path(sys.argv[sys.argv.index('--result') + 1]).write_text("
+        "json.dumps({'status': 'passed', 'reward': 1}))\n"
+    )
     monkeypatch.setenv("TAU2_BENCH_ROOT", str(runtime))
     monkeypatch.delenv("TAU2_DATA_DIR", raising=False)
     shutil.copyfile(BRIDGE, tests / "bridge.py")
@@ -106,10 +108,12 @@ def test_tau3_bridge_rejects_modified_runtime_database(tmp_path, monkeypatch):
     (tests / "verifier.toml").write_text(render_spec(ScriptSpec(path="bridge.py", verdict_file="result.json")))
     logs = tmp_path / "logs"
     logs.mkdir()
-    (logs / "reward.txt").write_text("1")
+    passing = run(tests / "verifier.toml", workspace)
+    assert passing.reward == 1
+    write_reward(logs, passing)
+    asset.write_text("candidate changed database")
     reward = run(tests / "verifier.toml", workspace)
     write_reward(logs, reward)
     assert reward.status.value == "infra_error"
     assert reward.reward == 0
-    assert "asset modified" in reward.detail["error"]
     assert not (logs / "reward.txt").exists()

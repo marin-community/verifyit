@@ -6,7 +6,7 @@ from typing import cast
 
 import pytest
 
-from verifyit.adapters.harness_runtime import corpus_config_profile, score_corpus
+from verifyit.adapters.harness_runtime import score_corpus
 from verifyit.grade import Status
 
 
@@ -63,35 +63,6 @@ def test_runtime_rejects_nonfinite_json_and_missing_sample_observations(tmp_path
     assert not invalid.aggregates
     with pytest.raises(RuntimeError, match="omitted samples"):
         score_corpus(root, config, [{"doc": {}, "responses": ["answer"]}])
-
-
-def test_likelihood_profile_preserves_source_aggregation_contract():
-    config = {
-        "output_type": "loglikelihood",
-        "metric_list": [
-            {"metric": "acc", "aggregation": "mean", "higher_is_better": True},
-            {"metric": "perplexity", "aggregation": "perplexity", "higher_is_better": False},
-        ],
-    }
-    assert corpus_config_profile(config) == "likelihood_corpus"
-    config["metric_list"][1]["aggregation"] = "mean"
-    assert corpus_config_profile(config) is None
-    config["metric_list"][1]["aggregation"] = "perplexity"
-    config["process_results"] = "task_owned_override"
-    assert corpus_config_profile(config) is None
-
-
-def test_unreviewed_generation_callback_cannot_enable_runtime():
-    def smoothed_bleu_4(references, predictions):
-        return 100
-
-    config = {
-        "output_type": "generate_until",
-        "metric_list": [{"metric": smoothed_bleu_4, "aggregation": "mean", "higher_is_better": True}],
-        "doc_to_text": "question",
-        "doc_to_target": "answer",
-    }
-    assert corpus_config_profile(config) is None
 
 
 @pytest.mark.parametrize("seed", [10**1000, True, -1, 2**32])

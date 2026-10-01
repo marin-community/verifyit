@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 """Strict exact grading after trusted Hendrycks string normalization."""
 
-import functools
 import hashlib
 import inspect
 import math
@@ -12,6 +11,7 @@ from importlib import import_module
 from pathlib import Path
 from types import CodeType
 
+from verifyit.adapters.harness_validation import validate_default_filter
 from verifyit.adapters.skyrl import grade_literal_candidate
 from verifyit.grade import InvalidTask, Reward, Status, invalid_task, scored
 
@@ -130,25 +130,11 @@ def validate_hendrycks_task(task) -> bool:
             raise InvalidTask("changed Hendrycks source scorer or metric configuration")
         return False
     mean = import_module("lm_eval.api.metrics").mean
-    ensemble_type = import_module("lm_eval.api.filter").FilterEnsemble
-    take_first = import_module("lm_eval.filters.selection").TakeFirstFilter
     if tuple(task._metric_fn_list) != ("exact_match",) or task._aggregation_list.get("exact_match") is not mean:
         raise InvalidTask("Hendrycks exact requires the registered exact_match/mean contract")
     if task._metric_fn_kwargs.get("exact_match", {}):
         raise InvalidTask("Hendrycks exact does not accept additional metric options")
-    filters = task._filters
-    if (
-        task.config.filter_list is not None
-        or len(filters) != 1
-        or type(filters[0]) is not ensemble_type
-        or filters[0].name != "none"
-        or "apply" in vars(filters[0])
-        or len(filters[0].filters) != 1
-    ):
-        raise InvalidTask("Hendrycks exact requires the default response filter")
-    factory = filters[0].filters[0]
-    if not isinstance(factory, functools.partial) or factory.func is not take_first or factory.args or factory.keywords:
-        raise InvalidTask("Hendrycks exact requires unmodified TakeFirstFilter")
+    validate_default_filter(task, "Hendrycks exact")
     return True
 
 

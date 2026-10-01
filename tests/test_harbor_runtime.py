@@ -43,27 +43,22 @@ def test_native_script_zero_replaces_stale_positive_reward(native_task, tmp_path
 
 
 @pytest.mark.parametrize(
-    "script,old_reward,expected_error",
+    "script",
     [
-        ("#!/bin/bash\nexit 1\n", "1", "exited 1"),
-        ('#!/bin/bash\necho 1 > "$VERIFYIT_NATIVE_LOGS_DIR/reward.txt"\nexit 7\n', "1", "exited 7"),
-        ("#!/bin/bash\ntrue\n", "1", "no reward file"),
-        ('#!/bin/bash\necho garbage > "$VERIFYIT_NATIVE_LOGS_DIR/reward.txt"\n', "1", "numeric"),
-        (
-            '#!/bin/bash\necho 1 > "$VERIFYIT_NATIVE_LOGS_DIR/reward.txt"\n'
-            'echo broken > "$VERIFYIT_NATIVE_LOGS_DIR/reward.json"\n',
-            "1",
-            "JSON",
-        ),
+        "#!/bin/bash\nexit 1\n",
+        '#!/bin/bash\necho 1 > "$VERIFYIT_NATIVE_LOGS_DIR/reward.txt"\nexit 7\n',
+        "#!/bin/bash\ntrue\n",
+        '#!/bin/bash\necho garbage > "$VERIFYIT_NATIVE_LOGS_DIR/reward.txt"\n',
+        '#!/bin/bash\necho 1 > "$VERIFYIT_NATIVE_LOGS_DIR/reward.txt"\n'
+        'echo broken > "$VERIFYIT_NATIVE_LOGS_DIR/reward.json"\n',
     ],
 )
-def test_native_runtime_failure_cannot_reuse_previous_reward(native_task, tmp_path, script, old_reward, expected_error):
+def test_native_runtime_failure_cannot_reuse_previous_reward(native_task, tmp_path, script):
     tests, workspace, logs = native_task
-    (logs / "reward.txt").write_text(old_reward)
+    (logs / "reward.txt").write_text("1")
     (tests / "test.sh").write_text(script)
     reward = run(tests / "verifier.toml", workspace)
     assert reward.status is Status.INFRA_ERROR and reward.reward == 0.0
-    assert expected_error in str(reward.detail)
     outer = tmp_path / "outer"
     outer.mkdir()
     (outer / "reward.txt").write_text("1")

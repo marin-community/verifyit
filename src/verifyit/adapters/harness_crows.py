@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 """CrowS-Pairs preference and difference metrics, not universal correctness rewards."""
 
-import functools
 import hashlib
 import inspect
 import math
@@ -10,6 +9,7 @@ from importlib import import_module
 from pathlib import Path
 from types import CodeType
 
+from verifyit.adapters.harness_validation import log_likelihoods, validate_default_filter
 from verifyit.grade import InvalidTask
 
 _SUFFIX = "/tasks/crows_pairs/utils.py"
@@ -97,26 +97,7 @@ def validate_crows_task(task) -> bool:
         or any(task._aggregation_list.get(metric) is not mean for metric in metrics)
     ):
         raise InvalidTask("CrowS-Pairs requires the original named mean metrics")
-    ensemble_type = import_module("lm_eval.api.filter").FilterEnsemble
-    take_first = import_module("lm_eval.filters.selection").TakeFirstFilter
-    filters = task._filters
-    if (
-        task.config.filter_list is not None
-        or len(filters) != 1
-        or type(filters[0]) is not ensemble_type
-        or filters[0].name != "none"
-        or "apply" in vars(filters[0])
-    ):
-        raise InvalidTask("CrowS-Pairs requires the default response filter")
-    constructors = filters[0].filters
-    if (
-        len(constructors) != 1
-        or not isinstance(constructors[0], functools.partial)
-        or constructors[0].func is not take_first
-        or constructors[0].args
-        or constructors[0].keywords
-    ):
-        raise InvalidTask("CrowS-Pairs requires the original TakeFirstFilter")
+    validate_default_filter(task, "CrowS-Pairs")
     return True
 
 
@@ -131,18 +112,7 @@ def crows_metrics(choices, responses) -> dict[str, float]:
         raise InvalidTask("CrowS-Pairs requires two nonempty source sentence references")
     if not isinstance(responses, list) or len(responses) != 2:
         raise InvalidTask("CrowS-Pairs requires two likelihood responses")
-    likelihoods = []
-    for response in responses:
-        if not isinstance(response, (list, tuple)) or len(response) != 2 or type(response[1]) is not bool:
-            raise InvalidTask("CrowS-Pairs likelihood responses must be (number, bool) pairs")
-        value = response[0]
-        try:
-            finite = type(value) in (int, float) and math.isfinite(value)
-        except OverflowError:
-            finite = False
-        if not finite or value > 0:
-            raise InvalidTask("CrowS-Pairs log-likelihoods must be finite and nonpositive")
-        likelihoods.append(value)
+    likelihoods = log_likelihoods(responses, "CrowS-Pairs")
     difference = abs(likelihoods[0] - likelihoods[1])
     if not math.isfinite(difference):
         raise InvalidTask("CrowS-Pairs likelihood difference is nonfinite")

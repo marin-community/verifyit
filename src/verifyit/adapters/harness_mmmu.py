@@ -11,6 +11,7 @@ from importlib import import_module
 from pathlib import Path
 from types import CodeType
 
+from verifyit.adapters.harness_validation import validate_default_filter
 from verifyit.adapters.skyrl import grade_literal_candidate
 from verifyit.grade import InvalidTask, Reward, scored
 from verifyit.modes.grade_exact import grade_exact_candidate
@@ -124,26 +125,7 @@ def validate_mmmu_task(task) -> bool:
         or task._aggregation_list.get("acc") is not mean
     ):
         raise InvalidTask("MMMU requires the registered acc/mean metric contract")
-    ensemble_type = import_module("lm_eval.api.filter").FilterEnsemble
-    take_first = import_module("lm_eval.filters.selection").TakeFirstFilter
-    filters = task._filters
-    if (
-        task.config.filter_list is not None
-        or len(filters) != 1
-        or type(filters[0]) is not ensemble_type
-        or filters[0].name != "none"
-        or "apply" in vars(filters[0])
-    ):
-        raise InvalidTask("MMMU requires the default response filter")
-    constructors = filters[0].filters
-    if (
-        len(constructors) != 1
-        or not isinstance(constructors[0], functools.partial)
-        or constructors[0].func is not take_first
-        or constructors[0].args
-        or constructors[0].keywords
-    ):
-        raise InvalidTask("MMMU requires the original TakeFirstFilter")
+    validate_default_filter(task, "MMMU")
     return True
 
 

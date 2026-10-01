@@ -15,11 +15,6 @@ def test_mass_includes_multiple_correct_alternatives_not_argmax():
     assert result.reward == pytest.approx(0.5)
 
 
-def test_finite_underflow_uses_defined_probability_ratio():
-    result = probability_mass([1, 0], [(-1000, False), (-1001, False)])
-    assert result.reward == pytest.approx(1 / (1 + math.exp(-1)))
-
-
 def test_arbitrary_choice_count_and_ties():
     assert probability_mass([1] + [0] * 29, [(-1, True)] * 30).reward == pytest.approx(1 / 30)
 

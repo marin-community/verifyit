@@ -424,10 +424,12 @@ def test_direct_configured_judge_rejects_nontext_contract(tmp_path, fake_judge, 
     assert fake_judge.requests == []
 
 
-def test_judge_positional_output_argument_preserves_public_constructor():
-    spec = JudgeSpec((), (), "", "", (), "reference", "", True, 120.0, "custom-answer.txt")
-    assert spec.output == "custom-answer.txt"
-    assert spec.system_prompt == ""
+def test_judge_positional_output_argument_selects_the_candidate_file(tmp_path, unconfigured_judge):
+    spec = JudgeSpec(("expected",), (), "", "", (), "reference", "", True, 120.0, "/app/custom-answer.txt")
+    (tmp_path / "answer.txt").write_text("wrong candidate")
+    (tmp_path / "custom-answer.txt").write_text("expected")
+    result = grade_judge.grade(spec, tmp_path, tmp_path)
+    assert (result.status, result.reward) == (Status.SCORED, 1.0)
 
 
 @pytest.mark.parametrize(

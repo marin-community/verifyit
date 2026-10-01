@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 """Probability-weighted correctness composed from literal exact grading."""
 
-import functools
 import hashlib
 import inspect
 import math
@@ -11,6 +10,7 @@ from importlib import import_module
 from pathlib import Path
 from types import CodeType
 
+from verifyit.adapters.harness_validation import log_likelihoods, validate_default_filter
 from verifyit.adapters.skyrl import grade_literal_candidate
 from verifyit.grade import InvalidTask, Reward, scored
 
@@ -26,20 +26,7 @@ def probability_mass(labels: Sequence[int], responses: Sequence[tuple[float, boo
         raise InvalidTask("probability mass requires one label per nonempty response vector")
     if any(type(label) is not int or label not in (0, 1) for label in labels) or not any(labels):
         raise InvalidTask("probability mass requires binary labels and at least one correct alternative")
-    likelihoods = []
-    for response in responses:
-        if not isinstance(response, tuple | list) or len(response) != 2 or type(response[1]) is not bool:
-            raise InvalidTask("probability mass responses require (log likelihood, boolean greedy) pairs")
-        value = response[0]
-        if type(value) not in (int, float):
-            raise InvalidTask("probability mass likelihoods must be finite nonpositive numbers")
-        try:
-            finite = math.isfinite(value)
-        except OverflowError:
-            finite = False
-        if not finite or value > 0:
-            raise InvalidTask("probability mass likelihoods must be finite nonpositive numbers")
-        likelihoods.append(value)
+    likelihoods = log_likelihoods(responses, "TruthfulQA MC2")
     maximum = max(likelihoods)
     weights = [math.exp(value - maximum) for value in likelihoods]
     denominator = math.fsum(weights)
@@ -129,27 +116,8 @@ def validate_truthfulqa_task(task) -> bool:
             raise InvalidTask("changed TruthfulQA MC2 scorer or metric configuration")
         return False
     mean = import_module("lm_eval.api.metrics").mean
-    take_first = import_module("lm_eval.filters.selection").TakeFirstFilter
-    ensemble_type = import_module("lm_eval.api.filter").FilterEnsemble
 
-    filters = task._filters
-    if (
-        task.config.filter_list is not None
-        or len(filters) != 1
-        or type(filters[0]) is not ensemble_type
-        or filters[0].name != "none"
-        or "apply" in vars(filters[0])
-    ):
-        raise InvalidTask("TruthfulQA MC2 requires the default response filter")
-    constructors = filters[0].filters
-    if (
-        len(constructors) != 1
-        or not isinstance(constructors[0], functools.partial)
-        or constructors[0].func is not take_first
-        or constructors[0].args
-        or constructors[0].keywords
-    ):
-        raise InvalidTask("TruthfulQA MC2 requires the unmodified TakeFirstFilter")
+    validate_default_filter(task, "TruthfulQA MC2")
     aggregate = task._aggregation_list.get("acc")
     if tuple(task._metric_fn_list) != ("acc",) or task._metric_fn_kwargs.get("acc", {}) or aggregate is not mean:
         raise InvalidTask("TruthfulQA MC2 requires the registered acc/mean metric contract")
