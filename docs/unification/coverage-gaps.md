@@ -7,7 +7,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Source population | Implemented / available | Remaining coverage |
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,329 guarded native routes + 993 retained-runtime routes available | 370 configs have no cutover; breakdown below |
-| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 23 source runtimes | 7 not integrated (5 client/comparator audits + 2 native profile gaps) |
+| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 23 source runtimes | 7 not integrated (4 client/comparator audits + 1 private-solution blocker + 2 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 17 retained-runtime overrides | 0 unwired; GSM hybrid retains its fallback; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 45 source-patched (30 with selected real traces, 15 without eligible real traces) | 1 partial client/harness routes + 0 native profile gaps; 2 external-objective placeholders separate |
 | Harbor 87 adapters | 19 native primitive clients + 18 structured source-runtime bridges | 50 not integrated; 6 wired routes need verifier isolation |
@@ -64,7 +64,7 @@ The 7 remaining custom benchmarks are named below. Script/stdio/pytest candidate
 | MultiPLE | not_integrated | script | Language-specific compiler/runtime dispatch and functional tests cannot be inferred as Python tests; explicit language images and source runner adapter are absent. |
 | SWEbench | not_integrated | script | run_evaluation requires repository/image preparation, candidate patch application and protected test identities; no task-image adapter is wired. |
 | alpaca_eval | capability_gap | judge, script | Alpaca evaluator pairwise annotations and leaderboard aggregation, including length control, are source-owned; no annotation-to-verdict client is integrated. |
-| zeroeval | not_integrated | script, exact | Private-solution evaluation and zebra_grid_eval_model require source task dispatch and grid/solution artifact handling; no adapter is wired. |
+| zeroeval | not_integrated | script | Partial ScriptSpec client covers five source task dispatches, but Zebra's private solution dataset is gated. Provide genuine Zebra private solutions and validate its grid metrics. |
 
 ### Implemented source and math runtimes
 

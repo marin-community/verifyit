@@ -304,3 +304,26 @@ by the benchmark constructor and remains unsupported. Scoring uses temporary
 files; existing source caches are neither trusted nor replaced. The batch
 deadline is 1900 seconds. Source hashes and boundaries are in
 `mixeval-source.json`.
+
+## Partial Zeroeval integration
+
+Apply `zeroeval-verifyit.patch` and enable `verifyit_enabled=True` only for
+explicit task selections among `numersense-v2`, `math-l5`, `crux`, `gsm` and
+`mmlu-redux`. The original evaluator dispatches the first two to its numeric
+parser and the other three to literal comparison; the cutover preserves this
+behavior. Append the zeroeval source directory to module lookup for the original
+`src.global_configs` import. Existing harness function-RPC exports and their
+pinned Python image are required for candidate fraction normalization.
+
+Twenty fixtures cover these five task names through the actual evaluator.
+ScriptSpec retains source metrics while candidate expressions run separately
+from trusted references. Missing task files and invalid references abort the
+whole batch. All missing-answer batches receive zero accuracy, 100 percent
+missing answers and zero reasoning length; the source divides by zero.
+
+This does not complete the Zeroeval benchmark. Its default Zebra route needs
+the gated `allenai/ZebraLogicBench-private` solutions. All 20,000 cells in the
+public dataset are `___` placeholders and cannot substitute for references.
+The loader also advertises `alpaca_eval`, whose original evaluator branch is
+broken; that branch remains unsupported. No whole-benchmark tested count or
+archive replay is claimed. Hashes and scope are in `zeroeval-source.json`.

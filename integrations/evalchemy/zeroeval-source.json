@@ -1,0 +1,52 @@
+{
+  "source_revision": "e3f4a3d601896c437f37b0bd0a30e51651cce6d0",
+  "patch_sha256": "710cee93d01d61c7255696617b1771838efb2dbe980fa34ddee60d447d66296c",
+  "framework_files": {
+    "eval/chat_benchmarks/zeroeval/eval_instruct.py": "0b2656a44815485c876955d7ccd683f5fff9c3912cb9a062f9482b2c64904572",
+    "eval/graders/verifyit_zeroeval.py": "117a7ac64355a158d89ab019c2a7bdafc28c48930256f910188fc19eefdc5577",
+    "tests/graders/test_verifyit_zeroeval.py": "c1e55d8343f55492d6b8b8e90d090c170d0191ace3dc00babd5f9acda292ad1d"
+  },
+  "source_files": {
+    "eval/chat_benchmarks/zeroeval/eval_instruct.py": "12ea3126f6824181fa109426fa428ba8bcfae9e8270caadd54ef7427591f605f",
+    "eval/chat_benchmarks/zeroeval/src/task_configs.py": "6517ee76e7580e816cca6835b9ec4365a6461d34f3dbde8dbdf763c5040672d9",
+    "eval/chat_benchmarks/zeroeval/src/evaluation/math_eval.py": "8b1466bbff3f9b9ce83422904fac5de70e1583a9d9d04c06af9c4402b4be9391",
+    "eval/chat_benchmarks/zeroeval/src/evaluation/crux_eval.py": "f012017663d248804e9c47bee2c0fcdaebcc82c560cdeb4bb9c83a42be5e38fc",
+    "eval/chat_benchmarks/zeroeval/src/evaluation/eval_utils.py": "b74fd2979f5c423760c41034f66904aa59b951f747c07e32e42611d394285f3d",
+    "eval/chat_benchmarks/zeroeval/src/evaluation/zebra_grid_eval.py": "998432c3b9424cb69c35db7a7fe8dda03bf80d1e08cb2d9bb4274a21d088d87d"
+  },
+  "fresh_applied": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/zeroeval-evalchemy-applied",
+  "scope": "Partial integration only. The complete zeroeval row remains untested and unpromoted.",
+  "dispatch": {
+    "numersense-v2": "source math parser, first numeric token after fraction normalization",
+    "math-l5": "source math parser, first numeric token after fraction normalization",
+    "crux": "source literal comparison; no code execution",
+    "gsm": "actual source literal dispatch, not math comparison",
+    "mmlu-redux": "actual source literal dispatch, not MCQ dispatch",
+    "zebra-grid": "blocked: private solution dataset is gated; every public solution cell is a placeholder",
+    "alpaca_eval": "source scoring branch is broken: generated output is a string and records have no answer field"
+  },
+  "runtime": "ScriptSpec supervises the whole source task batch. Candidate fraction eval runs in existing pinned function-RPC Python image. Reference normalization and aggregation remain in the trusted supervisor. Pinned source call order alternates candidate/reference; reference values never enter candidate runtime. Source memory limit is inherited; outer timeout is 120 seconds.",
+  "prerequisites": [
+    "verifyit",
+    "lm-eval-harness function RPC exports and pinned Python image",
+    "original zeroeval dependencies",
+    "append zeroeval source directory to sys.path for original src.global_configs import"
+  ],
+  "proof": {
+    "supported_task_names": 5,
+    "evaluator_samples": 20,
+    "ordinary_tests": 8,
+    "real_archived_replays": 0
+  },
+  "corrections": [
+    "Selected task files must be complete; failure aborts the entire batch and cleans temporary files.",
+    "All missing-answer tasks score zero with No answer 100 and Reason Lens 0; source raises ZeroDivisionError.",
+    "Invalid trusted numeric references raise InvalidTask before candidate execution; no partial metrics."
+  ],
+  "limitations": [
+    "No Zebra scoring proof: private access fails and all 20000 public cells equal ___.",
+    "No claim to repair the broken source alpaca_eval dispatch.",
+    "Fixtures exercise actual evaluate_responses; full generation and archived model traces are not claimed.",
+    "Candidate expression support inherits the bounded data-only RPC protocol and outer deadline."
+  ]
+}

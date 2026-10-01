@@ -1013,6 +1013,37 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-repobench/archive-census.json",
                 ],
             )
+        elif name == "zeroeval":
+            entity.update(
+                status="not_integrated",
+                reason_id="custom_zeroeval_private_solution_blocker",
+                reason=(
+                    "Partial ScriptSpec client covers five source task dispatches, but Zebra's "
+                    "private solution dataset is gated. All 20,000 public solution cells are "
+                    "placeholders, so the full benchmark remains untested."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Provide genuine Zebra private solutions and validate its grid metrics. "
+                    "Five non-Zebra task names match the source evaluator across 20 fixtures: "
+                    "numersense-v2/math-l5 numeric parsing and crux/gsm/mmlu-redux literal dispatch. "
+                    "Candidate fraction evaluation is isolated from trusted references. Missing "
+                    "task files abort, invalid numeric references remain invalid_task, and all "
+                    "missing-answer batches score zero instead of source division by zero. "
+                    "The source alpaca_eval branch is broken and remains unsupported. No full-row "
+                    "promotion or archived replay is claimed."
+                ),
+                validation_status="partial_five_task_evaluator_fixtures_zebra_blocked",
+                blockers=["gated Zebra private solutions; public cells are placeholders"],
+                evidence=[
+                    "integrations/evalchemy/zeroeval-verifyit.patch",
+                    "integrations/evalchemy/zeroeval-source.json",
+                    "../evidence/e2e/wiring/evalchemy-zeroeval/manager-initial/results.json",
+                    "../evidence/e2e/wiring/evalchemy-zeroeval/cutover-final/results.json",
+                    "../evidence/e2e/wiring/evalchemy-zeroeval/edges/results.json",
+                    "../evidence/e2e/wiring/evalchemy-zeroeval/solution-availability.json",
+                ],
+            )
         elif name == "MixEval":
             entity.update(
                 status="retained_runtime_available",
