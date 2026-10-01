@@ -1,11 +1,13 @@
 # Coverage gaps
 
+Completion scope: all 46 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **196 required routes**. The manager-reviewed checkpoint is **100/196 tested** (SkyRL 45/46, Harbor 21/87, custom 13/42, overrides 21/21). Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required.
+
 The remaining work is primarily client integration, source-specific comparison/judge profiles, and execution validation. A specification is not an implemented migration. Retaining the source scorer is compatibility or a hybrid route, not complete native equivalence. No unavoidable new verifier category has been identified.
 
 | Source population | Implemented / available | Remaining coverage |
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,329 guarded native routes + 993 retained-runtime routes available | 370 configs have no cutover; breakdown below |
-| Evalchemy 42 custom benchmarks | 8 native integrations + 3 math hybrids | 31 not integrated (20 client/comparator audits + 11 native profile gaps) |
+| Evalchemy 42 custom benchmarks | 8 native integrations + 3 math hybrids + 2 isolated source code runtimes | 29 not integrated (18 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 17 retained-runtime overrides | 0 unwired; GSM hybrid retains its fallback; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 45 source-patched (30 with selected real traces, 15 without eligible real traces) | 1 partial client/harness routes + 0 native profile gaps; 2 external-objective placeholders separate |
 | Harbor 87 adapters | 18 native primitive clients + 3 structured source-runtime bridges | 66 not integrated; 6 wired routes need verifier isolation |
@@ -21,7 +23,7 @@ Evidence audited 2026-10-01. These are distinct configurations exercised through
 
 | Population | Routes available / total | E2E tested / total | Fixture only | Archived-score parity | Real responses, different producer contract |
 | --- | --- | --- | --- | --- | --- |
-| evalchemy-custom | 11 / 42 | 11 / 42 | 6 | 5 | 0 |
+| evalchemy-custom | 13 / 42 | 13 / 42 | 8 | 5 | 0 |
 | evalchemy-override | 21 / 21 | 21 / 21 | 20 | 1 | 0 |
 | lm-eval-harness | 12,322 / 12,692 | 224 / 12,692 | 220 | 3 | 1 |
 
@@ -52,7 +54,7 @@ The source population additionally has 834 groups and 456 templates (1,290 orche
 
 ## Evalchemy custom benchmarks
 
-The 31 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
+The 29 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
@@ -63,7 +65,6 @@ The 31 remaining custom benchmarks are named below. Script/stdio/pytest candidat
 | FinanceBench | capability_gap | judge | judge_equivalence uses a pinned equivalence prompt, response parser, endpoint retries and named failure records; the default reference rubric is not equivalent. |
 | HLE | capability_gap | judge | Source semantic-answer judge and repeated-trial scoring require its exact prompt/parser and failure contract, not the default rubric. |
 | HMMT | not_integrated | math | MathArena parse_answer/check_answers accepts structured answers and parser warnings; its comparator has not been mapped to the existing math profile. |
-| HumanEval | not_integrated | script, pytest | Functional correctness and pass@k need extracted candidate code, trusted tests and per-trial success records; benchmark client is not wired. |
 | HumanEvalPlus | not_integrated | script, pytest | EvalPlus artifact validation and extended test cases need protected artifacts, source tolerances and pass@k aggregation; adapter is absent. |
 | IFBench | not_integrated | ifeval, script | IFBench evaluate_accuracy uses its instruction registry and named result vectors; no source registry adapter is wired. |
 | IFEval | capability_gap | ifeval | Official instruction registry and strict/loose instruction/prompt vectors differ from approximate core checkers; implement the registry profile and preserve denominators. |
@@ -71,7 +72,6 @@ The 31 remaining custom benchmarks are named below. Script/stdio/pytest candidat
 | LiveCodeBench | not_integrated | stdio, script | Source run_test dispatch includes stdin and callable modes with compile/runtime/timeout labels; case codec and runner adapter are not integrated. |
 | LiveCodeBenchv5 | not_integrated | stdio, script | Version5 source tests retain stdin/callable dispatch, resource limits and repeated/pass@k statistics; client translation is absent. |
 | LiveCodeBenchv5_official | not_integrated | script | Official evaluator owns its test serialization, runner dependencies and pass@k outputs; no protected source-runner ScriptSpec adapter is wired. |
-| MBPP | not_integrated | script, pytest | MBPP callable tests and candidate extraction need protected task tests and per-trial pass records; adapter is absent. |
 | MBPPPlus | not_integrated | script, pytest | EvalPlus MBPP extended tests and artifact validation need source tolerance/case semantics and protected fixtures; adapter is absent. |
 | MRCR | not_integrated | script | Character similarity and needle/context-bin aggregates are non-binary source metrics; preserve them through a named-result script adapter. |
 | MTBench | capability_gap | judge | Single/pairwise multi-turn matches use task judge templates and turn-specific aggregation; rubric-only scoring loses match labels and turn metrics. |
@@ -88,13 +88,15 @@ The 31 remaining custom benchmarks are named below. Script/stdio/pytest candidat
 | alpaca_eval | capability_gap | judge, script | Alpaca evaluator pairwise annotations and leaderboard aggregation, including length control, are source-owned; no annotation-to-verdict client is integrated. |
 | zeroeval | not_integrated | script, exact | Private-solution evaluation and zebra_grid_eval_model require source task dispatch and grid/solution artifact handling; no adapter is wired. |
 
-### Implemented math/source fallbacks
+### Implemented source and math runtimes
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
 | AIME24 | native_fallback | math | Boxed math is integrated, but missing parse explicitly retains Minerva comparison; complete native comparator equivalence is not implemented. Map the remaining Minerva normalization/comparison semantics without changing no-parse fallback behavior. |
 | AIME25 | native_fallback | math | Boxed math is integrated, but missing parse explicitly retains Minerva comparison; complete native comparator equivalence is not implemented. Map the remaining Minerva normalization/comparison semantics without changing no-parse fallback behavior. |
+| HumanEval | retained_runtime_available | script | ScriptSpec retains source Python assertions and HumanEval shell tests in a trusted supervisor while candidate functions run in isolated containers. Enable verifyit_enabled=True and load the pinned local candidate image. |
 | MATH500 | native_fallback | math | Boxed math is integrated, but missing parse explicitly retains Minerva comparison; complete native comparator equivalence is not implemented. Map the remaining Minerva normalization/comparison semantics without changing no-parse fallback behavior. |
+| MBPP | retained_runtime_available | script | ScriptSpec retains source Python assertions and HumanEval shell tests in a trusted supervisor while candidate functions run in isolated containers. Enable verifyit_enabled=True and load the pinned local candidate image. |
 
 ## Evalchemy overrides
 
@@ -259,7 +261,7 @@ CrowS-Pairs adds 22 guarded configs: strict stereo/anti-stereo preference preser
 
 AGIEval adds 19 guarded multi-answer choice configs: raw and character-normalized likelihood winners grade against alternative gold indices through existing MCQ/exact primitives. All 19 registered config guards and three seeded actual evaluator witnesses pass, including mixed-invalid-batch abort and four early drift guards. Unicode lengths and ties preserve fresh source per-record acc/acc_norm values. No AGIEval-named tracker or local JSON/JSONL/Markdown artifacts were found; this is source-fixture validation, not archived-run validation.
 
-Harness 980 retained-runtime configurations have source/evaluator fixture validation, without matching saved tracker runs. Harness 11,329 static-eligible configurations have implemented guards and representative source parity, but only PIQA/Winogrande/BoolQ have full selected real-run replays. The new 250 have source API and evaluator fixture validation without matching saved model traces. Evalchemy MMLUPro/GPQADiamond and AIME24/MATH500/GSM override have real replay evidence. AIW/GSM8KPerturbed/AIME25 have source parity but no validated tracker links. JEEBench opt-in constructor/extraction/evaluator roundtrips preserve three repetitions and partial credit; malformed references abort batches, unsupported uppercase labels are penalized, and no matching saved run links were available. AMC23 opt-in constructor/extraction/evaluator fixtures preserve ten repetitions and call exact after the pinned normalizer. Four malformed-reference batches abort, including a source raw-fallback case that formerly scored one. No matching AMC23 tracker links or direct local inputs were found; the 291 named local inputs are SkyRL Hendrycks/aime traces. NUPA-Loose and NUPA5K-Loose now call strict exact grading for complete digit-component equality and aligned digit matches, retaining all five named metrics and task/length/cross-bucket denominators. Three frozen NUPA5K runs replay all 15,000 raw responses with no per-sample or aggregate differences; NUPA-Loose shares the scorer but has evaluator fixtures only. Invalid references abort without aggregate output. Source preparation discards signs, including scientific exponent signs; exact_match is a digit-component metric, not numeric equivalence. NQ-Open/TriviaQA source exact routes lack full dataset replay. The English TruthfulQA MC2 override has actual source/evaluator fixture parity; three of thirteen matching tracker links were frozen before scoring, but S3 access is unavailable and no matching local JSON/JSONL artifacts were found. No archived TruthfulQA replay is claimed.
+Harness 993 retained-runtime configurations are available; exact tested configuration membership is in the ledger, and no matching archived score replay is claimed for these retained routes. Harness 11,329 static-eligible configurations have implemented guards and representative source parity, but only PIQA/Winogrande/BoolQ have full selected real-run replays. The new 250 have source API and evaluator fixture validation without matching saved model traces. Evalchemy MMLUPro/GPQADiamond and AIME24/MATH500/GSM override have real replay evidence. AIW/GSM8KPerturbed/AIME25 have source parity but no validated tracker links. JEEBench opt-in constructor/extraction/evaluator roundtrips preserve three repetitions and partial credit; malformed references abort batches, unsupported uppercase labels are penalized, and no matching saved run links were available. AMC23 opt-in constructor/extraction/evaluator fixtures preserve ten repetitions and call exact after the pinned normalizer. Four malformed-reference batches abort, including a source raw-fallback case that formerly scored one. No matching AMC23 tracker links or direct local inputs were found; the 291 named local inputs are SkyRL Hendrycks/aime traces. NUPA-Loose and NUPA5K-Loose now call strict exact grading for complete digit-component equality and aligned digit matches, retaining all five named metrics and task/length/cross-bucket denominators. Three frozen NUPA5K runs replay all 15,000 raw responses with no per-sample or aggregate differences; NUPA-Loose shares the scorer but has evaluator fixtures only. Invalid references abort without aggregate output. Source preparation discards signs, including scientific exponent signs; exact_match is a digit-component metric, not numeric equivalence. NQ-Open/TriviaQA source exact routes lack full dataset replay. The English TruthfulQA MC2 override has actual source/evaluator fixture parity; three of thirteen matching tracker links were frozen before scoring, but S3 access is unavailable and no matching local JSON/JSONL artifacts were found. No archived TruthfulQA replay is claimed.
 
 Harbor AIME, GAIA, GPQA Diamond and SATBench match 12 original-source task-script cases using actual patched CLI calls. One generated GAIA image ran two candidate cases with verifyit installed from the exact local API commit. The frozen eval-policy tracker and local run-manifest census have no matching saved model traces. The other three task images have not been built and run.
 

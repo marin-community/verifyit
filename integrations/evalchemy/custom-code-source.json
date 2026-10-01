@@ -1,0 +1,69 @@
+{
+  "source_fixtures_not_archives": true,
+  "image": "sha256:c65c33e0fdd600e418f020d233aca4178c79c3a3208657f51a31dfc77c2c22f3",
+  "exports": [
+    {
+      "framework": "lm-eval-harness",
+      "baseline": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/uncheatable-patch-validation",
+      "applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/code-family-lm-eval-harness-applied",
+      "patch": "integrations/lm-eval-harness/function-rpc-values-verifyit.patch",
+      "patch_sha256": "1e96d2e5cd863e82acf12254dd958cb9485e58ce662f020fd84d32c28108583e",
+      "files": {
+        "lm_eval/verifyit_function_worker.py": "0a83e569bd34f0d010b2bbbefb14f5ed45856e10117d3ed3b3b66926bac9325b",
+        "lm_eval/verifyit_humaneval.py": "29d0f2abb7e1930a651788571f03009552f13743ad05cf933ab5955078631922"
+      }
+    },
+    {
+      "framework": "evalchemy",
+      "baseline": "/Users/benfeuer/Documents/experiments/active/verifier-unification/sources/evalchemy",
+      "applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/code-family-evalchemy-applied",
+      "patch": "integrations/evalchemy/custom-code-verifyit.patch",
+      "patch_sha256": "f4e0d310a523bcb82fec228a835f92aa144674b2ede537aa765fbcea5dbc8fed",
+      "files": {
+        "eval/chat_benchmarks/HumanEval/eval_instruct.py": "049d9cc880087bd569194f733c68f4c89a671d51e15dbeb05f087af10c1806dc",
+        "eval/chat_benchmarks/MBPP/eval_instruct.py": "cc79d754268d55c6adb5c242d0cddbaea0006eda76de23ab1cc9d4725da8a81d",
+        "eval/graders/verifyit_code.py": "81a1c373235bfb3c62c39b22e61eb4746312217102a794b0ca9f2cc3d5f541ba",
+        "eval/graders/verifyit_shell.py": "23fbc23b63f16dd582f630dc9bfa9e59a3b7d768c38d11a8ff8bdb9a29ab9a44",
+        "eval/graders/verifyit_shell_proxy.py": "fd93a4044d0367988b57e9d198a9ba1dc70e61aa6747ed43a6ed6c0df5d36c13",
+        "eval/graders/verifyit_shell_worker.py": "0ab4be21a3bb71b1caf3e99492a4dc43a3e426e4b1cd87a2706f04648fb7618c",
+        "tests/graders/test_verifyit_code.py": "48b8e6e71ba1009a259cef6c9336d4a68e8b6b121a963c12a1247c3c307fe957"
+      }
+    }
+  ],
+  "source_revision": "e3f4a3d601896c437f37b0bd0a30e51651cce6d0",
+  "source_files": {
+    "eval/chat_benchmarks/HumanEval/data/humaneval-python.jsonl": "0eae07adadbb00d51962fdb78b9e2a26bfa8ade85dc54eb57cae9bffed2f5c54",
+    "eval/chat_benchmarks/HumanEval/data/humaneval-sh.jsonl": "2f702106e9ce4aa7385de568d9248d6c57c90382d782b162cb9e072fbd01ccf8",
+    "eval/chat_benchmarks/MBPP/data/mbpp_test.jsonl": "e57e9c9999aa35128f4d0b6a486979c2c1dce4f4b8c0680bf92bc6f5f147779f",
+    "eval/chat_benchmarks/HumanEval/human_eval/evaluation.py": "8a2fca00255529110981afb63af521545a4777178ecd7f2c9f897126b9cf0355",
+    "eval/chat_benchmarks/MBPP/human_eval/evaluation.py": "bb6183cfa137af8839634dcc82849851bb0102ca1d314255adbf6ec826b31acc"
+  },
+  "benchmarks": [
+    "HumanEval",
+    "MBPP"
+  ],
+  "scope": {
+    "HumanEval": [
+      "python",
+      "sh"
+    ],
+    "MBPP": [
+      "python"
+    ]
+  },
+  "canonical_census": {
+    "HumanEval_python": 164,
+    "HumanEval_shell": 158,
+    "MBPP": 500
+  },
+  "proof": "evidence/e2e/wiring/evalchemy-code-family",
+  "platform_caveat": "MBPP180/493 canonical code fails exact floating point assertions on macOS but passes unchanged assertions in the pinned Linux image. Parity uses untouched source scoring in that Linux image.",
+  "invalid_trusted_task": "MBPP367 refers to undefined root before any candidate call: invalid_task aborts the batch, minimum reward0, no partial metrics.",
+  "execution": "Trusted Python and shell tests stay in supervisor outside candidate containers. Typed function calls carry data only.",
+  "fixture_only": true,
+  "image_archive": {
+    "path": "evidence/e2e/wiring/evalchemy-code-family/candidate-image.tar",
+    "sha256": "025e05e47c474bc9811766bc54fd8b6c1e0c9b75c9f9bf1c3d00a714001f868d",
+    "bytes": 69135360
+  }
+}

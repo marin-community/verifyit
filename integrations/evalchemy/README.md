@@ -211,3 +211,42 @@ canonical, incorrect and correct-with-print completions on both framework
 routes. These are source fixtures, not archived model traces. The tracker has
 HumanEvalPlus runs, which use a different evaluation contract. Evidence and
 installation hashes are under `evidence/e2e/wiring/harness-humaneval`.
+
+## Custom HumanEval and MBPP
+
+These custom benchmarks are separate from the harness HumanEval override above.
+Apply `function-rpc-values-verifyit.patch` to the harness after the existing
+HumanEval patch, then apply `custom-code-verifyit.patch` to Evalchemy. Instantiate
+`HumanEvalBenchmark(verifyit_enabled=True)` or
+`MBPPBenchmark(verifyit_enabled=True)`; the source default remains unchanged.
+HumanEval retains both Python and shell. Both benchmarks retain the source
+pass@k estimator, including multiple completions; MBPP retains per-task sample
+annotations.
+
+The dispatcher uses `ScriptSpec` and a separate candidate container. Trusted
+Python assertions and shell tests stay in the supervisor. Typed JSON carries
+ordinary values, including sets, Counter values and complex numbers. Correct
+candidate stdout does not interfere with the protocol. A malformed trusted
+reference or verifier failure aborts the batch without returning partial metrics;
+an incorrect candidate or candidate timeout scores zero.
+
+The tested image has ID
+`sha256:c65c33e0fdd600e418f020d233aca4178c79c3a3208657f51a31dfc77c2c22f3`.
+It was built from `code.Dockerfile`, using the existing pinned Python base and
+NumPy 2.3.5. The exact image archive is retained in campaign evidence at
+`evidence/e2e/wiring/evalchemy-code-family/candidate-image.tar`; load it with
+`docker load -i` before replay. This is a local image ID, not a published registry
+digest. A fresh build may have a different image ID and requires a new pin and
+validation before deployment.
+
+Three frozen source fixtures per language/benchmark exercise canonical and
+incorrect completions, plus ten mixed completions per task for pass@1/pass@10.
+These are fixtures, not archived model traces. Supplemental tests cover trusted
+helper functions, Counter/set/complex transport, candidate functions named
+`check`, stdout, wrong return types, timeouts and batch failure after a valid
+sample. MBPP367 has an undefined trusted `root` and produces an invalid task.
+MBPP180 and MBPP493 have platform-sensitive exact floating-point assertions: unchanged
+canonical code fails on macOS and passes on the pinned Linux image. Linux parity
+uses the untouched source scorer in that same runtime, through the original
+benchmark API; expected values and tolerances are unchanged. Source hashes and
+export dependencies are in `custom-code-source.json`.

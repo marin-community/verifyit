@@ -20,15 +20,15 @@
     },
     "evalchemy-custom": {
       "total": 42,
-      "e2e_tested": 11,
+      "e2e_tested": 13,
       "archive_score_parity": 5,
-      "fixture_tested": 7,
-      "fixture_only": 6,
+      "fixture_tested": 9,
+      "fixture_only": 8,
       "real_response_source_parity_not_archive_score": 0,
-      "route_available": 11
+      "route_available": 13
     }
   },
-  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics.",
+  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance.",
   "records": [
     {
       "entity_id": "evalchemy-custom:eval/chat_benchmarks/AIME24/eval_instruct.py",
@@ -125,6 +125,21 @@
       ]
     },
     {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/HumanEval/eval_instruct.py",
+      "name": "HumanEval",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-code-family/humaneval-mixed-cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-code-family/manager-humaneval/roundtrip.json"
+        }
+      ]
+    },
+    {
       "entity_id": "evalchemy-custom:eval/chat_benchmarks/JEEBench/eval_instruct.py",
       "name": "JEEBench",
       "source": "evalchemy-custom",
@@ -151,6 +166,21 @@
         {
           "kind": "archive_score_parity",
           "path": "evidence/e2e/evals/replays/math500/2/native/report.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/MBPP/eval_instruct.py",
+      "name": "MBPP",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-code-family/mbpp-mixed-cutover/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-code-family/manager-mbpp/roundtrip.json"
         }
       ]
     },

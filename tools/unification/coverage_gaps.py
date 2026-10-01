@@ -774,6 +774,33 @@ def evalchemy_entities(root):
                     ],
                     validation_status="source_evaluator_fixtures_no_matching_archive",
                 )
+        elif name in {"HumanEval", "MBPP"}:
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_isolated_code_runtime",
+                reason=(
+                    "ScriptSpec retains source Python assertions and HumanEval shell tests in a trusted "
+                    "supervisor while candidate functions run in isolated containers. Source pass@k "
+                    "and MBPP sample annotations remain. Mixed completions match the untouched source "
+                    "scorer in the same pinned Linux runtime; MBPP180/493 differ on macOS."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True and load the pinned local candidate image. "
+                    "Source fixtures are validated; archived model replay is not claimed."
+                ),
+                validation_status="source_custom_evaluator_fixtures_pinned_linux_no_archived_replay",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/custom-code-verifyit.patch",
+                    "integrations/evalchemy/custom-code-source.json",
+                    "integrations/lm-eval-harness/function-rpc-values-verifyit.patch",
+                    "../evidence/e2e/wiring/evalchemy-code-family/comparison.json",
+                    "../evidence/e2e/wiring/evalchemy-code-family/manager-humaneval/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-code-family/manager-mbpp/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-code-family/manager-supplemental/results.json",
+                ],
+            )
         elif record["classification"] == "adapter-hybrid":
             entity.update(
                 status="native_fallback",
