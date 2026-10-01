@@ -43,7 +43,7 @@ def table(source, statuses=None):
 
 text = """# Coverage gaps
 
-Completion scope: all 46 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **196 required routes**. The manager-reviewed checkpoint is **109/196 tested** (SkyRL 45/46, Harbor 28/87, custom 15/42, overrides 21/21). Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required.
+COMPLETION_CHECKPOINT
 
 The remaining work is primarily client integration, source-specific comparison/judge profiles, and execution validation. A specification is not an implemented migration. Retaining the source scorer is compatibility or a hybrid route, not complete native equivalence. No unavoidable new verifier category has been identified.
 
@@ -56,7 +56,7 @@ SKYRL_SUMMARY_ROW
 HARBOR_SUMMARY_ROW
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
-Evidence-backed execution checkpoint: Harbor **28/87 adapters** have a cutover exercised through actual Harbor Verifier or Trial: **27** with generated fixtures and **1** (tau3) with archived replays. TaskTrove has **0/81 cohorts** with genuine archived task execution; metadata coverage is not execution validation. Tau3 completed 1,101 archived replays: 1,051 recorded-score matches, 37 previously unscored cases became scored, 10 stayed unscored, and 3 had native database-baseline mismatches. These counts describe tested adapter routes, not every task deployment. QuixBugs, ResearchCodeBench, SciCode, LiveCodeBench and USACO have a separate remaining trust gap: candidate code executes inside the grader runtime, so candidate/assertion isolation is unverified. This is distinct from the six routes still sharing the agent container.
+Evidence-backed execution checkpoint: Harbor **HARBOR_TESTED/HARBOR_TOTAL adapters** have a cutover exercised through actual Harbor Verifier or Trial: **HARBOR_FIXTURE_TESTED** with generated fixtures and **HARBOR_ARCHIVE_TESTED** (HARBOR_ARCHIVE_NAMES) with archived replays. TaskTrove has **0/81 cohorts** with genuine archived task execution; metadata coverage is not execution validation. Tau3 completed 1,101 archived replays: 1,051 recorded-score matches, 37 previously unscored cases became scored, 10 stayed unscored, and 3 had native database-baseline mismatches. These counts describe tested adapter routes, not every task deployment. QuixBugs, ResearchCodeBench, SciCode, LiveCodeBench and USACO have a separate remaining trust gap: candidate code executes inside the grader runtime, so candidate/assertion isolation is unverified. This is distinct from the six routes still sharing the agent container.
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
 
@@ -313,6 +313,53 @@ text = text.replace("HARBOR_PENDING_COUNT", str(harbor_pending))
 text = text.replace("HARBOR_NATIVE_COUNT", str(harbor_native))
 text = text.replace("HARBOR_BOUNDARY_COUNT", str(len(boundary_rows)))
 tested = d["tested_e2e"]
+skyrl_reporting = json.loads((root / "tools/unification/coverage_inputs/skyrl.json").read_text())[
+    "tested_cutover_reporting"
+]
+harbor_tested = [row for row in rows if row["source"] == "harbor" and "execution_evidence_kind" in row]
+for row in harbor_tested:
+    if row["execution_evidence_kind"] not in {"fixture", "archive"}:
+        raise ValueError(f"Unknown execution evidence kind for {row['entity_id']}")
+    if row["status"] not in {"native_route_available", "native_fallback"}:
+        raise ValueError(f"Tested Harbor row has no cutover: {row['entity_id']}")
+    if not any(isinstance(path, str) and "evidence/e2e/" in path for path in row.get("evidence", [])):
+        raise ValueError(f"Tested Harbor row lacks a recorded execution evidence reference: {row['entity_id']}")
+harbor_execution_counts = Counter(row["execution_evidence_kind"] for row in harbor_tested)
+custom_tested = tested["summary"]["evalchemy-custom"]
+override_tested = tested["summary"]["evalchemy-override"]
+required_counts = {
+    "SkyRL": (skyrl_reporting["tested_complete_routes"], skyrl_reporting["denominator"]),
+    "Harbor": (len(harbor_tested), harbor_total),
+    "custom": (custom_tested["e2e_tested"], custom_tested["total"]),
+    "overrides": (override_tested["e2e_tested"], override_tested["total"]),
+}
+assert (
+    skyrl_reporting["tested_complete_routes"]
+    == skyrl_reporting["real_trace_routes"] + skyrl_reporting["source_fixture_routes"]
+)
+assert all(0 <= count <= total for count, total in required_counts.values())
+required_tested = sum(count for count, _ in required_counts.values())
+required_total = sum(total for _, total in required_counts.values())
+assert required_total == 196, "required source census changed"
+checkpoint = (
+    f"Completion scope: all {required_counts['SkyRL'][1]} SkyRL verifiers, {harbor_total} Harbor adapters, "
+    f"{custom_tested['total']} Evalchemy custom benchmarks and {override_tested['total']} Evalchemy task overrides "
+    f"must have successful cutover tests: **{required_total} required routes**. "
+    f"The manager-reviewed checkpoint is **{required_tested}/{required_total} tested** ("
+    + ", ".join(f"{name} {count}/{total}" for name, (count, total) in required_counts.items())
+    + "). Counts derive from SkyRL's tested-route metadata, Harbor's explicit execution evidence markers "
+    "and the Evalchemy tested-config ledger; route availability alone does not count. "
+    "Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. "
+    "TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required."
+)
+text = text.replace("COMPLETION_CHECKPOINT", checkpoint)
+text = text.replace("HARBOR_TESTED", str(len(harbor_tested))).replace("HARBOR_TOTAL", str(harbor_total))
+text = text.replace("HARBOR_FIXTURE_TESTED", str(harbor_execution_counts["fixture"]))
+text = text.replace("HARBOR_ARCHIVE_TESTED", str(harbor_execution_counts["archive"]))
+text = text.replace(
+    "HARBOR_ARCHIVE_NAMES",
+    ", ".join(row["name"] for row in harbor_tested if row["execution_evidence_kind"] == "archive"),
+)
 tested_lines = [
     "## Framework execution evidence",
     "",

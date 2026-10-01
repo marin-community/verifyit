@@ -312,7 +312,8 @@
         "status": "separate_verifier_validated",
         "trusted_assets": "/tests/expected_answer.txt and test.sh in the separate verifier image only",
         "needed_change": "Validate additional source-generated tasks and archived model rollouts when matching traces become available."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:algotune",
@@ -461,7 +462,8 @@
         "status": "separate_verifier_validated",
         "trusted_assets": "/tests/expected.json in the verifier image only",
         "needed_change": "Replay archived model traces and additional task images before deployment."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:autocodebench",
@@ -512,7 +514,8 @@
         "status": "shared_candidate_reachable",
         "trusted_assets": "/tests/test_outputs.py and protected tests",
         "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:bfcl",
@@ -570,7 +573,8 @@
         "status": "separate_verifier_validated",
         "trusted_assets": "/tests/evaluate.py and generated ground truth",
         "needed_change": "No known boundary change; validate other generated categories and archived model traces before deployment."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:bigcodebench_hard",
@@ -630,7 +634,8 @@
         "status": "shared_candidate_reachable",
         "trusted_assets": "/tests/test_outputs.py and protected tests",
         "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:bird_bench",
@@ -979,7 +984,8 @@
         "status": "separate_verifier_validated",
         "trusted_assets": "/tests/verifyit/nRMSE_evaluator.py and reference HDF5",
         "needed_change": "No known boundary change within the tested fixture scope; validate full production images, datasets and archived traces before deployment."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:compilebench",
@@ -1022,7 +1028,8 @@
         "status": "shared_candidate_reachable",
         "trusted_assets": "/tests/test_outputs.py and protected tests",
         "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:cooperbench",
@@ -1329,7 +1336,8 @@
         "status": "separate_verifier_validated",
         "trusted_assets": "/tests/scorer.py and expected_answer.txt in the separate verifier image only",
         "needed_change": "Validate additional source-generated tasks and archived model rollouts when matching traces become available."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:dacode",
@@ -1966,7 +1974,8 @@
         "status": "shared_candidate_reachable",
         "trusted_assets": "/tests/test_outputs.py and source test fixtures",
         "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:featbench",
@@ -2257,7 +2266,8 @@
         "status": "separate_verifier_validated",
         "trusted_assets": "/tests/expected_answer.txt and test.sh in the separate verifier image only",
         "needed_change": "Validate additional source-generated tasks and archived model rollouts when matching traces become available."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:gaia2",
@@ -2488,7 +2498,8 @@
         "status": "separate_verifier_validated",
         "trusted_assets": "/tests/expected_answer.txt and test.sh in the separate verifier image only",
         "needed_change": "Validate additional source-generated tasks and archived model rollouts when matching traces become available."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:gso",
@@ -2605,7 +2616,8 @@
         "needed_change": "Validate additional production tasks and archived model traces.",
         "status": "separate_verifier_validated",
         "trusted_assets": "Source judge, reference data and verifier.toml in the separate verifier image; only candidate answer/log text crosses from the agent."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:humanevalfix",
@@ -2654,7 +2666,8 @@
         "status": "shared_candidate_reachable",
         "trusted_assets": "/tests/test_outputs.py and protected tests",
         "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:ineqmath",
@@ -2815,7 +2828,8 @@
         "status": "separate_verifier_parity_validated",
         "trusted_assets": "/tests/expected.json and strict exact comparator",
         "needed_change": "Ordinary score parity and source action-service roundtrips validated; security scope and archived model traces remain unverified."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:labbench",
@@ -2871,7 +2885,8 @@
         "status": "separate_verifier_parity_validated",
         "trusted_assets": "/tests/expected.json and strict label comparator",
         "needed_change": "Ordinary score parity validated with separate verifier images; security scope and archived model traces remain unverified."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:lawbench",
@@ -2990,7 +3005,8 @@
         "trusted_assets": "Source evaluator, config.json and verifier.toml in the separate image",
         "remaining_gap": "candidate_execution_in_grader",
         "needed_change": "Candidate code executes within the source grader runtime; candidate/assertion isolation has not been established."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:llmsr_bench",
@@ -3395,7 +3411,8 @@
         "status": "separate_verifier_validated",
         "trusted_assets": "/tests/test_outputs.py and /tests/data/info.json",
         "needed_change": "No known boundary change; validate archived model traces and more task instances before deployment."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:mmmlu",
@@ -3446,7 +3463,8 @@
         "status": "separate_verifier_parity_validated",
         "trusted_assets": "/tests/question_data.json and extractor",
         "needed_change": "Ordinary score parity validated with separate verifier images; security scope and archived model traces remain unverified."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:multi-swe-bench",
@@ -3594,7 +3612,8 @@
         "needed_change": "Validate additional production tasks and archived model traces.",
         "status": "separate_verifier_validated",
         "trusted_assets": "Source judge, reference data and verifier.toml in the separate verifier image; only candidate answer/log text crosses from the agent."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:pixiu",
@@ -3833,7 +3852,8 @@
         "trusted_assets": "/tests generated suites, helpers, original programs and verifier.toml",
         "remaining_gap": "candidate_execution_in_grader",
         "needed_change": "Ordinary Python/Java parity validated. Candidate Python imports and Java execution occur inside the grader runtime; candidate/assertion isolation is not established. This differs from the shared-agent-container exposure. Archived model traces remain unverified."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:reasoning-gym",
@@ -3875,7 +3895,8 @@
         "status": "separate_verifier_parity_validated",
         "trusted_assets": "/tests/entry_data.json, dataset_params.json and verifier.toml",
         "needed_change": "Ordinary configured score parity validated; security scope and archived model traces remain unverified."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:refav",
@@ -3967,7 +3988,8 @@
         "status": "separate_verifier_validated",
         "trusted_assets": "/tests/config.json and test_outputs.py",
         "needed_change": "No known boundary change; validate more generated tasks and archived model traces before deployment."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:research-code-bench",
@@ -4032,7 +4054,8 @@
         "trusted_assets": "Generated source tests, references and verifier.toml in the separate image",
         "remaining_gap": "candidate_execution_in_grader",
         "needed_change": "Candidate code executes within the source grader runtime; candidate/assertion isolation has not been established."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:rexbench",
@@ -4117,7 +4140,8 @@
         "status": "separate_verifier_validated",
         "trusted_assets": "/tests/ground_truth.json and test.sh in the separate verifier image only",
         "needed_change": "Validate additional source-generated tasks and archived model rollouts when matching traces become available."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:scicode",
@@ -4205,7 +4229,8 @@
         "trusted_assets": "Generated source tests, references and verifier.toml in the separate image",
         "remaining_gap": "candidate_execution_in_grader",
         "needed_change": "Candidate code executes within the source grader runtime; candidate/assertion isolation has not been established."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:scienceagentbench",
@@ -4418,7 +4443,8 @@
         "needed_change": "Validate additional production tasks and archived model traces.",
         "status": "separate_verifier_validated",
         "trusted_assets": "Source judge, reference data and verifier.toml in the separate verifier image; only candidate answer/log text crosses from the agent."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:sldbench",
@@ -5334,7 +5360,8 @@
         "status": "shared_candidate_reachable",
         "trusted_assets": "/tests native evaluator and tau2-assets.json manifest",
         "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
-      }
+      },
+      "execution_evidence_kind": "archive"
     },
     {
       "entity_id": "harbor:textarena",
@@ -5618,7 +5645,8 @@
         "trusted_assets": "Source pytest suite, batch judge, input/output fixtures and verifier.toml in separate image",
         "remaining_gap": "candidate_execution_in_grader",
         "needed_change": "Candidate code executes within the source grader runtime; candidate/assertion isolation has not been established."
-      }
+      },
+      "execution_evidence_kind": "fixture"
     },
     {
       "entity_id": "harbor:webgen_bench",
