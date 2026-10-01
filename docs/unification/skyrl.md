@@ -87,12 +87,14 @@ or resolve either complete SkyRL environment.
 
 The 48 entries comprise 46 scoring routes across 17 contract families and two
 external objectives. There are 42 wired routes and four partial routes. Wiring
-availability is distinct from tested cutovers: 37 of 46 complete routes have
-actual source/framework witnesses, comprising 27 with real trace replay and ten
-with source fixtures. Five wired routes still need route-specific witnesses:
-GSM8K multi-turn, search, searchcode, legacy text2sql and the SWE-pivot tool route.
-Their shared-helper tests do not establish framework cutover. The four partial
-routes have separate evidence and are not counted as complete tested routes.
+availability is distinct from tested cutovers: 42 of 46 complete routes now have
+actual source/framework witnesses, comprising 27 with real trace replay and 15
+with source fixtures. GSM8K multi-turn, search, searchcode, legacy text2sql and the
+SWE-pivot tool route each have three actual registered Env terminal-grading
+witnesses. Native, cutover and manager results agree, with raw primitive traces.
+These fixtures do not claim search retrieval, tool execution or the separate SWE
+Harbor preparation path. The four partial routes have separate evidence and are
+not counted as complete tested routes.
 
 Source orchestration and metrics stay in clients. No new mode category is
 proposed. The disjoint plan is recorded per entry in `skyrl.json` and detailed in

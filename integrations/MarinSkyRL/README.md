@@ -254,3 +254,12 @@ protocols, including in-place mutation, without moving trusted assertions into
 candidate execution. Sixty-nine source tests pass and twelve actual GeneralReact
 witnesses agree across native, cutover and exact-installed execution. Coder1 remains
 partial for arbitrary Python interoperability; see [the contract](coder1-partial.md).
+
+All 42 wired scoring routes now have actual source-boundary cutover witnesses:
+27 have real trace replay and 15 have source fixtures. The last five fixture gaps
+were GSM8K multi-turn, search, searchcode, legacy text2sql and SWE-pivot tool
+comparison. Each now has three registered Env terminal-grading cases matching
+pinned native and independent manager execution, with raw verifyit calls. This
+covers terminal grading, not retrieval, tool execution or SWE Harbor preparation.
+Evidence is in `evidence/e2e/wiring/skyrl-route-witnesses/`. Four partial routes
+remain outside the complete tested-route count.
