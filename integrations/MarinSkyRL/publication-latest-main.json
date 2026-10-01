@@ -2,12 +2,12 @@
   "repository": "https://github.com/marin-community/MarinSkyRL",
   "pr": "https://github.com/marin-community/MarinSkyRL/pull/885",
   "branch": "codex/verifyit-cutover",
-  "base": "8b4b6924704432df896143e2785b30e5f944a441",
-  "head": "992c9da0fe44c5313d9f95d2f298733a927cb60c",
+  "base": "903c3a9595adf9fadb6de688093988aee5ab677a",
+  "head": "40cc1bbb2f5e0d4ab7753053f967d92dd778d85e",
   "verifyit_repository": "https://github.com/marin-community/verifyit",
   "verifyit_revision": "d3edc5d240d53edbd0c0e4a53c0e112629550f7e",
   "verifyit_branch": "codex/verifier-unification-dependency",
-  "patch_sha256": "ea272cee85738357fd80b63630c93be3fb333e8dc844f5ecb3943b9a40a252d8",
+  "patch_sha256": "51833e0b0b06a09ced01c9b806f3e00b5dcb504ab2446f15ec2aa369b9b24f0c",
   "coverage": {
     "included": 38,
     "excluded": [
@@ -40,9 +40,10 @@
   "root_python": "3.12",
   "validation_limits": [
     "No full latest-main replay of all 38 current routes",
-    "No actual rootCPU or GPU training installation",
-    "No live judge or external code/Lean sandbox validation",
-    "Legacy agent packaging is unsupported; issue884"
+    "No actual root CPU or GPU training installation",
+    "No live judge or actual Lean compiler validation",
+    "Full legacy agent training runtime not exercised",
+    "Local security cases not run; existing Gym CI collection retained"
   ],
   "issues": {
     "coder1_deprecation": 880,
@@ -60,5 +61,37 @@
     "patch": "publication-initial-af5ceb9.patch"
   },
   "cold_review_comment": "https://github.com/marin-community/MarinSkyRL/pull/885#issuecomment-5931930272",
-  "reviewed_revision": "992c9da0fe44c5313d9f95d2f298733a927cb60c"
+  "reviewed_revision": "992c9da0fe44c5313d9f95d2f298733a927cb60c",
+  "upstream_agent_lock_fix": {
+    "revision": "903c3a9595adf9fadb6de688093988aee5ab677a",
+    "issue": 884,
+    "isolated_frozen_profiles": [
+      "base",
+      "verl",
+      "tinker"
+    ]
+  },
+  "ordinary_code_runtime_validation": {
+    "cases": 11,
+    "deselected": 13,
+    "source_revision": "bcf059af55c20a89f797724598f9908d126153e6",
+    "source_sha256": "c79197dc02e33b63b58b30783e3cfe0076e8edf6ceb409835b5d0762756b621d",
+    "packages": {
+      "Flask": "3.1.2",
+      "ipython": "9.6.0",
+      "psutil": "7.1.0",
+      "numpy": "2.2.6",
+      "pandas": "2.3.0"
+    },
+    "author_raw_log": "evidence/e2e/wiring/skyrl-publication/code-ci-isolated-raw.log",
+    "manager_raw_log": "evidence/pr/skyrl-cold-review/manager-isolated-sandbox-ci.log",
+    "earlier_endpoint_correction": "Earlier 6000 tests used an existing kubectl-forwarded endpoint; isolated 6101 execution supersedes exact-setup claims"
+  },
+  "gsm8k_current_source_parity_pairs": 8,
+  "ci": {
+    "run": 36869482613,
+    "state": "pending",
+    "recorded_success": false
+  },
+  "manager_reviewed_revision": "40cc1bbb2f5e0d4ab7753053f967d92dd778d85e"
 }

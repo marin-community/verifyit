@@ -1,3 +1,38 @@
+diff --git a/.github/workflows/cpu_ci.yaml b/.github/workflows/cpu_ci.yaml
+index f5a68a2..27108a0 100644
+--- a/.github/workflows/cpu_ci.yaml
++++ b/.github/workflows/cpu_ci.yaml
+@@ -130,5 +130,28 @@ jobs:
+           activate-environment: true
+       - name: Install skyrl-gym
+         run: uv sync --frozen --extra dev --python 3.12
+-      - name: Run cpu tests
+-        run: uv run --frozen --python 3.12 pytest tests/
++      - name: Run cpu tests with the real NeMo sandbox
++        run: |
++          sandbox_dir="$(mktemp -d)"
++          sandbox_pid=""
++          cleanup() {
++            if [[ -n "$sandbox_pid" ]]; then kill -- -"$sandbox_pid" 2>/dev/null || true; fi
++            rm -rf "$sandbox_dir"
++          }
++          trap cleanup EXIT
++          curl --fail --location --retry 3 \
++            https://raw.githubusercontent.com/NVIDIA-NeMo/Skills/bcf059af55c20a89f797724598f9908d126153e6/nemo_skills/code_execution/local_sandbox/local_sandbox_server.py \
++            --output "$sandbox_dir/server.py"
++          echo "c79197dc02e33b63b58b30783e3cfe0076e8edf6ceb409835b5d0762756b621d  $sandbox_dir/server.py" | sha256sum --check
++          uv venv --python 3.12 "$sandbox_dir/venv"
++          uv pip install --python "$sandbox_dir/venv/bin/python" Flask==3.1.2 ipython==9.6.0 psutil==7.1.0 numpy==2.2.6 pandas==2.3.0
++          setsid "$sandbox_dir/venv/bin/python" "$sandbox_dir/server.py" > "$sandbox_dir/server.log" 2>&1 &
++          sandbox_pid=$!
++          ready=false
++          for attempt in {1..60}; do
++            if curl --fail --silent http://127.0.0.1:6000/health; then ready=true; break; fi
++            if ! kill -0 "$sandbox_pid" 2>/dev/null; then break; fi
++            sleep 1
++          done
++          if [[ "$ready" != true ]]; then cat "$sandbox_dir/server.log"; exit 1; fi
++          if ! uv run --frozen --python 3.12 pytest tests/; then cat "$sandbox_dir/server.log"; exit 1; fi
 diff --git a/README.md b/README.md
 index 19424f6..48befe5 100644
 --- a/README.md
@@ -10,10 +45,10 @@ index 19424f6..48befe5 100644
 +Verifier setup, opt-in configuration and offline comparison commands are documented in [Unified verification](docs/verifyit.md).
 diff --git a/docs/verifyit.md b/docs/verifyit.md
 new file mode 100644
-index 0000000..5253a91
+index 0000000..a0965fa
 --- /dev/null
 +++ b/docs/verifyit.md
-@@ -0,0 +1,61 @@
+@@ -0,0 +1,63 @@
 +# Unified verification
 +
 +SkyRL clients call verifyit's existing verifier modes while retaining task-specific response extraction and framework reward reporting. The dependency is pinned to a published source commit in the project metadata. No local campaign checkout or unpublished wheel is needed. SkyRL uses math-verify 0.9.0, upgraded from 0.8.0 to satisfy the unified dependency. Math parsing or equivalence behavior can change with this upgrade; the 2026-10-01 campaign snapshot used math-verify 0.8.0. The offline comparisons use 0.9.0 on both paths.
@@ -36,6 +71,8 @@ index 0000000..5253a91
 +For a frozen gym installation, run `uv sync --project skyrl-gym --frozen --extra dev`, then `uv run --project skyrl-gym --frozen python tools/verifyit/replay.py --output /tmp/skyrl-verifier-replay.json`. The gym and root locks include the exact published verifyit revision and math-verify 0.9.0.
 +
 +The normal launcher installation uses the root project's CPU or GPU profile described in the README. The smaller installation above exercises verifiers without installing a training runtime. Code and Lean verification additionally require the configured sandbox runtime. Judge routes require their configured provider and credentials; they cannot be exercised through the offline fixtures.
++
++The Gym CI job starts the real [NeMo Skills local sandbox](https://github.com/NVIDIA-NeMo/Skills/blob/bcf059af55c20a89f797724598f9908d126153e6/nemo_skills/code_execution/local_sandbox/local_sandbox_server.py) at revision `bcf059af55c20a89f797724598f9908d126153e6`, verifies its SHA256, and installs Flask 3.1.2, IPython 9.6.0, psutil 7.1.0, NumPy 2.2.6 and pandas 2.3.0 in a separate test environment. The service requires Linux resource limits; its setup, bounded health check and process-group cleanup are in [cpu_ci.yaml](../.github/workflows/cpu_ci.yaml). This supplies execution for code integration tests rather than substituting precomputed rewards.
 +
 +## Enable verifyit
 +
@@ -74,7 +111,7 @@ index 0000000..5253a91
 +
 +## Archival agent packaging
 +
-+The remaining dormant STEM judge integration changes its source scorer, without reviving standalone `skyrl-agent` packaging or training. Its archival manifest and lock remain unchanged. [MarinSkyRL #884](https://github.com/marin-community/MarinSkyRL/issues/884) tracks the preexisting broken trainer dependency. The STEM judge requires its original provider configuration; its entrypoint and opt-in argument are recorded in the route inventory. The retired QA example is no longer available on current main.
++The remaining dormant STEM judge integration changes its source scorer, without reviving standalone `skyrl-agent` packaging or training. Upstream [903c3a9](https://github.com/marin-community/MarinSkyRL/commit/903c3a9) repairs standalone dependency locking tracked by [#884](https://github.com/marin-community/MarinSkyRL/issues/884); this branch includes that change. Isolated frozen exports for the base, VERL and Tinker dependency profiles pass, while a full legacy training runtime has not been exercised here. The STEM judge requires its original provider configuration; its entrypoint and opt-in argument are recorded in the route inventory. The retired QA example is no longer available on current main.
 diff --git a/infra/rl_data/sources.py b/infra/rl_data/sources.py
 index 900d409..928394e 100644
 --- a/infra/rl_data/sources.py
@@ -163,6 +200,225 @@ index 900d409..928394e 100644
  
  
  def generate_reasoning_gym_rows(*, tasks: tuple[str, ...], rows_per_task: int, seed: int, start_index: int = 0):
+diff --git a/infra/tests/test_verifier_reference_preparation.py b/infra/tests/test_verifier_reference_preparation.py
+new file mode 100644
+index 0000000..bf476cb
+--- /dev/null
++++ b/infra/tests/test_verifier_reference_preparation.py
+@@ -0,0 +1,179 @@
++"""Prepared infrastructure task references preserve source and unified scoring."""
++
++import copy
++import dataclasses
++import json
++import random
++import threading
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++
++import pytest
++from omegaconf import OmegaConf
++from infra.rl_data.sources import nemotron_ultra_mopd_source, nemotron_ultra_rlvr1_source, nemotron_ultra_rlvr2_source
++from skyrl_gym.envs.nemotron_ultra.env import NemotronUltraEnv
++from skyrl_gym.envs.nemotron_ultra.judge import OpenAIJudge
++
++@pytest.mark.parametrize(
++    "factory",
++    [
++        nemotron_ultra_mopd_source,
++        nemotron_ultra_rlvr1_source,
++        nemotron_ultra_rlvr2_source,
++    ],
++)
++def test_preparation_serializes_reference_before_framework_roundtrip(factory):
++    raw = {
++        "uuid": "frozen",
++        "agent_ref": {"name": "instruction_following_simple_agent"},
++        "responses_create_params": {"input": [{"role": "user", "content": "Write a response"}]},
++        "instruction_id_list": ["keywords:exclude_word_harder"],
++        "kwargs": [{"instruction": "red blue green"}],
++    }
++    original = copy.deepcopy(raw)
++    source = factory(instruction_reference_seed=13)
++    state = random.getstate()
++    row = source.prepare_row(raw, 0, None)
++    assert row == source.prepare_row(raw, 0, None)
++    assert random.getstate() == state
++    assert raw == original
++    record = json.loads(row["extra_info"]["nemotron_ultra"]["record_json"])
++    assert record["kwargs"][0]["keyword"] == "blue"
++    for candidate, expected in [("certain permitted sentence", 1.0), ("a blue b", 0.0)]:
++        scores = []
++        for enabled in [False, True]:
++            env = NemotronUltraEnv(OmegaConf.create({"verifyit_enabled": enabled}), extras=row)
++            env.init(row["prompt"])
++            try:
++                scores.append(env.step(candidate)["reward"])
++            finally:
++                env.close()
++        assert scores == [expected, expected]
++
++
++@pytest.mark.parametrize(
++    "identity",
++    ["length_constraints:nth_paragraph_first_word", "count:count_increment_word"],
++)
++def test_default_source_defects_are_resolved_before_serialization(identity):
++    raw = {
++        "uuid": "resolved-default",
++        "agent_ref": {"name": "instruction_following_simple_agent"},
++        "responses_create_params": {"input": [{"role": "user", "content": "Write a response"}]},
++        "instruction_id_list": [identity],
++        "kwargs": [{}],
++    }
++    row = nemotron_ultra_mopd_source(instruction_reference_seed=13).prepare_row(raw, 0, None)
++    record = json.loads(row["extra_info"]["nemotron_ultra"]["record_json"])
++    args = record["kwargs"][0]
++    if identity == "length_constraints:nth_paragraph_first_word":
++        assert 1 <= args["nth_paragraph"] <= args["num_paragraphs"]
++        positive = "\n\n".join([args["first_word"] + " body"] * args["num_paragraphs"])
++    else:
++        assert isinstance(args["keyword1"], str) and isinstance(args["keyword2"], str)
++        positive = f"{args['keyword1']} {args['keyword2']} {args['keyword2']}"
++    for candidate, expected in [(positive, 1.0), ("unrelated content", 0.0)]:
++        scores = []
++        for enabled in [False, True]:
++            env = NemotronUltraEnv(OmegaConf.create({"verifyit_enabled": enabled}), extras=row)
++            env.init(row["prompt"])
++            try:
++                scores.append(env.step(candidate)["reward"])
++            finally:
++                env.close()
++        assert scores == [expected, expected]
++
++
++
++@pytest.fixture
++def judge_server():
++    class Handler(BaseHTTPRequestHandler):
++        def do_POST(self):
++            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
++            server.requests.append(body)
++            index = min(len(server.requests) - 1, len(server.replies) - 1)
++            response = {
++                "id": "source-judge",
++                "object": "chat.completion",
++                "created": 0,
++                "model": body["model"],
++                "choices": [
++                    {
++                        "index": 0,
++                        "finish_reason": server.finish_reason,
++                        "message": {
++                            "role": "assistant",
++                            "content": server.replies[index],
++                        },
++                    }
++                ],
++            }
++            encoded = json.dumps(response).encode()
++            self.send_response(200)
++            self.send_header("Content-Type", "application/json")
++            self.send_header("Content-Length", str(len(encoded)))
++            self.end_headers()
++            self.wfile.write(encoded)
++
++        def log_message(self, *args):
++            pass
++
++    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
++    server.requests = []
++    server.replies = ["[[A=B]]"]
++    server.finish_reason = "stop"
++    thread = threading.Thread(target=server.serve_forever, daemon=True)
++    thread.start()
++    judge = OpenAIJudge(
++        base_url=f"http://127.0.0.1:{server.server_port}/v1",
++        model="recorded-test-judge",
++        timeout_seconds=2,
++    )
++    try:
++        yield server, judge
++    finally:
++        server.shutdown()
++        server.server_close()
++        thread.join(timeout=5)
++
++
++@pytest.mark.parametrize("agent", ["math_with_judge_simple_agent", "ns_tools_simple_agent"])
++@pytest.mark.parametrize("label,score", [("[[A=B]]", 1.0), ("[[A!=B]]", 0.0)])
++def test_prepared_semantic_reference_roundtrips_framework(agent, label, score, judge_server):
++
++    server, judge = judge_server
++    server.replies = [label]
++    raw = {
++        "agent_ref": {"name": agent},
++        "responses_create_params": {"input": [{"role": "user", "content": "Describe the strategy."}]},
++        "question": "Describe the strategy.",
++        "expected_answer": "Choose the next box (unless it is empty).\n• Stop at Box 8 — then return.",
++    }
++    # This selection is made before candidate creation; the source record remains unchanged.
++    row = nemotron_ultra_mopd_source(math_reference_kind="semantic").prepare_row(raw, 0, None)
++    serialized = json.loads(row["extra_info"]["nemotron_ultra"]["record_json"])
++    assert serialized["math_reference_kind"] == "semantic"
++    assert "math_reference_kind" not in raw
++    candidate = "Move to each nonempty next box and stop when reaching the eighth box."
++    results = []
++    requests = []
++    for enabled in (False, True):
++        server.requests.clear()
++        env = NemotronUltraEnv(
++            OmegaConf.create(
++                {
++                    "verifyit_enabled": enabled,
++                    "judges": {"general": dataclasses.asdict(judge)},
++                }
++            ),
++            extras=row,
++        )
++        env.init(row["prompt"])
++        try:
++            results.append(env.step(candidate)["reward"])
++            requests.append(list(server.requests))
++        finally:
++            env.close()
++    assert results == [score, score]
++    assert requests[0] == requests[1]
++    assert len(requests[1]) == (2 if score else 1)
++
+diff --git a/marinskyrl/environment_contract.py b/marinskyrl/environment_contract.py
+index 9316e58..84942b4 100644
+--- a/marinskyrl/environment_contract.py
++++ b/marinskyrl/environment_contract.py
+@@ -112,6 +112,29 @@ DEFAULT_NCCL_TRACE_BUFFER_SIZE = 20_000
+ 
+ 
+ ENV_VAR_SPECS = (
++    # Verifyit's judge client owns these names. They are set only inside the
++    # isolated grading child, using the benchmark's existing provider settings.
++    EnvVarSpec(
++        "VERIFYIT_JUDGE_BASE_URL",
++        "environment.skyrl_gym.nemotron_ultra.judges",
++        EnvVarSource.EXTERNAL,
++        frozenset({EnvVarScope.TASK_RUNTIME}),
++        frozenset({EnvVarWriter.PYTHON_ASSIGNMENT}),
++    ),
++    EnvVarSpec(
++        "VERIFYIT_JUDGE_MODEL",
++        "environment.skyrl_gym.nemotron_ultra.judges",
++        EnvVarSource.EXTERNAL,
++        frozenset({EnvVarScope.TASK_RUNTIME}),
++        frozenset({EnvVarWriter.PYTHON_ASSIGNMENT}),
++    ),
++    EnvVarSpec(
++        "VERIFYIT_JUDGE_API_KEY",
++        "environment.skyrl_gym.nemotron_ultra.judges",
++        EnvVarSource.SECRET,
++        frozenset({EnvVarScope.TASK_RUNTIME}),
++        frozenset({EnvVarWriter.PYTHON_ASSIGNMENT}),
++    ),
+     EnvVarSpec(DEBUG_MODE_ENV, "trainer.debug_mode", EnvVarSource.CONFIG, ALL_RUNTIME_SCOPES),
+     EnvVarSpec(DEBUG_ARTIFACT_DIR_ENV, "trainer.debug_mode", EnvVarSource.DERIVED, ALL_RUNTIME_SCOPES),
+     EnvVarSpec("NCCL_DEBUG", "trainer.debug_mode", EnvVarSource.DERIVED, ALL_RUNTIME_SCOPES),
 diff --git a/pyproject.toml b/pyproject.toml
 index 4e2d5ff..7db7872 100644
 --- a/pyproject.toml
@@ -497,31 +753,31 @@ index 1478ae6..144e5f0 100644
  
  def verify(
 diff --git a/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py b/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py
-index 2bd9b08..b408d96 100644
+index 2bd9b08..9c3dd35 100644
 --- a/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py
 +++ b/skyrl-gym/skyrl_gym/envs/gsm8k/utils.py
-@@ -12,8 +12,9 @@
+@@ -12,8 +12,10 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
  
-+from verifyit.adapters.skyrl import grade_gsm8k_final_line, grade_gsm8k_extracted, grade_gsm8k_strict
++from verifyit.grade import InvalidTask, Status
++from verifyit.adapters.skyrl import grade_gsm8k_final_line, grade_gsm8k_extracted
 +
  import re
 -from decimal import Decimal
  
  FINAL_ANSWER = re.compile(r"#### (-?(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)(?:\.[0-9]+)?)")
  
-@@ -61,13 +62,16 @@ def compute_score(solution_str, ground_truth, method="strict", format_score=0.0,
+@@ -61,13 +63,21 @@ def compute_score(solution_str, ground_truth, method="strict", format_score=0.0,
          format_score: the score for the format
          score: the score for the correct answer
      """
-+    if method in {"strict", "final_line"}:
-+        verdict = (
-+            grade_gsm8k_strict(ground_truth, solution_str)
-+            if method == "strict"
-+            else grade_gsm8k_final_line(ground_truth, solution_str)
-+        )
-+        if verdict.detail.get("reason") in {"missing_answer_marker", "missing_final_answer"}:
++    if method == "final_line":
++        try:
++            verdict = grade_gsm8k_final_line(ground_truth, solution_str)
++        except InvalidTask:
++            return 0
++        if verdict.status != Status.SCORED or verdict.detail.get("reason") == "missing_final_answer":
 +            return 0
 +        return score if verdict.reward == 1.0 else format_score
      answer = extract_solution(solution_str=solution_str, method=method)
@@ -534,7 +790,13 @@ index 2bd9b08..b408d96 100644
 -            return score
 -        else:
 -            return format_score
-+    return score if grade_gsm8k_extracted(ground_truth, answer).reward else format_score
++    try:
++        verdict = grade_gsm8k_extracted(ground_truth, answer)
++    except InvalidTask:
++        return 0
++    if verdict.status != Status.SCORED:
++        return 0
++    return score if verdict.reward else format_score
 diff --git a/skyrl-gym/skyrl_gym/envs/ifeval/env.py b/skyrl-gym/skyrl_gym/envs/ifeval/env.py
 index dda5cbe..e67c00f 100644
 --- a/skyrl-gym/skyrl_gym/envs/ifeval/env.py
@@ -600,10 +862,10 @@ index 248e2f0..52ec07e 100644
      satisfied = [check_constraint(response, constraint) for constraint in constraints]
 diff --git a/skyrl-gym/skyrl_gym/envs/instruction_verifyit.py b/skyrl-gym/skyrl_gym/envs/instruction_verifyit.py
 new file mode 100644
-index 0000000..fc23a27
+index 0000000..2681399
 --- /dev/null
 +++ b/skyrl-gym/skyrl_gym/envs/instruction_verifyit.py
-@@ -0,0 +1,537 @@
+@@ -0,0 +1,543 @@
 +"""Pinned source instruction predicates executed by IFEval under one deadline."""
 +
 +from __future__ import annotations
@@ -977,6 +1239,8 @@ index 0000000..fc23a27
 +            "follow_instruction_list": results,
 +            "instruction_errors": errors,
 +            "grading_mode": mode,
++            "num_passed": sum(results),
++            "num_total": len(results),
 +        }
 +    return {
 +        "status": "scored",
@@ -1050,6 +1314,10 @@ index 0000000..fc23a27
 +                or errors != [None] * len(results)
 +                or type(feedback["follow_all_instructions"]) is not bool
 +                or feedback["follow_all_instructions"] != all(results)
++                or type(feedback["num_passed"]) is not int
++                or feedback["num_passed"] != sum(results)
++                or type(feedback["num_total"]) is not int
++                or feedback["num_total"] != len(results)
 +                or mode != data.get("grading_mode", "binary")
 +                or mode not in {"binary", "fraction"}
 +                or verdict.reward != (float(all(results)) if mode == "binary" else sum(results) / len(results))
@@ -4532,68 +4800,46 @@ index 0000000..081583a
 +    args["config"]["verifyit_enabled"] = True
 +    with pytest.raises(RuntimeError, match="cohort verification failed"):
 +        grade_genrm_group(**args)
+diff --git a/skyrl-gym/tests/test_gsm8k.py b/skyrl-gym/tests/test_gsm8k.py
+index 428182a..ca57cc3 100644
+--- a/skyrl-gym/tests/test_gsm8k.py
++++ b/skyrl-gym/tests/test_gsm8k.py
+@@ -11,6 +11,8 @@ from skyrl_gym.verification import RolloutEvidence
+         ("The answer is #### 42", "43", 0.0),
+         ("The answer is #### $10", "10", 1.0),
+         ("The answer is #### $5", "5", 1.0),
++        ("The answer is #### $10", "11", 0.0),
++        ("The answer is #### $1,234", "1234", 1.0),
+         # answer is not in the expected format
+         ("The answer is 42", "42", 0.0),
+     ],
+@@ -59,3 +61,10 @@ def test_prepared_reward_model_extras_reach_the_verifier():
+     )
+     assert env.ground_truth == "42"
+     assert env.step("The answer is #### 42")["reward"] == 1.0
++
++
++@pytest.mark.parametrize("method", ["strict", "flexible", "final_line"])
++def test_invalid_reference_cannot_receive_format_credit(method):
++    from skyrl_gym.envs.gsm8k.utils import compute_score
++
++    assert compute_score("#### 10", None, method=method, format_score=0.5) == 0
 diff --git a/skyrl-gym/tests/test_instruction_reference_preparation.py b/skyrl-gym/tests/test_instruction_reference_preparation.py
 new file mode 100644
-index 0000000..898f1fd
+index 0000000..dd1e104
 --- /dev/null
 +++ b/skyrl-gym/tests/test_instruction_reference_preparation.py
-@@ -0,0 +1,235 @@
+@@ -0,0 +1,162 @@
 +"""Freeze stochastic task references before a candidate reaches the environment."""
 +
-+import copy
-+import json
 +import random
 +
 +import pytest
-+from omegaconf import OmegaConf
 +
-+from infra.rl_data.sources import (
-+    nemotron_ultra_mopd_source,
-+    nemotron_ultra_rlvr1_source,
-+    nemotron_ultra_rlvr2_source,
-+)
-+from skyrl_gym.envs.nemotron_ultra.env import NemotronUltraEnv
 +from skyrl_gym.envs.instruction_verifyit import grade_nemotron_instructions
 +from skyrl_gym.envs.nemotron_ultra.instruction_following import (
 +    grade_instruction_following,
 +)
-+
-+
-+@pytest.mark.parametrize(
-+    "factory",
-+    [
-+        nemotron_ultra_mopd_source,
-+        nemotron_ultra_rlvr1_source,
-+        nemotron_ultra_rlvr2_source,
-+    ],
-+)
-+def test_preparation_serializes_reference_before_framework_roundtrip(factory):
-+    raw = {
-+        "uuid": "frozen",
-+        "agent_ref": {"name": "instruction_following_simple_agent"},
-+        "responses_create_params": {"input": [{"role": "user", "content": "Write a response"}]},
-+        "instruction_id_list": ["keywords:exclude_word_harder"],
-+        "kwargs": [{"instruction": "red blue green"}],
-+    }
-+    original = copy.deepcopy(raw)
-+    source = factory(instruction_reference_seed=13)
-+    state = random.getstate()
-+    row = source.prepare_row(raw, 0, None)
-+    assert row == source.prepare_row(raw, 0, None)
-+    assert random.getstate() == state
-+    assert raw == original
-+    record = json.loads(row["extra_info"]["nemotron_ultra"]["record_json"])
-+    assert record["kwargs"][0]["keyword"] == "blue"
-+    for candidate, expected in [("certain permitted sentence", 1.0), ("a blue b", 0.0)]:
-+        scores = []
-+        for enabled in [False, True]:
-+            env = NemotronUltraEnv(OmegaConf.create({"verifyit_enabled": enabled}), extras=row)
-+            env.init(row["prompt"])
-+            try:
-+                scores.append(env.step(candidate)["reward"])
-+            finally:
-+                env.close()
-+        assert scores == [expected, expected]
 +
 +
 +def test_explicit_keyword_needs_no_unused_random_instruction():
@@ -4641,39 +4887,6 @@ index 0000000..898f1fd
 +        assert random.getstate() == after
 +    finally:
 +        random.setstate(original_state)
-+
-+
-+@pytest.mark.parametrize(
-+    "identity",
-+    ["length_constraints:nth_paragraph_first_word", "count:count_increment_word"],
-+)
-+def test_default_source_defects_are_resolved_before_serialization(identity):
-+    raw = {
-+        "uuid": "resolved-default",
-+        "agent_ref": {"name": "instruction_following_simple_agent"},
-+        "responses_create_params": {"input": [{"role": "user", "content": "Write a response"}]},
-+        "instruction_id_list": [identity],
-+        "kwargs": [{}],
-+    }
-+    row = nemotron_ultra_mopd_source(instruction_reference_seed=13).prepare_row(raw, 0, None)
-+    record = json.loads(row["extra_info"]["nemotron_ultra"]["record_json"])
-+    args = record["kwargs"][0]
-+    if identity == "length_constraints:nth_paragraph_first_word":
-+        assert 1 <= args["nth_paragraph"] <= args["num_paragraphs"]
-+        positive = "\n\n".join([args["first_word"] + " body"] * args["num_paragraphs"])
-+    else:
-+        assert isinstance(args["keyword1"], str) and isinstance(args["keyword2"], str)
-+        positive = f"{args['keyword1']} {args['keyword2']} {args['keyword2']}"
-+    for candidate, expected in [(positive, 1.0), ("unrelated content", 0.0)]:
-+        scores = []
-+        for enabled in [False, True]:
-+            env = NemotronUltraEnv(OmegaConf.create({"verifyit_enabled": enabled}), extras=row)
-+            env.init(row["prompt"])
-+            try:
-+                scores.append(env.step(candidate)["reward"])
-+            finally:
-+                env.close()
-+        assert scores == [expected, expected]
 +
 +
 +def test_frozen_reference_revision_mismatch_is_invalid():
@@ -4751,7 +4964,8 @@ index 0000000..898f1fd
 +    assert random.getstate() == before
 +
 +
-+def test_malformed_scored_child_result_does_not_commit_rng(monkeypatch):
++@pytest.mark.parametrize("missing_or_inconsistent", ["source_feedback", "num_passed", "num_total"])
++def test_malformed_scored_child_result_does_not_commit_rng(monkeypatch, missing_or_inconsistent):
 +    import dataclasses
 +    import verifyit.grade
 +
@@ -4761,7 +4975,12 @@ index 0000000..898f1fd
 +        verdict = real_run(*args, **kwargs)
 +        detail = dict(verdict.detail)
 +        assert "random_state" in detail
-+        detail.pop("source_feedback")
++        if missing_or_inconsistent == "source_feedback":
++            detail.pop("source_feedback")
++        else:
++            feedback = dict(detail["source_feedback"])
++            feedback[missing_or_inconsistent] += 1
++            detail["source_feedback"] = feedback
 +        return dataclasses.replace(verdict, detail=detail)
 +
 +    monkeypatch.setattr(verifyit.grade, "run", missing_feedback)
@@ -5231,10 +5450,10 @@ index 0000000..e00d03d
 +    assert len(owner.requests) == 2
 diff --git a/skyrl-gym/tests/test_math_judge_verifyit.py b/skyrl-gym/tests/test_math_judge_verifyit.py
 new file mode 100644
-index 0000000..ca2351b
+index 0000000..5f1382f
 --- /dev/null
 +++ b/skyrl-gym/tests/test_math_judge_verifyit.py
-@@ -0,0 +1,372 @@
+@@ -0,0 +1,326 @@
 +"""Math and symmetric judge contracts at the actual source boundary."""
 +
 +import json
@@ -5461,52 +5680,6 @@ index 0000000..ca2351b
 +    assert reward == 0.0
 +    assert detail["error_type"] == "schema_error"
 +    assert server.requests == []
-+
-+
-+@pytest.mark.parametrize("agent", ["math_with_judge_simple_agent", "ns_tools_simple_agent"])
-+@pytest.mark.parametrize("label,score", [("[[A=B]]", 1.0), ("[[A!=B]]", 0.0)])
-+def test_prepared_semantic_reference_roundtrips_framework(agent, label, score, judge_server):
-+    import dataclasses
-+    from omegaconf import OmegaConf
-+    from infra.rl_data.sources import nemotron_ultra_mopd_source
-+    from skyrl_gym.envs.nemotron_ultra.env import NemotronUltraEnv
-+
-+    server, judge = judge_server
-+    server.replies = [label]
-+    raw = {
-+        "agent_ref": {"name": agent},
-+        "responses_create_params": {"input": [{"role": "user", "content": "Describe the strategy."}]},
-+        "question": "Describe the strategy.",
-+        "expected_answer": "Choose the next box (unless it is empty).\n• Stop at Box 8 — then return.",
-+    }
-+    # This selection is made before candidate creation; the source record remains unchanged.
-+    row = nemotron_ultra_mopd_source(math_reference_kind="semantic").prepare_row(raw, 0, None)
-+    serialized = json.loads(row["extra_info"]["nemotron_ultra"]["record_json"])
-+    assert serialized["math_reference_kind"] == "semantic"
-+    assert "math_reference_kind" not in raw
-+    candidate = "Move to each nonempty next box and stop when reaching the eighth box."
-+    results = []
-+    requests = []
-+    for enabled in (False, True):
-+        server.requests.clear()
-+        env = NemotronUltraEnv(
-+            OmegaConf.create(
-+                {
-+                    "verifyit_enabled": enabled,
-+                    "judges": {"general": dataclasses.asdict(judge)},
-+                }
-+            ),
-+            extras=row,
-+        )
-+        env.init(row["prompt"])
-+        try:
-+            results.append(env.step(candidate)["reward"])
-+            requests.append(list(server.requests))
-+        finally:
-+            env.close()
-+    assert results == [score, score]
-+    assert requests[0] == requests[1]
-+    assert len(requests[1]) == (2 if score else 1)
 +
 +
 +@pytest.mark.parametrize(
