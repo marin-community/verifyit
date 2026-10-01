@@ -1,13 +1,13 @@
 # Coverage gaps
 
-Completion scope: all 45 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **195 required routes**. The manager-reviewed checkpoint is **130/195 tested** (SkyRL 45/45, Harbor 33/87, custom 31/42, overrides 21/21). Counts derive from SkyRL's tested-route metadata, Harbor's explicit execution evidence markers and the Evalchemy tested-config ledger; route availability alone does not count. Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required. SkyRL retains 46 inventoried scoring routes; coder1 is explicitly excluded at the user's request and tracked for deprecation in [MarinSkyRL #880](https://github.com/marin-community/MarinSkyRL/issues/880). Its partial integration, source hashes and unresolved contracts remain in the JSON register; it is not counted as tested.
+Completion scope: all 45 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **195 required routes**. The manager-reviewed checkpoint is **131/195 tested** (SkyRL 45/45, Harbor 33/87, custom 32/42, overrides 21/21). Counts derive from SkyRL's tested-route metadata, Harbor's explicit execution evidence markers and the Evalchemy tested-config ledger; route availability alone does not count. Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required. SkyRL retains 46 inventoried scoring routes; coder1 is explicitly excluded at the user's request and tracked for deprecation in [MarinSkyRL #880](https://github.com/marin-community/MarinSkyRL/issues/880). Its partial integration, source hashes and unresolved contracts remain in the JSON register; it is not counted as tested.
 
 The remaining work is primarily client integration, source-specific comparison/judge profiles, and execution validation. A specification is not an implemented migration. Retaining the source scorer is compatibility or a hybrid route, not complete native equivalence. No unavoidable new verifier category has been identified.
 
 | Source population | Implemented / available | Remaining coverage |
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,329 guarded native routes + 993 retained-runtime routes available | 370 configs have no cutover; breakdown below |
-| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 19 source runtimes | 11 not integrated (7 client/comparator audits + 4 native profile gaps) |
+| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 20 source runtimes | 10 not integrated (6 client/comparator audits + 4 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 17 retained-runtime overrides | 0 unwired; GSM hybrid retains its fallback; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 45 source-patched (30 with selected real traces, 15 without eligible real traces) | 1 partial client/harness routes + 0 native profile gaps; 2 external-objective placeholders separate |
 | Harbor 87 adapters | 19 native primitive clients + 14 structured source-runtime bridges | 54 not integrated; 6 wired routes need verifier isolation |
@@ -23,7 +23,7 @@ Evidence audited 2026-10-01. These are distinct configurations exercised through
 
 | Population | Routes available / total | E2E tested / total | Fixture only | Archived-score parity | Real responses, different producer contract |
 | --- | --- | --- | --- | --- | --- |
-| evalchemy-custom | 31 / 42 | 31 / 42 | 25 | 5 | 1 |
+| evalchemy-custom | 32 / 42 | 32 / 42 | 26 | 5 | 1 |
 | evalchemy-override | 21 / 21 | 21 / 21 | 20 | 1 | 0 |
 | lm-eval-harness | 12,322 / 12,692 | 224 / 12,692 | 220 | 3 | 1 |
 
@@ -54,12 +54,11 @@ The source population additionally has 834 groups and 456 templates (1,290 orche
 
 ## Evalchemy custom benchmarks
 
-The 11 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
+The 10 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
 | BigCodeBench | not_integrated | script, pytest | Functional correctness runner requires its imports/resources and trusted tests; no candidate-artifact/restored-test adapter is wired. |
-| CruxEval | not_integrated | script, exact | evaluate_generations runs input/output prediction cases with its serialization and execution harness; no case codec/source-output adapter is wired. |
 | LiveBench | not_integrated | script | gen_judgments dispatches multiple category/task/date scorer families; no per-family trusted scorer and metric adapter is integrated. |
 | MTBench | capability_gap | judge | Single/pairwise multi-turn matches use task judge templates and turn-specific aggregation; rubric-only scoring loses match labels and turn metrics. |
 | MixEval | capability_gap | judge | Source judge-result files and compute_metrics_p preserve task-specific evaluation labels and score aggregation; neither prompt/parser nor result-file adapter is wired. |
@@ -78,6 +77,7 @@ The 11 remaining custom benchmarks are named below. Script/stdio/pytest candidat
 | AIME25 | native_fallback | math | Boxed math is integrated, but missing parse explicitly retains Minerva comparison; complete native comparator equivalence is not implemented. Map the remaining Minerva normalization/comparison semantics without changing no-parse fallback behavior. |
 | CodeElo | retained_runtime_available | script | ScriptSpec supervises isolated candidate function/stdin execution and trusted source comparison. Enable verifyit_enabled=True and apply the pinned candidate/RPC exports. |
 | CodeForces | retained_runtime_available | script | ScriptSpec supervises isolated candidate function/stdin execution and trusted source comparison. Enable verifyit_enabled=True and apply the pinned candidate/RPC exports. |
+| CruxEval | retained_runtime_available | script | ScriptSpec compares trusted Python literal references with isolated candidate expression results using bounded typed RPC. Enable verifyit_enabled=True and load the pinned candidate image plus RPC prerequisites. |
 | FinanceBench | retained_runtime_available | exact, script | Source SDK requests and structured judge parsing run through ScriptSpec with actual ExactSpec verdicts. Enable verifyit_enabled=True and apply the exported source-specific client. |
 | HLE | retained_runtime_available | exact, script | Source SDK requests and structured judge parsing run through ScriptSpec with actual ExactSpec verdicts. Enable verifyit_enabled=True and apply the exported source-specific client. |
 | HMMT | retained_runtime_available | script | ScriptSpec runs pinned MathArena extraction in a candidate-only container, then bounded explicit symbolic reconstruction and untouched source comparison inside the supervised deadline. Enable verifyit_enabled=True and load the pinned image/prerequisite RPC patches. |

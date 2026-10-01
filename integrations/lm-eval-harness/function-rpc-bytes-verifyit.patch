@@ -1,0 +1,31 @@
+--- a/lm_eval/verifyit_function_worker.py
++++ b/lm_eval/verifyit_function_worker.py
+@@ -5,7 +5,6 @@
+ import re
+ import sys
+ from collections import Counter
+-
+ 
+ MAX_BYTES = 1048576
+ 
+@@ -17,6 +16,8 @@
+         return {"type": "integer_hex", "value": format(value, "x")}
+     if value is None or type(value) in (bool, int, str):
+         return value
++    if type(value) is bytes:
++        return {"type": "bytes_hex", "value": value.hex()}
+     if type(value) is float:
+         if math.isfinite(value):
+             return value
+@@ -50,6 +51,11 @@
+         return value
+     if type(value) is not dict or set(value) != {"type", "value"}:
+         raise ValueError("invalid typed function value")
++    if value["type"] == "bytes_hex":
++        text = value["value"]
++        if type(text) is not str or re.fullmatch(r"(?:[0-9a-f]{2})*", text) is None:
++            raise ValueError("invalid hexadecimal bytes value")
++        return bytes.fromhex(text)
+     if value["type"] == "integer_hex":
+         text = value["value"]
+         if type(text) is not str or re.fullmatch(r"-?[0-9a-f]+", text) is None:

@@ -954,6 +954,36 @@ def evalchemy_entities(root):
                     f"../evidence/e2e/wiring/evalchemy-{family}/archive-census.json",
                 ],
             )
+        elif name == "CruxEval":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_cruxeval_expression_runtime",
+                reason=(
+                    "ScriptSpec compares trusted Python literal references with isolated candidate "
+                    "expression results using bounded typed RPC. Both input/output directions retain "
+                    "source extraction, pass@1/pass@5 and per-task pass rates."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True and load the pinned candidate image plus RPC "
+                    "prerequisites. Ninety fixture evaluations cover nine frozen source tasks and "
+                    "five mixed completions in both directions. Source nested-input regex truncation "
+                    "remains unchanged. Malformed/missing batches abort, and missing command runtime "
+                    "does not return partial metrics. Three of 14 archive links are frozen but "
+                    "credentials are unavailable; no archived score replay is claimed."
+                ),
+                validation_status="source_custom_evaluator_fixtures_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/cruxeval-verifyit.patch",
+                    "integrations/evalchemy/cruxeval-source.json",
+                    "integrations/lm-eval-harness/function-rpc-bytes-verifyit.patch",
+                    "../evidence/e2e/wiring/evalchemy-cruxeval/manager/results.json",
+                    "../evidence/e2e/wiring/evalchemy-cruxeval/cutover-final/results.json",
+                    "../evidence/e2e/wiring/evalchemy-cruxeval/negative/results.json",
+                    "../evidence/e2e/wiring/evalchemy-cruxeval/archive-census.json",
+                ],
+            )
         elif name == "HMMT":
             entity.update(
                 status="retained_runtime_available",
