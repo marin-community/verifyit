@@ -97,6 +97,11 @@ earn positive rewards. Ordinary reported test failures retain required/protected
 For pytest tasks, `setup_failure_is_infra = true` makes a failed or timed-out `setup` an unscored
 infrastructure error with no reward file. Use it for task-owned dependency installation and
 environment preparation; the default remains scored zero for candidate-dependent setup commands.
+Pytest `batch_size` splits selected paths into separate invocations (`0` runs one invocation).
+The timeout covers restoration, setup and all batches; a later execution error cannot retain
+partial credit. Failed or skipped repeated tests cannot be overridden by an earlier pass.
+`id_matching = "exact"` is the default. `"unique_prefix"` also accepts uniquely matching
+bracket-truncated parameter IDs and Unicode-escaped IDs; ambiguous or overlapping aliases fail.
 
 For the `math` and `numeric` grading modes, the last `\boxed{...}` occurrence determines the
 candidate when the output contains a box marker. Its braces must be balanced and its content must be
@@ -209,3 +214,10 @@ takes precedence and a malformed final box scores zero. Unlike the default profi
 it does not wrap bare symbolic text to make it parse. A reference that yields only
 an unparsed string is an invalid task. Additive fallback in this profile uses
 LaTeX extraction only.
+
+Clients can grade prepared text with `grade_ifeval_candidate` from
+`verifyit.modes.grade_ifeval`. Its optional `registry` supplies additional trusted
+checks without changing global registrations or overriding built-in names.
+Direct text grading follows the spec's `empty_output` policy. Keyword existence
+and forbidden-word constraints accept `word_boundary = false` in their params
+for case-insensitive substring matching; the default keeps whole-word matching.

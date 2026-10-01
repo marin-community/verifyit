@@ -5,7 +5,7 @@ import pytest
 
 from verifyit.grade import InvalidTask, Status
 from verifyit.modes import grade_ifeval
-from verifyit.spec import Constraint, IfevalSpec
+from verifyit.spec import Constraint, EmptyOutputPolicy, IfevalSpec
 
 # One passing and one failing response per constraint, written the way a model would answer.
 CASES = [
@@ -231,3 +231,58 @@ def test_constraint_missing_its_parameters_fails_the_candidate(tmp_path, workspa
 def test_two_responses_requires_exactly_two_distinct_answers(tmp_path, workspace, text, expected):
     result = reward_for(workspace, tmp_path, (Constraint("combination:two_responses", {}),), text)
     assert (result.reward, result.status) == (expected, Status.SCORED)
+
+
+@pytest.mark.parametrize("policy", [EmptyOutputPolicy.ZERO, EmptyOutputPolicy.GRADE])
+def test_direct_candidate_preserves_file_empty_and_constraint_results(tmp_path, policy):
+    spec = IfevalSpec((Constraint("punctuation:no_comma"),), empty_output=policy)
+    for candidate in ["plain", "one,two", ""]:
+        (tmp_path / "answer.txt").write_text(candidate)
+        direct = grade_ifeval.grade_ifeval_candidate(spec, candidate)
+        from_file = grade_ifeval.grade(spec, tmp_path, tmp_path)
+        assert direct == from_file
+        assert direct.reward == float("," not in candidate and (bool(candidate) or policy is EmptyOutputPolicy.GRADE))
+
+
+def test_custom_constraint_cannot_replace_builtin_scoring():
+    spec = IfevalSpec((Constraint("punctuation:no_comma"),))
+    with pytest.raises(InvalidTask):
+        grade_ifeval.grade_ifeval_candidate(
+            spec, "one,two", registry={"punctuation:no_comma": lambda text, params: (True, "")}
+        )
+    assert grade_ifeval.grade_ifeval_candidate(spec, "one,two").reward == 0
+
+
+@pytest.mark.parametrize("value,detail", [(1, ""), ("passed", ""), (None, ""), (True, {})])
+def test_custom_constraint_truthy_malformed_result_cannot_award_credit(value, detail):
+    spec = IfevalSpec((Constraint("custom:decision"),))
+    with pytest.raises(RuntimeError):
+        grade_ifeval.grade_ifeval_candidate(
+            spec, "candidate", registry={"custom:decision": lambda text, params: (value, detail)}
+        )
+
+
+@pytest.mark.parametrize(
+    "name,key", [("keywords:existence", "keywords"), ("keywords:forbidden_words", "forbidden_words")]
+)
+def test_keyword_substring_policy_preserves_lowercase_and_word_default(name, key):
+    expected = name == "keywords:existence"
+    default = IfevalSpec((Constraint(name, {key: ["cat"]}),))
+    substring = IfevalSpec((Constraint(name, {key: ["cat"], "word_boundary": False}),))
+    assert grade_ifeval.grade_ifeval_candidate(default, "SCATTER").reward == float(not expected)
+    assert grade_ifeval.grade_ifeval_candidate(substring, "SCATTER").reward == float(expected)
+    malformed = IfevalSpec((Constraint(name, {key: [], "word_boundary": "false"}),))
+    assert grade_ifeval.grade_ifeval_candidate(malformed, "candidate").reward == 0
+
+
+@pytest.mark.parametrize(
+    "name,key,valid",
+    [("keywords:existence", "keywords", "candidate"), ("keywords:forbidden_words", "forbidden_words", "absent")],
+)
+def test_malformed_keyword_members_cannot_silently_disappear(name, key, valid):
+    for words in ([None], [valid, None]):
+        spec = IfevalSpec((Constraint(name, {key: words}),))
+        assert grade_ifeval.grade_ifeval_candidate(spec, "candidate").reward == 0
+    for words in ([], [valid]):
+        spec = IfevalSpec((Constraint(name, {key: words}),))
+        assert grade_ifeval.grade_ifeval_candidate(spec, "candidate").reward == 1

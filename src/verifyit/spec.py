@@ -66,6 +66,11 @@ class Compare(StrEnum):
     FLOAT = "float"
 
 
+class TestIdMatching(StrEnum):
+    EXACT = "exact"
+    UNIQUE_PREFIX = "unique_prefix"
+
+
 class EmptyOutputPolicy(StrEnum):
     """Whether a present empty answer is scored zero or passed to its grader."""
 
@@ -194,6 +199,8 @@ class PytestSpec:
     timeout: float = 600.0
     workspace: str = DEFAULT_WORKSPACE
     setup_failure_is_infra: bool = False
+    batch_size: int = 0
+    id_matching: TestIdMatching = TestIdMatching.EXACT
 
 
 @dataclass(frozen=True)

@@ -21,6 +21,9 @@ from verifyit.spec import (
     render_spec,
     spec_from_table,
 )
+from verifyit.spec import (
+    TestIdMatching as IdMatching,
+)
 
 
 def test_round_trip_every_field_kind():
@@ -33,6 +36,7 @@ def test_round_trip_every_field_kind():
         IfevalSpec(constraints=(Constraint("last_word:last_word_answer", {"last_word": "contest"}),)),
         StdioSpec(command="python3 /app/main.py", compare=Compare.FLOAT, special_judge="judge.py", min_cases=3),
         PytestSpec(setup="uv init", setup_failure_is_infra=True),
+        PytestSpec(batch_size=40, id_matching=IdMatching.UNIQUE_PREFIX),
     ]
     for spec in specs:
         assert parse_spec(render_spec(spec)) == spec
