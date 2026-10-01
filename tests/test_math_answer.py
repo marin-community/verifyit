@@ -12,10 +12,12 @@ import math_verify
 import sympy
 from math_verify.errors import TimeoutException
 
+from verifyit.bounded import call_bounded
 from verifyit.grade import InvalidTask, Status, run, write_reward
 from verifyit.grade import grade as dispatch
 from verifyit.modes import grade_math
-from verifyit.spec import MathProfile, MathSpec, MathType, render_spec
+from verifyit.modes.grade_exact import grade_exact_candidate
+from verifyit.spec import ExactSpec, MathProfile, MathSpec, MathType, render_spec
 
 
 def _answer(workspace: Path, text: str) -> None:
@@ -279,3 +281,30 @@ def test_raw_math_does_not_recover_an_earlier_answer_after_malformed_final_box(t
     spec_path.write_text(render_spec(MathSpec(expected="2", profile=MathProfile.RAW)))
     result = run(spec_path, tmp_path)
     assert (result.status, result.reward) == (Status.SCORED, 0.0)
+
+
+@pytest.mark.parametrize(
+    "gold,candidate,expected",
+    [
+        ("1,1,2", "2,1,1", 1),
+        ("1,1,2", "1,2,2", 0),
+        ("1,1,2", "1,2", 0),
+        ("1,2", "1,2,3", 0),
+        (r"\frac{1}{2}", "0.5", 1),
+        ("0", "0.00000000005", 0),
+        ("0", "0.0000000001", 0),
+        ("1000000000000000000000000000001", "1000000000000000000000000000002", 0),
+        ("1000000000000000000000000000000.1", "1000000000000000000000000000000.2", 0),
+    ],
+)
+def test_canonical_members_preserve_exact_multiset_and_numeric_distinctions(gold, candidate, expected):
+    reference = call_bounded(grade_math.canonical_math_members, gold, timeout=10)
+    proposed = call_bounded(grade_math.canonical_math_members, candidate, timeout=10)
+    verdict = grade_exact_candidate(ExactSpec(expected=reference, ordered=False), ",".join(proposed))
+    assert verdict.reward == expected
+
+
+@pytest.mark.parametrize("value", ["", "[]", "1,,2", "x", r"\infty", "0.1+0.2", "1 +", "1 trailing text", r"\frac{1}"])
+def test_canonical_members_reject_empty_nonfinite_and_approximate_expressions(value):
+    with pytest.raises(ValueError):
+        call_bounded(grade_math.canonical_math_members, value, timeout=10)

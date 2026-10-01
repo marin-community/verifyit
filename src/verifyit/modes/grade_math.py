@@ -94,6 +94,53 @@ def _split_members(text: str) -> list[str]:
     return members
 
 
+def canonical_math_members(text: str) -> tuple[str, ...]:
+    """Prepare finite exact constants for Exact multiset grading inside a bounded worker.
+
+    Tokens encode canonical expressions as hex so commas inside symbolic constructors
+    cannot become Exact member separators. Approximate compound expressions are rejected.
+    """
+    from latex2sympy2_extended import NormalizationConfig  # noqa: PLC0415
+    from math_verify import parse  # noqa: PLC0415
+    from math_verify.parser import LatexExtractionConfig  # noqa: PLC0415
+    from sympy import Expr, Float, Rational, simplify, srepr  # noqa: PLC0415
+
+    strict_latex = LatexExtractionConfig(
+        normalization_config=NormalizationConfig(
+            basic_latex=True, units=False, malformed_operators=False, nits=False, boxed="none", equations=False
+        )
+    )
+    if not isinstance(text, str) or not text.strip():
+        raise ValueError("math members require nonempty text")
+    tokens = []
+    for member in _split_members(text):
+        if re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", member):
+            value = Rational(member)
+        else:
+            parsed = [
+                value
+                for value in parse(
+                    f"${member}$", extraction_config=[strict_latex], parsing_timeout=_timeout(), raise_on_error=True
+                )
+                if not isinstance(value, str)
+            ]
+            if len(parsed) != 1:
+                raise ValueError("math member is missing or ambiguous")
+            value = parsed[0]
+        if (
+            not isinstance(value, Expr)
+            or value.free_symbols
+            or getattr(value, "is_finite", None) is not True
+            or value.has(Float)
+        ):
+            raise ValueError("math member must be a finite exact constant")
+        canonical = simplify(value)
+        if canonical.free_symbols or getattr(canonical, "is_finite", None) is not True or canonical.has(Float):
+            raise ValueError("math member cannot be normalized exactly")
+        tokens.append(srepr(canonical).encode("utf-8").hex())
+    return tuple(tokens)
+
+
 def _parsed_members(text: str) -> list[list]:
     return [_parse(member) for member in _split_members(text)]
 

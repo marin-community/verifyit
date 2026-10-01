@@ -89,6 +89,7 @@ def test_harbor_answer_cli_rejects_candidate_alias_to_protected_reference(tmp_pa
         ("gaia", " \n "),
         ("gpqa-diamond", "E"),
         ("satbench", '{"expected_answer":"MAYBE"}'),
+        ("satbench", "not JSON"),
         ("unknown", "42"),
     ],
 )
@@ -101,3 +102,27 @@ def test_invalid_reference_precedes_redirected_candidate(tmp_path: Path, mode: s
     reward = grade_files(mode, expected, candidate)
     assert reward.status == Status.INVALID_TASK
     assert reward.reward == 0.0
+
+
+def test_answer_size_limit_applies_before_matching(tmp_path):
+    expected = tmp_path / "expected"
+    candidate = tmp_path / "candidate"
+    expected.write_text("42")
+    candidate.write_bytes(b"42" + b" " * 999_998)
+    assert grade_files("gaia", expected, candidate).reward == 1.0
+    with candidate.open("ab") as output:
+        output.write(b" ")
+    assert grade_files("gaia", expected, candidate).reward == 0.0
+    expected.write_bytes(candidate.read_bytes())
+    assert grade_files("gaia", expected, candidate).status == Status.INVALID_TASK
+
+
+def test_answer_parent_link_is_rejected(tmp_path):
+    real = tmp_path / "real"
+    real.mkdir()
+    alias = tmp_path / "alias"
+    alias.symlink_to(real, target_is_directory=True)
+    (real / "expected").write_text("42")
+    (real / "candidate").write_text("42")
+    assert grade_files("gaia", real / "expected", alias / "candidate").reward == 0.0
+    assert grade_files("gaia", alias / "expected", real / "candidate").status == Status.INVALID_TASK

@@ -47,12 +47,13 @@ def test_bad_protected_grid_is_invalid_task(expected: object) -> None:
         grade_grids(expected, [[1]])
 
 
-def test_file_errors_and_stale_reward_are_fail_closed(tmp_path: Path) -> None:
+@pytest.mark.parametrize("encoding", ["utf-8", "utf-16"])
+def test_file_errors_and_stale_reward_are_fail_closed(tmp_path: Path, encoding: str) -> None:
     reference = tmp_path / "expected.json"
     candidate = tmp_path / "output.json"
     logs = tmp_path / "logs"
     reference.write_text("[[1]]", encoding="utf-8")
-    candidate.write_text("[[1]]", encoding="utf-8")
+    candidate.write_text("[[1]]", encoding=encoding)
     assert main([str(reference), str(candidate), "--logs-dir", str(logs)]) == 0
     assert float((logs / "reward.txt").read_text()) == 1.0
 

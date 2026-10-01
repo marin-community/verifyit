@@ -6,13 +6,12 @@
 import argparse
 import errno
 import json
-import os
 import re
-import stat
 from pathlib import Path
 
+from verifyit.adapters.artifact_files import read_regular_bytes
 from verifyit.adapters.skyrl import grade_literal_candidate
-from verifyit.grade import InvalidTask, Reward, infra_error, invalid_task, scored, write_reward
+from verifyit.grade import DEFAULT_LOGS_DIR, InvalidTask, Reward, infra_error, invalid_task, scored, write_reward
 from verifyit.modes.grade_mcq import grade_mcq_candidate
 from verifyit.spec import McqSpec
 
@@ -20,28 +19,6 @@ SAT_MARKER = re.compile(r"\[(SAT|UNSAT)\]")
 ASCII_LOWER = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")
 ASCII_UPPER = str.maketrans("abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 ASCII_SPACE = " \t\r\n\v\f"
-MAX_ANSWER_BYTES = 1_000_000
-
-
-def _read_regular_text(path: Path) -> str:
-    """Reject redirected and special files at the Harbor artifact boundary."""
-    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
-    try:
-        descriptor = os.open(
-            path.name,
-            os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
-            dir_fd=directory,
-        )
-    finally:
-        os.close(directory)
-    with os.fdopen(descriptor, "rb") as source:
-        info = os.fstat(source.fileno())
-        if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_ANSWER_BYTES:
-            raise ValueError("answer is not a bounded regular file")
-        payload = source.read(MAX_ANSWER_BYTES + 1)
-    if len(payload) > MAX_ANSWER_BYTES:
-        raise ValueError("answer exceeds the size limit")
-    return payload.decode()
 
 
 def grade_answer(mode: str, expected: str, candidate: str | None) -> Reward:
@@ -71,7 +48,7 @@ def grade_answer(mode: str, expected: str, candidate: str | None) -> Reward:
 def grade_files(mode: str, expected_path: Path, candidate_path: Path) -> Reward:
     """Read protected task reference and candidate output with distinct failure statuses."""
     try:
-        expected = _read_regular_text(expected_path)
+        expected = read_regular_bytes(expected_path).decode()
     except FileNotFoundError as error:
         return invalid_task(f"missing expected answer: {error.filename}")
     except (UnicodeError, ValueError) as error:
@@ -94,7 +71,7 @@ def grade_files(mode: str, expected_path: Path, candidate_path: Path) -> Reward:
     except InvalidTask as error:
         return invalid_task(str(error))
     try:
-        candidate = _read_regular_text(candidate_path)
+        candidate = read_regular_bytes(candidate_path).decode()
     except FileNotFoundError:
         candidate = None
     except UnicodeError as error:
@@ -118,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("mode", choices=("aime", "gaia", "satbench", "gpqa-diamond"))
     parser.add_argument("expected", type=Path)
     parser.add_argument("candidate", type=Path)
-    parser.add_argument("--logs-dir", type=Path, default=Path("/logs/verifier"))
+    parser.add_argument("--logs-dir", type=Path, default=Path(DEFAULT_LOGS_DIR))
     args = parser.parse_args(argv)
     try:
         reward = grade_files(args.mode, args.expected, args.candidate)
