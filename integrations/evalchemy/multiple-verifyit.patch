@@ -1,0 +1,563 @@
+diff --git a/eval/chat_benchmarks/MultiPLE/eval_instruct.py b/eval/chat_benchmarks/MultiPLE/eval_instruct.py
+--- a/eval/chat_benchmarks/MultiPLE/eval_instruct.py
++++ b/eval/chat_benchmarks/MultiPLE/eval_instruct.py
+@@ -99,6 +99,7 @@
+         timeout: float = 15,
+         debug: bool = False,
+         logger: Optional[logging.Logger] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize multipl-e benchmark.
+@@ -113,6 +114,7 @@
+             logger: Optional logger instance
+         """
+         super().__init__(logger)
++        self.verifyit_enabled = verifyit_enabled
+         self.languages = languages
+         self.data_dir = data_dir
+         self.max_tokens = max_tokens or 1024
+@@ -148,6 +150,10 @@
+         for lang in self.languages:
+             try:
+                 problem_file = os.path.join(self.data_dir, f"multipl-e-{lang}.json")
++                if self.verifyit_enabled:
++                    from eval.graders.verifyit_multiple import problem_path
++
++                    problem_file = str(problem_path(self.data_dir, lang))
+                 if not os.path.exists(problem_file):
+                     self.logger.warning(f"Dataset file not found: {problem_file}")
+                     continue
+@@ -231,6 +237,10 @@
+         if results is None:
+             return None
+ 
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_multiple import evaluate
++
++            return evaluate(self, results)
+         temp_dir_obj = results["temp_dir_obj"]
+         temp_dir = temp_dir_obj.name
+ 
+diff --git a/eval/graders/verifyit_multiple.py b/eval/graders/verifyit_multiple.py
+new file mode 100644
+--- /dev/null
++++ b/eval/graders/verifyit_multiple.py
+@@ -0,0 +1,209 @@
++"""MultiPL-E source execution and pass@k behind the existing ScriptSpec boundary.
++
++Candidate code shares the original grader runtime and trusted tests. This client
++preserves source language runtimes; it does not claim assertion isolation.
++"""
++
++import hashlib
++import importlib.util
++import json
++import math
++import os
++from pathlib import Path
++import subprocess
++import sys
++import tempfile
++import uuid
++
++from verifyit.grade import InvalidTask, Status, run
++from verifyit.spec import ScriptSpec, render_spec
++
++IMAGE = "verifyit-evalchemy-multiple:source-v1"
++NATIVE_IMAGE = "verifyit-evalchemy-multiple-native:source-v1"
++DATA_ALIASES = {"ruby": "rb", "dlang": "d", "ocaml": "ml"}
++
++LANGUAGES = frozenset(
++    (
++        "js",
++        "java",
++        "cpp",
++        "cs",
++        "go",
++        "hs",
++        "php",
++        "r",
++        "rs",
++        "sh",
++        "swift",
++        "ts",
++        "clj",
++        "dart",
++        "elixir",
++        "julia",
++        "lua",
++        "racket",
++        "ruby",
++        "dlang",
++        "ocaml",
++        "adb",
++        "pl",
++        "scala",
++    )
++)
++
++
++def problem_path(data_dir, language):
++    return Path(data_dir) / f"multipl-e-{DATA_ALIASES.get(language, language)}.json"
++
++
++def source_root():
++    root = Path(__file__).resolve().parents[1] / "chat_benchmarks/MultiPLE"
++    hashes = json.loads(Path(__file__).with_name("multiple_runtime").joinpath("source-hashes.json").read_text())
++    for relative, expected in hashes.items():
++        if hashlib.sha256((root / relative).read_bytes()).hexdigest() != expected:
++            raise InvalidTask(f"MultiPL-E source implementation changed: {relative}")
++    return root
++
++
++def grade(task_id, sample, language, timeout, tmp_dir, completion_id):
++    if language not in LANGUAGES:
++        raise InvalidTask("MultiPL-E language has no complete bundled source contract")
++    if type(timeout) not in (int, float) or not math.isfinite(timeout) or timeout <= 0:
++        raise InvalidTask("MultiPL-E timeout must be positive and finite")
++    source = source_root()
++    name = "verifyit-multiple-" + uuid.uuid4().hex
++    with tempfile.TemporaryDirectory(prefix="verifyit-multiple-") as directory:
++        root = Path(directory)
++        payload = dict(
++            task_id=task_id,
++            sample=sample,
++            language=language,
++            timeout=timeout,
++            completion_id=completion_id,
++            container=name,
++            source=str(source),
++        )
++        (root / "input.json").write_text(json.dumps(payload, allow_nan=False))
++        (root / "run.sh").write_text('exec "$@"\n')
++        spec = ScriptSpec(
++            "run.sh",
++            args=(sys.executable, "-m", "eval.graders.verifyit_multiple", str(root / "input.json")),
++            timeout=timeout + 60,
++            verdict_file="result.json",
++        )
++        (root / "verifier.toml").write_text(render_spec(spec))
++        try:
++            verdict = run(root / "verifier.toml", root)
++        finally:
++            subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=30, check=False)
++    if verdict.status == Status.INVALID_TASK:
++        raise InvalidTask(str(verdict.detail))
++    if verdict.status != Status.SCORED:
++        raise RuntimeError(f"MultiPL-E verifier failed: {verdict.status}: {verdict.detail}")
++    result = verdict.detail["source_result"]
++    if type(result.get("passed")) is not bool or verdict.reward != float(result["passed"]):
++        raise RuntimeError("MultiPL-E returned inconsistent sample scoring")
++    return result
++
++
++def evaluate(benchmark, results):
++    source = source_root()
++    original_temp = results.get("temp_dir_obj") if isinstance(results, dict) else None
++    try:
++        if (
++            not isinstance(results, dict)
++            or not benchmark.languages
++            or len(set(benchmark.languages)) != len(benchmark.languages)
++        ):
++            raise InvalidTask("MultiPL-E requires a nonempty distinct language population")
++        if any(language not in LANGUAGES for language in benchmark.languages):
++            raise InvalidTask("MultiPL-E selected language lacks bundled data or source dispatch")
++        specification = importlib.util.spec_from_file_location(
++            "multiple._verifyit_evaluation", source / "multiple/evaluation.py"
++        )
++        runtime = importlib.util.module_from_spec(specification)
++        specification.loader.exec_module(runtime)
++        runtime.check_code_correctness = grade
++        metrics = {}
++        with tempfile.TemporaryDirectory(prefix="verifyit-multiple-batch-") as directory:
++            for language in benchmark.languages:
++                problem_file = problem_path(benchmark.data_dir, language)
++                problems = runtime.read_dataset(str(problem_file))
++                rows = results.get(language)
++                if not isinstance(rows, list) or not rows:
++                    raise InvalidTask("MultiPL-E requires current responses for every selected language")
++                clean_rows = []
++                for original in rows:
++                    if not isinstance(original, dict) or original.get("task_id") not in problems:
++                        raise InvalidTask("MultiPL-E response has no trusted problem")
++                    row = dict(original)
++                    problem = problems[row["task_id"]]
++                    if not isinstance(problem.get("test"), str) or not problem["test"].strip():
++                        raise InvalidTask("MultiPL-E requires a nonempty trusted test suite")
++                    if not isinstance(row.get("generation"), str) or not isinstance(row.get("prompt"), str):
++                        raise InvalidTask("MultiPL-E generation and prompt must be text")
++                    if row["prompt"] != problem.get("prompt"):
++                        raise InvalidTask("MultiPL-E response prompt differs from its trusted problem")
++                    clean_rows.append(row)
++                path = Path(directory) / f"{language}.jsonl"
++                path.write_text("".join(json.dumps(row, allow_nan=False) + "\n" for row in clean_rows))
++                values = runtime.evaluate_functional_correctness(
++                    input_file=str(path),
++                    tmp_dir=directory,
++                    n_workers=benchmark.num_workers,
++                    timeout=benchmark.timeout,
++                    problem_file=str(problem_file),
++                    language=language,
++                )
++                if not values or any(
++                    not math.isfinite(float(value)) or not 0 <= float(value) <= 1 for value in values.values()
++                ):
++                    raise RuntimeError("MultiPL-E returned invalid aggregate metrics")
++                metrics.update({f"{language}_{key}": value for key, value in values.items()})
++        return metrics
++    finally:
++        if original_temp is not None:
++            original_temp.cleanup()
++
++
++def main():
++    path = Path(sys.argv[1])
++    payload = json.loads(path.read_text())
++    source_root()
++    native = payload["language"] in {"cs", "racket"}
++    command = [
++        "docker",
++        "run",
++        "--rm",
++        "--platform",
++        os.environ.get("VERIFYIT_MULTIPLE_PLATFORM", "linux/arm64" if native else "linux/amd64"),
++        "--name",
++        payload["container"],
++        "-v",
++        f"{path.parent}:/input:ro",
++        "-v",
++        f"{payload['source']}:/source:ro",
++        "-v",
++        f"{Path(__file__).with_name('verifyit_multiple_worker.py')}:/worker.py:ro",
++        "--entrypoint",
++        "python",
++        os.environ.get("VERIFYIT_MULTIPLE_IMAGE", NATIVE_IMAGE if native else IMAGE),
++        "/worker.py",
++    ]
++    result = subprocess.run(command, capture_output=True, text=True, timeout=payload["timeout"] + 40, check=False)
++    if result.returncode != 0:
++        raise RuntimeError(f"MultiPL-E runtime failed: {result.stderr[-4096:]}")
++    runtime_result = json.loads(result.stdout)
++    source_result = runtime_result["source_result"]
++    if type(source_result.get("passed")) is not bool:
++        raise RuntimeError("MultiPL-E runtime omitted its sample outcome")
++    verdict = {
++        "status": "scored",
++        "reward": float(source_result["passed"]),
++        "detail": {"source_result": source_result, "execution_receipts": runtime_result["execution_receipts"]},
++    }
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(json.dumps(verdict, allow_nan=False))
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/eval/graders/verifyit_multiple_worker.py b/eval/graders/verifyit_multiple_worker.py
+new file mode 100644
+--- /dev/null
++++ b/eval/graders/verifyit_multiple_worker.py
+@@ -0,0 +1,89 @@
++"""Execute the untouched MultiPL-E sample scorer in its documented dependency image."""
++
++import contextlib
++import json
++import multiprocessing
++from pathlib import Path
++import shutil
++import sys
++
++sys.path.insert(0, "/source")
++from multiple import execution
++from multiple import containerized_eval, eval_pl, eval_scala
++
++TOOLS = {
++    "js": ("node",),
++    "java": ("javac", "java"),
++    "cpp": ("g++",),
++    "cs": ("csc", "mono"),
++    "go": ("go",),
++    "hs": ("runghc",),
++    "php": ("php",),
++    "r": ("Rscript",),
++    "rs": ("rustc",),
++    "sh": ("bash",),
++    "swift": ("swiftc",),
++    "ts": ("tsc", "node"),
++    "clj": ("clojure",),
++    "dart": ("dart",),
++    "elixir": ("elixir",),
++    "julia": ("julia",),
++    "lua": ("lua",),
++    "racket": ("racket",),
++    "ruby": ("ruby",),
++    "dlang": ("dmd",),
++    "ocaml": ("ocaml",),
++    "adb": ("gnatchop", "gnatmake"),
++    "pl": ("perl",),
++    "scala": ("scalac", "scala"),
++}
++
++payload = json.loads(Path("/input/input.json").read_text())
++for tool in TOOLS[payload["language"]]:
++    if shutil.which(tool) is None:
++        raise RuntimeError(f"MultiPL-E trusted runtime is unavailable: {tool}")
++if payload["language"] == "java" and not Path("/usr/multiple/javatuples-1.2.jar").is_file():
++    raise RuntimeError("MultiPL-E javatuples dependency is unavailable")
++containerized_eval.EVALUATORS.update({"pl": (eval_pl.eval_script, ".pl"), "scala": (eval_scala.eval_script, ".scala")})
++# Go only discovers Test* functions in a _test.go file. The source .go suffix
++# compiles but reports no tests, even for a wrong candidate.
++containerized_eval.EVALUATORS["go"] = (containerized_eval.EVALUATORS["go"][0], "_test.go")
++failures_manager = multiprocessing.Manager()
++launch_failures = failures_manager.list()
++execution_receipts = failures_manager.list()
++original_execute = execution.eval_string_script
++runtime_aliases = {"ruby": "rb", "dlang": "d", "ocaml": "ml", "adb": "ada"}
++
++
++def execute(language, program, tmpdir):
++    try:
++        result = original_execute(runtime_aliases.get(language, language), program, tmpdir)
++        execution_receipts.append({key: result[key] for key in ("status", "exit_code", "stdout", "stderr")})
++        # Every supported source callback uses OK for successful execution.
++        # Mono can exit zero after a failed assertion; its source callback
++        # reports Exception but retains that original exit code.
++        if result["status"] != "OK" and result["exit_code"] == 0:
++            result = {**result, "exit_code": 1}
++        return result
++    except (OSError, ImportError) as error:
++        launch_failures.append(f"{type(error).__name__}: {error}")
++        raise
++
++
++execution.eval_string_script = execute
++try:
++    with contextlib.redirect_stdout(sys.stderr):
++        result = execution.check_code_correctness(
++            payload["task_id"],
++            payload["sample"],
++            payload["language"],
++            payload["timeout"],
++            "/tmp",
++            payload["completion_id"],
++        )
++    if launch_failures:
++        raise RuntimeError("MultiPL-E runtime launch failed: " + "; ".join(launch_failures))
++    receipts = list(execution_receipts)
++finally:
++    failures_manager.shutdown()
++print(json.dumps({"source_result": result, "execution_receipts": receipts}, allow_nan=False))
+diff --git a/eval/graders/multiple_runtime/Dockerfile b/eval/graders/multiple_runtime/Dockerfile
+new file mode 100644
+--- /dev/null
++++ b/eval/graders/multiple_runtime/Dockerfile
+@@ -0,0 +1,7 @@
++FROM marianna13/evalchemy_multiple@sha256:ff98f693cdfa73e5738488f346b9ad87caf904c16ad8618860c7972b9f1e3920
++RUN apt-get -o Dir::Etc::sourceparts=- -o Acquire::Retries=3 update \
++    && apt-get install --no-install-recommends -y gnat-12=12.3.0-1ubuntu1~22.04.3 racket=8.2+dfsg1-2ubuntu1 \
++    && ln -s /usr/bin/gnatchop-12 /usr/local/bin/gnatchop \
++    && ln -s /usr/bin/gnatmake-12 /usr/local/bin/gnatmake \
++    && rm -rf /var/lib/apt/lists/*
++ENV PATH="/workspace/swift-5.7-RELEASE-ubuntu22.04/usr/bin:/workspace/julia-1.8.2/bin:${PATH}"
+diff --git a/eval/graders/multiple_runtime/Dockerfile.csharp b/eval/graders/multiple_runtime/Dockerfile.csharp
+new file mode 100644
+--- /dev/null
++++ b/eval/graders/multiple_runtime/Dockerfile.csharp
+@@ -0,0 +1,6 @@
++FROM ubuntu:22.04@sha256:1cc7bb38a74c0e126716646e47c0b3c5c139547d386d5ff7a64cf3ea316ca523
++RUN apt-get update \
++    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y python3=3.10.6-1~22.04.1 mono-devel=6.8.0.105+dfsg-3.2 racket=8.2+dfsg1-2ubuntu1 \
++    && ln -s /usr/bin/python3 /usr/local/bin/python \
++    && ln -s /usr/bin/mono-csc /usr/local/bin/csc \
++    && rm -rf /var/lib/apt/lists/*
+diff --git a/eval/graders/multiple_runtime/README.md b/eval/graders/multiple_runtime/README.md
+new file mode 100644
+--- /dev/null
++++ b/eval/graders/multiple_runtime/README.md
+@@ -0,0 +1,46 @@
++# MultiPL-E runtime
++
++Build the two images from the Evalchemy checkout:
++
++```sh
++docker build --platform linux/amd64 -t verifyit-evalchemy-multiple:source-v1 -f eval/graders/multiple_runtime/Dockerfile .
++docker build --platform linux/arm64 -t verifyit-evalchemy-multiple-native:source-v1 -f eval/graders/multiple_runtime/Dockerfile.csharp .
++```
++
++The first image derives from the immutable image named by the source README.
++It repairs the image's Swift and Julia PATH entries and installs the pinned Ada
++and Racket packages that the corresponding source callbacks require. The native
++ARM64 image supplies Mono and Racket because those runtimes abort under AMD64
++emulation on the validation host. Source and cutover comparisons use the same
++image and architecture for each language. This is an explicit runtime change,
++not evidence that the original AMD64 image works on every host.
++
++The opt-in adapter chooses the native image for C# and Racket and the source-derived
++image for other supported languages. VERIFYIT_MULTIPLE_IMAGE and
++VERIFYIT_MULTIPLE_PLATFORM override that trusted execution configuration together
++when an installation supplies an equivalent runtime. Neither value comes from a
++candidate response. Images must be built before grading; missing Docker or tools
++abort the batch with an infrastructure failure rather than a candidate score.
++
++All 31 advertised source selectors remain in the integration census. Twenty-four
++have bundled task data and source scoring modules. Ruby, D, and OCaml use their
++actual bundled rb/d/ml filenames; Ada, Perl, and Scala receive their existing
++source callback dispatch. Seven selectors lack bundled populations and are
++rejected explicitly. Source generation also lacks formatting settings for some
++advertised selectors; this adapter does not claim to repair that separate driver.
++
++The trusted source test program and candidate run together in the retained
++runtime, preserving source language semantics. This is a candidate-in-grader
++bridge, not isolation of trusted assertions from candidate execution. The parent
++owns a named container and removes it on success, failure, or timeout. Source
++per-language subprocess deadlines remain in force inside the configured sample
++deadline, with 40 seconds allowed for container setup and shutdown.
++
++Two scoring corrections are deliberate. Go test programs use `_test.go` so the
++Go tool actually discovers Test functions. All callbacks must report both status
++`OK` and exit code zero: the source outer scorer checks only exit code, which can
++credit Mono or other runtimes after their callback reports failed assertions.
++Unsuccessful source statuses remain candidate zero; missing executable or import
++errors abort the batch. Source pass@k estimation and selected-task denominator
++remain unchanged. The adapter regenerates scores from current responses and does
++not accept stale generated response files.
+diff --git a/eval/graders/multiple_runtime/source-hashes.json b/eval/graders/multiple_runtime/source-hashes.json
+new file mode 100644
+--- /dev/null
++++ b/eval/graders/multiple_runtime/source-hashes.json
+@@ -0,0 +1,42 @@
++{
++  "multiple/eval_lean.py": "296caa3e9f35a828ab683b4922a8cae415ea9b98ba77f0cd7adc0c0472fc3d40",
++  "multiple/eval_r.py": "83ad1c13f861a5aaee3b0ba7c909ba0dc74abdce7b49f1f74ce81beedc0f01e5",
++  "multiple/simple_eval.py": "59d0fa931189131c8988349c12fd53b2c6f6e0231803bdb7124d596a466208a9",
++  "multiple/eval_python.py": "3b9b0b8eae35f27dc5f7176d12add53baeadca60d2e1407a718b616384efe5dc",
++  "multiple/eval_v.py": "6e0738848f7aee1e844dd850527c9fa80ae88f88f88ba31146ac322886dd1185",
++  "multiple/execution.py": "2216aaa72f3e71561800d656ab5dfab02a287df81b6867d2144e4ed9bcae0460",
++  "multiple/eval_hs.py": "cf69bf628fdf16416b59f7bf0dd03409bd4f5055db6769603a079d66b859f069",
++  "multiple/eval_rust.py": "52f20982948f4cea256fb34974a0b664c9a32320e1d84dfe7d6e34f0669ace53",
++  "multiple/eval_sh.py": "2516757102881e01cf377a6f19fa741482b4480ef5f9858fd80035fba1b15235",
++  "multiple/eval_pl.py": "2bf4f2535d2b216b4a151aa6880f1c3fb1387635081cb6f97625d3d29ffa05a7",
++  "multiple/eval_lua.py": "72676da367c85329880fa487fc1d5ba6c04f0dd2d761437d2e26c2869540b34b",
++  "multiple/generic_eval.py": "890b00d5d984b1b917bee9d10e84e6558504c81b565cd36f098885a8a9cf2c80",
++  "multiple/eval_elixir.py": "ed905778246ba36cfb3953384372ec834ddb158b4b869f571ef853de7d3a8309",
++  "multiple/eval_luau.py": "7c29ddbb52064637eb8020cb0e8606109a78e01fc51ff1457e5386986185ce9e",
++  "multiple/eval_clj.py": "8fab8426920c177a82f59c49abb2d8b57e602e5593562d65ba75d6db5350b46f",
++  "multiple/eval_cpp.py": "0d457598dd24a8a6ead265780688ac44f73f2346156ff9c430d660cf8018f9b3",
++  "multiple/evaluation.py": "7b7c5964968c53b40f64c8486c5ad22284cda3acd37bf48cf51838491e529f31",
++  "multiple/eval_ocaml.py": "52b82350489770747a3939379224407603a460e0f42cdbd537494a1253cb0c8c",
++  "multiple/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
++  "multiple/eval_dlang.py": "d86526184569e576c61f8a5d5c3374a3b318938a20f01d3118c551b0d81de675",
++  "multiple/eval_racket.py": "fc1ca8b85ccd8ef6710258aedb2c53ec68b1c5a59ad2270b372bb977ba9215d1",
++  "multiple/eval_dfy.py": "72f5c4fd9a97a30dc1b8cab9c7ab1c4f0ffe5aa11c69221d956545754ea9511b",
++  "multiple/libeval.py": "473f4f08e6f0fea203d9fe68634d9dea83fd8bcc383a479b6e675c42384604a4",
++  "multiple/eval_julia.py": "16730e7633c516e5f8baaec6af0b80f58f6468df0be14bd39dec30899775736b",
++  "multiple/eval_javascript.py": "be82d0f9ae16297bdbf755c684ade388363c0053e63dda81dd2b0dc5c7ba2fc0",
++  "multiple/eval_scala.py": "aa9b15b631a06adaa0f08bec48b9ae7393b8a0e299166b2fb0f853f4850aadab",
++  "multiple/eval_ruby.py": "eb887892d734fec2361d61d38ce80b0680e541126a59aa0dd1e8d5e05da4c155",
++  "multiple/eval_dart.py": "e06e3a19e7642ec54ba32463440529c0b1399dc71cb9dc361718d26ef3587284",
++  "multiple/eval_matlab.py": "c774dc03d15aabe1725d82335b83783db5d36c09a9316d492c8d6405d3f5881d",
++  "multiple/eval_fs.py": "0d7eae1ce2f250116ea776584fdf7f0b1021ce8233b6c326d301a1b32fab1fcc",
++  "multiple/main.py": "3f6fa645d61facb3a47f16377a05b5cf2e29f0f8bfed6c6cd1a8aeb020797813",
++  "multiple/eval_go.py": "5f4a2ba151b12c1a1254fbf82465d07a925b66a15a414a7ca552a6ade1084aed",
++  "multiple/eval_adb.py": "6251f5dda688e609f4037eca0bf05a31cc66062693b0032a883fcd3d92aade5a",
++  "multiple/eval_java.py": "75a61aaa985a4de89c1a6751d03ef6f753cd7e95ca02e7556492688d32ccfcac",
++  "multiple/eval_swift.py": "b9c9da7575bd3d9beca30bbb38ddf5157180e56a9be00347526b25712664f499",
++  "multiple/eval_php.py": "563c178ab35129dfa5429999c5011e38837c38457ba73eb7f4626d004d3338ab",
++  "multiple/eval_ts.py": "0450deffc3438693337ae248f9ad71eaaf153036b63f45466bb337495f10ba95",
++  "multiple/eval_cs.py": "4fdbd9d9bddcf6724469bbc3a88bd1e66729f56c5390714f791ebd0e0767e21e",
++  "multiple/containerized_eval.py": "332de5a40b1ab61502e3e2ee39367841df61dac6a43f6e7bafdec786806c3f09",
++  "multiple/safe_subprocess/__init__.py": "64ab6d598be2c9909cd215180879c880b2cb9e537e6e2c7941d1bde8b0dda37c"
++}
+diff --git a/tests/graders/test_verifyit_multiple.py b/tests/graders/test_verifyit_multiple.py
+new file mode 100644
+--- /dev/null
++++ b/tests/graders/test_verifyit_multiple.py
+@@ -0,0 +1,88 @@
++"""Real compiler regressions for MultiPL-E source scoring failures."""
++
++import json
++from pathlib import Path
++import tempfile
++
++import pytest
++from verifyit.grade import InvalidTask
++
++from eval.chat_benchmarks.MultiPLE.eval_instruct import MultipleBenchmark
++
++
++@pytest.mark.parametrize(
++    "language,task_id,body,wrong,image,platform",
++    [
++        (
++            "go",
++            "mbpp_770_odd_num_sum",
++            "sum := 0; for i := 1; i <= n; i++ { x := 2*i-1; sum += x*x*x*x }; return sum\n}",
++            "return 0;\n}",
++            "verifyit-evalchemy-multiple:source-v1",
++            "linux/amd64",
++        ),
++        (
++            "cs",
++            "mbpp_14_find_Volume",
++            "return l * b * h / 2;",
++            "return 0;",
++            "verifyit-evalchemy-multiple-native:source-v1",
++            "linux/arm64",
++        ),
++        (
++            "clj",
++            "mbpp_726_multiply_elements",
++            "(mapv (fn [[a b]] (* a b)) (partition 2 1 test_tup)))",
++            "[])",
++            "verifyit-evalchemy-multiple:source-v1",
++            "linux/amd64",
++        ),
++    ],
++)
++def test_real_trusted_assertions_reject_wrong_completion(language, task_id, body, wrong, image, platform, monkeypatch):
++    root = Path(__file__).resolve().parents[2] / "eval/chat_benchmarks/MultiPLE/data"
++    tasks = json.loads((root / f"multipl-e-{language}.json").read_text())
++    task = next(row for row in tasks if row["task_id"] == task_id)
++    monkeypatch.setenv("VERIFYIT_MULTIPLE_IMAGE", image)
++    monkeypatch.setenv("VERIFYIT_MULTIPLE_PLATFORM", platform)
++    scorer = MultipleBenchmark(languages=[language], data_dir=str(root), timeout=60, verifyit_enabled=True)
++    for completion, expected in [(body, 1.0), (wrong, 0.0)]:
++        directory = tempfile.TemporaryDirectory()
++        responses = {
++            language: [{"task_id": task_id, "prompt": task["prompt"], "generation": task["prompt"] + completion}],
++            "temp_dir_obj": directory,
++        }
++        assert scorer.evaluate_responses(responses) == {f"{language}_pass@1": expected}
++        assert not Path(directory.name).exists()
++
++
++def test_later_invalid_suite_discards_prior_positive_aggregate(tmp_path, monkeypatch):
++    monkeypatch.setenv("VERIFYIT_MULTIPLE_IMAGE", "verifyit-evalchemy-multiple:source-v1")
++    valid = {"task_id": "valid", "prompt": "", "test": "if (candidate(2)!==2) throw Error('wrong');"}
++    invalid = {"task_id": "invalid", "prompt": "", "test": ""}
++    (tmp_path / "multipl-e-js.json").write_text(json.dumps([valid]))
++    (tmp_path / "multipl-e-lua.json").write_text(json.dumps([invalid]))
++    directory = tempfile.TemporaryDirectory()
++    responses = {
++        "js": [{"task_id": "valid", "prompt": "", "generation": "function candidate(x){return x;}"}],
++        "lua": [{"task_id": "invalid", "prompt": "", "generation": "function candidate(x) return x end"}],
++        "temp_dir_obj": directory,
++    }
++    scorer = MultipleBenchmark(languages=["js", "lua"], data_dir=str(tmp_path), timeout=60, verifyit_enabled=True)
++    with pytest.raises(InvalidTask, match="nonempty trusted test"):
++        scorer.evaluate_responses(responses)
++    assert not Path(directory.name).exists()
++
++
++def test_mixed_completions_preserve_pass_at_k_and_ignore_stale_file(tmp_path, monkeypatch):
++    monkeypatch.setenv("VERIFYIT_MULTIPLE_IMAGE", "verifyit-evalchemy-multiple:source-v1")
++    task = {"task_id": "identity", "prompt": "", "test": "if(candidate(2)!==2) throw Error('wrong');"}
++    (tmp_path / "multipl-e-js.json").write_text(json.dumps([task]))
++    directory = tempfile.TemporaryDirectory()
++    good = {"task_id": "identity", "prompt": "", "generation": "function candidate(x){return x;}"}
++    bad = {**good, "generation": "function candidate(x){return 0;}"}
++    (Path(directory.name) / "generated_js.jsonl").write_text((json.dumps(good) + "\n") * 10)
++    responses = {"js": [good, bad] * 5, "temp_dir_obj": directory}
++    scorer = MultipleBenchmark(languages=["js"], data_dir=str(tmp_path), timeout=60, verifyit_enabled=True)
++    assert scorer.evaluate_responses(responses) == {"js_pass@1": 0.5, "js_pass@10": 1.0}
++    assert not Path(directory.name).exists()

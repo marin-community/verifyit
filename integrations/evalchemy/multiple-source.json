@@ -1,0 +1,428 @@
+{
+  "source_revision": "e3f4a3d601896c437f37b0bd0a30e51651cce6d0",
+  "core_revision": "028d377d0b846a4d43bd6bd6d76e2e46d5badf22",
+  "patch_sha256": "098dad3ec993aa92afe3d19cc8078aabd665d6ad04a448fef2661e467b80910b",
+  "files": {
+    "eval/chat_benchmarks/MultiPLE/eval_instruct.py": {
+      "source_sha256": "506c8c5f2361122ecb9438419ac7f0a83a8aa8fe2097f260be3d37ca051b39ac",
+      "current_sha256": "01b53f6883a823f1d1bc626883b2204dd4fceb7540fd5514d581401eabe040f6"
+    },
+    "eval/graders/verifyit_multiple.py": {
+      "source_sha256": null,
+      "current_sha256": "a3776e4faa9381dc10accee188b05a34446260531704412b7adc38feec90c0f6"
+    },
+    "eval/graders/verifyit_multiple_worker.py": {
+      "source_sha256": null,
+      "current_sha256": "ceafb4cb0e6aef425192c6b69ebd4cd1d2d7220a87799c0876ba02b3bc7f99c9"
+    },
+    "eval/graders/multiple_runtime/Dockerfile": {
+      "source_sha256": null,
+      "current_sha256": "d2dde74361e216a33b32c494e20d2077350ebacaa1d8b6e91a1ae4ee6ef48d60"
+    },
+    "eval/graders/multiple_runtime/Dockerfile.csharp": {
+      "source_sha256": null,
+      "current_sha256": "bc6e86100f0e89fac9ea33ed38ef6a6c16af39a4aa42d40dbaccd1f9bd195196"
+    },
+    "eval/graders/multiple_runtime/README.md": {
+      "source_sha256": null,
+      "current_sha256": "cc733a3e66bdf528d7108385906c5db39a95a8554b58e620384670646017bd37"
+    },
+    "eval/graders/multiple_runtime/source-hashes.json": {
+      "source_sha256": null,
+      "current_sha256": "c8aa1b27103c1a6b726a5178b4805fe070034a905149e18b7982b074c1dc46e3"
+    },
+    "tests/graders/test_verifyit_multiple.py": {
+      "source_sha256": null,
+      "current_sha256": "dd0f4df04f1c9c79e5d9b2e2ce7672f1d51b8df8716d17c030875e8c7cea38c0"
+    }
+  },
+  "source_callback_hashes": {
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_lean.py": "296caa3e9f35a828ab683b4922a8cae415ea9b98ba77f0cd7adc0c0472fc3d40",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_r.py": "83ad1c13f861a5aaee3b0ba7c909ba0dc74abdce7b49f1f74ce81beedc0f01e5",
+    "eval/chat_benchmarks/MultiPLE/multiple/simple_eval.py": "59d0fa931189131c8988349c12fd53b2c6f6e0231803bdb7124d596a466208a9",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_python.py": "3b9b0b8eae35f27dc5f7176d12add53baeadca60d2e1407a718b616384efe5dc",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_v.py": "6e0738848f7aee1e844dd850527c9fa80ae88f88f88ba31146ac322886dd1185",
+    "eval/chat_benchmarks/MultiPLE/multiple/execution.py": "2216aaa72f3e71561800d656ab5dfab02a287df81b6867d2144e4ed9bcae0460",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_hs.py": "cf69bf628fdf16416b59f7bf0dd03409bd4f5055db6769603a079d66b859f069",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_rust.py": "52f20982948f4cea256fb34974a0b664c9a32320e1d84dfe7d6e34f0669ace53",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_sh.py": "2516757102881e01cf377a6f19fa741482b4480ef5f9858fd80035fba1b15235",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_pl.py": "2bf4f2535d2b216b4a151aa6880f1c3fb1387635081cb6f97625d3d29ffa05a7",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_lua.py": "72676da367c85329880fa487fc1d5ba6c04f0dd2d761437d2e26c2869540b34b",
+    "eval/chat_benchmarks/MultiPLE/multiple/generic_eval.py": "890b00d5d984b1b917bee9d10e84e6558504c81b565cd36f098885a8a9cf2c80",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_elixir.py": "ed905778246ba36cfb3953384372ec834ddb158b4b869f571ef853de7d3a8309",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_luau.py": "7c29ddbb52064637eb8020cb0e8606109a78e01fc51ff1457e5386986185ce9e",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_clj.py": "8fab8426920c177a82f59c49abb2d8b57e602e5593562d65ba75d6db5350b46f",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_cpp.py": "0d457598dd24a8a6ead265780688ac44f73f2346156ff9c430d660cf8018f9b3",
+    "eval/chat_benchmarks/MultiPLE/multiple/evaluation.py": "7b7c5964968c53b40f64c8486c5ad22284cda3acd37bf48cf51838491e529f31",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_ocaml.py": "52b82350489770747a3939379224407603a460e0f42cdbd537494a1253cb0c8c",
+    "eval/chat_benchmarks/MultiPLE/multiple/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_dlang.py": "d86526184569e576c61f8a5d5c3374a3b318938a20f01d3118c551b0d81de675",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_racket.py": "fc1ca8b85ccd8ef6710258aedb2c53ec68b1c5a59ad2270b372bb977ba9215d1",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_dfy.py": "72f5c4fd9a97a30dc1b8cab9c7ab1c4f0ffe5aa11c69221d956545754ea9511b",
+    "eval/chat_benchmarks/MultiPLE/multiple/libeval.py": "473f4f08e6f0fea203d9fe68634d9dea83fd8bcc383a479b6e675c42384604a4",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_julia.py": "16730e7633c516e5f8baaec6af0b80f58f6468df0be14bd39dec30899775736b",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_javascript.py": "be82d0f9ae16297bdbf755c684ade388363c0053e63dda81dd2b0dc5c7ba2fc0",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_scala.py": "aa9b15b631a06adaa0f08bec48b9ae7393b8a0e299166b2fb0f853f4850aadab",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_ruby.py": "eb887892d734fec2361d61d38ce80b0680e541126a59aa0dd1e8d5e05da4c155",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_dart.py": "e06e3a19e7642ec54ba32463440529c0b1399dc71cb9dc361718d26ef3587284",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_matlab.py": "c774dc03d15aabe1725d82335b83783db5d36c09a9316d492c8d6405d3f5881d",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_fs.py": "0d7eae1ce2f250116ea776584fdf7f0b1021ce8233b6c326d301a1b32fab1fcc",
+    "eval/chat_benchmarks/MultiPLE/multiple/main.py": "3f6fa645d61facb3a47f16377a05b5cf2e29f0f8bfed6c6cd1a8aeb020797813",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_go.py": "5f4a2ba151b12c1a1254fbf82465d07a925b66a15a414a7ca552a6ade1084aed",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_adb.py": "6251f5dda688e609f4037eca0bf05a31cc66062693b0032a883fcd3d92aade5a",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_java.py": "75a61aaa985a4de89c1a6751d03ef6f753cd7e95ca02e7556492688d32ccfcac",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_swift.py": "b9c9da7575bd3d9beca30bbb38ddf5157180e56a9be00347526b25712664f499",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_php.py": "563c178ab35129dfa5429999c5011e38837c38457ba73eb7f4626d004d3338ab",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_ts.py": "0450deffc3438693337ae248f9ad71eaaf153036b63f45466bb337495f10ba95",
+    "eval/chat_benchmarks/MultiPLE/multiple/eval_cs.py": "4fdbd9d9bddcf6724469bbc3a88bd1e66729f56c5390714f791ebd0e0767e21e",
+    "eval/chat_benchmarks/MultiPLE/multiple/containerized_eval.py": "332de5a40b1ab61502e3e2ee39367841df61dac6a43f6e7bafdec786806c3f09",
+    "eval/chat_benchmarks/MultiPLE/multiple/safe_subprocess/__init__.py": "64ab6d598be2c9909cd215180879c880b2cb9e537e6e2c7941d1bde8b0dda37c"
+  },
+  "fresh_applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/evalchemy-multiple-export/applied",
+  "scope": {
+    "advertised_selectors": 31,
+    "bundled_supported": 24,
+    "missing_bundled_populations": [
+      "python",
+      "dfy",
+      "fs",
+      "lean",
+      "luau",
+      "matlab",
+      "v"
+    ],
+    "generation_settings_gaps": [
+      "adb",
+      "clj",
+      "dart",
+      "dfy",
+      "dlang",
+      "elixir",
+      "fs"
+    ],
+    "new_specs": 0
+  },
+  "runtime": [
+    {
+      "Id": "sha256:3e0dbc4187873d29543d30a1c5c8b47d70608cebad07cc4ac617266264205f29",
+      "RepoTags": [
+        "verifyit-evalchemy-multiple:source-v1"
+      ],
+      "RepoDigests": [
+        "verifyit-evalchemy-multiple@sha256:3e0dbc4187873d29543d30a1c5c8b47d70608cebad07cc4ac617266264205f29"
+      ],
+      "Comment": "buildkit.dockerfile.v0",
+      "Created": "2026-10-01T17:42:32.377363218Z",
+      "Config": {
+        "ExposedPorts": {
+          "6006/tcp": {},
+          "8888/tcp": {}
+        },
+        "Env": [
+          "PATH=/workspace/swift-5.7-RELEASE-ubuntu22.04/usr/bin:/workspace/julia-1.8.2/bin:/clojure/bin:/erlang/bin:/elixir/bin:/swift-5.7-RELEASE-ubuntu22.04/usr/bin:/julia-1.8.2/bin:/usr/local/lib/python3.10/dist-packages/torch_tensorrt/bin:/usr/local/mpi/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/ucx/bin:/opt/tensorrt/bin",
+          "CUDA_VERSION=12.6.1.006",
+          "CUDA_DRIVER_VERSION=560.35.03",
+          "CUDA_CACHE_DISABLE=1",
+          "NVIDIA_REQUIRE_JETPACK_HOST_MOUNTS=",
+          "_CUDA_COMPAT_PATH=/usr/local/cuda/compat",
+          "ENV=/etc/shinit_v2",
+          "BASH_ENV=/etc/bash.bashrc",
+          "SHELL=/bin/bash",
+          "NVIDIA_REQUIRE_CUDA=cuda>=9.0",
+          "NCCL_VERSION=2.22.3",
+          "CUBLAS_VERSION=12.6.3.1002",
+          "CUFFT_VERSION=11.2.6.59",
+          "CURAND_VERSION=10.3.7.68",
+          "CUSPARSE_VERSION=12.5.3.3",
+          "CUSPARSELT_VERSION=0.6.2.3",
+          "CUSOLVER_VERSION=11.6.4.69",
+          "CUTENSOR_VERSION=2.0.2.5",
+          "NPP_VERSION=12.3.1.54",
+          "NVJPEG_VERSION=12.3.3.54",
+          "CUDNN_VERSION=9.4.0.58",
+          "CUDNN_FRONTEND_VERSION=1.6.0",
+          "TRT_VERSION=10.4.0.26",
+          "TRTOSS_VERSION=",
+          "NSIGHT_SYSTEMS_VERSION=2024.4.2.133",
+          "NSIGHT_COMPUTE_VERSION=2024.3.1.2",
+          "DALI_VERSION=1.41.0",
+          "DALI_BUILD=17427117",
+          "POLYGRAPHY_VERSION=0.49.13",
+          "TRANSFORMER_ENGINE_VERSION=1.10",
+          "MODEL_OPT_VERSION=0.15.1",
+          "LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/torch/lib:/usr/local/lib/python3.10/dist-packages/torch_tensorrt/lib:/usr/local/cuda/compat/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64",
+          "NVIDIA_VISIBLE_DEVICES=all",
+          "NVIDIA_DRIVER_CAPABILITIES=compute,utility,video",
+          "NVIDIA_PRODUCT_NAME=PyTorch",
+          "GDRCOPY_VERSION=2.3.1-1",
+          "HPCX_VERSION=2.20",
+          "MOFED_VERSION=5.4-rdmacore39.0",
+          "OPENUCX_VERSION=1.17.0",
+          "OPENMPI_VERSION=4.1.7",
+          "RDMACORE_VERSION=39.0",
+          "OPAL_PREFIX=/opt/hpcx/ompi",
+          "OMPI_MCA_coll_hcoll_enable=0",
+          "LIBRARY_PATH=/usr/local/cuda/lib64/stubs:",
+          "PYTORCH_BUILD_VERSION=2.5.0a0+b465a58",
+          "PYTORCH_VERSION=2.5.0a0+b465a58",
+          "PYTORCH_BUILD_NUMBER=0",
+          "NVIDIA_PYTORCH_VERSION=24.09",
+          "NVFUSER_BUILD_VERSION=346e51c",
+          "NVFUSER_VERSION=346e51c",
+          "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python",
+          "NVPL_LAPACK_MATH_MODE=PEDANTIC",
+          "PYTHONIOENCODING=utf-8",
+          "LC_ALL=C.UTF-8",
+          "PIP_DEFAULT_TIMEOUT=100",
+          "JUPYTER_PORT=8888",
+          "TENSORBOARD_PORT=6006",
+          "UCC_CL_BASIC_TLS=^sharp",
+          "TORCH_CUDA_ARCH_LIST=5.2 6.0 6.1 7.0 7.2 7.5 8.0 8.6 8.7 9.0+PTX",
+          "PYTORCH_HOME=/opt/pytorch/pytorch",
+          "CUDA_HOME=/usr/local/cuda",
+          "TORCH_ALLOW_TF32_CUBLAS_OVERRIDE=1",
+          "USE_EXPERIMENTAL_CUDNN_V8_API=1",
+          "COCOAPI_VERSION=2.0+nv0.8.0",
+          "TORCH_CUDNN_V8_API_ENABLED=1",
+          "CUDA_MODULE_LOADING=LAZY",
+          "NVIDIA_BUILD_ID=109656992",
+          "LANG=C.UTF-8"
+        ],
+        "Entrypoint": [
+          "/opt/nvidia/nvidia_entrypoint.sh"
+        ],
+        "WorkingDir": "/app",
+        "Labels": {
+          "com.nvidia.build.id": "109656992",
+          "com.nvidia.build.ref": "ea7eeeddfca58990ef71aaf8d37a34a16de95d29",
+          "com.nvidia.cublas.version": "12.6.3.1002",
+          "com.nvidia.cuda.version": "9.0",
+          "com.nvidia.cudnn.version": "9.4.0.58",
+          "com.nvidia.cufft.version": "11.2.6.59",
+          "com.nvidia.curand.version": "10.3.7.68",
+          "com.nvidia.cusolver.version": "11.6.4.69",
+          "com.nvidia.cusparse.version": "12.5.3.3",
+          "com.nvidia.cusparselt.version": "0.6.2.3",
+          "com.nvidia.cutensor.version": "2.0.2.5",
+          "com.nvidia.nccl.version": "2.22.3",
+          "com.nvidia.npp.version": "12.3.1.54",
+          "com.nvidia.nsightcompute.version": "2024.3.1.2",
+          "com.nvidia.nsightsystems.version": "2024.4.2.133",
+          "com.nvidia.nvjpeg.version": "12.3.3.54",
+          "com.nvidia.pytorch.version": "2.5.0a0+b465a58",
+          "com.nvidia.tensorrt.version": "10.4.0.26",
+          "com.nvidia.tensorrtoss.version": "",
+          "com.nvidia.volumes.needed": "nvidia_driver",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.version": "22.04"
+        }
+      },
+      "Architecture": "amd64",
+      "Os": "linux",
+      "Size": 19499686728,
+      "RootFS": {
+        "Type": "layers",
+        "Layers": [
+          "sha256:1b9b7346fee7abbc7f5538eaa23548bd05a45abe8daf6794024be0c8ad7d60bb",
+          "sha256:b5a32aec2e9d745357d5e87fb53529f3931c4f65d891768b80a6b36dc935a844",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:e2db435d888e29e7477343d773890d38ee777b42349f1d59ddf3a262c843f924",
+          "sha256:f05780d37e0f11d63e04fa3c1acae85e9cbb548569eacbb42e58aa8171b70e07",
+          "sha256:8e1b9334e910972a4fee396b9489985f84c77e04f726801416bd02b957695de3",
+          "sha256:a62c8c75f8c8b0841061d8b0d3589f77756cef54f4bb6e529a83cc1b0412ee25",
+          "sha256:14efc3c96ab2c5c0920c20a484d9755ea28e0b230310e7f64b7c7a0d31d99842",
+          "sha256:43318f0006477ee6a02be460ab98c75e45bc23e2643b9f877b041b88a7cea175",
+          "sha256:edeb577b0f8827769d6a5a69adae1a235354afff23e4948ce0c6c2df2fa04743",
+          "sha256:e4cd7cd254dec17d933efbf6dd1271dd4514eaa16c4ee2bafd5dffa541c79f53",
+          "sha256:4ccf08e524259b5ae8e05de28df93e53a4e07ad8a60ce2361a90935038643c1f",
+          "sha256:f97588faa6c468724eda134f66eff4dca51a5f55bf5a4606fba8193ecdd474ca",
+          "sha256:f52a1b582938b1be9dc0073bab68f84c21915bc72b733e14a86fec58b802802b",
+          "sha256:81af638711b60e0edbe6a05bab74bf62cc099c686d8cb77967fe003bc890bd88",
+          "sha256:fdbc4ff92aa70954e91be65c89c9c20c3f83bb64f8efece53618581d40b2ddf5",
+          "sha256:b133678f7346cc6ce2a1c0a11c26a848f769e9ab7275e671d6c183f123c3bf9d",
+          "sha256:bcc607d2734a55dee24393fd2374180c9fab5b16b85f19d2f27ab1bc727eadc0",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:8ec22e814d25b8f6ed34825d61a8593300f49f78193316818260d71d4c707d30",
+          "sha256:53ba39be4b754b9829f47f44bc1911e6e0d0c04e61ea56e570a95f3766a1dfc8",
+          "sha256:046f92c3ac7bc6d55277f0790600dedcca126b1de9ecc052e414de647c2a6478",
+          "sha256:e53657ce2aaa7199e1026a79bc0fdb6311b6847f6a9338b0adaeab2273b906ca",
+          "sha256:10d35672f290adabe8627a0be1dce75aba620f4011b00c286446f7d07e9fb935",
+          "sha256:70c28f8d0e0279134de685a67a28ccd29f6911a14aafdd27dcff05f63e8f315b",
+          "sha256:62db6d59f9c5fe1289ddbcd8691ae2ca5c254f8f26d72ffda0e7d429b0141c13",
+          "sha256:b7aefeb14d043e56047d6f271b204cdd336054370f8328de70f99e01860a22c0",
+          "sha256:680047e6c56098eb8e55c4d73d51de5fcb2a9cfbdda1b9aaade8819f20cd3170",
+          "sha256:3f0000cb76c27c51cebf8b2630a70faaceeec1d0b64e17a652b09dd636b588ff",
+          "sha256:38bd0eb8afe3bbd06f3bedc9cb2c4d1be288dea49ab9bddfac5a6dc614250730",
+          "sha256:fdc0da9370774f499ad18b7ec64369c176189c5c03c96054522aa7fe65bf8095",
+          "sha256:b6a8f7521ecb303b7cd492e1d68e84d69548316f84022d25d4e0003f2914f872",
+          "sha256:9bf03ae6c3b7f530e7cee3d09307bab5ef487e0abf895d03c56a469cc60d1985",
+          "sha256:7f939cc693fd671b0068d5427bb853f637b16716643aaf5de58448fe87d06aeb",
+          "sha256:dff4d97f4f6b366dafdece6a90b3e85a5213e1e0d35491e45b5ac96a310a031f",
+          "sha256:b0bd0622c651e3b7200b68fc9af837339d61288c1902f7e3d0a101c76768504e",
+          "sha256:e13c1751fe17a28fe5c18f6161e6e12f25bf88459b84f5a768cef86af4af468c",
+          "sha256:1991f28fbc61b1aa19bd09382f9eaf7974d77caa915a1c238278efb7c5893383",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:2e6e16bf2f7c78555e71104ac471f178eb81fcd62f9ddbc6842a06dd1f1415d2",
+          "sha256:4b7853cb7629b02c73e6c306715be18e158977bce04c08f628b8a5c2c89b854f",
+          "sha256:04e6ea82fa2ac20cf347c312ed35b28bc39f0c86e9e16051fd7a0598e8252c0b",
+          "sha256:612b36c71da1e1c777407654b9a40812c9a5dd342e871b9d604685cc73b744c6",
+          "sha256:3c150999be8f5075299dedebdaef9e9e4f8913c5795ab0a8e47dcadaaa1c2a26",
+          "sha256:610f21705d0ea2a4f8e0c30941c350b50e295667de381c728f58bfff21ae49bc",
+          "sha256:5db02bc0d9ea8b3e4472acdf6612896c07293da896b223a09b500c25c4689aec",
+          "sha256:c54ccae56d407a61a292e5689465424f52a204bc506774509b975563b0046a5d",
+          "sha256:2c8a884b7b8c226f43ee3fd942b9caa3ba1377dd573f982ac62520c0bf09cc75",
+          "sha256:4acb96ef375f3f06d8022f0af2ed4838bbce5225dbfb7bbda640b724742b9465",
+          "sha256:c62d990f9b0bf910411d30e565ccb2977c1f3c960369bbe1df07f34e180174c1",
+          "sha256:7edb387d97cb62ad1314428be33190a40c701cf96f90c9e981812e9935c42bd4",
+          "sha256:fd4ef185a42a0dd567695c0ba429893cdb3a3783c3f8a1d1569862a5e5f6402c",
+          "sha256:a36e55e1b174e173848dea59ca3b664a944bdc6ca41e1e65e6a22c00a933952e",
+          "sha256:8f5c6d78571251779cca10f4c8a6e9f7f3211343c7b4209ec13b5e034a347403",
+          "sha256:a33d062e7c4a36072d8e58723343579d85838df33ac4e83c14539ef94aa1d4c2",
+          "sha256:8c3b842675000cb80a83d2aa97c7800956e5046bb54bc13672bd82c97f3f3e9e",
+          "sha256:eb1413b459e4a07e306cb36cdb903f0713126f98afa7f5887ebcfbdb3d6ae7ad",
+          "sha256:54b4cbb448a91301d9f6d43a57b17f1dca9c3ba59429955e8b9fd80d4ce10201",
+          "sha256:963857932f55b77303e4b876973e7ded08be82b0768abff5107ca17dcaed7b99",
+          "sha256:6f794ca46946c55b6ea22a3b350c787439320324f3eaef9d650b3e89e4b90474",
+          "sha256:6a246b09341582a43604149f258091ed0b32e1abc23cde4d0f954015682a0651",
+          "sha256:9b11fbc3936ec75f5fb23c21cc3d3938839ae1774f9becfca7c166815a9859fd",
+          "sha256:bb154ebc6a7209bab206fb11f1ab908d8d86e77223384a4e1fdd27d2918a3fe0",
+          "sha256:048dd4d04e1c44f5972753cd199e18657d0a22058e5800c52282ff720c72d149",
+          "sha256:df6c2f5820b6297610f2358d8b26fc49d99e9d4c4077f54bc126e212e1f4ad18",
+          "sha256:609a1c96e7bd0d7c6c5741ade79bd56ebc4719e97b23bdf7c735d8b28639fb05",
+          "sha256:6289dc62b18abf90b1cae93d81e016814f49342de859d949878c31ad551fa3dc",
+          "sha256:02edf0cd592a67021054f3d18a26aef006fe74c189822ebb25d195d49c8a7e4f",
+          "sha256:013db327e4bd32bda764d6183b6879c96eb73c60ab9c0d6e8863e144268eb2fe",
+          "sha256:90e6ec2da456eb79ce67e8120d5fd89eb7c68b46067b4e3d3321710c7005b59f",
+          "sha256:e3a7f5dfb5cc6133529404bb6cc13ada65efb7578f5a2f0af90fc227abc0934b",
+          "sha256:e2846b5cea86e3061edf4260f8fcb8847dba2a57055609e883a08fae16dad197",
+          "sha256:f2464f53f1f03db5c2a738094967d29303d4e8a02bf694039eac5fd091c24fef",
+          "sha256:2ed5682f37fd2e6c76ee37cb3ffbe3905f73c5efd36f91baa1d742d4f1e7b613",
+          "sha256:4619eb58f31cd5ce0c1a7a9cec63f3f194dd0091ffc7f5b33108688ec0fc0418",
+          "sha256:9ffcdfb7160d2e78583266016b809eacb190eea55c775e2fa7a6991e3cd6aee1",
+          "sha256:e56b9fa28c966ab3b3a85e6321d8997fe7f7b9cff2c07112eb80beefcce433ff",
+          "sha256:20ec6149b5e4b28639d240c6302e4f85bc5afd4403906f4594c6c853764864ed",
+          "sha256:cf5d9f5dcea2f59a77866152a2cc36ba49e9ca25561a920c0bacda7d1bf2724d",
+          "sha256:c2cf95126a02696eb796e3d75328e46ee0b3486e77a52fb72c1aec90e6f40de0",
+          "sha256:a53b18bca07329f44b55ad93478805455ff937a9590ff1dd8bc82bd3a390d789",
+          "sha256:7a64bed196c0aa3b9fb8eee267be6754ec32c8cff743b8f6967e0fbb6e96fe6e",
+          "sha256:a518ecae26d041382c30b15e5a5be287a8d674a862d1676d9e0d38f52fe39580",
+          "sha256:4113ac4501e23b83c4c19654f1ba1e972ab46833343849cb1d7143354c53066c",
+          "sha256:8a651ac9eb9c43ccdfb3c4c7aaeba198e6f3fde1067c5c1638ca1323752c4558",
+          "sha256:41923164fd0ea215e578e9390d0893dd80ca6c040e62b06274cf01b3fb4e787b",
+          "sha256:25e5769e740e825d2f5e06973d8343c26b06575dfb83e134577159dec863cd99",
+          "sha256:0f150fdddc4ceda41e8c6aaac32ce57c23f82d7f4f716db1081535138a5662fe",
+          "sha256:ea0b5895387146e699ce86203e133fecf6a322d566aa66a88059fc55872c5995",
+          "sha256:d8957c6dab1e51f2c538424acde9b90f47c13380f16a39f7b83e427e576366eb",
+          "sha256:ce4b069be3e6161d06ed52639149d367c64fabbf8533b505c92822f843f09df1",
+          "sha256:9605496385588986952469e599a327963b9ae7c5bcf124a8c64b762a2d252149",
+          "sha256:75a5ad8024018575e351519a08c87b7c9794a3eb3f47f37ea7de24fd528778ec",
+          "sha256:317e5f01371723006ab67da92f0cac3114708fa3541d482af852d751b2de4e44",
+          "sha256:9744ab7f9775651160a6cc46a1d04f26ee909a7ad913ea027b0ca5e60e36fc40",
+          "sha256:8b888065c59d6371abcb9482a6da16c70f43376deeb91d3cf2e0326eeaca9f01",
+          "sha256:556a6cd134b8ecfbf278a7d56e2f5c029f4067ae94e2bbd61299cd093b1fd5b1",
+          "sha256:90b2205ad241e7e778f88bc39d2346f66352caa138ba600f4aea2a2c690e6b5e",
+          "sha256:1e3f641adcf67cecf6e8815c83b003b503e96736dd609166c209cfeb011f40dc",
+          "sha256:a2e861180880c71c50b5f79bd965bb5c3d57083ad80202e29e07f10825502317",
+          "sha256:c8b597e6a368875445cd11621c8ea51251fa5571f07bd9a0a838806c77e92ca3",
+          "sha256:98d812096d7ca8d494700a140b101a0a01baf7aab918bddabbfa8c0acbb5e1cd",
+          "sha256:8c1cfcc1a16de44518cd2edab5c0fd37be4ee4570c35bd18b1f1d649d0a0d5ba"
+        ]
+      },
+      "Metadata": {
+        "LastTagTime": "2026-10-01T17:42:54.752717923Z"
+      },
+      "Descriptor": {
+        "mediaType": "application/vnd.oci.image.index.v1+json",
+        "digest": "sha256:3e0dbc4187873d29543d30a1c5c8b47d70608cebad07cc4ac617266264205f29",
+        "size": 857
+      },
+      "Identity": {
+        "Build": [
+          {
+            "Ref": "obrq21oyrng29qqsh4l2dzdv1",
+            "CreatedAt": "2026-10-01T17:42:54.824641423Z"
+          }
+        ]
+      }
+    },
+    {
+      "Id": "sha256:0430f2ade3755831d5b6a8b2c7cae94b17629f1970f3bf9b5374c5d1ae87220b",
+      "RepoTags": [
+        "verifyit-evalchemy-multiple-native:source-v1"
+      ],
+      "RepoDigests": [
+        "verifyit-evalchemy-multiple-native@sha256:0430f2ade3755831d5b6a8b2c7cae94b17629f1970f3bf9b5374c5d1ae87220b"
+      ],
+      "Comment": "buildkit.dockerfile.v0",
+      "Created": "2026-10-01T17:58:41.037841791Z",
+      "Config": {
+        "Env": [
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        ],
+        "Cmd": [
+          "/bin/bash"
+        ],
+        "Labels": {
+          "org.opencontainers.image.version": "22.04"
+        }
+      },
+      "Architecture": "arm64",
+      "Os": "linux",
+      "Size": 297721740,
+      "RootFS": {
+        "Type": "layers",
+        "Layers": [
+          "sha256:9a355ff6975d1085f6e6db84acabe804ee5500cdbb5118523220e2ff35d2e2ea",
+          "sha256:f01144763aaf5c1e4896595b3fadc11a33416f571cae64bd0643139a3903410a"
+        ]
+      },
+      "Metadata": {
+        "LastTagTime": "2026-10-01T17:58:53.957697131Z"
+      },
+      "Descriptor": {
+        "mediaType": "application/vnd.oci.image.index.v1+json",
+        "digest": "sha256:0430f2ade3755831d5b6a8b2c7cae94b17629f1970f3bf9b5374c5d1ae87220b",
+        "size": 855
+      },
+      "Identity": {
+        "Build": [
+          {
+            "Ref": "6zy0ri75w2jtq24wqq72ab5pa",
+            "CreatedAt": "2026-10-01T17:58:57.381178341Z"
+          }
+        ]
+      }
+    }
+  ],
+  "evidence_root": "evidence/e2e/wiring/evalchemy-multiple",
+  "proofs": {
+    "positive": "final-identity-positive",
+    "wrong": "final-identity-wrong",
+    "source_positive": "final-identity-source",
+    "source_wrong": "final-identity-source-wrong",
+    "frozen72": "final-frozen",
+    "original_frozen72": "final-source-frozen",
+    "mixed10": [
+      "pass-at-k-source",
+      "pass-at-k-cutover"
+    ],
+    "manager": [
+      "manager-initial-js",
+      "manager-go-wrong",
+      "manager-final-identity-cs",
+      "manager-final-identity-cs-wrong"
+    ],
+    "tests": "final-tests-clojure.log",
+    "launch_failure": "missing-launch-final",
+    "comparison": "final-comparison.json",
+    "durable_tests": 5
+  },
+  "limitations": [
+    "Fixture-only, no validated response archive found.",
+    "Retained candidate-in-grader runtime; not trusted assertion isolation.",
+    "Native ARM64 Mono/Racket differ from documented source AMD64 runtime; baseline uses identical selected runtime.",
+    "Seven advertised selectors have no bundled population; generation driver gaps are not claimed repaired.",
+    "Go discovery and non-OK callback/exit0 corrections deliberately penalize original source false positives.",
+    "Random temporary paths in error strings are provenance differences; scoring fields compared separately."
+  ]
+}

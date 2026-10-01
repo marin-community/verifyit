@@ -1044,6 +1044,37 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-zeroeval/solution-availability.json",
                 ],
             )
+        elif name == "MultiPLE":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_multiple_language_runtimes",
+                reason=(
+                    "ScriptSpec supervises 24 bundled language runtimes and source pass@k. "
+                    "Six existing callback/data aliases are repaired. Seven advertised selectors "
+                    "have no bundled populations and remain explicitly unsupported."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Build both documented runtime images and enable verifyit_enabled=True. "
+                    "All 24 bundled selectors have actual positive and wrong evaluator fixtures; "
+                    "72 frozen source tasks and mixed pass@1/pass@10 also ran. Go discovery and "
+                    "non-OK callback statuses with exit zero are corrected, including C# and Clojure "
+                    "false positives. Mono and Racket use an explicit native ARM64 runtime after "
+                    "AMD64 emulation failures. Candidate code shares trusted assertions; isolation "
+                    "is unverified. This does not claim all 31 selectors or source generation paths "
+                    "work, and no archived-score replay is claimed."
+                ),
+                validation_status="source_evaluator_24_bundled_languages_fixtures",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/multiple-verifyit.patch",
+                    "integrations/evalchemy/multiple-source.json",
+                    "../evidence/e2e/wiring/evalchemy-multiple/final-comparison.json",
+                    "../evidence/e2e/wiring/evalchemy-multiple/final-frozen/results.json",
+                    "../evidence/e2e/wiring/evalchemy-multiple/final-tests-clojure.log",
+                    "../evidence/e2e/wiring/evalchemy-multiple/source-contract-census.json",
+                ],
+            )
         elif name == "LiveBench":
             entity.update(
                 status="retained_runtime_available",

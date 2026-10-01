@@ -439,3 +439,28 @@ and language detection is explicitly seeded. Nineteen regressions cover these
 cases. See `livebench-source.json` for exact hashes and
 `evidence/e2e/wiring/evalchemy-livebench/` for frozen selections and raw evidence.
 No new verifier class is introduced.
+
+
+## MultiPLE
+
+Apply `multiple-verifyit.patch`, build the two images documented in
+`eval/graders/multiple_runtime/README.md`, and set `verifyit_enabled=True` on
+`MultipleBenchmark`. The existing Script mode supervises source scoring and
+pass@k aggregation. No new verifier class is required.
+
+All 24 selectors with bundled data have positive and wrong evaluator fixtures,
+plus 72 frozen source-task responses. Six existing data/callback aliases are
+repaired. Seven of the 31 advertised selectors lack bundled populations:
+python, dfy, fs, lean, luau, matlab and v. They remain unsupported, and missing
+source generation settings are not claimed repaired. This is fixture evidence,
+not archived-score replay or a claim that all 31 advertised routes work.
+
+Go now discovers its Test functions. A callback must report both OK and exit
+zero; this corrects source false positives in C#, Clojure and other status-aware
+runtimes. Five durable tests include real bundled Go/C#/Clojure correct and wrong
+responses, stale-file replacement, mixed pass@1/pass@10, and whole-batch failure
+cleanup. Native ARM64 Mono/Racket replace runtimes that abort under AMD64
+emulation on the validation host; source comparisons use the same runtime.
+Candidate code still shares the source grader with trusted assertions, so this
+bridge does not establish candidate/assertion isolation. See
+`multiple-source.json` for exact sources, images, scope and evidence.
