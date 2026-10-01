@@ -1,0 +1,350 @@
+--- a/eval/chat_benchmarks/MTBench/eval_instruct.py
++++ b/eval/chat_benchmarks/MTBench/eval_instruct.py
+@@ -76,6 +76,7 @@
+         max_tokens: int = 1024,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize MTBench benchmark.
+@@ -88,6 +89,7 @@
+             system_instruction: Optional system instruction for the model
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.base_path = Path(base_path)
+         if annotator_model == AUTO_ANNOTATOR_MODEL:
+             annotator_model = "gpt-4"
+@@ -220,6 +222,14 @@
+         # Handle None result from non-primary ranks
+         if results is None:
+             return None
++
++        if self.verifyit_enabled and self.config.mode != "single":
++            from verifyit.grade import InvalidTask
++
++            raise InvalidTask("MTBench source pairwise aggregation is unsupported")
++
++        if self.verifyit_enabled:
++            (self.judgment_dir / "gpt-4_single.jsonl").unlink(missing_ok=True)
+ 
+         # Load data
+         questions = load_questions(self.question_file, None, None)
+@@ -292,6 +302,11 @@
+             )
+         )
+ 
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_mtbench import evaluate as verifyit_evaluate
++
++            return verifyit_evaluate(matches, results["model_id"], self.config.parallel, output_file)
++
+         # Run evaluation
+         if self.config.parallel == 1:
+             for match in tqdm(matches):
+--- /dev/null
++++ b/eval/graders/verifyit_mtbench.py
+@@ -0,0 +1,205 @@
++"""MTBench source single-judge requests and complete-batch score aggregation."""
++
++from concurrent.futures import ThreadPoolExecutor
++import dataclasses
++import hashlib
++import importlib
++import json
++import math
++import os
++from pathlib import Path
++import sys
++import tempfile
++import time
++
++import anthropic
++import openai
++import pandas as pd
++from verifyit.grade import InvalidTask, Status, run
++from verifyit.json_objects import unique_object
++from verifyit.spec import ScriptSpec, render_spec
++
++SOURCE_HASHES = {
++    "fastchat/llm_judge/common.py": "0013d00ae4d3f6e42f97022eba2b699a470c32d2672fa2f9c4af217fdc1a7ee3",
++    "fastchat/llm_judge/gen_judgment.py": "82d3d2e90ab8eb92928e6dcff1ddf88bbeec172b6386903bce605c2acb49ffe5",
++    "fastchat/model/api_models.py": "3b323605861220a364bc93ce2dae089ec6e85bd1a927941b0ef5528932688257",
++    "fastchat/conversation.py": "0420ddcf1c916760d4226e7e41ce5ce44fefa50b63e6303fb0a2cbfad776be35",
++}
++
++
++def _source():
++    directory = Path(__file__).resolve().parents[1] / "chat_benchmarks/MTBench"
++    for name, digest in SOURCE_HASHES.items():
++        if hashlib.sha256((directory / name).read_bytes()).hexdigest() != digest:
++            raise InvalidTask("MTBench source judge contract changed")
++    sys.path.append(str(directory))
++    return importlib.import_module("fastchat.llm_judge.common")
++
++
++def evaluate(matches, model_id, parallel, output_file):
++    Path(output_file).unlink(missing_ok=True)
++    _source()
++    if type(parallel) is not int or parallel <= 0 or not matches:
++        raise InvalidTask("MTBench needs matches and positive concurrency")
++    identifiers = []
++    for match in matches:
++        if match.model != model_id or match.judge.prompt_template.get("type") != "single":
++            raise InvalidTask("MTBench supports source single matches only")
++        if match.judge.prompt_template.get("output_format") != "[[rating]]":
++            raise InvalidTask("MTBench requires the source rating output format")
++        turns = match.question.get("turns")
++        if (
++            not isinstance(turns, list)
++            or len(turns) != 2
++            or any(not isinstance(x, str) or not x.strip() for x in turns)
++        ):
++            raise InvalidTask("MTBench needs two trusted question turns")
++        answer = match.answer.get("choices")
++        if not isinstance(answer, list) or not answer or not isinstance(answer[0].get("turns"), list):
++            raise InvalidTask("MTBench needs candidate answer turns")
++        if len(answer[0]["turns"]) != 2 or any(not isinstance(x, str) for x in answer[0]["turns"]):
++            raise InvalidTask("MTBench needs two textual candidate turns")
++        if match.judge.ref_based:
++            if not isinstance(match.ref_answer, dict):
++                raise InvalidTask("MTBench reference-based judge requires reference answers")
++            gold = match.ref_answer.get("choices", [])
++            if (
++                not gold
++                or len(gold[0].get("turns", [])) != 2
++                or any(not isinstance(x, str) or not x.strip() for x in gold[0]["turns"])
++            ):
++                raise InvalidTask("MTBench reference turns must be nonempty text")
++        identifiers.append((match.question["question_id"], 2 if match.multi_turn else 1))
++    if len(set(identifiers)) != len(identifiers) or {turn for _, turn in identifiers} != {1, 2}:
++        raise InvalidTask("MTBench requires unique matches for both turns")
++    for question_id in {question_id for question_id, _ in identifiers}:
++        if {turn for identifier, turn in identifiers if identifier == question_id} != {1, 2}:
++            raise InvalidTask("MTBench requires both turn matches for every question")
++    with ThreadPoolExecutor(max_workers=parallel) as executor:
++        judgments = list(executor.map(grade_match, matches))
++    # Replace stale source artifacts only after the whole current batch succeeds.
++    Path(output_file).write_text("".join(json.dumps(row, allow_nan=False) + "\n" for row in judgments))
++    frame = pd.DataFrame(judgments)[["model", "score", "turn"]]
++    first = frame[frame["turn"] == 1].groupby(["model", "turn"]).mean()
++    second = frame[frame["turn"] == 2].groupby(["model", "turn"]).mean()
++    average = frame[["model", "score"]].groupby(["model"]).mean()
++    return {
++        "Turn 1": first.loc[model_id].score.values[0],
++        "Turn 2": second.loc[model_id].score.values[0],
++        "Average": average.loc[model_id].score,
++    }
++
++
++def grade_match(match):
++    with tempfile.TemporaryDirectory(prefix="verifyit-mtbench-") as directory:
++        root = Path(directory)
++        (root / "input.json").write_text(json.dumps(dataclasses.asdict(match), allow_nan=False))
++        (root / "run.sh").write_text('exec "$@"\n')
++        specification = ScriptSpec(
++            "run.sh",
++            args=(sys.executable, "-m", "eval.graders.verifyit_mtbench", str(root / "input.json")),
++            timeout=900,
++            verdict_file="result.json",
++        )
++        (root / "verifier.toml").write_text(render_spec(specification))
++        verdict = run(root / "verifier.toml", root)
++    if verdict.status == Status.INVALID_TASK:
++        raise InvalidTask(str(verdict.detail))
++    if verdict.status != Status.SCORED:
++        raise RuntimeError(f"MTBench judge failed: {verdict.status}")
++    result = verdict.detail["judgment"]
++    if (
++        type(result.get("score")) not in (int, float)
++        or not math.isfinite(result["score"])
++        or not 1 <= result["score"] <= 10
++        or verdict.reward != (result["score"] - 1) / 9
++    ):
++        raise RuntimeError("MTBench judgment and normalized reward disagree")
++    return result
++
++
++def _raw_json(raw):
++    data = json.loads(raw.http_response.text, object_pairs_hook=unique_object)
++    json.dumps(data, allow_nan=False)
++    if not isinstance(data, dict) or data.get("error"):
++        raise RuntimeError("MTBench judge returned an error")
++    return data
++
++
++def _openai(model, conv, temperature, max_tokens, api_dict=None):
++    if api_dict is not None:
++        raise InvalidTask("MTBench source caller supplies no API override")
++    raw = openai.chat.completions.with_raw_response.create(
++        model=model, messages=conv.to_openai_api_messages(), n=1, temperature=temperature, max_tokens=max_tokens
++    )
++    data = _raw_json(raw)
++    choices = data.get("choices")
++    if not isinstance(choices, list) or len(choices) != 1 or choices[0].get("finish_reason") != "stop":
++        raise RuntimeError("MTBench judge did not complete one response")
++    message = choices[0].get("message")
++    if (
++        not isinstance(message, dict)
++        or message.get("refusal")
++        or message.get("tool_calls")
++        or message.get("function_call")
++        or not isinstance(message.get("content"), str)
++    ):
++        raise RuntimeError("MTBench judge refused or returned no text")
++    return message["content"]
++
++
++def _anthropic(model, conv, temperature, max_tokens, api_dict=None):
++    if api_dict is not None:
++        raise InvalidTask("MTBench source caller supplies no API override")
++    with anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"]) as client:
++        raw = client.completions.with_raw_response.create(
++            model=model,
++            prompt=conv.get_prompt(),
++            stop_sequences=[anthropic.HUMAN_PROMPT],
++            max_tokens_to_sample=max_tokens,
++            temperature=temperature,
++        )
++        data = _raw_json(raw)
++    if data.get("stop_reason") != "stop_sequence" or not isinstance(data.get("completion"), str):
++        raise RuntimeError("MTBench Anthropic judge did not complete text")
++    return data["completion"].strip()
++
++
++def main():
++    data = json.loads(Path(sys.argv[1]).read_text())
++    try:
++        source = _source()
++        judge = source.Judge(**data["judge"])
++        source.chat_completion_openai = _openai
++        source.chat_completion_anthropic = _anthropic
++        rating, prompt, judgment = source.run_judge_single(
++            data["question"], data["answer"], judge, data["ref_answer"], data["multi_turn"]
++        )
++        if type(rating) not in (int, float) or not math.isfinite(rating) or not 1 <= rating <= 10:
++            raise RuntimeError("MTBench judge rating is absent or outside 1 to 10")
++        original_rating = rating
++        turn = 2 if data["multi_turn"] else 1
++        if not data["answer"]["choices"][0]["turns"][turn - 1].strip():
++            rating = 1
++        result = {
++            "question_id": data["question"]["question_id"],
++            "model": data["model"],
++            "judge": [judge.model_name, judge.prompt_template["name"]],
++            "user_prompt": prompt,
++            "judgment": judgment,
++            "score": rating,
++            "turn": turn,
++            "tstamp": time.time(),
++        }
++        verdict = {
++            "status": "scored",
++            "reward": (rating - 1) / 9,
++            "detail": {"judgment": result, "original_judge_score": original_rating},
++        }
++    except InvalidTask as error:
++        verdict = {"status": "invalid_task", "reward": 0.0, "detail": {"error": str(error)}}
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(json.dumps(verdict, allow_nan=False))
++
++
++if __name__ == "__main__":
++    main()
+--- /dev/null
++++ b/tests/graders/test_verifyit_mtbench.py
+@@ -0,0 +1,94 @@
++"""MTBench score scales, complete match populations and failed-judge artifacts."""
++
++from dataclasses import replace
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++import importlib
++import json
++from pathlib import Path
++import threading
++
++import pytest
++from verifyit.grade import InvalidTask
++
++from eval.graders.verifyit_mtbench import evaluate
++
++
++@pytest.fixture
++def matches(monkeypatch):
++    directory = Path(__file__).resolve().parents[2] / "eval/chat_benchmarks/MTBench"
++    monkeypatch.syspath_prepend(str(directory))
++    source = importlib.import_module("fastchat.llm_judge.common")
++    generation = importlib.import_module("fastchat.llm_judge.gen_judgment")
++    prompts = source.load_judge_prompts(directory / "fastchat/llm_judge/data/judge_prompts.jsonl")
++    judges = generation.make_judge_single("gpt-4o-mini-2024-07-18", prompts)
++    question = {"question_id": 1, "category": "writing", "turns": ["Question one", "Question two"]}
++    answer = {"choices": [{"turns": ["Answer one", "Answer two"]}]}
++    return [
++        source.MatchSingle(question, "fixture", answer, judges["default"]),
++        source.MatchSingle(question, "fixture", answer, judges["default-mt"], multi_turn=True),
++    ]
++
++
++@pytest.fixture
++def judge_server(monkeypatch):
++    responses = ["[7.5]", "[[10]]"]
++
++    class Handler(BaseHTTPRequestHandler):
++        def do_POST(self):
++            self.rfile.read(int(self.headers["Content-Length"]))
++            data = json.dumps(
++                {"choices": [{"finish_reason": "stop", "message": {"content": responses.pop(0)}}]}
++            ).encode()
++            self.send_response(200)
++            self.send_header("Content-Type", "application/json")
++            self.send_header("Content-Length", str(len(data)))
++            self.end_headers()
++            self.wfile.write(data)
++
++        def log_message(self, *args):
++            pass
++
++    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
++    thread = threading.Thread(target=server.serve_forever, daemon=True)
++    thread.start()
++    monkeypatch.setenv("OPENAI_API_KEY", "fixture")
++    monkeypatch.setenv("OPENAI_BASE_URL", f"http://127.0.0.1:{server.server_port}/v1")
++    try:
++        yield responses
++    finally:
++        server.shutdown()
++        server.server_close()
++        thread.join()
++
++
++def test_fractional_source_rating_and_turn_aggregates(matches, judge_server, tmp_path):
++    output = tmp_path / "judgments.jsonl"
++    result = evaluate(matches, "fixture", 1, output)
++    assert result == {"Turn 1": 7.5, "Turn 2": 10, "Average": 8.75}
++    assert [json.loads(line)["score"] for line in output.read_text().splitlines()] == [7.5, 10]
++
++
++def test_missing_turn_counterpart_rejects_biased_population(matches, tmp_path):
++    second_question = {**matches[1].question, "question_id": 2}
++    incomplete = [matches[0], replace(matches[1], question=second_question)]
++    output = tmp_path / "judgments.jsonl"
++    output.write_text('{"score":10}\n')
++    with pytest.raises(InvalidTask):
++        evaluate(incomplete, "fixture", 1, output)
++    assert not output.exists()
++
++
++def test_failed_judge_aborts_after_success_and_removes_stale_results(matches, judge_server, tmp_path):
++    judge_server[:] = ["[[10]]", "No rating available"]
++    output = tmp_path / "judgments.jsonl"
++    output.write_text('{"score":10}\n')
++    with pytest.raises(RuntimeError):
++        evaluate(matches, "fixture", 1, output)
++    assert not output.exists()
++
++
++def test_blank_candidate_receives_minimum_despite_positive_judge(matches, judge_server, tmp_path):
++    answers = {"choices": [{"turns": ["", "Answer two"]}]}
++    inputs = [replace(match, answer=answers) for match in matches]
++    result = evaluate(inputs, "fixture", 1, tmp_path / "judgments.jsonl")
++    assert result == {"Turn 1": 1, "Turn 2": 10, "Average": 5.5}

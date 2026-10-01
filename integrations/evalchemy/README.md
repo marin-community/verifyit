@@ -327,3 +327,27 @@ public dataset are `___` placeholders and cannot substitute for references.
 The loader also advertises `alpaca_eval`, whose original evaluator branch is
 broken; that branch remains unsupported. No whole-benchmark tested count or
 archive replay is claimed. Hashes and scope are in `zeroeval-source.json`.
+
+## MTBench single-mode judges
+
+Apply `mtbench-verifyit.patch` and enable `verifyit_enabled=True` in single mode.
+Use the bundled, source-equivalent fastchat package. ScriptSpec retains all four
+source profiles (default/math and first/multi-turn), OpenAI chat-completions and
+legacy Anthropic completions requests, rating parsing and pandas per-turn/global
+means. Source scores range from 1 to 10; verifyit rewards are `(score - 1) / 9`.
+
+Eight local HTTP evaluator judgments match full source records and requests on
+both providers. Timestamps remain in emitted records and raw verdicts but are
+excluded from deterministic parity comparisons. Missing or out-of-range ratings,
+refusals and incomplete responses abort the batch. SDK retries remain, while the
+source outer 16 retries are bypassed under a 900-second judge deadline. Each
+question requires both turn matches. Empty turns receive minimum score 1, and
+stale judgment files are removed before scoring. Only complete successful
+batches publish fresh judgment files.
+
+Both source pairwise modes remain unsupported. Pairwise-baseline writes winner
+fields but the evaluator reads single-mode score columns, raising KeyError.
+Pairwise-all selects only one model even when multiple answer files exist,
+creates no matches and fails loading judgments. Evidence is fixture-only; no
+matching archive traces were found. Source and installed-module hashes are
+recorded in `mtbench-source.json` and its linked provenance.

@@ -1044,6 +1044,37 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-zeroeval/solution-availability.json",
                 ],
             )
+        elif name == "MTBench":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_mtbench_single_judge_runtime",
+                reason=(
+                    "ScriptSpec retains all four single-judge profiles, source OpenAI and legacy "
+                    "Anthropic requests, fractional ratings and per-turn/global means. Failed "
+                    "judgments abort instead of being dropped from aggregation."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True in single mode with source-equivalent fastchat. "
+                    "Eight local HTTP evaluator judgments match full source requests and records "
+                    "apart from timestamps. Empty turns receive source minimum 1 / reward 0, and "
+                    "stale judgment files are cleared. Pairwise-baseline source scoring fails on "
+                    "incompatible result columns; pairwise-all hardcodes one selected model and "
+                    "creates no matches. Both remain excluded. No archived replay is claimed."
+                ),
+                validation_status="source_single_mode_evaluator_fixtures_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/mtbench-verifyit.patch",
+                    "integrations/evalchemy/mtbench-source.json",
+                    "../evidence/e2e/wiring/evalchemy-mtbench/manager-initial/results.json",
+                    "../evidence/e2e/wiring/evalchemy-mtbench/contract-census.json",
+                    "../evidence/e2e/wiring/evalchemy-mtbench/installed-module-provenance.json",
+                    "../evidence/e2e/wiring/evalchemy-mtbench/pairwise-source/results.json",
+                    "../evidence/e2e/wiring/evalchemy-mtbench/pairwise-all-source/results.json",
+                    "../evidence/e2e/wiring/evalchemy-mtbench/archive-census.json",
+                ],
+            )
         elif name == "MixEval":
             entity.update(
                 status="retained_runtime_available",

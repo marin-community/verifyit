@@ -1,0 +1,50 @@
+{
+  "source_revision": "e3f4a3d601896c437f37b0bd0a30e51651cce6d0",
+  "patch_sha256": "933026ab7132241596862e1d9ba26f205d40116eb74b2cb3465a0d93c01948fd",
+  "framework_files": {
+    "eval/chat_benchmarks/MTBench/eval_instruct.py": "14d1f984f58b7deb52cbd4c903658b440e5daa0a4bc06af46fbce09f3d93096b",
+    "eval/graders/verifyit_mtbench.py": "413aa312865a83ea21c3337f20c621ee7163b23c6ee2e12e684190660ac142f7",
+    "tests/graders/test_verifyit_mtbench.py": "5b8f6f741cc5a0ca3ab332fb496a7ecd340fa6ce62158cd81d1263475e1665a0"
+  },
+  "source_files": {
+    "eval/chat_benchmarks/MTBench/eval_instruct.py": "90479123f76da226be9b462e17b489960af43f595de16891deb926288ddf9d80",
+    "eval/chat_benchmarks/MTBench/fastchat/llm_judge/common.py": "0013d00ae4d3f6e42f97022eba2b699a470c32d2672fa2f9c4af217fdc1a7ee3",
+    "eval/chat_benchmarks/MTBench/fastchat/llm_judge/gen_judgment.py": "82d3d2e90ab8eb92928e6dcff1ddf88bbeec172b6386903bce605c2acb49ffe5",
+    "eval/chat_benchmarks/MTBench/fastchat/model/api_models.py": "3b323605861220a364bc93ce2dae089ec6e85bd1a927941b0ef5528932688257",
+    "eval/chat_benchmarks/MTBench/fastchat/conversation.py": "0420ddcf1c916760d4226e7e41ce5ce44fefa50b63e6303fb0a2cbfad776be35",
+    "eval/chat_benchmarks/MTBench/fastchat/llm_judge/data/judge_prompts.jsonl": "fd283293406d024f44c174b094ef48031d0687a4682fd3a56b29b138f80281b6",
+    "eval/chat_benchmarks/MTBench/fastchat/llm_judge/data/mt_bench/question.jsonl": "119565adbab82227089cefdb44c8d7e2cf04dc0a0ec233634c82e7d4e2a944f7"
+  },
+  "fresh_applied": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/mtbench-evalchemy-applied",
+  "contract": "Single-mode source judge composition and rating regex run in ScriptSpec. Four profiles (default/math, first/multi-turn) preserve source prompts, OpenAI chat-completions and legacy Anthropic completions request bodies, fractional 1-to-10 ratings, per-turn means and overall mean. Normalized reward is (rating-1)/9.",
+  "proof": {
+    "source_question_census": 80,
+    "profiles": 4,
+    "providers": 2,
+    "actual_evaluator_judgments": 8,
+    "matching_http_requests": 8,
+    "ordinary_tests": 4,
+    "malformed_provider_batches_aborted": 8,
+    "empty_candidate_corrections": 2,
+    "stale_artifact_corrections": 2
+  },
+  "source_modes": {
+    "single": "Implemented and fixture-tested for all four profiles on both providers.",
+    "pairwise-baseline": "Actual source two-model judgments write model_1/model_2 and winner fields; source evaluator expects model/score and raises KeyError. Excluded.",
+    "pairwise-all": "Source evaluate_responses hardcodes models=[results[model_id]] even with two answer files loaded. It constructs zero pairs and fails reading an absent judgment artifact. The observed ValueError proves this singleton/no-match path, not pairwise column equivalence. Excluded."
+  },
+  "corrections": [
+    "Missing/out-of-range ratings and malformed/incomplete transport abort the entire batch; no source filtering of failed samples. SDK retries remain; source outer 16 retries are bypassed.",
+    "Each question needs both turn matches; incomplete populations cannot change aggregate weights.",
+    "Empty candidate turn receives source minimum 1 / verifyit reward 0 despite positive judge output.",
+    "Clear stale judgment artifact before validation/scoring and write only a complete successful current batch."
+  ],
+  "limitations": [
+    "Fixture-only evaluator evidence with local HTTP responses; no live judge or archived model replay. No matching tracker/local named traces.",
+    "Timestamps remain in source-shaped output and raw verdict evidence; deterministic parity excludes only tstamp.",
+    "The original legacy Anthropic completions protocol is retained, not upgraded to Messages.",
+    "Append the bundled MTBench directory to import lookup for its source fastchat package; original dependencies required.",
+    "Each judge Script has a 900-second deadline; candidate execution is not involved."
+  ],
+  "installed_module_provenance": "evidence/e2e/wiring/evalchemy-mtbench/installed-module-provenance.json"
+}

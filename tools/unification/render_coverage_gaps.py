@@ -53,12 +53,12 @@ text = """# Coverage gaps
 
 COMPLETION_CHECKPOINT
 
-The remaining work is primarily client integration, source-specific comparison/judge profiles, and execution validation. A specification is not an implemented migration. Retaining the source scorer is compatibility or a hybrid route, not complete native equivalence. No unavoidable new verifier category has been identified. WildBench coverage is its working score mode: the advertised pairwise path fails in the original source because references are None. Its default missing max_tokens field also needs the documented 4096-token configuration workaround.
+The remaining work is primarily client integration, source-specific comparison/judge profiles, and execution validation. A specification is not an implemented migration. Retaining the source scorer is compatibility or a hybrid route, not complete native equivalence. No unavoidable new verifier category has been identified. WildBench coverage is its working score mode: the advertised pairwise path fails in the original source because references are None. Its default missing max_tokens field also needs the documented 4096-token configuration workaround. MTBench coverage is single mode with all four judge profiles and both source provider protocols; its pairwise-baseline result columns and pairwise-all singleton model selection fail in the original evaluator and remain excluded.
 
 | Source population | Implemented / available | Remaining coverage |
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,329 guarded native routes + 993 retained-runtime routes available | 370 configs have no cutover; breakdown below |
-| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 23 source runtimes | 7 not integrated (4 client/comparator audits + 1 private-solution blocker + 2 native profile gaps) |
+| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 24 source runtimes | 6 not integrated (4 client/comparator audits + 1 private-solution blocker + 1 native profile gap) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 17 retained-runtime overrides | 0 unwired; GSM hybrid retains its fallback; plus 1 orchestration group |
 SKYRL_SUMMARY_ROW
 HARBOR_SUMMARY_ROW
@@ -137,7 +137,7 @@ The source population additionally has 834 groups and 456 templates (1,290 orche
 
 ## Evalchemy custom benchmarks
 
-The 7 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
+The 6 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
 
 """ + table(
     "evalchemy-custom", {"not_integrated", "capability_gap"}
