@@ -3844,16 +3844,23 @@
       "entity_id": "harbor:qcircuitbench",
       "evidence": [
         "docs/unification/harbor_semantics.json#qcircuitbench",
-        "docs/unification/harbor_inventory.json#qcircuitbench"
+        "docs/unification/harbor_inventory.json#qcircuitbench",
+        "integrations/harbor/qcircuitbench-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-qcircuitbench/final-summary.json",
+        "evidence/e2e/wiring/harbor-qcircuitbench/final-manifest.json",
+        "evidence/e2e/wiring/harbor-qcircuitbench/installed-image-hashes.json",
+        "evidence/e2e/wiring/harbor-qcircuitbench/provenance.json",
+        "evidence/e2e/wiring/harbor-qcircuitbench/census.json",
+        "evidence/e2e/wiring/harbor-qcircuitbench/selection.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "qcircuitbench",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/qcircuitbench/src/qcircuitbench/task-template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate archived model candidates and production deployment using a published core pin; candidate Python still executes inside the retained grader.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Quantum circuit fidelity and optimization metric evaluation with task-specific clamp01; preserve simulator, solution execution and full metric dictionary. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "Opt-in generation retains each generated quantum verifier through existing ScriptSpec in a separate image. Native dispatch, simulations, postprocessing, sampling and seed defaults are unchanged. Finite semantic normalization and projected metrics are preserved, with all six raw channels retained and nonfinite primary scores rejected before clamping.",
       "source_evidence": [
         {
           "functions": [
@@ -3893,8 +3900,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "All 28 source algorithms (16 with Python postprocessing and 12 QASM-only) passed original source-oracle baselines. The 56 source/actual Harbor Trial pairs match primary rewards, all projected metrics and every raw non-timing channel; 26 measured timing-ratio differences are retained without an exact timing parity claim. Eight ordinary edge cases and four regressions cover fractional scoring, candidate syntax/load failures, reference/dependency failures, answer-path precedence and nonfinite primary scores. All 57 inspected verifier images match source assets and all 41 core Python files in the pinned wheel. Native Python remains 3.10.9; core runs separately on Python 3.14.7. Three seeded source tasks are frozen, but no eligible tracker archives exist, so this is bounded source-contract fixture evidence. Candidate-in-grader isolation remains unverified and the production core pin remains unpublished.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Retained generated native verifier, reference QASM, metadata and verifier.toml in a separate image; candidate solution artifacts transfer from the source environment.",
+        "needed_change": "Ordinary source-contract and status semantics are validated. Candidate Python executes inside the grader; candidate/assertion isolation and archived traces remain unverified."
+      }
     },
     {
       "entity_id": "harbor:quixbugs",

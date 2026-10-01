@@ -866,3 +866,37 @@ context, add a Dockerfile `COPY` for the wheel, and replace only the Git URL
 install target with that copied wheel path. Keep the domain dependencies and
 remaining Dockerfile commands. The recorded local proof images use exactly that
 wheel; no push or dependency publication is implied.
+
+
+## QCircuitBench
+
+Apply `qcircuitbench-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate with `--verifyit`.
+Existing ScriptSpec runs the unchanged generated Python verifier in a separate
+image with the source conda environment and Python 3.10.9. Verifyit runs in a
+separate base-Python environment. Candidate lookup preserves the source's three
+solution paths and precedence.
+
+All 28 source algorithms retain native dispatch, circuit simulation, Python
+postprocessing, sampling and seed defaults. Semantic rewards keep finite source
+normalization. Projected syntax/gate metrics and all six raw result channels are
+recorded; native auxiliary NaNs become null with an explicit raw witness. The
+wrapper rejects nonfinite semantic scores before source clamping. Trusted asset,
+dependency and unhandled checker failures remain distinct from candidate zero.
+Candidate Python executes inside the retained grader, so candidate/assertion
+isolation remains unverified.
+
+All 28 original source-oracle baselines score 1. The 56 source/Harbor Trial pairs
+match primary rewards, projected metrics and every raw non-timing channel. The
+26 timing-ratio differences are retained as measured values, without an exact
+parity claim. Eight ordinary edge cases and four regressions pass, including
+fractional data-encoding credit, missing/malformed submissions, reference/runtime
+failures and answer-path precedence. All 57 inspected verifier images match
+source assets and all 41 core Python files in the pinned wheel.
+
+`evidence/e2e/wiring/harbor-qcircuitbench/final-manifest.json` links the full census,
+frozen selection, original source runs, raw metric capture, Trial outcomes and
+installed-image hashes. No eligible tracker archives exist. These are bounded
+source-contract fixtures, not archived model parity. Use the exact local wheel
+recipe above while the production core pin remains unpublished. No new security
+tests were run.
