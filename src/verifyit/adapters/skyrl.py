@@ -15,6 +15,7 @@ from verifyit.modes.grade_exact import grade_exact_candidate
 from verifyit.spec import ExactSpec
 
 TEX_FRACTION = re.compile(r"\\[dt]?frac\{(-?\d+(?:\.\d+)?)\}\{(-?\d+(?:\.\d+)?)\}")
+TEX_FRACTION_COMMAND = re.compile(r"\\[dt]?frac(?=\{)")
 SLASH_FRACTION = re.compile(r"(-?\d+(?:\.\d+)?)/(-?\d+(?:\.\d+)?)")
 RATIO = re.compile(r"(-?\d+):(-?\d+)")
 PLAIN_DECIMAL = re.compile(r"-?\d+(?:\.\d+)?")
@@ -104,23 +105,34 @@ def grade_grid_candidate(expected: object, candidate: object) -> Reward:
 
 def _rational(answer: str) -> Fraction | None:
     candidate = answer.replace(r"\left", "").replace(r"\right", "").strip()
+    sign = -1 if candidate.startswith("-\\") else 1
+    if sign == -1:
+        candidate = candidate[1:]
     for pattern in (TEX_FRACTION, SLASH_FRACTION, RATIO):
         match = pattern.fullmatch(candidate)
         if match is not None:
             denominator = Fraction(match.group(2))
-            return Fraction(match.group(1)) / denominator if denominator else None
+            return sign * Fraction(match.group(1)) / denominator if denominator else None
     return Fraction(candidate) if PLAIN_DECIMAL.fullmatch(candidate) else None
 
 
 def grade_aime_candidate(expected: str, candidate: str) -> Reward:
     """Score source-normalized AIME answers by literal or exact rational equality.
 
+    TeX fraction styles are equivalent, and an outer minus applies to the whole fraction.
     The caller retains AIME's tail extraction and text normalization. Strict-box
     scoring is a separate whitespace-sensitive contract; this helper does not implement it.
     """
     spec = ExactSpec(expected=(expected,))
     if candidate == expected:
         return grade_exact_candidate(spec, candidate)
+    expected = TEX_FRACTION_COMMAND.sub(lambda _: r"\frac", expected)
+    candidate = TEX_FRACTION_COMMAND.sub(lambda _: r"\frac", candidate)
+    if expected == candidate:
+        # Formatting equivalence must not add credit for an undefined fraction.
+        if any(Fraction(match.group(2)) == 0 for match in TEX_FRACTION.finditer(expected)):
+            return scored(0.0, extracted=candidate, expected=[expected])
+        return grade_exact_candidate(ExactSpec(expected=(expected,)), candidate)
     expected_value, candidate_value = _rational(expected), _rational(candidate)
     if expected_value is None or candidate_value is None:
         return scored(0.0, extracted=candidate, expected=[expected])
