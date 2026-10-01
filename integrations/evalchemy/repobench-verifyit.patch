@@ -1,0 +1,229 @@
+--- a/eval/chat_benchmarks/RepoBench/eval_instruct.py
++++ b/eval/chat_benchmarks/RepoBench/eval_instruct.py
+@@ -30,6 +30,7 @@
+         legacy_mode: bool = False,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize RepoBench benchmark.
+@@ -42,6 +43,7 @@
+             legacy_mode: Whether to use legacy (v0) evaluation
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.languages = languages
+         self.subsets = subsets
+         self.max_tokens = max_tokens
+@@ -197,6 +199,14 @@
+         return {"temp_dir_obj": temp_dir_obj}
+ 
+     def evaluate_responses(self, results: Dict[str, Any]) -> Dict[str, float]:
++        if not self.verifyit_enabled or results is None:
++            return self._evaluate_responses(results)
++        try:
++            return self._evaluate_responses(results)
++        finally:
++            results["temp_dir_obj"].cleanup()
++
++    def _evaluate_responses(self, results: Dict[str, Any]) -> Dict[str, float]:
+         """
+         Evaluate the generated code completions.
+ 
+@@ -213,6 +223,20 @@
+         temp_dir_obj = results["temp_dir_obj"]
+         temp_dir = temp_dir_obj.name
+ 
++        if self.verifyit_enabled:
++            from verifyit.grade import InvalidTask
++
++            if (
++                not isinstance(self.languages, list) or not isinstance(self.subsets, list)
++                or not self.languages or not self.subsets
++                or any(not isinstance(value, str) for value in self.languages + self.subsets)
++                or len(set(self.languages)) != len(self.languages)
++                or len(set(self.subsets)) != len(self.subsets)
++                or any(lang not in {"python", "java"} for lang in self.languages)
++                or any(subset not in {"cross_file_first", "cross_file_random", "in_file"} for subset in self.subsets)
++            ):
++                raise InvalidTask("Invalid RepoBench language/subset selection")
++
+         evaluation_results = {}
+         aggregated_stats = {"total_samples": 0, "total_em": 0, "total_es": 0}
+ 
+@@ -221,6 +245,8 @@
+                 filepath = os.path.join(temp_dir, f"repobench_{subset}_{lang}.jsonl")
+ 
+                 if not os.path.exists(filepath):
++                    if self.verifyit_enabled:
++                        raise InvalidTask("Missing RepoBench cell file")
+                     print(f"Missing file: {filepath}")
+                     continue
+ 
+@@ -228,13 +254,21 @@
+                     data = [json.loads(line) for line in f]
+ 
+                 if not data:
+-                    continue
+-
+-                ground_truth = [d["label"] for d in data]
+-                generated = [d["gpt_completion"] for d in data]
+-
+-                em_score = round(exact_match_score(ground_truth, generated) * 100, 2)
+-                es_score = round(edit_similarity_score(ground_truth, generated), 2)
++                    if self.verifyit_enabled:
++                        raise InvalidTask("Empty RepoBench cell")
++                    continue
++
++                if self.verifyit_enabled:
++                    from eval.graders.verifyit_repobench import score_cell
++
++                    exact, similarity = score_cell(data)
++                    em_score = round(exact * 100, 2)
++                    es_score = round(similarity, 2)
++                else:
++                    ground_truth = [d["label"] for d in data]
++                    generated = [d["gpt_completion"] for d in data]
++                    em_score = round(exact_match_score(ground_truth, generated) * 100, 2)
++                    es_score = round(edit_similarity_score(ground_truth, generated), 2)
+ 
+                 # Store individual scores
+                 evaluation_results[f"{lang}_{subset}_EM"] = em_score
+--- /dev/null
++++ b/eval/graders/verifyit_repobench.py
+@@ -0,0 +1,88 @@
++"""RepoBench token equality and retained source edit similarity."""
++
++import dataclasses
++import hashlib
++import importlib.util
++import json
++import math
++import os
++from pathlib import Path
++import sys
++import tempfile
++
++from verifyit.grade import InvalidTask, Status, run
++from verifyit.modes.grade_exact import grade_exact_candidate
++from verifyit.spec import ExactSpec, ScriptSpec, render_spec
++
++SOURCE_SHA256 = "682ed9488f96d3549d842a4c698eccdc73eb60dc3bfe365bce8c99934dabd195"
++
++
++def score_cell(rows):
++    if not isinstance(rows, list) or not rows:
++        raise InvalidTask("RepoBench cell must contain samples")
++    for row in rows:
++        if not isinstance(row, dict) or not isinstance(row.get("label"), str) or not row["label"].split():
++            raise InvalidTask("RepoBench reference must contain text tokens")
++        if not isinstance(row.get("gpt_completion"), str):
++            raise InvalidTask("RepoBench completion must be text")
++    with tempfile.TemporaryDirectory(prefix="verifyit-repobench-") as directory:
++        root = Path(directory)
++        (root / "input.json").write_text(json.dumps(rows, allow_nan=False))
++        (root / "run.sh").write_text('exec "$@"\n')
++        spec = ScriptSpec(
++            "run.sh",
++            args=(sys.executable, "-m", "eval.graders.verifyit_repobench", str(root / "input.json")),
++            timeout=120,
++            verdict_file="result.json",
++        )
++        (root / "verifier.toml").write_text(render_spec(spec))
++        verdict = run(root / "verifier.toml", root)
++    if verdict.status == Status.INVALID_TASK:
++        raise InvalidTask(str(verdict.detail))
++    if verdict.status != Status.SCORED:
++        raise RuntimeError(f"RepoBench verifier failed: {verdict.status}")
++    exact = verdict.detail.get("exact_match")
++    if type(exact) not in (int, float) or not math.isfinite(exact) or not 0 <= exact <= 1:
++        raise RuntimeError("RepoBench returned invalid exact score")
++    similarity = verdict.detail.get("edit_similarity")
++    if (
++        type(similarity) not in (int, float)
++        or not math.isfinite(similarity)
++        or not 0 <= similarity <= 100
++        or verdict.reward != similarity / 100
++    ):
++        raise RuntimeError("RepoBench returned inconsistent edit similarity")
++    return exact, similarity
++
++
++def main():
++    source = Path(__file__).resolve().parents[1] / "chat_benchmarks/RepoBench/evaluation/metrics.py"
++    if hashlib.sha256(source.read_bytes()).hexdigest() != SOURCE_SHA256:
++        raise InvalidTask("RepoBench source scorer changed")
++    spec = importlib.util.spec_from_file_location("repobench_source_metrics", source)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    rows = json.loads(Path(sys.argv[1]).read_text())
++    rewards = []
++    exact_verdicts = []
++    for row in rows:
++        verdict = grade_exact_candidate(
++            ExactSpec(expected=(" ".join(row["label"].split()),), ignore_case=False, ignore_whitespace=False),
++            " ".join(row["gpt_completion"].split()),
++        )
++        if verdict.status != Status.SCORED:
++            raise RuntimeError("RepoBench exact verifier did not score")
++        rewards.append(verdict.reward)
++        exact_verdicts.append(dataclasses.asdict(verdict))
++    exact = round(sum(rewards) / len(rows), 5)
++    similarity = module.edit_similarity_score([row["label"] for row in rows], [row["gpt_completion"] for row in rows])
++    result = {
++        "status": "scored",
++        "reward": similarity / 100,
++        "detail": {"exact_match": exact, "edit_similarity": similarity, "exact_verdicts": exact_verdicts},
++    }
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(json.dumps(result, allow_nan=False))
++
++
++if __name__ == "__main__":
++    main()
+--- /dev/null
++++ b/tests/graders/test_verifyit_repobench.py
+@@ -0,0 +1,43 @@
++"""RepoBench whitespace equality, source similarity and incomplete-cell failures."""
++
++import json
++from pathlib import Path
++import sys
++import tempfile
++
++import pytest
++from verifyit.grade import InvalidTask
++
++from eval.graders.verifyit_repobench import score_cell
++
++
++def test_source_token_equality_and_raw_edit_similarity_remain_distinct():
++    exact, similarity = score_cell([{"label": "return value", "gpt_completion": "return   value"}])
++    assert exact == 1
++    assert similarity == 92
++    assert score_cell([{"label": "CaseSensitive", "gpt_completion": "casesensitive"}])[0] == 0
++    assert score_cell([{"label": "nonempty", "gpt_completion": ""}]) == (0, 0)
++
++
++@pytest.mark.parametrize("fault", ["missing_file", "empty_cell", "empty_reference", "nontext_reference"])
++def test_incomplete_later_cell_aborts_batch_and_cleans_files(tmp_path, fault):
++    sys.path.append(str(Path(__file__).resolve().parents[2] / "eval/chat_benchmarks/RepoBench"))
++    from eval.chat_benchmarks.RepoBench.eval_instruct import RepoBenchmark
++
++    benchmark = RepoBenchmark(languages=["python"], subsets=["cross_file_first", "in_file"], verifyit_enabled=True)
++    directory = tempfile.TemporaryDirectory()
++    rows = [{"label": "return value", "gpt_completion": "return value"}]
++    (Path(directory.name) / "repobench_cross_file_first_python.jsonl").write_text(json.dumps(rows[0]) + "\n")
++    if fault == "empty_cell":
++        rows = []
++    elif fault == "empty_reference":
++        rows[0]["label"] = "  "
++    elif fault == "nontext_reference":
++        rows[0]["label"] = None
++    if fault != "missing_file":
++        (Path(directory.name) / "repobench_in_file_python.jsonl").write_text(
++            "".join(json.dumps(row) + "\n" for row in rows)
++        )
++    with pytest.raises(InvalidTask):
++        benchmark.evaluate_responses({"temp_dir_obj": directory})
++    assert not Path(directory.name).exists()

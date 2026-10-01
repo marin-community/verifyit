@@ -984,6 +984,35 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-cruxeval/archive-census.json",
                 ],
             )
+        elif name == "RepoBench":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_repobench_similarity_runtime",
+                reason=(
+                    "ExactSpec grades source whitespace-token equality and ScriptSpec retains "
+                    "fuzzywuzzy edit similarity. The client preserves source double rounding and "
+                    "global weighted averages repeated under each language label."
+                ),
+                primitive_candidates=["exact", "script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True and append the source RepoBench directory to "
+                    "module lookup for its absolute imports. All six default language/subset cells "
+                    "match source evaluator fixtures with 18 samples. Invalid or missing cells abort "
+                    "the whole batch and clean temporary files. Evidence uses fuzzywuzzy 0.18.0 with "
+                    "pure-Python difflib; cross-backend parity and archived replay are unclaimed. "
+                    "The source evaluator does not call its imported CodeBLEU metric."
+                ),
+                validation_status="source_custom_evaluator_fixtures_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/repobench-verifyit.patch",
+                    "integrations/evalchemy/repobench-source.json",
+                    "../evidence/e2e/wiring/evalchemy-repobench/manager/results.json",
+                    "../evidence/e2e/wiring/evalchemy-repobench/cutover-final/results.json",
+                    "../evidence/e2e/wiring/evalchemy-repobench/negative/results.json",
+                    "../evidence/e2e/wiring/evalchemy-repobench/archive-census.json",
+                ],
+            )
         elif name == "HMMT":
             entity.update(
                 status="retained_runtime_available",
