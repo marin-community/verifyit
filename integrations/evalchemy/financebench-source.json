@@ -1,0 +1,40 @@
+{
+  "benchmarks": [
+    "FinanceBench"
+  ],
+  "fixture_only": true,
+  "source_revision": "e3f4a3d601896c437f37b0bd0a30e51651cce6d0",
+  "applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/financebench-evalchemy-applied",
+  "baseline_files": {
+    "eval/chat_benchmarks/FinanceBench/eval_instruct.py": "/Users/benfeuer/Documents/experiments/active/verifier-unification/sources/evalchemy/eval/chat_benchmarks/FinanceBench/eval_instruct.py",
+    "eval/graders/verifyit_judges.py": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/shared-judges-evalchemy-applied/eval/graders/verifyit_judges.py",
+    "tests/graders/test_verifyit_judges.py": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/shared-judges-evalchemy-applied/tests/graders/test_verifyit_judges.py"
+  },
+  "patch": "integrations/evalchemy/financebench-verifyit.patch",
+  "patch_sha256": "04f6b227f24ce6834f077c3ca3a4e1971d6a69ce298eda8246705c97c310a6d6",
+  "files": {
+    "eval/chat_benchmarks/FinanceBench/eval_instruct.py": "cb3f69185f871956926dbd6f4ebcc1ac9a6c171f9696acaa2ee632bc2ee3cf3d",
+    "eval/graders/verifyit_judges.py": "35bb76f4c11f5f937ab85cd6b89bfa5991daf5a7e0c0eea697034238c8192b2e",
+    "tests/graders/test_verifyit_judges.py": "5e5dd6b64aeb69a95761a7baa70f7dfd8e15513ede76eeacedfd155cbd376d7f"
+  },
+  "runtime_dependencies": [
+    "integrations/evalchemy/shared-judges-verifyit.patch"
+  ],
+  "source_contract": "Preserve shared answer-equivalence prompt, SDK settings, 128/512/2048 token-budget retries and exact three-label parsing. ScriptSpec performs source transport; Exact grades the returned label. All original FinanceBench metrics and example annotations remain for valid judgments.",
+  "proof": {
+    "fixture_samples": 4,
+    "http_requests": 5,
+    "actual_script_grades": 4,
+    "durable_tests_including_previous_judge_routes": 14,
+    "negative_batches": 9
+  },
+  "scoring_fixes": [
+    "Abort malformed/failed judge batches instead of reporting accuracy over only successful judgments. Source-before returned accuracy 1.0 for all nine malformed transports. Reject missing/empty trusted references before str coercion."
+  ],
+  "limitations": [
+    "HTTP fixtures execute actual evaluate_responses; no real judge/model inference or archived-score replay. All 50 shipped source references have valid text shape; fixtures do not establish full dataset execution."
+  ],
+  "source_files": {
+    "eval/graders/answer_equivalence.py": "84ed23ce5d91214cc81f7dc72d7e011c62e7b840b1663e558c7f1b4eb87168ac"
+  }
+}

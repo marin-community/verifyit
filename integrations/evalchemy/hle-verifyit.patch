@@ -1,0 +1,376 @@
+diff --git a/eval/chat_benchmarks/HLE/eval_instruct.py b/eval/chat_benchmarks/HLE/eval_instruct.py
+--- a/eval/chat_benchmarks/HLE/eval_instruct.py
++++ b/eval/chat_benchmarks/HLE/eval_instruct.py
+@@ -66,6 +66,7 @@
+         max_tokens: int = 32768,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize HLE benchmark.
+@@ -76,6 +77,7 @@
+             logger: Optional logger instance
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.debug = debug
+         self.max_new_tokens = max_tokens
+         self.seed = seed
+@@ -159,12 +161,21 @@
+ 
+         examples = results["examples"]
+         num_questions = len(examples)
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_hle import validate_examples
++
++            validate_examples(examples, self.n_repeat)
+ 
+         # Calculate accuracy for each repetition
+         all_results = []
+         correct_by_repeat = []
+         for i in range(self.n_repeat):
+-            correct = [example["answer"] == example["model_answers"][i] for example in examples]
++            if self.verifyit_enabled:
++                from eval.graders.verifyit_hle import score_exact
++
++                correct = [score_exact(example["answer"], example["model_answers"][i]) for example in examples]
++            else:
++                correct = [example["answer"] == example["model_answers"][i] for example in examples]
+             correct_by_repeat.append(correct)
+             solved = sum(correct)
+ 
+@@ -211,6 +222,10 @@
+ 
+         examples = results["examples"]
+         num_questions = len(examples)
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_hle import validate_examples
++
++            validate_examples(examples, self.n_repeat)
+ 
+         self.logger.info(f"Evaluating {num_questions} examples...")
+ 
+@@ -228,7 +243,12 @@
+         for i in range(self.n_repeat):
+             predictions = {example["id"]: {"response": example["model_outputs"][i]} for example in examples}
+ 
+-            eval_results = asyncio.run(judge_all_responses(questions, predictions, num_workers=2, judge=judge))
++            judge_responses = judge_all_responses
++            if self.verifyit_enabled:
++                from eval.graders.verifyit_hle import judge_all_responses as verifyit_judge
++
++                judge_responses = verifyit_judge
++            eval_results = asyncio.run(judge_responses(questions, predictions, num_workers=2, judge=judge))
+ 
+             for i, (unique_id, predictions) in enumerate(eval_results):
+                 if unique_id is not None:
+diff --git a/eval/graders/verifyit_hle.py b/eval/graders/verifyit_hle.py
+new file mode 100644
+--- /dev/null
++++ b/eval/graders/verifyit_hle.py
+@@ -0,0 +1,184 @@
++"""HLE exact responses and source structured judge through existing primitives."""
++
++import asyncio
++import dataclasses
++import hashlib
++import importlib
++import json
++import os
++from pathlib import Path
++import sys
++import tempfile
++
++from verifyit.grade import InvalidTask, Status, run
++from verifyit.json_objects import unique_object
++from verifyit.modes.grade_exact import grade_exact_candidate
++from verifyit.modes.grade_json_schema import grade_json_schema_candidate
++from verifyit.spec import ExactSpec, ScriptSpec, render_spec
++
++SOURCE_SHA256 = "67fdb851537a5c236ebce98880090c64c8ce5509dbe1a81d6ef0f38fe19d7d8d"
++
++
++def _required(value, name):
++    if not isinstance(value, str) or not value.strip():
++        raise InvalidTask(name + " must be nonempty text")
++
++
++def validate_examples(examples, repeats):
++    if not isinstance(examples, list) or not examples:
++        raise InvalidTask("HLE requires a nonempty batch")
++    for example in examples:
++        if not isinstance(example, dict):
++            raise InvalidTask("Malformed HLE sample")
++        _required(example.get("answer"), "Reference")
++        for key in ("model_outputs", "model_answers"):
++            if not isinstance(example.get(key), list) or len(example[key]) != repeats:
++                raise InvalidTask("HLE responses must match configured repetitions")
++
++
++def score_exact(reference, candidate):
++    _required(reference, "Reference")
++    candidate = candidate if isinstance(candidate, str) else ""
++    verdict = grade_exact_candidate(
++        ExactSpec(expected=(json.dumps(reference),), ignore_case=False, ignore_whitespace=False), json.dumps(candidate)
++    )
++    if verdict.status != Status.SCORED:
++        raise RuntimeError("HLE exact verifier did not produce a score")
++    return verdict.reward == 1.0
++
++
++def _source():
++    directory = Path(__file__).resolve().parent.parent / "chat_benchmarks/HLE"
++    if hashlib.sha256((directory / "run_judge_results.py").read_bytes()).hexdigest() != SOURCE_SHA256:
++        raise InvalidTask("HLE judge source changed")
++    sys.path.insert(0, str(directory))
++    return importlib.import_module("run_judge_results")
++
++
++def _judge_one(question, prediction, judge):
++    _required(question.get("question"), "Question")
++    _required(question.get("answer"), "Reference")
++    _required(judge, "Judge model")
++    if not isinstance(prediction.get("response"), str):
++        raise InvalidTask("HLE judge requires a textual candidate response")
++    with tempfile.TemporaryDirectory(prefix="verifyit-hle-") as directory:
++        root = Path(directory)
++        (root / "input.json").write_text(json.dumps({"question": question, "prediction": prediction, "judge": judge}))
++        (root / "run.sh").write_text('exec "$@"\n')
++        spec = ScriptSpec(
++            "run.sh",
++            args=(sys.executable, "-m", "eval.graders.verifyit_hle", str(root / "input.json")),
++            timeout=650,
++            verdict_file="result.json",
++        )
++        (root / "verifier.toml").write_text(render_spec(spec))
++        verdict = run(root / "verifier.toml", root)
++    if verdict.status == Status.INVALID_TASK:
++        raise InvalidTask(str(verdict.detail))
++    if verdict.status != Status.SCORED:
++        raise RuntimeError(f"HLE judge failed: {verdict.status}: {verdict.detail}")
++    content = verdict.detail["judge_response"]
++    if (content["correct"] == "yes") != (verdict.reward == 1.0):
++        raise RuntimeError("HLE judge label disagrees with verifier reward")
++    return content
++
++
++async def judge_all_responses(questions, predictions, num_workers, judge):
++    if type(num_workers) is not int or num_workers <= 0:
++        raise InvalidTask("HLE judge concurrency must be a positive integer")
++    if (
++        not isinstance(questions, list)
++        or not questions
++        or any(
++            not isinstance(question, dict) or not isinstance(question.get("id"), str) or not question["id"]
++            for question in questions
++        )
++    ):
++        raise InvalidTask("HLE judge requires question identifiers")
++    if not isinstance(predictions, dict) or any(not isinstance(value, dict) for value in predictions.values()):
++        raise InvalidTask("HLE predictions must be keyed records")
++    if not questions or len({question.get("id") for question in questions}) != len(questions):
++        raise InvalidTask("HLE judge questions require unique identifiers")
++    if set(predictions) != {question.get("id") for question in questions}:
++        raise InvalidTask("HLE questions and predictions do not align")
++    semaphore = asyncio.Semaphore(num_workers)
++
++    async def one(question):
++        async with semaphore:
++            prediction = predictions[question["id"]]
++            result = await asyncio.to_thread(_judge_one, question, prediction, judge)
++            return question["id"], {**prediction, "judge_response": result}
++
++    results = await asyncio.gather(*(one(question) for question in questions), return_exceptions=True)
++    for result in results:
++        if isinstance(result, BaseException):
++            raise result
++    return results
++
++
++async def _complete(payload):
++    source = _source()
++    question = payload["question"]
++    prompt = source.JUDGE_PROMPT.format(
++        question=question["question"], correct_answer=question["answer"], response=payload["prediction"]["response"]
++    )
++    raw = await source.client.beta.chat.completions.with_raw_response.parse(
++        model=payload["judge"],
++        max_completion_tokens=4096,
++        messages=[{"role": "user", "content": prompt}],
++        response_format=source.ExtractedAnswer,
++    )
++    transport = json.loads(raw.http_response.text, object_pairs_hook=unique_object)
++    json.dumps(transport, allow_nan=False)
++    if not isinstance(transport, dict) or transport.get("error") is not None:
++        raise RuntimeError("HLE judge transport failed")
++    choices = transport.get("choices")
++    if not isinstance(choices, list) or len(choices) != 1 or choices[0].get("finish_reason") != "stop":
++        raise RuntimeError("HLE judge returned an incomplete completion")
++    message = choices[0]["message"]
++    if message.get("refusal") or message.get("tool_calls") or message.get("function_call"):
++        raise RuntimeError("HLE judge refused or requested tools")
++    value = json.loads(message["content"], object_pairs_hook=unique_object)
++    json.dumps(value, allow_nan=False)
++    schema = source.ExtractedAnswer.model_json_schema()
++    schema["additionalProperties"] = False
++    schema["properties"]["confidence"].update(minimum=0, maximum=100)
++    schema_verdict = grade_json_schema_candidate(schema, value)
++    if schema_verdict.status != Status.SCORED or schema_verdict.reward != 1.0:
++        raise RuntimeError("Malformed HLE structured judgment")
++    response = raw.parse()
++    content = response.choices[0].message.parsed
++    verdict = grade_exact_candidate(
++        ExactSpec(expected=("yes",), ignore_case=False, ignore_whitespace=False), value["correct"]
++    )
++    if verdict.status != Status.SCORED:
++        raise RuntimeError("HLE exact verifier did not score the judgment")
++    result = {
++        "correct_answer": question["answer"],
++        "model_answer": content.extracted_final_answer,
++        "reasoning": content.reasoning,
++        "correct": content.correct,
++        "confidence": content.confidence,
++    }
++    return {
++        "status": "scored",
++        "reward": verdict.reward,
++        "detail": {
++            "judge_response": result,
++            "schema_verdict": dataclasses.asdict(schema_verdict),
++            "label_verdict": dataclasses.asdict(verdict),
++        },
++    }
++
++
++def main():
++    payload = json.loads(Path(sys.argv[1]).read_text())
++    try:
++        result = asyncio.run(_complete(payload))
++    except InvalidTask as error:
++        result = {"status": "invalid_task", "reward": 0.0, "detail": {"error": str(error)}}
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(json.dumps(result, allow_nan=False))
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tests/graders/test_verifyit_hle.py b/tests/graders/test_verifyit_hle.py
+new file mode 100644
+--- /dev/null
++++ b/tests/graders/test_verifyit_hle.py
+@@ -0,0 +1,115 @@
++"""HLE exact scoring and structured judge failures through real ScriptSpec runs."""
++
++import asyncio
++import json
++import threading
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++
++import pytest
++
++from eval.graders.verifyit_hle import judge_all_responses, score_exact
++from verifyit.grade import InvalidTask
++
++
++@pytest.fixture
++def judge_server(monkeypatch):
++    state = {"fault": None}
++
++    class Handler(BaseHTTPRequestHandler):
++        def do_POST(self):
++            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
++            fault = state["fault"] if "[question]: bad\n" in body["messages"][0]["content"] else None
++            content = {
++                "extracted_final_answer": "A",
++                "reasoning": "fixture",
++                "correct": "yes",
++                "confidence": 90,
++                "strict": True,
++            }
++            if fault == "strict":
++                content["strict"] = False
++            elif fault == "confidence":
++                content["confidence"] = 101
++            elif fault == "missing":
++                del content["correct"]
++            raw = json.dumps(content)
++            if fault == "duplicate":
++                raw = raw.replace('"correct": "yes"', '"correct": "no", "correct": "yes"')
++            message = {"role": "assistant", "content": raw, "refusal": "refused" if fault == "refusal" else None}
++            response = {
++                "id": "fixture",
++                "object": "chat.completion",
++                "created": 0,
++                "model": "fixture",
++                "choices": [
++                    {"index": 0, "finish_reason": "length" if fault == "truncated" else "stop", "message": message}
++                ],
++            }
++            data = json.dumps(response).encode()
++            self.send_response(200)
++            self.send_header("Content-Type", "application/json")
++            self.send_header("Content-Length", str(len(data)))
++            self.end_headers()
++            self.wfile.write(data)
++
++        def log_message(self, *args):
++            pass
++
++    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
++    thread = threading.Thread(target=server.serve_forever, daemon=True)
++    thread.start()
++    monkeypatch.setenv("OPENAI_API_KEY", "fixture")
++    monkeypatch.setenv("OPENAI_BASE_URL", f"http://127.0.0.1:{server.server_port}/v1")
++    try:
++        yield state
++    finally:
++        server.shutdown()
++        server.server_close()
++        thread.join()
++
++
++@pytest.mark.parametrize(("candidate", "expected"), [("A", True), ("a", False), (" A ", False), (None, False)])
++def test_default_exact_contract_is_case_and_whitespace_sensitive(candidate, expected):
++    assert score_exact("A", candidate) is expected
++
++
++def test_empty_reference_cannot_match_empty_candidate():
++    with pytest.raises(InvalidTask):
++        score_exact("", "")
++
++
++def test_structured_judge_returns_original_source_fields(judge_server):
++    result = asyncio.run(
++        judge_all_responses([{"id": "1", "question": "good", "answer": "A"}], {"1": {"response": "A"}}, 1, "fixture")
++    )
++    assert result == [
++        (
++            "1",
++            {
++                "response": "A",
++                "judge_response": {
++                    "correct_answer": "A",
++                    "model_answer": "A",
++                    "reasoning": "fixture",
++                    "correct": "yes",
++                    "confidence": 90,
++                },
++            },
++        )
++    ]
++
++
++@pytest.mark.parametrize("fault", ["strict", "confidence", "missing", "duplicate", "refusal", "truncated"])
++def test_malformed_judgment_aborts_after_completed_positive(judge_server, fault):
++    judge_server["fault"] = fault
++    questions = [{"id": name, "question": name, "answer": "A"} for name in ("good", "bad")]
++    with pytest.raises(RuntimeError):
++        asyncio.run(
++            judge_all_responses(questions, {name: {"response": "A"} for name in ("good", "bad")}, 1, "fixture")
++        )
++
++
++def test_missing_prediction_cannot_return_partial_judgments(judge_server):
++    questions = [{"id": name, "question": name, "answer": "A"} for name in ("good", "bad")]
++    with pytest.raises(InvalidTask):
++        asyncio.run(judge_all_responses(questions, {"good": {"response": "A"}}, 1, "fixture"))

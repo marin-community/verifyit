@@ -20,15 +20,15 @@
     },
     "evalchemy-custom": {
       "total": 42,
-      "e2e_tested": 29,
+      "e2e_tested": 31,
       "archive_score_parity": 5,
-      "fixture_tested": 25,
-      "fixture_only": 23,
+      "fixture_tested": 27,
+      "fixture_only": 25,
       "real_response_source_parity_not_archive_score": 1,
-      "route_available": 29
+      "route_available": 31
     }
   },
-  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance. Plus frame-boundary fixtures use explicit30-second source/cutover budgets; three source missing-assert scoring corrections are recorded separately from parity. Five judge clients use local HTTP fixtures with source request-body parity; malformed transport cases abort entire batches. OlympiadBench archive links are frozen but unavailable. IFEval540 saved source responses reproduce source scoring with detector seed0, not archived validated scores; IFBench300 genuine instruction rows use synthetic responses. The source IFEval full-driver typo remains outside the tested evaluate_responses boundary. MRCR generation-scoring and evaluator methods match source across74 fixtures with dataset selection and model outputs substituted; archived replay is unclaimed. HMMT uses three frozen questions and ten source repetitions through generation/evaluation; all 30 gold answers also have canonical/wrong supplemental grading. The bounded explicit symbolic transport returns display strings in model_answers and does not claim arbitrary SymPy equivalence. No HMMT archive replay is claimed. Five competitive-code clients have 66 fixture completion evaluations through actual source evaluators. Source macOS and pinned candidate-runtime outputs match; LCB source memory limits are separately preserved and tested. Legacy clients inherit their environment memory limit. No archive replay is claimed.",
+  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance. Plus frame-boundary fixtures use explicit30-second source/cutover budgets; three source missing-assert scoring corrections are recorded separately from parity. Five judge clients use local HTTP fixtures with source request-body parity; malformed transport cases abort entire batches. OlympiadBench archive links are frozen but unavailable. IFEval540 saved source responses reproduce source scoring with detector seed0, not archived validated scores; IFBench300 genuine instruction rows use synthetic responses. The source IFEval full-driver typo remains outside the tested evaluate_responses boundary. MRCR generation-scoring and evaluator methods match source across74 fixtures with dataset selection and model outputs substituted; archived replay is unclaimed. HMMT uses three frozen questions and ten source repetitions through generation/evaluation; all 30 gold answers also have canonical/wrong supplemental grading. The bounded explicit symbolic transport returns display strings in model_answers and does not claim arbitrary SymPy equivalence. No HMMT archive replay is claimed. Five competitive-code clients have 66 fixture completion evaluations through actual source evaluators. Source macOS and pinned candidate-runtime outputs match; LCB source memory limits are separately preserved and tested. Legacy clients inherit their environment memory limit. No archive replay is claimed. FinanceBench and both HLE evaluator methods preserve full fixture results and HTTP request bodies. Malformed judge batches abort without partial metrics. HLE calibration CLI is excluded. FinanceBench has 14 tracker links with three frozen selections, but unavailable archive credentials prevent replay; both promotions remain fixture-only.",
   "records": [
     {
       "entity_id": "evalchemy-custom:eval/chat_benchmarks/AIME24/eval_instruct.py",
@@ -121,6 +121,17 @@
       ]
     },
     {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/FinanceBench/eval_instruct.py",
+      "name": "FinanceBench",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-financebench/manager/roundtrip.json"
+        }
+      ]
+    },
+    {
       "entity_id": "evalchemy-custom:eval/chat_benchmarks/GPQADiamond/eval_instruct.py",
       "name": "GPQADiamond",
       "source": "evalchemy-custom",
@@ -151,6 +162,17 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/evalchemy-wired-five/manager-custom/custom-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/HLE/eval_instruct.py",
+      "name": "HLE",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-hle/manager/results.json"
         }
       ]
     },

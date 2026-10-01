@@ -923,6 +923,37 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-competitive-code/archive-census.json",
                 ],
             )
+        elif name in {"FinanceBench", "HLE"}:
+            family = "financebench" if name == "FinanceBench" else "hle"
+            entity.update(
+                status="retained_runtime_available",
+                reason_id=f"custom_{family}_judge_runtime",
+                reason=(
+                    "Source SDK requests and structured judge parsing run through ScriptSpec with "
+                    "actual ExactSpec verdicts. HLE also uses exact grading for its default scoring "
+                    "method, preserving literal whitespace and repeated metrics. Malformed trusted "
+                    "references and incomplete judge batches abort without partial metrics."
+                ),
+                primitive_candidates=["exact", "script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True and apply the exported source-specific client. "
+                    "Actual evaluator fixtures preserve complete results and HTTP request bodies. "
+                    "HLE's separate calibration CLI is excluded. FinanceBench has 14 tracker links, "
+                    "with three frozen selections unavailable because archive credentials are absent; "
+                    "no archived score replay is claimed for either benchmark."
+                ),
+                validation_status="source_custom_evaluator_fixtures_no_archives",
+                blockers=[],
+                evidence=[
+                    f"integrations/evalchemy/{family}-verifyit.patch",
+                    f"integrations/evalchemy/{family}-source.json",
+                    f"../evidence/e2e/wiring/evalchemy-{family}/manager/"
+                    + ("roundtrip.json" if family == "financebench" else "results.json"),
+                    f"../evidence/e2e/wiring/evalchemy-{family}/negative/"
+                    + ("negative.json" if family == "financebench" else "results.json"),
+                    f"../evidence/e2e/wiring/evalchemy-{family}/archive-census.json",
+                ],
+            )
         elif name == "HMMT":
             entity.update(
                 status="retained_runtime_available",
