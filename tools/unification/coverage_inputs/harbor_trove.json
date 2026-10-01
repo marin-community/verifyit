@@ -3813,16 +3813,20 @@
       "entity_id": "harbor:reasoning-gym",
       "evidence": [
         "docs/unification/harbor_semantics.json#reasoning-gym",
-        "docs/unification/harbor_inventory.json#reasoning-gym"
+        "docs/unification/harbor_inventory.json#reasoning-gym",
+        "integrations/harbor/reasoning-gym-verifyit.patch",
+        "evidence/e2e/wiring/harbor-reasoning-gym/final-manifest.json",
+        "evidence/e2e/wiring/harbor-reasoning-gym/config-dependence.json",
+        "evidence/e2e/wiring/harbor-reasoning-gym/manager-near-miss.json"
       ],
-      "gap_kind": "dataset_entry_client",
-      "implementation_present": false,
+      "gap_kind": "implemented_reasoning_gym_client",
+      "implementation_present": true,
       "name": "reasoning-gym",
-      "needed_change": "Write dataset identity/generator config and stored entry into ReasoningGymSpec inputs, connect answer discovery, and replay the same native partial-credit scorer.",
+      "needed_change": "Validate matching archived model traces and broader configured datasets before wider deployment.",
       "primitive_candidates": [
         "reasoning-gym"
       ],
-      "reason": "Dataset.score_answer(answer,entry) produces native partial credit; retain generator config/dataset identity and complete stored entry. ReasoningGymSpec already delegates Dataset.score_answer, but Harbor does not emit the original dataset config and complete entry or call the shared grader.",
+      "reason": "The existing ReasoningGymSpec now accepts a protected params JSON file, preserving source create_dataset configuration instead of silently using defaults. The Harbor client pins reasoning-gym0.1.25 and places entry, params and spec in a separate verifier image. Invalid configuration is an invalid task before candidate access; dataset construction failures remain infrastructure errors. Native partial credit is preserved.",
       "source_evidence": [
         {
           "functions": [],
@@ -3839,8 +3843,13 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "Three seeded configured source datasets ran positive/wrong answers through the original scorer and actual Harbor Trials, plus decimal precision near-miss and polynomial partial-credit cases. All eight scores match. The decimal near-miss changes legacy default-scorer one to configured zero. Thirty-eight focused core/spec tests and a core-only installed-wheel smoke pass. No matching archived model traces were available; ordinary parity only, security scope remains unverified.",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "/tests/entry_data.json, dataset_params.json and verifier.toml",
+        "needed_change": "Ordinary configured score parity validated; security scope and archived model traces remain unverified."
+      }
     },
     {
       "entity_id": "harbor:refav",

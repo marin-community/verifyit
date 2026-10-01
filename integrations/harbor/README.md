@@ -339,3 +339,20 @@ the original source script and actual Harbor Trials. Provenance is in
 program fixtures; archived model traces remain unverified. Candidate Python is
 imported in the grader process and Java runs inside the grader container, so
 candidate/assertion isolation is not established by the separate image.
+
+## Reasoning Gym
+
+Apply `reasoning-gym-verifyit.patch` after the Harbor dispatcher, then pass
+`--verifyit` to the adapter. The client pins verifyit159d145 and
+reasoning-gym0.1.25. Existing ReasoningGymSpec reads the source's protected
+entry and dataset-parameter JSON from a separate verifier image. Configured
+scoring matters: decimal precision4 rejects a near-miss that the legacy
+default-configuration scorer accepted. Native partial credit is preserved.
+
+Eight ordinary cases across three seeded configured source datasets match
+the source scorer through actual Harbor Trials, including the decimal near-miss
+and polynomial partial credit. Core/spec tests cover malformed parameters,
+preflight before absent candidates, construction infrastructure failures and
+legacy spec compatibility. Provenance is in
+`evidence/e2e/wiring/harbor-reasoning-gym/final-manifest.json`. No matching
+archived model traces were available; security scope remains unverified.
