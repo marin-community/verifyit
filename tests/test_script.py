@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from verifyit.grade import InvalidTask, Status, run, write_reward
+from verifyit.grade import InvalidTask, Status, main, run, scored, write_reward
 from verifyit.modes import grade_script
 from verifyit.spec import ScriptSpec, parse_spec, render_spec
 
@@ -263,6 +263,7 @@ def test_declared_producer_timeout_does_not_accept_written_success(tmp_path):
 @pytest.mark.parametrize(
     "payload",
     [
+        '{"status":"scored","reward":0,"reward":1,"detail":{}}',
         '{"status":"scored","reward":2,"detail":{}}',
         '{"status":"scored","reward":true,"detail":{}}',
         '{"status":"unknown","reward":0,"detail":{}}',
@@ -278,3 +279,46 @@ def test_declared_verdict_malformed_contract_is_infrastructure_failure(tmp_path,
     )
     (tests / "verifier.toml").write_text(render_spec(ScriptSpec(path="grade.py", verdict_file="result.json")))
     assert run(tests / "verifier.toml", _workspace(tmp_path)).status == Status.INFRA_ERROR
+
+
+@pytest.mark.parametrize("channel", ["reward.json", "reward.txt", "result.json"])
+@pytest.mark.parametrize("producer", ["symlink", "dangling", "oversize"])
+def test_invalid_reward_artifact_cannot_fall_back_or_leave_stale_credit(tmp_path, channel, producer):
+    payload = {
+        "reward.json": '{"reward":1}',
+        "reward.txt": "1",
+        "result.json": '{"status":"scored","reward":1,"detail":{}}',
+    }[channel]
+    operation = {
+        "symlink": "target.write_text(payload); artifact.symlink_to(target)",
+        "dangling": "artifact.symlink_to(target)",
+        "oversize": "artifact.write_text(payload + ' ' * 1_000_001)",
+    }[producer]
+    body = (
+        "import os\nfrom pathlib import Path\n"
+        "logs = Path(os.environ['VERIFYIT_LOGS_DIR'])\n"
+        f"artifact = logs / {channel!r}\npayload = {payload!r}\n"
+        "target = logs / 'target'\n"
+        f"{operation}\nprint(1)\n"
+    )
+    tests = _tests_dir(tmp_path, body, "grade.py")
+    if channel == "result.json":
+        (tests / "verifier.toml").write_text(render_spec(ScriptSpec(path="grade.py", verdict_file=channel)))
+    logs = tmp_path / "logs"
+    write_reward(logs, scored(1))
+    assert main([str(tests / "verifier.toml"), "--workspace", str(_workspace(tmp_path)), "--logs-dir", str(logs)]) == 0
+    verdict = json.loads((logs / "verdict.json").read_text())
+    assert (verdict["status"], verdict["reward"]) == ("infra_error", 0)
+    assert not (logs / "reward.txt").exists()
+    assert not (logs / "reward.json").exists()
+
+
+@pytest.mark.parametrize("payload", ['{"reward":0,"reward":1}', '{"reward":1,"metadata":{"value":1e999}}'])
+def test_ambiguous_or_nonfinite_json_metadata_cannot_award_credit(tmp_path, payload):
+    body = (
+        "import os\nfrom pathlib import Path\n"
+        f"(Path(os.environ['VERIFYIT_LOGS_DIR']) / 'reward.json').write_text({payload!r})\nprint(1)\n"
+    )
+    tests = _tests_dir(tmp_path, body, "grade.py")
+    reward = run(tests / "verifier.toml", _workspace(tmp_path))
+    assert (reward.status, reward.reward) == (Status.INFRA_ERROR, 0)

@@ -11,6 +11,7 @@ programming graders this mode replaces.
 import math
 import re
 import tempfile
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import NamedTuple
 
@@ -24,9 +25,13 @@ JUDGE_ACCEPT = "1"
 
 
 def grade(spec: StdioSpec, tests_dir: Path, workspace: Path) -> Reward:
+    _validate_comparison(spec)
     cases = _cases(tests_dir / spec.cases)
     if len(cases) < spec.min_cases:
         raise InvalidTask(f"stdio needs at least {spec.min_cases} cases, found {len(cases)}")
+    if spec.compare == Compare.DECIMAL_LINES:
+        for case in cases:
+            _decimal_reference(case.expected.read_text(errors="replace"))
     directory = workdir(spec, workspace)
     argv = split_command(spec.command)
     judge = tests_dir / spec.special_judge if spec.special_judge else None
@@ -58,7 +63,7 @@ def grade(spec: StdioSpec, tests_dir: Path, workspace: Path) -> Reward:
                 )
             expected = expected_path.read_text(errors="replace")
             if judge is None:
-                accepted = _matches(result.stdout, expected, spec)
+                accepted = grade_stdio_candidate(spec, result.stdout, expected).reward == 1.0
             else:
                 got_path.write_text(result.stdout)
                 accepted = _judge_accepts(judge, input_path, expected_path, got_path, spec.per_case_timeout)
@@ -103,6 +108,62 @@ def _sort_key(number: str) -> tuple[int, float, str]:
     if number.isdigit():
         return (0, int(number), "")
     return (1, 0.0, number)
+
+
+def _validate_comparison(spec: StdioSpec) -> None:
+    if not isinstance(spec.compare, Compare):
+        raise InvalidTask("unknown stdout comparison policy")
+    if spec.compare == Compare.FLOAT and (
+        isinstance(spec.float_tolerance, bool)
+        or not isinstance(spec.float_tolerance, int | float)
+        or not math.isfinite(spec.float_tolerance)
+        or spec.float_tolerance < 0
+    ):
+        raise InvalidTask("stdout float tolerance must be finite and nonnegative")
+
+
+def grade_stdio_candidate(spec: StdioSpec, candidate: str, expected: str) -> Reward:
+    """Compare captured stdout with a trusted expected output using the StdIO policy.
+
+    Execution and special judges belong to the file grader; this API only compares text.
+    """
+    _validate_comparison(spec)
+    if spec.special_judge is not None:
+        raise InvalidTask("direct stdout grading cannot execute a special judge")
+    if not isinstance(expected, str):
+        raise InvalidTask("expected stdout must be text")
+    reference = _decimal_reference(expected) if spec.compare == Compare.DECIMAL_LINES else None
+    if not isinstance(candidate, str):
+        return scored(0.0, reason="invalid_stdout")
+    if spec.compare == Compare.DECIMAL_LINES:
+        try:
+            actual = _decimal_lines(candidate)
+        except ValueError:
+            return scored(0.0, reason="nonfinite_stdout")
+        return scored(float(actual == reference))
+    return scored(float(_matches(candidate, expected, spec)))
+
+
+def _decimal_reference(expected: str) -> list[str | list[Decimal]]:
+    try:
+        return _decimal_lines(expected)
+    except ValueError as error:
+        raise InvalidTask("expected stdout contains nonfinite numbers") from error
+
+
+def _decimal_lines(text: str) -> list[str | list[Decimal]]:
+    lines: list[str | list[Decimal]] = []
+    for line in text.strip().split("\n"):
+        line = line.strip()
+        try:
+            numbers = [Decimal(token) for token in line.split()]
+        except InvalidOperation:
+            lines.append(line)
+            continue
+        if any(not number.is_finite() for number in numbers):
+            raise ValueError("nonfinite decimal line")
+        lines.append(numbers)
+    return lines
 
 
 def _matches(got: str, expected: str, spec: StdioSpec) -> bool:

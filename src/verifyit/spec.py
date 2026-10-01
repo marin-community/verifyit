@@ -64,6 +64,7 @@ class Compare(StrEnum):
     EXACT = "exact"
     TOKENS = "tokens"
     FLOAT = "float"
+    DECIMAL_LINES = "decimal_lines"
 
 
 class TestIdMatching(StrEnum):

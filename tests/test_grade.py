@@ -94,3 +94,54 @@ def test_deeply_nested_detail_replaces_stale_positive_verdict(tmp_path):
     verdict = json.loads((tmp_path / "verdict.json").read_text())
     assert (verdict["status"], verdict["reward"]) == ("infra_error", 0.0)
     assert not (tmp_path / "reward.json").exists()
+
+
+@pytest.mark.parametrize(
+    "policy,expected",
+    [(grade_module.Aggregation.ALL, 0.0), (grade_module.Aggregation.MEAN, 0.5), (grade_module.Aggregation.MAX, 1.0)],
+)
+def test_aggregation_preserves_missing_component_denominator(policy, expected):
+    verdict = grade_module.aggregate_rewards([grade_module.scored(1.0)], expected_total=2, policy=policy)
+    assert (verdict.reward, verdict.status) == (expected, Status.SCORED)
+    assert verdict.detail["missing"] == 1
+    complete = grade_module.aggregate_rewards([grade_module.scored(1.0)] * 2, expected_total=2, policy=policy)
+    assert complete.reward == 1.0
+
+
+@pytest.mark.parametrize(
+    "bad,status",
+    [
+        (Reward(0.0, Status.INVALID_TASK), Status.INVALID_TASK),
+        (Reward(0.0, Status.INFRA_ERROR), Status.INFRA_ERROR),
+        (Reward(float("nan"), Status.SCORED), Status.INFRA_ERROR),
+        (Reward(True, Status.SCORED), Status.INFRA_ERROR),
+        (Reward(2.0, Status.SCORED), Status.INFRA_ERROR),
+    ],
+)
+@pytest.mark.parametrize("policy", list(grade_module.Aggregation))
+def test_bad_component_discards_previous_credit_and_stale_reward(tmp_path, bad, status, policy):
+    write_reward(tmp_path, grade_module.scored(1.0))
+    verdict = grade_module.aggregate_rewards([grade_module.scored(1.0), bad], expected_total=2, policy=policy)
+    write_reward(tmp_path, verdict)
+    assert (verdict.reward, verdict.status) == (0.0, status)
+    assert not (tmp_path / "reward.txt").exists()
+    assert not (tmp_path / "reward.json").exists()
+
+
+@pytest.mark.parametrize("total", [0, True, 1])
+def test_invalid_aggregation_denominator_cannot_award_credit(total):
+    verdict = grade_module.aggregate_rewards(
+        [grade_module.scored(1.0)] * 2, expected_total=total, policy=grade_module.Aggregation.MEAN
+    )
+    assert (verdict.reward, verdict.status) == (0.0, Status.INVALID_TASK)
+
+
+def test_max_aggregation_preserves_partial_credit_and_empty_failure():
+    verdict = grade_module.aggregate_rewards(
+        [grade_module.scored(0.25), grade_module.scored(0.75)],
+        expected_total=3,
+        policy=grade_module.Aggregation.MAX,
+    )
+    assert (verdict.reward, verdict.status) == (0.75, Status.SCORED)
+    empty = grade_module.aggregate_rewards([], expected_total=3, policy=grade_module.Aggregation.MAX)
+    assert (empty.reward, empty.status) == (0.0, Status.SCORED)

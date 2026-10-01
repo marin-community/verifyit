@@ -7,7 +7,7 @@ import argparse
 import json
 from pathlib import Path
 
-from verifyit.adapters.artifact_files import read_regular_bytes
+from verifyit.artifact_files import read_regular_bytes
 from verifyit.grade import DEFAULT_LOGS_DIR, InvalidTask, Reward, infra_error, invalid_task, scored, write_reward
 from verifyit.modes.grade_json_schema import grade_json_schema_candidate
 

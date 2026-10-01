@@ -5,50 +5,29 @@
 
 import argparse
 import json
-import math
 import os
 import subprocess
+from dataclasses import asdict
 from pathlib import Path
 
-from verifyit.json_objects import unique_object
+from verifyit.artifact_files import read_regular_bytes
+from verifyit.grade import scored
+from verifyit.modes.grade_script import parse_json_reward, parse_reward_number
 
 VERDICT = "native-verdict.json"
 
 
-def _numeric(value: object) -> float:
-    if isinstance(value, bool) or not isinstance(value, int | float | str):
-        raise ValueError("native reward must be numeric")
-    try:
-        result = float(value)
-    except (ValueError, OverflowError) as error:
-        raise ValueError("native reward must be numeric") from error
-    if not math.isfinite(result):
-        raise ValueError("native reward must be finite")
-    return result
-
-
-def _reject_constant(value: str) -> None:
-    raise ValueError(f"nonfinite JSON constant {value}")
-
-
 def _native_reward(logs: Path, reward_key: str) -> tuple[float, dict[str, object]]:
     reward_json = logs / "reward.json"
-    if reward_json.exists():
-        payload = json.loads(reward_json.read_text(), parse_constant=_reject_constant, object_pairs_hook=unique_object)
-        if not isinstance(payload, dict) or reward_key not in payload:
-            raise ValueError(f"native reward.json lacks {reward_key!r}")
-        # Auxiliary detail may contain nulls, text and nested records. Validate every
-        # number without allowing metadata to determine the primary reward.
-        json.dumps(payload, allow_nan=False)
-        reward = _numeric(payload[reward_key])
-        metrics = {key: value for key, value in payload.items() if key != reward_key}
-        return reward, metrics
+    if reward_json.exists() or reward_json.is_symlink():
+        reward, payload = parse_json_reward(read_regular_bytes(reward_json).decode(), reward_key)
+        return reward, {key: value for key, value in payload.items() if key != reward_key}
     if reward_key != "reward":
         raise ValueError(f"named reward {reward_key!r} requires reward.json")
     reward_txt = logs / "reward.txt"
     if not reward_txt.exists():
         raise ValueError("native script wrote no reward file")
-    return _numeric(reward_txt.read_text().strip()), {}
+    return parse_reward_number(read_regular_bytes(reward_txt).decode().strip()), {}
 
 
 def run_native(script_name: str, reward_key: str = "reward") -> dict:
@@ -65,9 +44,7 @@ def run_native(script_name: str, reward_key: str = "reward") -> dict:
     if completed.returncode != 0:
         raise RuntimeError(f"native script exited {completed.returncode}: {completed.stderr[-1000:]}")
     reward, metrics = _native_reward(legacy, reward_key)
-    if not 0.0 <= reward <= 1.0:
-        raise ValueError("native reward must be in the unit interval")
-    return {"status": "scored", "reward": reward, "detail": {"native_metrics": metrics}}
+    return asdict(scored(reward, native_metrics=metrics))
 
 
 def main(argv: list[str] | None = None) -> int:

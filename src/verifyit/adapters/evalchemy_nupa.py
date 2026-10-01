@@ -7,7 +7,7 @@ import json
 from collections.abc import Callable
 
 from verifyit.adapters.skyrl import grade_literal_candidate
-from verifyit.grade import Reward, invalid_task, scored
+from verifyit.grade import Aggregation, Reward, Status, aggregate_rewards, invalid_task
 
 ALIGNMENT = {
     "Integer": (True,),
@@ -47,20 +47,23 @@ def grade_nupa_answer(
     if len(prediction) != len(reference) or any(not isinstance(part, str) for part in prediction):
         raise RuntimeError("source NUPA extraction returned malformed components")
     format_valid = extracted is not None
-    exact = grade_literal_candidate(json.dumps(prediction), json.dumps(reference)).reward if format_valid else 0.0
-    correct = 0.0
+    exact = grade_literal_candidate(json.dumps(reference), json.dumps(prediction) if format_valid else "")
+    if exact.status is not Status.SCORED:
+        return exact
+    digits = []
     for predicted, gold, from_right in zip(prediction, reference, ALIGNMENT[answer_format], strict=True):
         if from_right:
             predicted, gold = predicted[::-1], gold[::-1]
-        correct += sum(
-            grade_literal_candidate(actual, wanted).reward for actual, wanted in zip(predicted, gold, strict=False)
-        )
+        digits.extend(grade_literal_candidate(wanted, actual) for actual, wanted in zip(predicted, gold, strict=False))
     gold_length = sum(map(len, reference))
+    digit_match = aggregate_rewards(digits, expected_total=gold_length, policy=Aggregation.MEAN)
+    if digit_match.status is not Status.SCORED:
+        return digit_match
     metrics = {
-        "exact_match": exact,
-        "digit_match": correct / gold_length,
+        "exact_match": exact.reward,
+        "digit_match": digit_match.reward,
         "dlength": float(abs(sum(map(len, prediction)) - gold_length)),
         "format_valid": float(format_valid),
         "no_answer": float(not format_valid),
     }
-    return scored(exact, metrics=metrics, extracted=extracted)
+    return Reward(exact.reward, exact.status, {**exact.detail, "metrics": metrics, "extracted": extracted})

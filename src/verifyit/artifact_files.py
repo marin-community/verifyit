@@ -1,7 +1,7 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
-"""Bounded regular-file reads for Harbor candidate and reference artifacts."""
+"""Bounded regular-file reads for verifier inputs and result artifacts."""
 
 import errno
 import os

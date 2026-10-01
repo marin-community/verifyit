@@ -9,8 +9,8 @@ import json
 import re
 from pathlib import Path
 
-from verifyit.adapters.artifact_files import read_regular_bytes
 from verifyit.adapters.skyrl import grade_literal_candidate
+from verifyit.artifact_files import read_regular_bytes
 from verifyit.grade import DEFAULT_LOGS_DIR, InvalidTask, Reward, infra_error, invalid_task, scored, write_reward
 from verifyit.modes.grade_mcq import grade_mcq_candidate
 from verifyit.spec import McqSpec

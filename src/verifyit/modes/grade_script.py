@@ -20,11 +20,25 @@ import logging
 import math
 import os
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from verifyit.grade import REWARD_JSON, REWARD_TXT, InvalidTask, Reward, Status, scored
+from verifyit.artifact_files import read_regular_bytes
+from verifyit.bounded import call_bounded
+from verifyit.grade import (
+    REWARD_JSON,
+    REWARD_TXT,
+    InvalidTask,
+    Reward,
+    Status,
+    _validated_reward,
+    infra_error,
+    invalid_task,
+    scored,
+)
+from verifyit.json_objects import unique_object
 from verifyit.modes.extract import last_line
 from verifyit.modes.run import STDERR_TAIL, run_command
 from verifyit.spec import DEFAULT_REWARD_KEY, DEFAULT_WORKSPACE, ScriptSpec, Spec
@@ -55,6 +69,20 @@ class Reported:
     value: float
     channel: Channel
     metrics: dict[str, float] | None = None
+
+
+def grade_script_callable(function: Callable[..., Reward], *args: object, timeout: float, **kwargs: object) -> Reward:
+    """Run a trusted importable Python grader under the Script verdict contract.
+
+    The callable is client-owned grading code, never candidate-provided code.
+    Existing bounded execution owns transport, deadlines and process cleanup.
+    """
+    try:
+        return _validated_reward(call_bounded(function, *args, timeout=timeout, **kwargs))
+    except InvalidTask as error:
+        return invalid_task(str(error))
+    except Exception as error:
+        return infra_error(f"{type(error).__name__}: {error}")
 
 
 def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
@@ -122,13 +150,13 @@ def _run(command: list[str], cwd: Path, env: dict[str, str], timeout: float) -> 
 
 def _reported_reward(logs_dir: Path, stdout: str, reward_key: str) -> Reported | None:
     json_path = logs_dir / REWARD_JSON
-    if json_path.is_file():
+    if json_path.exists() or json_path.is_symlink():
         return _json_reward(json_path, reward_key)
     if reward_key != DEFAULT_REWARD_KEY:
         raise RuntimeError(f"named reward {reward_key!r} requires reward.json")
     text_path = logs_dir / REWARD_TXT
-    if text_path.is_file():
-        value = _float(text_path.read_text(errors="replace"))
+    if text_path.exists() or text_path.is_symlink():
+        value = _float(read_regular_bytes(text_path).decode(errors="replace"))
         if value is None or not math.isfinite(value):
             raise RuntimeError(f"{text_path} does not contain a finite numeric reward")
         return Reported(value, Channel.REWARD_TXT)
@@ -138,16 +166,28 @@ def _reported_reward(logs_dir: Path, stdout: str, reward_key: str) -> Reported |
     return Reported(value, Channel.STDOUT) if value is not None else None
 
 
+def parse_json_reward(text: str, reward_key: str) -> tuple[float, dict]:
+    """Validate a reward object while leaving auxiliary metric selection to the caller."""
+    payload = json.loads(text, object_pairs_hook=unique_object)
+    if not isinstance(payload, dict) or reward_key not in payload:
+        raise ValueError(f"reward object lacks selected key {reward_key!r}")
+    json.dumps(payload, allow_nan=False)
+    return parse_reward_number(payload[reward_key]), payload
+
+
+def parse_reward_number(value: object) -> float:
+    """Read a finite numeric reward; the grading contract decides its allowed range."""
+    result = _float(value)
+    if result is None or not math.isfinite(result):
+        raise ValueError("reward must be finite and numeric")
+    return result
+
+
 def _json_reward(path: Path, reward_key: str) -> Reported:
     try:
-        payload = json.loads(path.read_text(errors="replace"))
+        value, payload = parse_json_reward(read_regular_bytes(path).decode(errors="replace"), reward_key)
     except ValueError as error:
-        raise RuntimeError(f"{path} is not valid JSON: {error}") from error
-    if not isinstance(payload, dict) or reward_key not in payload:
-        raise RuntimeError(f"{path} must contain the selected reward {reward_key!r}")
-    value = _float(payload[reward_key])
-    if value is None or not math.isfinite(value):
-        raise RuntimeError(f"{path} does not contain a finite numeric reward {reward_key!r}")
+        raise RuntimeError(f"{path} is not valid JSON reward: {error}") from error
     metrics = {}
     for key, raw_value in payload.items():
         metric = _float(raw_value)
@@ -163,7 +203,7 @@ def _float(value: object) -> float | None:
         return None
     try:
         return float(value)
-    except ValueError:
+    except (ValueError, OverflowError):
         return None
 
 
@@ -179,7 +219,9 @@ def _structured_verdict(logs: Path, filename: str, completion: Completion) -> Re
     if not path.resolve().is_relative_to(logs.resolve()):
         raise RuntimeError("declared script verdict escapes its private logs directory")
     try:
-        payload = json.loads(path.read_text(), parse_constant=_reject_json_constant)
+        payload = json.loads(
+            read_regular_bytes(path).decode(), parse_constant=_reject_json_constant, object_pairs_hook=unique_object
+        )
     except (OSError, ValueError) as error:
         return Reward(
             0.0,

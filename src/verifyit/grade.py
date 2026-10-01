@@ -10,7 +10,7 @@ import logging
 import math
 import sys
 import traceback
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
@@ -43,6 +43,12 @@ class Status(StrEnum):
     SCORED = "scored"
     INVALID_TASK = "invalid_task"
     INFRA_ERROR = "infra_error"
+
+
+class Aggregation(StrEnum):
+    ALL = "all"
+    MEAN = "mean"
+    MAX = "max"
 
 
 class InvalidTask(Exception):
@@ -94,6 +100,33 @@ def _validated_reward(verdict: object) -> Reward:
         return infra_error(error)
     assert isinstance(verdict, Reward)
     return verdict
+
+
+def aggregate_rewards(verdicts: Sequence[Reward], *, expected_total: int, policy: Aggregation) -> Reward:
+    """Combine component grades without dropping missing or unscored components.
+
+    Missing components earn zero. An invalid task or infrastructure error discards
+    all credit; infrastructure errors take precedence when both occur.
+    """
+    if type(expected_total) is not int or expected_total <= 0:
+        return invalid_task("expected_total must be a positive integer")
+    if not isinstance(policy, Aggregation):
+        return invalid_task("unknown reward aggregation policy")
+    if len(verdicts) > expected_total:
+        return invalid_task("more component grades than expected")
+    validated = [_validated_reward(verdict) for verdict in verdicts]
+    for status in (Status.INFRA_ERROR, Status.INVALID_TASK):
+        for index, verdict in enumerate(validated):
+            if verdict.status == status:
+                return Reward(0.0, status, {"component": index, "cause": verdict.detail, "total": expected_total})
+    passed = sum(verdict.reward == 1.0 for verdict in validated)
+    if policy == Aggregation.ALL:
+        reward = float(passed == expected_total)
+    elif policy == Aggregation.MAX:
+        reward = max((verdict.reward for verdict in validated), default=0.0)
+    else:
+        reward = sum(verdict.reward for verdict in validated) / expected_total
+    return scored(reward, passed=passed, total=expected_total, missing=expected_total - len(validated))
 
 
 def invalid_task(message: str) -> Reward:
