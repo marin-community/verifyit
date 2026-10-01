@@ -20,15 +20,15 @@
     },
     "evalchemy-custom": {
       "total": 42,
-      "e2e_tested": 20,
+      "e2e_tested": 22,
       "archive_score_parity": 5,
-      "fixture_tested": 16,
-      "fixture_only": 15,
-      "real_response_source_parity_not_archive_score": 0,
-      "route_available": 20
+      "fixture_tested": 18,
+      "fixture_only": 16,
+      "real_response_source_parity_not_archive_score": 1,
+      "route_available": 22
     }
   },
-  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance. Plus frame-boundary fixtures use explicit30-second source/cutover budgets; three source missing-assert scoring corrections are recorded separately from parity. Five judge clients use local HTTP fixtures with source request-body parity; malformed transport cases abort entire batches. OlympiadBench archive links are frozen but unavailable.",
+  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance. Plus frame-boundary fixtures use explicit30-second source/cutover budgets; three source missing-assert scoring corrections are recorded separately from parity. Five judge clients use local HTTP fixtures with source request-body parity; malformed transport cases abort entire batches. OlympiadBench archive links are frozen but unavailable. IFEval540 saved source responses reproduce source scoring with detector seed0, not archived validated scores; IFBench300 genuine instruction rows use synthetic responses. The source IFEval full-driver typo remains outside the tested evaluate_responses boundary.",
   "records": [
     {
       "entity_id": "evalchemy-custom:eval/chat_benchmarks/AIME24/eval_instruct.py",
@@ -155,6 +155,36 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/evalchemy-plus/manager-final-frame-humanevalplus/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/IFBench/eval_instruct.py",
+      "name": "IFBench",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-instructions/ifbench-population-consistency/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-instructions/cutover/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/IFEval/eval_instruct.py",
+      "name": "IFEval",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "real_response_source_parity_not_archive_score",
+          "path": "evidence/e2e/wiring/evalchemy-instructions/ifeval-population-consistency/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-instructions/cutover/roundtrip.json"
         }
       ]
     },

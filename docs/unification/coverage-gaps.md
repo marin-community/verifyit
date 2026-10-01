@@ -1,13 +1,13 @@
 # Coverage gaps
 
-Completion scope: all 46 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **196 required routes**. The manager-reviewed checkpoint is **118/196 tested** (SkyRL 45/46, Harbor 32/87, custom 20/42, overrides 21/21). Counts derive from SkyRL's tested-route metadata, Harbor's explicit execution evidence markers and the Evalchemy tested-config ledger; route availability alone does not count. Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required.
+Completion scope: all 46 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **196 required routes**. The manager-reviewed checkpoint is **120/196 tested** (SkyRL 45/46, Harbor 32/87, custom 22/42, overrides 21/21). Counts derive from SkyRL's tested-route metadata, Harbor's explicit execution evidence markers and the Evalchemy tested-config ledger; route availability alone does not count. Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required.
 
 The remaining work is primarily client integration, source-specific comparison/judge profiles, and execution validation. A specification is not an implemented migration. Retaining the source scorer is compatibility or a hybrid route, not complete native equivalence. No unavoidable new verifier category has been identified.
 
 | Source population | Implemented / available | Remaining coverage |
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,329 guarded native routes + 993 retained-runtime routes available | 370 configs have no cutover; breakdown below |
-| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 4 isolated code runtimes + 4 source judge runtimes | 22 not integrated (15 client/comparator audits + 7 native profile gaps) |
+| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 4 code runtimes + 4 judge runtimes + 2 instruction runtimes | 20 not integrated (14 client/comparator audits + 6 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 17 retained-runtime overrides | 0 unwired; GSM hybrid retains its fallback; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 45 source-patched (30 with selected real traces, 15 without eligible real traces) | 1 partial client/harness routes + 0 native profile gaps; 2 external-objective placeholders separate |
 | Harbor 87 adapters | 19 native primitive clients + 13 structured source-runtime bridges | 55 not integrated; 6 wired routes need verifier isolation |
@@ -23,7 +23,7 @@ Evidence audited 2026-10-01. These are distinct configurations exercised through
 
 | Population | Routes available / total | E2E tested / total | Fixture only | Archived-score parity | Real responses, different producer contract |
 | --- | --- | --- | --- | --- | --- |
-| evalchemy-custom | 20 / 42 | 20 / 42 | 15 | 5 | 0 |
+| evalchemy-custom | 22 / 42 | 22 / 42 | 16 | 5 | 1 |
 | evalchemy-override | 21 / 21 | 21 / 21 | 20 | 1 | 0 |
 | lm-eval-harness | 12,322 / 12,692 | 224 / 12,692 | 220 | 3 | 1 |
 
@@ -54,7 +54,7 @@ The source population additionally has 834 groups and 456 templates (1,290 orche
 
 ## Evalchemy custom benchmarks
 
-The 22 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
+The 20 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
@@ -65,8 +65,6 @@ The 22 remaining custom benchmarks are named below. Script/stdio/pytest candidat
 | FinanceBench | capability_gap | judge | judge_equivalence uses a pinned equivalence prompt, response parser, endpoint retries and named failure records; the default reference rubric is not equivalent. |
 | HLE | capability_gap | judge | Source semantic-answer judge and repeated-trial scoring require its exact prompt/parser and failure contract, not the default rubric. |
 | HMMT | not_integrated | math | MathArena parse_answer/check_answers accepts structured answers and parser warnings; its comparator has not been mapped to the existing math profile. |
-| IFBench | not_integrated | ifeval, script | IFBench evaluate_accuracy uses its instruction registry and named result vectors; no source registry adapter is wired. |
-| IFEval | capability_gap | ifeval | Official instruction registry and strict/loose instruction/prompt vectors differ from approximate core checkers; implement the registry profile and preserve denominators. |
 | LiveBench | not_integrated | script | gen_judgments dispatches multiple category/task/date scorer families; no per-family trusted scorer and metric adapter is integrated. |
 | LiveCodeBench | not_integrated | stdio, script | Source run_test dispatch includes stdin and callable modes with compile/runtime/timeout labels; case codec and runner adapter are not integrated. |
 | LiveCodeBenchv5 | not_integrated | stdio, script | Version5 source tests retain stdin/callable dispatch, resource limits and repeated/pass@k statistics; client translation is absent. |
@@ -89,6 +87,8 @@ The 22 remaining custom benchmarks are named below. Script/stdio/pytest candidat
 | AIME25 | native_fallback | math | Boxed math is integrated, but missing parse explicitly retains Minerva comparison; complete native comparator equivalence is not implemented. Map the remaining Minerva normalization/comparison semantics without changing no-parse fallback behavior. |
 | HumanEval | retained_runtime_available | script | ScriptSpec retains source Python assertions and HumanEval shell tests in a trusted supervisor while candidate functions run in isolated containers. Enable verifyit_enabled=True and load the pinned local candidate image. |
 | HumanEvalPlus | retained_runtime_available | script | ScriptSpec retains source extended Python assertions, pass@k, scored_count and sample annotations with isolated candidate calls. Enable verifyit_enabled=True with the pinned candidate image. |
+| IFBench | retained_runtime_available | ifeval, script | Trusted source predicates register in existing IFEval mode under ScriptSpec; native no-comma is reused. Enable verifyit_enabled=True. |
+| IFEval | retained_runtime_available | ifeval, script | Trusted source predicates register in existing IFEval mode under ScriptSpec; native no-comma is reused. Enable verifyit_enabled=True. |
 | MATH500 | native_fallback | math | Boxed math is integrated, but missing parse explicitly retains Minerva comparison; complete native comparator equivalence is not implemented. Map the remaining Minerva normalization/comparison semantics without changing no-parse fallback behavior. |
 | MBPP | retained_runtime_available | script | ScriptSpec retains source Python assertions and HumanEval shell tests in a trusted supervisor while candidate functions run in isolated containers. Enable verifyit_enabled=True and load the pinned local candidate image. |
 | MBPPPlus | retained_runtime_available | script | ScriptSpec retains source extended Python assertions, pass@k, scored_count and sample annotations with isolated candidate calls. Enable verifyit_enabled=True with the pinned candidate image. |

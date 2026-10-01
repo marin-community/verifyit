@@ -858,6 +858,40 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-shared-judges/archive-census.json",
                 ],
             )
+        elif name in {"IFEval", "IFBench"}:
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_source_instruction_predicates",
+                reason=(
+                    "Trusted source predicates register in existing IFEval mode under ScriptSpec; "
+                    "native no-comma is reused. Original strict/loose variants, descriptor defaults, "
+                    "per-prompt/instruction/type aggregates and source Python RNG behavior remain. "
+                    "Language detector failures now score zero with explicit seed0 reproducibility; "
+                    "malformed or vacuous descriptors and inconsistent child results abort batches."
+                ),
+                primitive_candidates=["ifeval", "script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True. IFEval540 saved source responses match source "
+                    "scores, not an archived validated score; one unmatched source prompt is recorded. "
+                    "IFBench300 source metadata rows use synthetic responses. Three archived IFBench "
+                    "links are frozen but credentials unavailable. IFEval's unrelated run_benchmark "
+                    "typo remains; evaluate_responses is the tested boundary."
+                ),
+                validation_status=(
+                    "real_response_source_parity_not_archived_score"
+                    if name == "IFEval"
+                    else "source_custom_evaluator_fixtures_no_archives"
+                ),
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/instructions-verifyit.patch",
+                    "integrations/evalchemy/instructions-source.json",
+                    "../evidence/e2e/wiring/evalchemy-instructions/manager-final-ifeval/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-instructions/manager-final-ifbench/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-instructions/manager-negative-final/negative.json",
+                    "../evidence/e2e/wiring/evalchemy-instructions/archive-census.json",
+                ],
+            )
         elif record["classification"] == "adapter-hybrid":
             entity.update(
                 status="native_fallback",
