@@ -17,7 +17,7 @@ source revisions below.
 
 | Source snapshot | Enumerated population | Mapping and specification evidence |
 |---|---|---|
-| [MarinSkyRL](skyrl.md), `91c7a60e85e31b6933ab0ee732125b3338e82b89` | 14 registered environments; 26 Nemotron Ultra agent routes; 9 dormant verifier/scorer routes; 48 mapping entries, with 26 IFEval checkers indexed | [Source-pinned inventory](skyrl.json); every entry links to a [reusable adapter contract](skyrl-adapter-specs.md) |
+| [MarinSkyRL](skyrl.md), `91c7a60e85e31b6933ab0ee732125b3338e82b89` | 14 registered environments; 27 source-declared Nemotron Ultra generators, including the unimplemented IPI route; dormant verifier/scorer routes and external objectives are reconciled in the current coverage register | [Source-pinned inventory](skyrl.json); every entry links to a [reusable adapter contract](skyrl-adapter-specs.md) |
 | [Harbor](harbor.md), `6f94f2237224869a49c249a737d701147afc33b6` | 87 adapters; 115 tracked task configurations; 128 executable test entrypoints | [Discovery inventory](harbor_inventory.json); [87 source-reviewed semantic mappings](harbor_semantics.json) |
 | [Evalchemy](evalchemy_mapping.md), `e3f4a3d601896c437f37b0bd0a30e51651cce6d0` | 42 custom benchmark classes; 22 local harness overrides; 72 scoring entrypoints | [Inventory](evalchemy_inventory.json); mapping document specifies exact, math, instruction, judge, and execution profiles |
 | [lm-eval-harness](lm_eval_mapping.md), `6d642546f4688648fced259eb3302efd36ece5af` (Evalchemy's v0.4.12 pin) | 13,982 configurations: 12,692 tasks, 834 groups, 456 templates; 123 scoring entrypoints | [Resolved configuration inventory](lm_eval_inventory.json); source metric and filter contracts; combined loader parity on 14,004 nonempty harness/override configurations |
@@ -29,34 +29,38 @@ fetched task bodies require their own source evidence. Dormant SkyRL code is
 included separately from active dispatch. Group/template configurations describe
 orchestration rather than independent correctness scorers.
 
-## Implemented integrations
+## Integration status and entrypoints
 
-| Integration | Implemented behavior | Verification evidence |
-|---|---|---|
-| [SkyRL patches](skyrl.md) | 31 complete source-route integrations use existing primitives, client reframing or source-owned registry extensions. Coder1 and NVIDIA instruction following have partial integrations and remain pending; the latter rejects intrinsically stochastic hidden-reference construction. Source metrics and shaping remain client owned. | Earlier 66 pinned-source replays remain recorded. Later scopes preserve separate seeded samples for Reasoning Gym/tools/calendar, SQL, Lean, code, structured outputs, formatting and instruction following. The instruction wave matches 15 selected real traces but validates only its implemented deterministic subset; 60 exported-source tests pass. Ten complete routes lack eligible model traces and retain fixture-only validation. Two supplemental genuine code positives are separate from the random sample. |
-| [Evalchemy patch](../../integrations/evalchemy/README.md) | Eight clean integrations (GPQA, MMLU-Pro, AIW, GSM8KPerturbed, opt-in JEEBench, AMC23 and both NUPA variants); three boxed-math hybrids retain explicit missing-parse fallback. | 26 upstream extraction regressions and source exact/numeric parity cases pass. JEEBench constructor/extraction/evaluator fixtures preserve three repetitions and partial credit, with malformed references aborting batches; no matching saved traces. NUPA5K replays three full saved runs (15,000 records), preserving all five metrics and bucket aggregates; NUPA-Loose has shared-scorer fixtures only. NUPA component equality retains source sign normalization. The other 31 custom benchmarks remain client/profile work. |
-| [Harness patch](../../integrations/lm-eval-harness/README.md) | Guarded native contracts cover 11,221 statically eligible task configurations: 8,061 likelihood-choice, 2,785 exact-match, 45 AfriQA, 100 MasakhaNER and 100 MasakhaPOS and 31 TruthfulQA MC2 plus eight Hendrycks literal-math profiles and 19 AGIEval multi-answer choice configs plus 22 CrowS-Pairs preference and 20 Babilong substring configs and 30 MMMU typed-answer configs. Source aggregation remains. | The new AfroBench profiles pass source API and evaluator fixture comparisons, with no matching saved model traces. Eligibility is not execution of every dataset. An additional 978 configs have opt-in single-rank ScriptSpec corpus routing; 493 remain without cutover. Corpus routing retains actual source metrics and has fixture-only validation. |
-| [Harbor patches](../../integrations/harbor/README.md) | Four answer-file adapters call exact or MCQ primitives; eight code/task adapters call the existing pytest route; ARC-AGI-2 calls JSON-schema const in a separate verifier image. BFCL, DABstep and tau3 retain source scorers behind structured ScriptSpec clients. Another 71 adapters need client integration. | The four answer clients match 12 pinned original task-script cases. Generated GAIA and nine pytest task images execute positive and negative verifyit cases through the actual Harbor Verifier. CodePDE covers all five PDE variants with the upstream nRMSE evaluator on bounded HDF5 fixtures and rejects forged candidate scores in adversarial checks. ReplicationBench preserves its nested comparator and artifact while rejecting boolean-as-number false positives and malformed trusted references; its separate verifier image changes a reproduced shared-container reference-mutation reward from one to zero. CompileBench's pinned Ubuntu and Alpine task images preserve source CTRF counts, fail closed on malformed tests, and reject three bounded candidate executable tamper attempts; its other 13 images and saved model rollouts remain unvalidated. ARC-AGI-2 matches three seeded source-generated pairs across source, CLI and isolated Harbor Trial, and prevents a reproduced shared-container reference mutation false positive. BFCL and DABstep each match 11 bounded generated-image source/CLI/Harbor cases, including deliberate false-positive corrections and invalid trusted-task handling. Full-size CodePDE data, broader task instances, three other answer images and matching model traces remain unvalidated; AWS SSO expiry prevented BFCL tracker workspace replay. Tau3 retains separate real-run replay evidence. |
-| [Task Trove integration](../../integrations/task-trove/README.md) | Explicit verifyit revision/dependency overlay, source converter migration, local Docker audit checkout, and task-owned archive script/setup namespace wrappers. | All rows' metadata scanned using bounded HTTP ranges; 19 converter and 12 mode/helper drift matrix; 8 local CLI integration cases; actual patched pipeline CLI and Dockerfile rewriting pass at scheduling/container I/O boundaries. |
+The [coverage report](coverage-gaps.md) and its generated
+[entity register](coverage-gaps.json) are authoritative for current campaign
+counts, remaining contracts, and accepted execution evidence. Earlier mapping
+and replay documents below describe their individual checkpoints; their counts
+must not be added together or treated as current completion totals.
 
-Integration dependency patches record the required immutable API checkpoint.
-They require a fetchable Git revision or the corresponding local checkout; an
-unpushed local checkpoint does not establish published availability, updated
-fork lockfiles, or deployed integration.
+| Integration | Entry point and scope |
+|---|---|
+| SkyRL | [Patch instructions](../../integrations/MarinSkyRL/README.md) and [adapter contracts](skyrl-adapter-specs.md) cover existing primitives, client extraction, source-owned registries, and retained runtimes. The current report includes the previously omitted IPI generator and revokes abstention completion for its empty-response regression. Published current-main routes and the larger historical campaign inventory are separate populations. |
+| Evalchemy | [Patch instructions](../../integrations/evalchemy/README.md) and the [tested configuration ledger](evals-tested-configs.json) distinguish custom benchmarks, harness overrides, retained source scorers, and actual evaluator evidence. |
+| lm-eval-harness | [Patch instructions](../../integrations/lm-eval-harness/README.md) describe guarded native contracts and structured source-runtime routing. Available configurations are not all individually executed; exhaustive harness replay is outside the required completion cohort. |
+| Harbor | [Patch instructions](../../integrations/harbor/README.md) record source-specific task generation, separate verifier images, native primitive clients, and retained-runtime bridges. The coverage report identifies each tested adapter, remaining integration work, shared verifier boundaries, and candidate execution trust limitations. |
+| Task Trove | [Migration instructions](../../integrations/task-trove/README.md) cover revision overlays, converter migration, and archive script/setup namespaces. Metadata and fixture validation do not establish genuine archived-task execution; Task Trove is outside the required completion cohort. |
 
-Nine wired Harbor routes still run the verifier in the agent container.
-A candidate process changed a GAIA reference after Harbor uploaded it and
-turned a wrong answer into a positive reward. Their client integration remains
-recorded, with [route-specific trusted assets and isolation work](coverage-gaps.md#shared-verifier-boundary)
-listed as a separate deployment blocker. ARC-AGI-2, AIME, GAIA, GPQA Diamond,
-SATBench, DABstep and ReplicationBench have isolated verifier images on bounded
-generated tasks; GAIA, DABstep and ReplicationBench passed corresponding
-mutation replays. Matching saved model rollouts remain unavailable for these
-six isolated routes.
+Integration dependency patches record immutable API checkpoints. A checkpoint
+must be published or supplied by the documented local wheel/checkout recipe to
+build its task image. Installing verifyit does not apply client patches, update
+fork lockfiles, or deploy integrations. MarinSkyRL's published dependency pin is
+recorded separately in its [publication manifest](../../integrations/MarinSkyRL/publication-latest-main.json).
 
-## Hardening evidence
+The [verifier-boundary register](coverage-gaps.md#shared-verifier-boundary)
+tracks outstanding isolation work separately from integration and ordinary score
+parity. Separate verifier images protect source artifacts from the agent
+container; code graders that execute candidate code within the grading runtime
+retain an additional trust limitation. Neither fixture parity nor a private image
+alone establishes complete hardening.
 
-The [replay report](e2e-replay.md) records 24 Evalchemy/harness runs matching
+## Historical replay evidence
+
+The earlier [replay report](e2e-replay.md) records 24 Evalchemy/harness runs matching
 63,360 samples, 66/66 SkyRL pinned-native and 65/66 archived results, and 1,101
 Harbor trials. Harbor's recovered zeros, infrastructure failures and database
 discrepancies remain explicit exceptions; these replays do not establish full
