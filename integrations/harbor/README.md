@@ -817,3 +817,52 @@ links exist. These are source-contract and local HTTP judge fixtures; they do no
 establish archived model parity, live judge quality, or dataset pipeline behavior.
 Use the exact local wheel recipe above while the production core pin remains
 unpublished. No new security tests were run.
+
+
+### Dolci four-domain cutover
+
+Apply `dolci-runtime-verifyit.patch` after the common Harbor dispatcher and
+`research-code-bench-runtime-verifyit.patch` (which supplies
+`package_source_runtime`). Generate tasks with Dolci's `--use-verifyit` flag.
+The separate verifier receives only the domain's candidate file. A structured
+Script producer composes existing Math, Stdio and Pytest modes; the extended
+IFEval domain retains all 54 upstream instruction checkers.
+
+Math preserves source answer preprocessing and its strict finite absolute
+numeric tolerance, but removes a faulty fallback that accepts `2` for
+`\frac{1}{2}`. Missing/null references reject before string conversion; numeric
+zero and `reward_model` fallback remain valid. Stdio requires all cases and
+uses the source comparator to preserve leading blank lines. Code runs the
+original concatenated program and assertions as one Pytest item, including
+`pytest-json-report` in the verifier runtime. Empty test sets and malformed
+IFEval references are invalid tasks at zero. IFEval keeps its full denominator,
+thinking removal and fractional score; validation restores RNG state before
+source checkers construct any random defaults. The old shell fallback that
+awards one when a successful process omits its reward is not used.
+
+Evidence is in
+`evidence/e2e/wiring/harbor-dolci/final-manifest.json`: 100 final source/actual
+Harbor pairs, 54 instruction positive fixtures, 19 regressions and 91 installed
+image witnesses. Four manager replays independently checked math, code,
+stdio and fractional IFEval. Six initial code pairs are retained separately:
+the first image lacked the required Pytest report plugin; corrected images
+pass. Formatting-only final helper changes have full-module AST equivalence
+and five final-image replays.
+
+The source sample is three frozen rows per domain from 36 bounded random
+rows (187 KB), not archived model traces. Dataset-server payload hashes identify
+the records; the observed repository revision does not independently pin those
+responses. Selected stdio and IFEval rows have no reference solution, so their
+placeholders are retained and separate positive fixtures cover scoring. One
+frozen stdio row contains function-style list inputs and remains an invalid task;
+it was not resampled or reinterpreted. No full-dataset or production-image claim
+is made. Candidate code still executes within the grader runtime, so complete
+candidate/assertion isolation remains unverified.
+
+The generated Dockerfile pins unpublished verifyit commit
+`a0861089947096aabe456ca4308ca46b1b001d7c`. Until that revision is published,
+build its wheel from a local checkout/archive, copy it into the verifier build
+context, add a Dockerfile `COPY` for the wheel, and replace only the Git URL
+install target with that copied wheel path. Keep the domain dependencies and
+remaining Dockerfile commands. The recorded local proof images use exactly that
+wheel; no push or dependency publication is implied.

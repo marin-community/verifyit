@@ -1803,19 +1803,21 @@
       "entity_id": "harbor:dolci",
       "evidence": [
         "docs/unification/harbor_semantics.json#dolci",
-        "docs/unification/harbor_inventory.json#dolci"
+        "docs/unification/harbor_inventory.json#dolci",
+        "integrations/harbor/dolci-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-dolci/final-manifest.json"
       ],
-      "gap_kind": "domain_dispatch_and_registry",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "dolci",
-      "needed_change": "Port domain dispatch to math/function assertions/stdio/IFEval with original extraction; retain or explicitly register extended IFEval constraint IDs absent from standard registry.",
+      "needed_change": "Validate archived candidates and full production data/deployment; core pin remains unpublished and code/stdin candidate execution within the grader is not isolated.",
       "primitive_candidates": [
         "math",
-        "pytest",
         "stdio",
-        "ifeval"
+        "pytest",
+        "script"
       ],
-      "reason": "grade.py routes dataset domain math equivalence, function assertions, stdin/stdout cases and extended IFEval registry; preserve extraction and extension constraint IDs. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in separate-image structured Script producer composes native Math, Stdio and single-item Pytest while retaining all54 extended IFEval checkers. Source preprocessing, strict numeric tolerance, stdio leading blanks, binary code denominator and fractional instruction scores are preserved; erroneous fraction-as-product fallback and empty/malformed trusted contracts return minimum.",
       "source_evidence": [
         {
           "functions": [
@@ -1891,8 +1893,15 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "100 final source/actual Harbor pairs,54instruction positive fixtures,19regressions,91installed image witnesses; four independent manager domain replays. Three frozen rows/domain selected from36bounded random dataset-server rows, not archived model traces. Selected stdio/IFEval have no source oracle; separate positive/fractional fixtures supplement their retained placeholders. Frozen stdio17541 has list-valued inputs and remains invalid_task. Six initial code dependency pairs retained separately; corrected pytest-json-report runtime passes. Final formatted helper is AST-identical and five final-image cases were replayed. Observed HF repository revision does not independently pin dataset-server payloads; exact response hashes are recorded.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Source graders, references, core specs and all54IFEval checkers reside in a separate verifier image; only domain candidate file is transferred.",
+        "remaining_gap": "candidate_execution_in_grader",
+        "needed_change": "Candidate code still executes in the grading runtime for code/stdin; complete candidate/assertion isolation and production/archive execution remain unverified. Ordinary correctness work only; no new security tests."
+      }
     },
     {
       "entity_id": "harbor:ds1000",
