@@ -1,13 +1,15 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
 
+import json
 import os
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
 
-from verifyit.grade import Status, run
+from verifyit.grade import Status, main, run
 from verifyit.modes import grade_gotest
 from verifyit.spec import GotestSpec
 
@@ -162,3 +164,27 @@ def test_gotest_failclosed_one_package_error_is_not_hidden_by_another_packages_t
     reward = run(tests / "verifier.toml", workspace)
     assert reward.status == Status.INFRA_ERROR
     assert reward.reward == 0
+
+
+@pytest.mark.skipif(shutil.which("go") is None, reason="the go toolchain is not installed")
+def test_gotest_undiscovered_test_function_cannot_leave_positive_reward(tmp_path):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "go.mod").write_text("module example.com/m\n\ngo 1.18\n")
+    (workspace / "calc.go").write_text(CALC_GO)
+    # Go compiles this Test function but does not execute it without _test.go.
+    (workspace / "checks.go").write_text(CALC_TEST_GO)
+    native = subprocess.run(["go", "test", "-json", "./..."], cwd=workspace, capture_output=True, text=True)
+    assert native.returncode == 0
+    assert "[no test files]" in native.stdout
+    spec = tmp_path / "verifier.toml"
+    spec.write_text('mode = "gotest"\n')
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "reward.txt").write_text("1.0")
+    assert main([str(spec), "--workspace", str(workspace), "--logs-dir", str(logs)]) == 0
+    verdict = json.loads((logs / "verdict.json").read_text())
+    assert verdict["status"] == "scored"
+    assert verdict["reward"] == 0.0
+    assert verdict["detail"]["reason"] == "no_tests"
+    assert float((logs / "reward.txt").read_text()) == 0.0
