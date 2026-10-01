@@ -1162,8 +1162,40 @@ def main():
     assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11329
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
+    tested_ledger = json.loads((root / "docs/unification/evals-tested-configs.json").read_text())
+    tested_records = tested_ledger["records"]
+    tested_ids = [record["entity_id"] for record in tested_records]
+    assert len(tested_ids) == len(set(tested_ids)), "duplicate tested configurations"
+    assert set(tested_ids) <= set(ids), "tested configuration missing from source census"
+    tested_summary = {}
+    for source in ("lm-eval-harness", "evalchemy-custom", "evalchemy-override"):
+        source_entities = [e for e in entities if e["source"] == source and e["status"] != "orchestration"]
+        selected = [r for r in tested_records if r["source"] == source]
+        kinds = {
+            kind: {r["entity_id"] for r in selected if any(e["kind"] == kind for e in r["evidence"])}
+            for kind in ("fixture", "archive_score_parity", "real_response_source_parity_not_archive_score")
+        }
+        tested_summary[source] = {
+            "total": len(source_entities),
+            "e2e_tested": len(selected),
+            "route_available": sum(
+                e["status"]
+                in ("native_route_available", "retained_runtime_available", "native_integrated", "native_fallback")
+                for e in source_entities
+            ),
+            "archive_score_parity": len(kinds["archive_score_parity"]),
+            "fixture_only": len(
+                kinds["fixture"] - kinds["archive_score_parity"] - kinds["real_response_source_parity_not_archive_score"]
+            ),
+            "real_response_source_parity_not_archive_score": len(kinds["real_response_source_parity_not_archive_score"]),
+        }
     payload = {
         "schema_version": 1,
+        "tested_e2e": {
+            "as_of": tested_ledger["as_of"],
+            "summary": tested_summary,
+            "ledger": "evals-tested-configs.json",
+        },
         "scope": (
             "Pinned source snapshots and subsequent opt-in cutovers; route availability "
             "is separate from runtime validation."

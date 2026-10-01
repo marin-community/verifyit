@@ -56,6 +56,8 @@ HARBOR_SUMMARY_ROW
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
 
+TESTED_E2E_TABLE
+
 ## Harness: 370 indexed configurations without a cutover
 
 The groups below are mutually exclusive. The exhaustive [register](coverage-gaps.json) contains every indexed config's name/path/hash, resolved metric options, source callable/hash/call evidence, status and coverage-contract reference. It also contains the 11,329 eligible records so counts can be audited; availability does not assert full dataset execution. The new 250 include 45 AfriQA exact/F1, 100 MasakhaNER span-F1, 100 MasakhaPOS token-accuracy and five ASK-GEC implicit-exact configurations; source API and evaluator fixtures pass, but no matching saved model traces were available.
@@ -304,4 +306,26 @@ text = text.replace(
 text = text.replace("HARBOR_PENDING_COUNT", str(harbor_pending))
 text = text.replace("HARBOR_NATIVE_COUNT", str(harbor_native))
 text = text.replace("HARBOR_BOUNDARY_COUNT", str(len(boundary_rows)))
+tested = d["tested_e2e"]
+tested_lines = [
+    "## Framework execution evidence",
+    "",
+    f"Evidence audited {tested['as_of']}. These are distinct configurations exercised through the actual evaluator or benchmark scoring entrypoint. Historical artifacts are not a replay of every configuration at the current commit. Guard enumeration and direct adapter-only calls are excluded. The [tested-config ledger](evals-tested-configs.json) lists exact membership and evidence paths.",
+    "",
+    "| Population | Routes available / total | E2E tested / total | Fixture only | Archived-score parity | Real responses, different producer contract |",
+    "| --- | --- | --- | --- | --- | --- |",
+]
+for source, counts in tested["summary"].items():
+    tested_lines.append(
+        f"| {source} | {counts['route_available']:,} / {counts['total']:,} | "
+        f"{counts['e2e_tested']:,} / {counts['total']:,} | {counts['fixture_only']} | "
+        f"{counts['archive_score_parity']} | {counts['real_response_source_parity_not_archive_score']} |"
+    )
+tested_lines.extend(
+    [
+        "",
+        "The final three columns are disjoint and sum to the tested count. Harness Math500 used real saved responses and matches the source harness scorer, but its original custom producer scores differ; it is excluded from archived-score parity. NUPA5K-Loose has both fixture and archive evidence and is counted once, under archived-score parity.",
+    ]
+)
+text = text.replace("TESTED_E2E_TABLE", "\n".join(tested_lines))
 (root / "docs/unification/coverage-gaps.md").write_text(text)

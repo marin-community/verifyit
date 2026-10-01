@@ -1,0 +1,2264 @@
+{
+  "summary": {
+    "lm-eval-harness": {
+      "total": 12692,
+      "e2e_tested": 160,
+      "archive_score_parity": 3,
+      "fixture_tested": 157,
+      "fixture_only": 156,
+      "real_response_source_parity_not_archive_score": 1,
+      "route_available": 12322
+    },
+    "evalchemy-override": {
+      "total": 21,
+      "e2e_tested": 21,
+      "archive_score_parity": 1,
+      "fixture_tested": 20,
+      "fixture_only": 20,
+      "real_response_source_parity_not_archive_score": 0,
+      "route_available": 21
+    },
+    "evalchemy-custom": {
+      "total": 42,
+      "e2e_tested": 11,
+      "archive_score_parity": 5,
+      "fixture_tested": 7,
+      "fixture_only": 6,
+      "real_response_source_parity_not_archive_score": 0,
+      "route_available": 11
+    }
+  },
+  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit.",
+  "records": [
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/AIME24/eval_instruct.py",
+      "name": "AIME24",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/aime24/0/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/aime24/1/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/aime24/2/native/report.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/AIME25/eval_instruct.py",
+      "name": "AIME25",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-wired-five/custom-cutover/custom-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-wired-five/manager-custom/custom-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/AIW/eval_instruct.py",
+      "name": "AIW",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-wired-five/custom-cutover/custom-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-wired-five/manager-custom/custom-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/AMC23/eval_instruct.py",
+      "name": "AMC23",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-amc-math/guarded-amc/amc-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/GPQADiamond/eval_instruct.py",
+      "name": "GPQADiamond",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/gpqa-diamond/0/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/gpqa-diamond/1/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/gpqa-diamond/2/native/report.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/GSM8KPerturbed/eval_instruct.py",
+      "name": "GSM8KPerturbed",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-wired-five/custom-cutover/custom-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-wired-five/manager-custom/custom-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/JEEBench/eval_instruct.py",
+      "name": "JEEBench",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-jee/source-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/MATH500/eval_instruct.py",
+      "name": "MATH500",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/math500/0/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/math500/1/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/math500/2/native/report.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/MMLUPro/eval_instruct.py",
+      "name": "MMLUPro",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/mmlu-pro/0/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/mmlu-pro/1/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/mmlu-pro/2/native/report.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/NUPA-Loose/eval_instruct.py",
+      "name": "NUPA-Loose",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-nupa/final-cutover/source-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/NUPA5K-Loose/eval_instruct.py",
+      "name": "NUPA5K-Loose",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-nupa/final-cutover/source-roundtrip.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/wiring/evalchemy-nupa/replay-0/replay.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/wiring/evalchemy-nupa/replay-1/replay.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/wiring/evalchemy-nupa/replay-2/replay.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/drop/drop.yaml",
+      "name": "drop",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-drop/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/gsm8k/gsm8k.yaml",
+      "name": "gsm8k",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/gsm8k-0shot/0/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/gsm8k-0shot/1/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/gsm8k-0shot/2/native/report.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/humaneval/humaneval.yaml",
+      "name": "humaneval",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-humaneval/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/nq_open/nq_open.yaml",
+      "name": "nq_open",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-wired-five/override-cutover/override-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-wired-five/manager-override/override-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/triviaqa/default.yaml",
+      "name": "triviaqa",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-wired-five/override-cutover/override-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-wired-five/manager-override/override-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/truthfulqa/truthfulqa_mc2.yaml",
+      "name": "truthfulqa_mc2",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mc2/installed-english/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/ao3_english.yaml",
+      "name": "uncheatable_eval_ao3_english",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/ao3_nonenglish.yaml",
+      "name": "uncheatable_eval_ao3_nonenglish",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/arxiv_computer_science.yaml",
+      "name": "uncheatable_eval_arxiv_computer_science",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/arxiv_math.yaml",
+      "name": "uncheatable_eval_arxiv_math",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/arxiv_other.yaml",
+      "name": "uncheatable_eval_arxiv_other",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/arxiv_physics.yaml",
+      "name": "uncheatable_eval_arxiv_physics",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/bbc_news.yaml",
+      "name": "uncheatable_eval_bbc_news",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/biorxiv_all.yaml",
+      "name": "uncheatable_eval_biorxiv_all",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/github_cpp.yaml",
+      "name": "uncheatable_eval_github_cpp",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/github_javascript.yaml",
+      "name": "uncheatable_eval_github_javascript",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/github_markdown.yaml",
+      "name": "uncheatable_eval_github_markdown",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/github_other.yaml",
+      "name": "uncheatable_eval_github_other",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/github_python.yaml",
+      "name": "uncheatable_eval_github_python",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/wikipedia_english.yaml",
+      "name": "uncheatable_eval_wikipedia_english",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-override:eval/lm_eval_tasks/uncheatable_eval/wikipedia_nonenglish.yaml",
+      "name": "uncheatable_eval_wikipedia_nonenglish",
+      "source": "evalchemy-override",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/afriqa/prompt_1/afriqa_bem.yaml",
+      "name": "afriqa_bem_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-profiles/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/masakhaner/prompt_1/masakhaner_am.yaml",
+      "name": "masakhaner_am_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-profiles/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/masakhapos/prompt_1/masakhapos_bam.yaml",
+      "name": "masakhapos_bam_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-profiles/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_1/xlsum_yoruba.yaml",
+      "name": "xlsum_yoruba_prompt_1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-rouge/filter-seed-replay/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/afrobench/xlsum/prompt_2/xlsum_telugu.yaml",
+      "name": "xlsum_telugu_prompt_2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-rouge/filter-seed-replay/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/agieval/aqua-rat.yaml",
+      "name": "agieval_aqua_rat",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-agieval/cutover/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/agieval/logiqa-en.yaml",
+      "name": "agieval_logiqa_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-agieval/guards/selected-1/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/agieval/lsat-rc.yaml",
+      "name": "agieval_lsat_rc",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-agieval/guards/selected-2/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/agieval/sat-en.yaml",
+      "name": "agieval_sat_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-agieval/guards/selected-0/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/arithmetic/arithmetic_1dc.yaml",
+      "name": "arithmetic_1dc",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-likelihood/installed-replay/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/asdiv/default.yaml",
+      "name": "asdiv",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-likelihood/installed-replay/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/babilong/babilong_qa1.yaml",
+      "name": "babilong_qa1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-babilong/cutover/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/babilong/babilong_qa18.yaml",
+      "name": "babilong_qa18",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-babilong/guards/selected-1/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/babilong/babilong_qa20.yaml",
+      "name": "babilong_qa20",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-babilong/guards/selected-0/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/babilong/babilong_qa4.yaml",
+      "name": "babilong_qa4",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-babilong/guards/selected-2/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/cabbq/cabbq_age.yaml",
+      "name": "cabbq_age",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/cabbq/cabbq_disability_status.yaml",
+      "name": "cabbq_disability_status",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/cabbq/cabbq_gender.yaml",
+      "name": "cabbq_gender",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/cabbq/cabbq_lgbtqia.yaml",
+      "name": "cabbq_lgbtqia",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/cabbq/cabbq_nationality.yaml",
+      "name": "cabbq_nationality",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/cabbq/cabbq_physical_appearance.yaml",
+      "name": "cabbq_physical_appearance",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/cabbq/cabbq_race_ethnicity.yaml",
+      "name": "cabbq_race_ethnicity",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/cabbq/cabbq_religion.yaml",
+      "name": "cabbq_religion",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/cabbq/cabbq_ses.yaml",
+      "name": "cabbq_ses",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/cabbq/cabbq_spanish_region.yaml",
+      "name": "cabbq_spanish_region",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/code_x_glue/code-text/python.yaml",
+      "name": "code2text_python",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-code-text/installed-replay/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/crows_pairs/crows_pairs_english.yaml",
+      "name": "crows_pairs_english",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-crows/cutover/evaluator-roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-crows/guards/selected-1/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/crows_pairs/crows_pairs_english_socioeconomic.yaml",
+      "name": "crows_pairs_english_socioeconomic",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-crows/guards/selected-0/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/crows_pairs/crows_pairs_french_socioeconomic.yaml",
+      "name": "crows_pairs_french_socioeconomic",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-crows/guards/selected-2/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/drop/default.yaml",
+      "name": "drop",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-drop/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/esbbq/esbbq_age.yaml",
+      "name": "esbbq_age",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/esbbq/esbbq_disability_status.yaml",
+      "name": "esbbq_disability_status",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/esbbq/esbbq_gender.yaml",
+      "name": "esbbq_gender",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/esbbq/esbbq_lgbtqia.yaml",
+      "name": "esbbq_lgbtqia",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/esbbq/esbbq_nationality.yaml",
+      "name": "esbbq_nationality",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/esbbq/esbbq_physical_appearance.yaml",
+      "name": "esbbq_physical_appearance",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/esbbq/esbbq_race_ethnicity.yaml",
+      "name": "esbbq_race_ethnicity",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/esbbq/esbbq_religion.yaml",
+      "name": "esbbq_religion",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/esbbq/esbbq_ses.yaml",
+      "name": "esbbq_ses",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/esbbq/esbbq_spanish_region.yaml",
+      "name": "esbbq_spanish_region",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/hendrycks_math/hendrycks_math500.yaml",
+      "name": "hendrycks_math500",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-amc-math/guards/guard-audit.json"
+        },
+        {
+          "kind": "real_response_source_parity_not_archive_score",
+          "path": "evidence/e2e/wiring/evalchemy-amc-math/math500-cutover/0/replay.json"
+        },
+        {
+          "kind": "real_response_source_parity_not_archive_score",
+          "path": "evidence/e2e/wiring/evalchemy-amc-math/math500-cutover/1/replay.json"
+        },
+        {
+          "kind": "real_response_source_parity_not_archive_score",
+          "path": "evidence/e2e/wiring/evalchemy-amc-math/math500-cutover/2/replay.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/hendrycks_math/hendrycks_math_algebra.yaml",
+      "name": "hendrycks_math_algebra",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-amc-math/installed-harness/harness-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/hendrycks_math/hendrycks_math_counting_and_prob.yaml",
+      "name": "hendrycks_math_counting_and_prob",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-amc-math/guards/guard-audit.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/hendrycks_math/hendrycks_math_precalc.yaml",
+      "name": "hendrycks_math_precalc",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-amc-math/guards/guard-audit.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/humaneval/humaneval.yaml",
+      "name": "humaneval",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-humaneval/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/lambada/lambada_openai.yaml",
+      "name": "lambada_openai",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-likelihood/installed-replay/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/librusec_history.yaml",
+      "name": "librusec_history",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/librusec_mhqa.yaml",
+      "name": "librusec_mhqa",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/long_context_multiq.yaml",
+      "name": "long_context_multiq",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/matreshka_names.yaml",
+      "name": "matreshka_names",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/matreshka_yes_no.yaml",
+      "name": "matreshka_yes_no",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/passkey.yaml",
+      "name": "passkey",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/passkey_with_librusec.yaml",
+      "name": "passkey_with_librusec",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_2wikimultihopqa.yaml",
+      "name": "ru_2wikimultihopqa",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_babilong_qa1.yaml",
+      "name": "ru_babilong_qa1",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_babilong_qa2.yaml",
+      "name": "ru_babilong_qa2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_babilong_qa3.yaml",
+      "name": "ru_babilong_qa3",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_babilong_qa4.yaml",
+      "name": "ru_babilong_qa4",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_babilong_qa5.yaml",
+      "name": "ru_babilong_qa5",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_gsm100.yaml",
+      "name": "ru_gsm100",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_qasper.yaml",
+      "name": "ru_qasper",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_quality.yaml",
+      "name": "ru_quality",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_sci_abstract_retrieval.yaml",
+      "name": "ru_sci_abstract_retrieval",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/libra/ru_sci_passage_count.yaml",
+      "name": "ru_sci_passage_count",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/2wikimqa.yaml",
+      "name": "longbench_2wikimqa",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/2wikimqa_e.yaml",
+      "name": "longbench_2wikimqa_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/dureader.yaml",
+      "name": "longbench_dureader",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/gov_report.yaml",
+      "name": "longbench_gov_report",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/gov_report_e.yaml",
+      "name": "longbench_gov_report_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/hotpotqa.yaml",
+      "name": "longbench_hotpotqa",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/hotpotqa_e.yaml",
+      "name": "longbench_hotpotqa_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/lcc.yaml",
+      "name": "longbench_lcc",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/lcc_e.yaml",
+      "name": "longbench_lcc_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/lsht.yaml",
+      "name": "longbench_lsht",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/multi_news.yaml",
+      "name": "longbench_multi_news",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/multi_news_e.yaml",
+      "name": "longbench_multi_news_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/multifieldqa_en.yaml",
+      "name": "longbench_multifieldqa_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/multifieldqa_en_e.yaml",
+      "name": "longbench_multifieldqa_en_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/multifieldqa_zh.yaml",
+      "name": "longbench_multifieldqa_zh",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/musique.yaml",
+      "name": "longbench_musique",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/narrativeqa.yaml",
+      "name": "longbench_narrativeqa",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/passage_count.yaml",
+      "name": "longbench_passage_count",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/passage_count_e.yaml",
+      "name": "longbench_passage_count_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/passage_retrieval_en.yaml",
+      "name": "longbench_passage_retrieval_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/passage_retrieval_en_e.yaml",
+      "name": "longbench_passage_retrieval_en_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/passage_retrieval_zh.yaml",
+      "name": "longbench_passage_retrieval_zh",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/qasper.yaml",
+      "name": "longbench_qasper",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/qasper_e.yaml",
+      "name": "longbench_qasper_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/qmsum.yaml",
+      "name": "longbench_qmsum",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/repobench-p.yaml",
+      "name": "longbench_repobench-p",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/repobench-p_e.yaml",
+      "name": "longbench_repobench-p_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/samsum.yaml",
+      "name": "longbench_samsum",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/samsum_e.yaml",
+      "name": "longbench_samsum_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/trec.yaml",
+      "name": "longbench_trec",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/trec_e.yaml",
+      "name": "longbench_trec_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/triviaqa.yaml",
+      "name": "longbench_triviaqa",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/triviaqa_e.yaml",
+      "name": "longbench_triviaqa_e",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/longbench/vcsum.yaml",
+      "name": "longbench_vcsum",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_ar_ar.yaml",
+      "name": "mlqa_ar_ar",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_ar_de.yaml",
+      "name": "mlqa_ar_de",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_ar_en.yaml",
+      "name": "mlqa_ar_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_ar_es.yaml",
+      "name": "mlqa_ar_es",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_ar_hi.yaml",
+      "name": "mlqa_ar_hi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_ar_vi.yaml",
+      "name": "mlqa_ar_vi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_ar_zh.yaml",
+      "name": "mlqa_ar_zh",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_de_ar.yaml",
+      "name": "mlqa_de_ar",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_de_de.yaml",
+      "name": "mlqa_de_de",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_de_en.yaml",
+      "name": "mlqa_de_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_de_es.yaml",
+      "name": "mlqa_de_es",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_de_hi.yaml",
+      "name": "mlqa_de_hi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_de_vi.yaml",
+      "name": "mlqa_de_vi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_de_zh.yaml",
+      "name": "mlqa_de_zh",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_en_ar.yaml",
+      "name": "mlqa_en_ar",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_en_de.yaml",
+      "name": "mlqa_en_de",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_en_en.yaml",
+      "name": "mlqa_en_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_en_es.yaml",
+      "name": "mlqa_en_es",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_en_hi.yaml",
+      "name": "mlqa_en_hi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_en_vi.yaml",
+      "name": "mlqa_en_vi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_en_zh.yaml",
+      "name": "mlqa_en_zh",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_es_ar.yaml",
+      "name": "mlqa_es_ar",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_es_de.yaml",
+      "name": "mlqa_es_de",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_es_en.yaml",
+      "name": "mlqa_es_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_es_es.yaml",
+      "name": "mlqa_es_es",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_es_hi.yaml",
+      "name": "mlqa_es_hi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_es_vi.yaml",
+      "name": "mlqa_es_vi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_es_zh.yaml",
+      "name": "mlqa_es_zh",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_hi_ar.yaml",
+      "name": "mlqa_hi_ar",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_hi_de.yaml",
+      "name": "mlqa_hi_de",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_hi_en.yaml",
+      "name": "mlqa_hi_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_hi_es.yaml",
+      "name": "mlqa_hi_es",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_hi_hi.yaml",
+      "name": "mlqa_hi_hi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_hi_vi.yaml",
+      "name": "mlqa_hi_vi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_hi_zh.yaml",
+      "name": "mlqa_hi_zh",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_vi_ar.yaml",
+      "name": "mlqa_vi_ar",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_vi_de.yaml",
+      "name": "mlqa_vi_de",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_vi_en.yaml",
+      "name": "mlqa_vi_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_vi_es.yaml",
+      "name": "mlqa_vi_es",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_vi_hi.yaml",
+      "name": "mlqa_vi_hi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_vi_vi.yaml",
+      "name": "mlqa_vi_vi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_vi_zh.yaml",
+      "name": "mlqa_vi_zh",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_zh_ar.yaml",
+      "name": "mlqa_zh_ar",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_zh_de.yaml",
+      "name": "mlqa_zh_de",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_zh_en.yaml",
+      "name": "mlqa_zh_en",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_zh_es.yaml",
+      "name": "mlqa_zh_es",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_zh_hi.yaml",
+      "name": "mlqa_zh_hi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_zh_vi.yaml",
+      "name": "mlqa_zh_vi",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mlqa/mlqa_zh_zh.yaml",
+      "name": "mlqa_zh_zh",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mlqa/roundtrip-final/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mmmu/mmmu_accounting.yaml",
+      "name": "mmmu_val_accounting",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mmmu/cutover/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mmmu/mmmu_electronics.yaml",
+      "name": "mmmu_val_electronics",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mmmu/guards/selected-0/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mmmu/mmmu_geography.yaml",
+      "name": "mmmu_val_geography",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mmmu/guards/selected-1/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/mmmu/mmmu_literature.yaml",
+      "name": "mmmu_val_literature",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mmmu/guards/selected-2/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/okapi/truthfulqa_multilingual/truthfulqa_fr_mc2.yaml",
+      "name": "truthfulqa_fr_mc2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mc2/cutover/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/okapi/truthfulqa_multilingual/truthfulqa_mr_mc2.yaml",
+      "name": "truthfulqa_mr_mc2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mc2/guards/guard-audit.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/okapi/truthfulqa_multilingual/truthfulqa_ro_mc2.yaml",
+      "name": "truthfulqa_ro_mc2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mc2/guards/guard-audit.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/okapi/truthfulqa_multilingual/truthfulqa_sv_mc2.yaml",
+      "name": "truthfulqa_sv_mc2",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-mc2/guards/guard-audit.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/pile/pile_arxiv.yaml",
+      "name": "pile_arxiv",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-runtime/installed-replay/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/piqa/piqa.yaml",
+      "name": "piqa",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/piqa/0/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/piqa/1/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/piqa/2/native/report.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/super_glue/boolq/default.yaml",
+      "name": "boolq",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/boolq/0/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/boolq/1/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/boolq/2/native/report.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/translation/wmt14_en-fr.yaml",
+      "name": "wmt14-en-fr",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/harness-runtime/installed-replay/evaluator-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "lm-eval-harness:lm_eval/tasks/winogrande/default.yaml",
+      "name": "winogrande",
+      "source": "lm-eval-harness",
+      "evidence": [
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/winogrande/0/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/winogrande/1/native/report.json"
+        },
+        {
+          "kind": "archive_score_parity",
+          "path": "evidence/e2e/evals/replays/winogrande/2/native/report.json"
+        }
+      ]
+    }
+  ],
+  "excluded_adapter_only_audits": [
+    "evidence/e2e/wiring/harness-likelihood/guards/guard-audit.json",
+    "evidence/e2e/wiring/harness-code-text/guards/guard-audit.json",
+    "evidence/e2e/wiring/harness-rouge/guards/guard-audit.json"
+  ],
+  "as_of": "2026-10-01"
+}
