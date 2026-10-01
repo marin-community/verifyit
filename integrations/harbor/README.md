@@ -1009,3 +1009,44 @@ The production image pins unpublished verifyit revision
 `a0861089947096aabe456ca4308ca46b1b001d7c`. Local images install its recorded wheel;
 production deployment requires that revision to be available. Publication is
 separate from this integration.
+
+### DevEval three-phase source oracle
+
+Apply `deveval-runtime-verifyit.patch` after the common Harbor integration and
+`research-code-bench-runtime-verifyit.patch`, which supplies
+`package_source_runtime`. Generate with `--use-verifyit`. The client preserves
+all 21 CPU repositories and their implementation, unit-testing and
+acceptance-testing phases, including repository-specific setup, fixes and command
+order. The original adapter excludes GPU-only TextCNN; this cutover keeps that
+scope. Implementation requires both phase logs to pass and remains binary.
+
+The separate verifier image retains the prepared source repository, source outer
+pytest oracle and phase scripts, and transfers only declared candidate paths.
+ScriptSpec preserves the source's 600-second budget. Terminal `ALL_FAILED`
+overrides earlier `ALL_PASSED` text; empty logs and missing phase commands cannot
+receive credit. Nine Java Gradle phase contracts reuse verifyit's JUnit parser to
+require nonzero unskipped test outcomes. An exact selected-task `NO-SOURCE`
+marker overrides stale reports, while legitimate `UP-TO-DATE` reports remain
+valid. Java Heap's Python acceptance phase is not subjected to the Gradle guard.
+
+All 63 genuine upstream Oracle/source-task contracts execute through actual
+Harbor Trials: 15 C++ proofs use the earlier wrapper, and 48 non-C++ proofs use
+final v3. The final wrapper changes only Gradle report validation for mapped Java
+phases; an independent final-v3 C++ replay also passes. All source/cutover scores
+match successful native runs. The original ArXiv implementation run scored zero
+because a live API returned HTTP429; its same-task serial native retry scored
+one. Both results remain recorded, so this is not a deterministic external-service
+parity claim. Twelve regressions and all 63 final-image code witnesses accompany
+the manifest at `evidence/e2e/wiring/harbor-deveval/final-manifest.json`.
+
+Ordinary wrong candidates score zero. A nonempty Java test directory with no
+runnable tests scored one in the source and earlier wrapper, but final v3 scores
+zero. A changed candidate invalidates the Gradle cache; reusing the complete
+source setup still fails at its unconditional `uv init`, an unmodified source
+idempotence limitation. No archived model trajectories were available.
+
+The core pin is `a0861089947096aabe456ca4308ca46b1b001d7c`, now published in the
+mono-branch history. The pinned source image needs `python3-venv` before installing
+the core wheel in `/opt/verifyit`; the local proof used that exact wheel and
+preserved the original failed build log. Candidate code executes inside the
+grading runtime: image separation alone is not candidate/assertion isolation.

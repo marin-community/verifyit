@@ -1705,18 +1705,19 @@
       "entity_id": "harbor:deveval",
       "evidence": [
         "docs/unification/harbor_semantics.json#deveval",
-        "docs/unification/harbor_inventory.json#deveval"
+        "docs/unification/harbor_inventory.json#deveval",
+        "integrations/harbor/deveval-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-deveval/final-manifest.json"
       ],
-      "gap_kind": "test_quality_oracle",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "deveval",
-      "needed_change": "Preserve implementation/generated-test phase setup and agent-versus-reference test-output comparison; route executable report evidence to pytest/JUnit only inside that outer oracle relation.",
+      "needed_change": "Validate genuine archived candidates and production images. Candidate code runs inside the grading runtime; separate images do not establish candidate/assertion isolation.",
       "primitive_candidates": [
-        "pytest",
-        "junit",
-        "script"
+        "script",
+        "junit"
       ],
-      "reason": "Implementation and generated-test variants compare agent/reference test outputs (oracle test); retain phase-specific test generation/coverage contract, not plain answer score. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in separate-image Script client retains all21 supported CPU repositories and three source phases, original setup/fixes and binary outer oracle. Trusted phase logs must have a terminal result; nine Gradle phase contracts additionally require nonzero unskipped JUnit outcomes and reject exact NO-SOURCE even with stale reports.",
       "source_evidence": [
         {
           "functions": [
@@ -1754,8 +1755,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "63 genuine upstream Oracle/source-task roundtrips:15 C++ v1 and48 Java/JavaScript/Python finalv3 cases. All match a native successful baseline; original ArXiv implementation scored0 under external HTTP429, while same frozen task serial retry scored1 and is retained separately. Manager independently replayed finalv3 C++ positive and Java empty-test source1\u2192cutover0. Twelve source regressions; all63 finalv3 image witnesses. No matching archived model traces. Source TextCNN GPU repository remains excluded exactly as in original adapter. Native reused-workspace uv-init idempotence failure remains an explicit infrastructure limitation.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Prepared source repository, phase scripts, test oracle and pinned runtime in separate verifier image; only phase candidate paths transferred.",
+        "needed_change": "Candidate code executes inside grader runtime; complete assertion/process isolation remains unverified."
+      }
     },
     {
       "entity_id": "harbor:devopsgym",
