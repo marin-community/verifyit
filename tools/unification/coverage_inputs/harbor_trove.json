@@ -3748,17 +3748,19 @@
       "entity_id": "harbor:quixbugs",
       "evidence": [
         "docs/unification/harbor_semantics.json#quixbugs",
-        "docs/unification/harbor_inventory.json#quixbugs"
+        "docs/unification/harbor_inventory.json#quixbugs",
+        "integrations/harbor/quixbugs-pytest-verifyit.patch",
+        "evidence/e2e/wiring/harbor-quixbugs/final-manifest.json",
+        "evidence/e2e/wiring/harbor-quixbugs/manager-python-sqrt-positive.json"
       ],
-      "gap_kind": "language_test_report_client",
-      "implementation_present": false,
+      "gap_kind": "implemented_pytest_client",
+      "implementation_present": true,
       "name": "quixbugs",
-      "needed_change": "Emit Python pytest or Java JUnit spec from actual task language/report contract, preserve restored references and all-pass policy, and validate both language runners.",
+      "needed_change": "Validate archived model traces and broader Python/Java programs before wider deployment.",
       "primitive_candidates": [
-        "pytest",
-        "junit"
+        "pytest"
       ],
-      "reason": "Adapter generates Python pytest or Java suite based on task language; restore original buggy/fixed reference fixtures and capture per-test identities. Corresponding graders exist but language-specific commands, restored references and report identity are not emitted by this Harbor adapter.",
+      "reason": "Both source languages use generated pytest wrappers, so existing PytestSpec preserves functional tests and the one-line-change constraint. Java retains its original Gradle/JUnit subprocess behind the source pytest wrapper. A separate verifier image receives only the candidate program and owns original code, helper modules and tests.",
       "source_evidence": [
         {
           "functions": [
@@ -3798,8 +3800,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "Three seeded source programs in both languages ran positive and wrong candidates through the original source script and actual separate-environment Harbor Trials. All twelve scores match. Java source timeout cases remain in the real Gradle/JUnit runtime. No matching archived model traces were available. Validation covers ordinary score parity; security scope remains unverified.",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "/tests generated suites, helpers, original programs and verifier.toml",
+        "remaining_gap": "candidate_execution_in_grader",
+        "needed_change": "Ordinary Python/Java parity validated. Candidate Python imports and Java execution occur inside the grader runtime; candidate/assertion isolation is not established. This differs from the shared-agent-container exposure. Archived model traces remain unverified."
+      }
     },
     {
       "entity_id": "harbor:reasoning-gym",

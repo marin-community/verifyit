@@ -322,3 +322,20 @@ Five helper regressions pass. Independent manager positive/wrong Trials confirm
 the final images. Provenance is in
 `evidence/e2e/wiring/harbor-kumo/final-manifest.json`. No matching archived
 model traces were available; security scope remains unverified.
+
+## QuixBugs
+
+Apply `quixbugs-pytest-verifyit.patch` after the Harbor dispatcher and
+`answer-isolation-verifyit.patch`, then pass `--verifyit` to the QuixBugs
+adapter. Both Python and Java use existing PytestSpec with the source-generated
+wrappers and one-line-change requirement. The Java wrapper retains Gradle and
+JUnit. A separate grader image owns original programs and tests; only the
+candidate source file transfers from the agent. The Java grader retains network
+access for the source Gradle dependency resolution.
+
+Twelve ordinary cases across three seeded programs in both languages match
+the original source script and actual Harbor Trials. Provenance is in
+`evidence/e2e/wiring/harbor-quixbugs/final-manifest.json`. These are generated
+program fixtures; archived model traces remain unverified. Candidate Python is
+imported in the grader process and Java runs inside the grader container, so
+candidate/assertion isolation is not established by the separate image.
