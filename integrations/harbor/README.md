@@ -285,3 +285,23 @@ python integrations/harbor/tau3_assets.py /path/to/tau2-bench airline /path/to/t
 Use the task's actual domain and upload the manifest together with the updated
 bridge through Harbor's tests upload. Replay evidence and limitations are in
 [the Harbor replay report](../../docs/unification/harbor_replay.md).
+
+## LAB-Bench FigQA
+
+Apply `labbench-exact-verifyit.patch` after the Harbor dispatcher and
+`answer-isolation-verifyit.patch`, then generate tasks with the LAB-Bench
+adapter's `--verifyit` option. The pinned adapter supports FigQA. Generation
+freezes the shuffled public letter mapping and puts accepted letters in the
+separate verifier image. Each accepted letter uses a strict ExactSpec; duplicate
+choice text can therefore have two accepted letters. Malformed trusted labels
+and blank or oversized choice sets fail task validation. Conflicting explicit
+answer labels receive zero.
+
+Thirteen generated fixture cases ran the source script with the same mapping
+and actual Harbor Trials: twelve match and contradictory labels intentionally
+change one to zero. Nine helper and generation tests pass. Final v2 images
+include stricter trusted-input preflight, with independent manager Trials.
+Provenance and original result hashes are in
+`evidence/e2e/wiring/harbor-labbench/final-manifest.json`. No matching archived
+model traces were available; validation covers ordinary parity, and security
+scope remains unverified.

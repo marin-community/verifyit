@@ -2802,17 +2802,21 @@
       "entity_id": "harbor:labbench",
       "evidence": [
         "docs/unification/harbor_semantics.json#labbench",
-        "docs/unification/harbor_inventory.json#labbench"
+        "docs/unification/harbor_inventory.json#labbench",
+        "integrations/harbor/labbench-exact-verifyit.patch",
+        "evidence/e2e/wiring/harbor-labbench/final-manifest.json",
+        "evidence/e2e/wiring/harbor-labbench/manager-duplicate.json",
+        "evidence/e2e/wiring/harbor-labbench/manager-positive.json",
+        "evidence/e2e/wiring/harbor-labbench/manager-wrong.json"
       ],
-      "gap_kind": "subtask_extraction_adapter",
-      "implementation_present": false,
+      "gap_kind": "implemented_exact_client",
+      "implementation_present": true,
       "name": "labbench",
-      "needed_change": "Implement each native subtask setup/file discovery and answer extraction before strict stripped exact comparison; subtask routing has no current Harbor client patch.",
+      "needed_change": "Validate matching archived model traces and broader FigQA instances before wider deployment.",
       "primitive_candidates": [
-        "exact",
-        "script"
+        "exact"
       ],
-      "reason": "Subtask-specific setup/file discovery and extraction, followed by stripped answer equality; preserve extraction variants and failure classification. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "The pinned adapter supports FigQA. Opt-in task generation freezes the shuffled public letter mapping and private accepted-letter set. Each accepted letter receives an independent strict ExactSpec comparison; duplicate choice texts preserve all matching letters. All primitive verdicts must be scored before taking the maximum. Conflicting explicit answer labels score zero.",
       "source_evidence": [
         {
           "functions": [
@@ -2842,8 +2846,13 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "Thirteen bounded source-structured FigQA cases ran the original script with the same frozen mapping and actual separate-environment Harbor Trials. Twelve scores match; conflicting explicit labels change source one to cutover zero. Duplicate choice text accepts both corresponding letters. Three runtime witnesses record real Exact primitive calls. Nine helper and malformed-task tests pass. Final v2 images add trusted ASCII-label and nonblank bounded-choice validation; manager normal Trials verify the final images. No matching tracker traces were available. No additional security tests were performed for this route.",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "/tests/expected.json and strict label comparator",
+        "needed_change": "Ordinary score parity validated with separate verifier images; security scope and archived model traces remain unverified."
+      }
     },
     {
       "entity_id": "harbor:lawbench",
