@@ -1,12 +1,12 @@
 # Harbor integration
 
-The coverage register identifies a shared-verifier boundary gap in ten wired
+The coverage register identifies a shared-verifier boundary gap in six wired
 Harbor routes. Harbor uploads their protected tests or references into the live
 agent container before grading; a surviving candidate process can modify them.
 A generated GAIA task reproduced the failure: the wrong answer `Boston` scored
 one after the candidate changed the uploaded `New York` reference. ARC-AGI-2,
 AIME, GAIA, GPQA Diamond, SATBench and DABstep now use separate verifier
-images on bounded generated tasks. The ten remaining routes require the
+images on bounded generated tasks. The six remaining routes require the
 boundary changes listed in the
 [coverage report](../../docs/unification/coverage-gaps.md#shared-verifier-boundary)
 before deployment. The GAIA reproduction is in
@@ -356,3 +356,76 @@ preflight before absent candidates, construction infrastructure failures and
 legacy spec compatibility. Provenance is in
 `evidence/e2e/wiring/harbor-reasoning-gym/final-manifest.json`. No matching
 archived model traces were available; security scope remains unverified.
+
+## ResearchCodeBench and SciCode source runtimes
+
+Apply `research-code-bench-runtime-verifyit.patch` after the dispatcher patch.
+It adds the shared source-runtime packaging helper; apply
+`scicode-runtime-verifyit.patch` afterward for SciCode. Pass `--verifyit` to
+either adapter. Generated tasks use ScriptSpec around the existing source
+scorer in a separate verifier image. ResearchCodeBench retains snippet insertion,
+pytest scoring and `code_lines`; SciCode retains fractional substep scores.
+These are retained source runtimes, not native comparator replacements.
+
+ResearchCodeBench matched nine ordinary source/Harbor cases: three direct-file
+positive/wrong pairs and Codex-log insertion with correct, wrong and empty
+outputs. The three tasks were sampled from five synthetic scalar operations.
+This validates the adapter contract, not the actual ResearchCodeBench dataset;
+the full production scientific dependency image was not built. SciCode matched
+nine full/half/zero scores across three synthetic two-step HDF5 tasks, plus a
+missing candidate scoring zero. Its source scientific image dependencies were
+built, but the reference data is synthetic, not the full SciCode benchmark.
+Neither result is archived model replay. Evidence and installed-image hashes
+are in `evidence/e2e/wiring/harbor-research-code-bench/final-manifest.json` and
+`evidence/e2e/wiring/harbor-scicode/final-manifest.json`.
+
+SciCode generation rejects empty or malformed evaluated test lists and tasks
+with no remaining evaluated steps, preserving documented prewritten/broken
+exclusions. The original empty-step harness awarded one without testing an
+implementation; the cutover rejects that task. Uncaught harness failures now
+remain unscored zeroes instead of becoming the source shell's scored-zero
+fallback. Seven regression tests cover these generation contracts.
+
+Both routes execute candidate code inside their grader runtime. Separate images
+do not establish candidate/assertion isolation; that trust boundary remains
+unverified. Validation here covers ordinary score parity only.
+
+### Build with the local verifyit revision
+
+The generated Dockerfiles pin `a0861089947096aabe456ca4308ca46b1b001d7c`, a local,
+unpushed commit. Their Git installation requirement cannot resolve remotely
+until that commit is published. No push is required for local use: build a wheel
+from the exact commit, then substitute it in each generated verifier image.
+From the verifyit campaign worktree:
+
+```sh
+build_dir=$(mktemp -d)
+git archive a0861089947096aabe456ca4308ca46b1b001d7c | tar -x -C "$build_dir"
+uv build --wheel --out-dir "$build_dir/wheels" "$build_dir"
+```
+
+Set `task_dir` to one generated task and run this substitution before Harbor
+builds its images. It retains the source Dockerfile's runtime dependencies.
+
+```sh
+python3 - "$task_dir" "$build_dir/wheels/verifyit-0.1.0-py3-none-any.whl" <<'PY'
+import shutil
+import sys
+from pathlib import Path
+
+tests = Path(sys.argv[1]) / "tests"
+wheel = Path(sys.argv[2])
+dockerfile = tests / "Dockerfile"
+source = dockerfile.read_text()
+requirement = "'verifyit @ git+https://github.com/marin-community/verifyit@a0861089947096aabe456ca4308ca46b1b001d7c'"
+assert source.count(requirement) == 1
+shutil.copy2(wheel, tests / wheel.name)
+source = source.replace("RUN python3 -m venv /opt/verifyit", f"COPY {wheel.name} /tmp/{wheel.name}\nRUN python3 -m venv /opt/verifyit")
+dockerfile.write_text(source.replace(requirement, f"/tmp/{wheel.name}"))
+PY
+```
+
+The manifests record the exact local wheel hash. ResearchCodeBench proof images
+also used a bounded pytest-only dependency image; the wheel substitution above
+alone preserves its larger production image and does not claim that image has
+been validated.

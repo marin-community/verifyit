@@ -1,0 +1,164 @@
+diff --git a/adapters/research-code-bench/adapter.py b/adapters/research-code-bench/adapter.py
+index 0ab5195..90e6687 100644
+--- a/adapters/research-code-bench/adapter.py
++++ b/adapters/research-code-bench/adapter.py
+@@ -25,6 +25,8 @@ from typing import Dict, List, Optional
+ 
+ import yaml
+ 
++from harbor.tasks.verifyit_source_runtime import package_source_runtime
++
+ TEMPLATE_DIR = Path(__file__).parent / "template"
+ 
+ # Default repository URL for ResearchCodeBench
+@@ -310,6 +312,7 @@ class ResearchCodeBenchAdapter:
+         task_dir: Path,
+         pset_dir: Path,
+         selected_problems: Optional[List[str]] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize the adapter.
+@@ -321,6 +324,7 @@ class ResearchCodeBenchAdapter:
+         """
+         self.task_dir = Path(task_dir)
+         self.pset_dir = Path(pset_dir)
++        self.verifyit_enabled = verifyit_enabled
+         self.selected_problems = selected_problems
+         self.tasks = self._load_tasks()
+ 
+@@ -535,6 +539,15 @@ class ResearchCodeBenchAdapter:
+             f"# Reference implementation for snippet: {snippet.name}\n{reference_code}"
+         )
+ 
++        if self.verifyit_enabled:
++            shutil.copytree(env_app_dir, tests_dir / "app", dirs_exist_ok=True)
++            package_source_runtime(
++                output_dir,
++                artifacts=[f"/app/{problem_file.rel_path}", "/logs/agent"],
++                dockerfile=(env_dir / "Dockerfile").read_text(),
++                timeout=3600,
++            )
++
+     def _copy_problem_files(self, src_dir: Path, dest_dir: Path):
+         """Copy problem files, excluding cache and git directories."""
+         ignore_patterns = ["__pycache__", ".git", ".gitignore", "*.pyc", "*.pyo"]
+@@ -629,6 +642,7 @@ def run_with_clone(
+     branch: str = "main",
+     selected_problems: Optional[List[str]] = None,
+     one_task_per_problem: bool = False,
++    verifyit_enabled: bool = False,
+ ) -> int:
+     """
+     Clone the ResearchCodeBench repository temporarily, generate tasks, and clean up.
+@@ -648,6 +662,7 @@ def run_with_clone(
+             task_dir=Path(output_dir),
+             pset_dir=pset_dir,
+             selected_problems=selected_problems,
++            verifyit_enabled=verifyit_enabled,
+         )
+         total_snippets = adapter.generate_all_tasks(
+             one_task_per_problem=one_task_per_problem
+@@ -702,6 +717,7 @@ def main():
+         "--branch", type=str, default="main", help="Branch to checkout (default: main)"
+     )
+ 
++    parser.add_argument("--verifyit", action="store_true")
+     args = parser.parse_args()
+ 
+     if args.clone:
+@@ -711,6 +727,7 @@ def main():
+             repo_url=args.repo_url,
+             branch=args.branch,
+             selected_problems=args.problems,
++            verifyit_enabled=args.verifyit,
+             one_task_per_problem=args.one_per_problem,
+         )
+     else:
+@@ -722,6 +739,7 @@ def main():
+             task_dir=Path(args.output_dir),
+             pset_dir=Path(args.pset_dir),
+             selected_problems=args.problems,
++            verifyit_enabled=args.verifyit,
+         )
+ 
+         total_snippets = adapter.generate_all_tasks(
+diff --git a/adapters/research-code-bench/run_adapter.py b/adapters/research-code-bench/run_adapter.py
+index 4310c21..26f3f20 100644
+--- a/adapters/research-code-bench/run_adapter.py
++++ b/adapters/research-code-bench/run_adapter.py
+@@ -95,6 +95,7 @@ Examples:
+         help="Generate one task per problem (first snippet only)",
+     )
+ 
++    parser.add_argument("--verifyit", action="store_true")
+     args = parser.parse_args()
+ 
+     # Validate arguments
+@@ -123,6 +124,7 @@ Examples:
+             repo_url=args.repo_url,
+             branch=args.branch,
+             selected_problems=args.problems,
++            verifyit_enabled=args.verifyit,
+             one_task_per_problem=args.one_per_problem,
+         )
+ 
+@@ -144,6 +146,7 @@ Examples:
+             task_dir=Path(args.output_dir),
+             pset_dir=Path(args.pset_dir),
+             selected_problems=args.problems,
++            verifyit_enabled=args.verifyit,
+         )
+ 
+         total_tasks = adapter.generate_all_tasks(
+diff --git a/src/harbor/tasks/verifyit_source_runtime.py b/src/harbor/tasks/verifyit_source_runtime.py
+new file mode 100644
+index 0000000..0996e05
+--- /dev/null
++++ b/src/harbor/tasks/verifyit_source_runtime.py
+@@ -0,0 +1,45 @@
++"""Package generated source scorers for the verifyit Script verifier."""
++
++import json
++from pathlib import Path
++
++VERIFYIT_REVISION = "a0861089947096aabe456ca4308ca46b1b001d7c"
++
++
++def package_source_runtime(
++    task_dir: Path, *, artifacts: list[str], dockerfile: str, timeout: int
++) -> None:
++    """Run a source scorer in a separate image with explicit candidate artifacts.
++
++    Candidate code still executes within the source grader runtime. This helper
++    packages the scoring contract; it does not isolate that execution.
++    """
++    tests = task_dir / "tests"
++    config_path = task_dir / "task.toml"
++    config = config_path.read_text()
++    if config.count("[verifier]\n") != 1 or "artifacts =" in config:
++        raise ValueError("Unreviewed source verifier configuration")
++    config_path.write_text(
++        f"artifacts = {json.dumps(artifacts)}\n"
++        + config.replace(
++            "[verifier]\n", '[verifier]\nenvironment_mode = "separate"\n', 1
++        )
++        + "\n[verifier.environment]\n"
++        + "build_timeout_sec = 1800.0\ncpus = 2\nmemory_mb = 4096\n"
++        + "storage_mb = 16384\nallow_internet = true\n"
++    )
++    (tests / "verifier.toml").write_text(
++        'mode = "script"\npath = "native_bridge.sh"\nworkspace = "/app"\n'
++        f'timeout = {timeout}\nverdict_file = "native-verdict.json"\n'
++    )
++    (tests / "native_bridge.sh").write_text(
++        "#!/bin/sh\nexec /opt/verifyit/bin/python -m verifyit.adapters.harbor_runtime test.sh\n"
++    )
++    (tests / "native_bridge.sh").chmod(0o755)
++    (tests / "Dockerfile").write_text(
++        dockerfile
++        + "\nRUN python3 -m venv /opt/verifyit && /opt/verifyit/bin/pip install --no-cache-dir "
++        + f"'verifyit @ git+https://github.com/marin-community/verifyit@{VERIFYIT_REVISION}' "
++        + "&& ln -s /opt/verifyit/bin/verifyit /usr/local/bin/verifyit\n"
++        + "COPY . /tests/\n"
++    )

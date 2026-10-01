@@ -3947,16 +3947,19 @@
       "entity_id": "harbor:research-code-bench",
       "evidence": [
         "docs/unification/harbor_semantics.json#research-code-bench",
-        "docs/unification/harbor_inventory.json#research-code-bench"
+        "docs/unification/harbor_inventory.json#research-code-bench",
+        "integrations/harbor/research-code-bench-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-research-code-bench/final-manifest.json",
+        "evidence/e2e/wiring/harbor-research-code-bench/manager-positive.json"
       ],
-      "gap_kind": "snippet_and_auxiliary_metric",
-      "implementation_present": false,
+      "gap_kind": "implemented_native_runtime_bridge",
+      "implementation_present": true,
       "name": "research-code-bench",
-      "needed_change": "Insert candidate snippet at the source location and run its specified pytest entrypoint; preserve binary all-pass score and retain code_lines auxiliary weighting separately.",
+      "needed_change": "Validate actual benchmark tasks and archived candidate traces; candidate execution inside the grader remains unverified.",
       "primitive_candidates": [
-        "pytest"
+        "script"
       ],
-      "reason": "Insert submitted snippet then execute specified pytest entrypoint; reward binary plus code_lines auxiliary weighting. Preserve snippet insertion and auxiliary metric separately. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in source generator packages its existing scorer through ScriptSpec and the shared harbor_runtime bridge in a separate verifier image. Existing primary score semantics remain, with auxiliary metrics preserved. This retains the source runtime rather than replacing its scorer with a native comparator.",
       "source_evidence": [
         {
           "functions": [
@@ -3996,8 +3999,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Nine exact source/Harbor score and code_lines matches: six direct-file positive/wrong cases and three Codex-log insertion positive/wrong/empty cases. Three tasks were sampled from five synthetic scalar operations, not the actual ResearchCodeBench dataset. Full production scientific dependency image was not built. No matching archived model replay; ordinary fixture validation only. Core pin a086108 is local and requires exact-archive wheel substitution until authorized publication.",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Generated source tests, references and verifier.toml in the separate image",
+        "remaining_gap": "candidate_execution_in_grader",
+        "needed_change": "Candidate code executes within the source grader runtime; candidate/assertion isolation has not been established."
+      }
     },
     {
       "entity_id": "harbor:rexbench",
@@ -4088,17 +4097,19 @@
       "entity_id": "harbor:scicode",
       "evidence": [
         "docs/unification/harbor_semantics.json#scicode",
-        "docs/unification/harbor_inventory.json#scicode"
+        "docs/unification/harbor_inventory.json#scicode",
+        "integrations/harbor/scicode-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-scicode/final-manifest.json",
+        "evidence/e2e/wiring/harbor-scicode/manager-partial.json"
       ],
-      "gap_kind": "scientific_assertion_wrapper",
-      "implementation_present": false,
+      "gap_kind": "implemented_native_runtime_bridge",
+      "implementation_present": true,
       "name": "scicode",
-      "needed_change": "Wrap the unchanged nested numeric/symbolic/sparse SciCode comparator assertions in pytest evidence; ordinary NumericSpec cannot replace those scientific output structures.",
+      "needed_change": "Validate actual benchmark tasks and archived candidate traces; candidate execution inside the grader remains unverified.",
       "primitive_candidates": [
-        "pytest",
         "script"
       ],
-      "reason": "Generated function harness compares nested numeric/symbolic/sparse outputs with SciCode comparators; use pytest wrapper around unchanged assertions or retain script execution. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in source generator packages its existing scorer through ScriptSpec and the shared harbor_runtime bridge in a separate verifier image. Existing primary score semantics remain, with auxiliary metrics preserved. This retains the source runtime rather than replacing its scorer with a native comparator.",
       "source_evidence": [
         {
           "functions": [
@@ -4161,8 +4172,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Nine source/Harbor score matches at 1, 0.5 and 0 across three synthetic two-step HDF5 tasks; missing candidate scores zero. Full source scientific image dependencies built, but references are synthetic and do not cover the actual SciCode dataset. Seven generation regressions reject empty or malformed test lists and no evaluated steps while preserving documented exclusions. Original empty-step source credit 1 now fails task generation; uncaught harness failure becomes unscored zero. No matching archived model replay; ordinary fixture validation only. Core pin a086108 is local and requires exact-archive wheel substitution until authorized publication.",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Generated source tests, references and verifier.toml in the separate image",
+        "remaining_gap": "candidate_execution_in_grader",
+        "needed_change": "Candidate code executes within the source grader runtime; candidate/assertion isolation has not been established."
+      }
     },
     {
       "entity_id": "harbor:scienceagentbench",
