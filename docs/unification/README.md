@@ -50,6 +50,11 @@ must be published or supplied by the documented local wheel/checkout recipe to
 build its task image. Installing verifyit does not apply client patches, update
 fork lockfiles, or deploy integrations. MarinSkyRL's published dependency pin is
 recorded separately in its [publication manifest](../../integrations/MarinSkyRL/publication-latest-main.json).
+Publishing this mono-branch also publishes its ancestor core revisions, including
+`a0861089947096aabe456ca4308ca46b1b001d7c` and
+`d3edc5d240d53edbd0c0e4a53c0e112629550f7e`. Earlier references to those
+revisions as unpublished describe the proof-time environment; they do not imply
+that client lockfiles or deployed images have been updated.
 
 The [verifier-boundary register](coverage-gaps.md#shared-verifier-boundary)
 tracks outstanding isolation work separately from integration and ordinary score
