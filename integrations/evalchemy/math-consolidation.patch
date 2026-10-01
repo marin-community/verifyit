@@ -1,0 +1,587 @@
+diff --git a/eval/graders/answer_equivalence.py b/eval/graders/answer_equivalence.py
+--- a/eval/graders/answer_equivalence.py
++++ b/eval/graders/answer_equivalence.py
+@@ -9,12 +9,8 @@
+ from typing import Sequence, TypeVar
+ from urllib.parse import urlsplit
+ 
++from math_verify import parse, verify
+ from openai import AsyncOpenAI
+-
+-from eval.graders.minerva_math import is_equiv as minerva_is_equiv
+-from eval.graders.minerva_math import normalize_final_answer
+-from verifyit.modes.grade_math import grade_math_candidate
+-from verifyit.spec import MathProfile, MathSpec
+ 
+ DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
+ DEFAULT_JUDGE_BASE_URL = "https://api.openai.com/v1"
+@@ -69,16 +65,11 @@
+         if parsed.scheme not in ("http", "https") or not parsed.netloc:
+             raise ValueError("JUDGE_BASE_URL must be an absolute HTTP(S) URL")
+         if parsed.username or parsed.password or parsed.query or parsed.fragment:
+-            raise ValueError(
+-                "JUDGE_BASE_URL must not contain credentials, a query, or a fragment"
+-            )
++            raise ValueError("JUDGE_BASE_URL must not contain credentials, a query, or a fragment")
+ 
+     @classmethod
+     def resolve(
+-        cls,
+-        judge_model: str | None = None,
+-        base_url: str | None = None,
+-        api_key: str | None = None,
++        cls, judge_model: str | None = None, base_url: str | None = None, api_key: str | None = None
+     ) -> "JudgeConfig":
+         """Resolve explicit judge settings before the normalized environment."""
+         explicit_model = judge_model if judge_model not in (None, "auto") else None
+@@ -86,12 +77,8 @@
+         if not resolved_key:
+             raise ValueError("JUDGE_API_KEY is required by this benchmark")
+         return cls(
+-            model=explicit_model
+-            or os.environ.get("JUDGE_MODEL")
+-            or DEFAULT_JUDGE_MODEL,
+-            base_url=base_url
+-            or os.environ.get("JUDGE_BASE_URL")
+-            or DEFAULT_JUDGE_BASE_URL,
++            model=explicit_model or os.environ.get("JUDGE_MODEL") or DEFAULT_JUDGE_MODEL,
++            base_url=base_url or os.environ.get("JUDGE_BASE_URL") or DEFAULT_JUDGE_BASE_URL,
+             api_key=resolved_key,
+         )
+ 
+@@ -129,22 +116,42 @@
+     judgment: EquivalenceJudgment | None = None
+ 
+ 
+-def math_answers_equivalent(
+-    candidate_answer: str, reference_answers: Sequence[str]
+-) -> bool:
++def math_answers_equivalent(candidate_answer: str, reference_answers: Sequence[str]) -> bool:
+     """Return whether the candidate is mathematically equivalent to any reference."""
++    from eval.graders.minerva_math import is_equiv as minerva_is_equiv
++    from eval.graders.minerva_math import normalize_final_answer
++
+     candidate = normalize_final_answer(candidate_answer)
++    parsed_candidate = parse(f"\\boxed{{{candidate_answer}}}")
+     for reference in reference_answers:
+-        result = grade_math_candidate(
+-            MathSpec(expected=reference, profile=MathProfile.BOXED), candidate_answer
+-        )
+-        if result.detail.get("reason") != "missing_parse":
+-            if result.reward:
++        parsed_reference = parse(f"\\boxed{{{reference}}}")
++        if parsed_candidate and parsed_reference:
++            if verify(gold=parsed_reference, target=parsed_candidate):
+                 return True
+             continue
+         if minerva_is_equiv(candidate, normalize_final_answer(reference)):
+             return True
+     return False
++
++
++def verifyit_math_answers_equivalent(candidate_answer: str, reference_answers: Sequence[str]) -> bool:
++    """Compare final mathematical answers using only the existing Math mode."""
++    from verifyit.grade import InvalidTask
++    from verifyit.modes.extract import BOXED, extract_boxed, last_line
++    from verifyit.modes.grade_math import grade_math_candidate
++    from verifyit.spec import MathProfile, MathSpec
++
++    if not reference_answers or any(not isinstance(value, str) or not value.strip() for value in reference_answers):
++        raise InvalidTask("Math equivalence requires nonempty textual reference answers")
++    if not isinstance(candidate_answer, str):
++        raise InvalidTask("Math candidate must be text")
++    specs = [MathSpec(expected=reference, profile=MathProfile.BOXED) for reference in reference_answers]
++    for spec in specs:
++        grade_math_candidate(MathSpec(expected=spec.expected), "")
++    candidate = (
++        (extract_boxed(candidate_answer) or "") if BOXED in candidate_answer else last_line(candidate_answer) or ""
++    )
++    return any(grade_math_candidate(spec, candidate).reward == 1 for spec in specs)
+ 
+ 
+ def _parse_judgment(text: str) -> JudgeLabel:
+@@ -155,18 +162,11 @@
+         raise ValueError(f"unrecognized equivalence judgment: {text!r}") from exc
+ 
+ 
+-async def _complete_judge_prompt(
+-    prompt: str,
+-    config: JudgeConfig,
+-    client: AsyncOpenAI,
+-) -> str:
++async def _complete_judge_prompt(prompt: str, config: JudgeConfig, client: AsyncOpenAI) -> str:
+     raw = ""
+     for max_tokens in JUDGE_TOKEN_BUDGETS:
+         response = await client.chat.completions.create(
+-            model=config.model,
+-            max_tokens=max_tokens,
+-            temperature=0,
+-            messages=[{"role": "user", "content": prompt}],
++            model=config.model, max_tokens=max_tokens, temperature=0, messages=[{"role": "user", "content": prompt}]
+         )
+         raw = (response.choices[0].message.content or "").strip()
+         if raw:
+@@ -186,27 +186,18 @@
+     if num_workers < 1:
+         raise ValueError("num_workers must be positive")
+     semaphore = asyncio.Semaphore(num_workers)
+-    async with AsyncOpenAI(
+-        api_key=config.api_key,
+-        base_url=config.base_url,
+-        timeout=300.0,
+-        max_retries=5,
+-    ) as client:
++    async with AsyncOpenAI(api_key=config.api_key, base_url=config.base_url, timeout=300.0, max_retries=5) as client:
+ 
+         async def bound(prompt: str) -> _Judgment:
+             async with semaphore:
+                 raw = await _complete_judge_prompt(prompt, config, client)
+                 return parse_response(raw)
+ 
+-        return await asyncio.gather(
+-            *(bound(prompt) for prompt in prompts), return_exceptions=True
+-        )
++        return await asyncio.gather(*(bound(prompt) for prompt in prompts), return_exceptions=True)
+ 
+ 
+ async def judge_equivalence(
+-    requests: Sequence[EquivalenceRequest],
+-    config: JudgeConfig,
+-    num_workers: int = DEFAULT_NUM_WORKERS,
++    requests: Sequence[EquivalenceRequest], config: JudgeConfig, num_workers: int = DEFAULT_NUM_WORKERS
+ ) -> list[EquivalenceJudgment | BaseException]:
+     """Judge requests concurrently and preserve failures in input order."""
+     prompts = [
+@@ -218,17 +209,12 @@
+         for request in requests
+     ]
+     return await judge_prompts(
+-        prompts,
+-        config,
+-        lambda raw: EquivalenceJudgment(_parse_judgment(raw), raw),
+-        num_workers=num_workers,
++        prompts, config, lambda raw: EquivalenceJudgment(_parse_judgment(raw), raw), num_workers=num_workers
+     )
+ 
+ 
+ async def grade_math_equivalence(
+-    requests: Sequence[EquivalenceRequest],
+-    config: JudgeConfig | None,
+-    num_workers: int = DEFAULT_NUM_WORKERS,
++    requests: Sequence[EquivalenceRequest], config: JudgeConfig | None, num_workers: int = DEFAULT_NUM_WORKERS
+ ) -> list[EquivalenceResult | BaseException]:
+     """Use Minerva equivalence first; judge unresolved answers only when configured."""
+     outcomes: list[EquivalenceResult | BaseException | None] = [None] * len(requests)
+@@ -245,9 +231,7 @@
+         for index in unresolved_indexes:
+             outcomes[index] = EquivalenceResult(False, EquivalenceMethod.MINERVA)
+     elif unresolved_requests:
+-        judgments = await judge_equivalence(
+-            unresolved_requests, config, num_workers=num_workers
+-        )
++        judgments = await judge_equivalence(unresolved_requests, config, num_workers=num_workers)
+         for index, judgment in zip(unresolved_indexes, judgments, strict=True):
+             if isinstance(judgment, BaseException):
+                 outcomes[index] = judgment
+diff --git a/eval/graders/verifyit_judges.py b/eval/graders/verifyit_judges.py
+--- a/eval/graders/verifyit_judges.py
++++ b/eval/graders/verifyit_judges.py
+@@ -14,7 +14,7 @@
+     EquivalenceMethod,
+     EquivalenceResult,
+     JudgeLabel,
+-    math_answers_equivalent,
++    verifyit_math_answers_equivalent,
+ )
+ from eval.graders.simpleqa import SIMPLEQA_GRADER_TEMPLATE
+ 
+@@ -111,7 +111,7 @@
+             _required(reference, "Reference")
+         if not isinstance(request.candidate_answer, str):
+             raise InvalidTask("Candidate must be a string")
+-        if math_answers_equivalent(request.candidate_answer, request.reference_answers):
++        if verifyit_math_answers_equivalent(request.candidate_answer, request.reference_answers):
+             outcomes.append(EquivalenceResult(True, EquivalenceMethod.MINERVA))
+         elif config is None:
+             outcomes.append(EquivalenceResult(False, EquivalenceMethod.MINERVA))
+diff --git a/eval/lm_eval_tasks/gsm8k/utils.py b/eval/lm_eval_tasks/gsm8k/utils.py
+--- a/eval/lm_eval_tasks/gsm8k/utils.py
++++ b/eval/lm_eval_tasks/gsm8k/utils.py
+@@ -3,10 +3,6 @@
+ import re
+ 
+ from eval.generation_stops import GSM8K_STOP_SEQUENCES, truncate_at_stop
+-from eval.graders.minerva_math import _rational_value, is_equiv, normalize_final_answer
+-from verifyit.grade import scored
+-from verifyit.modes.grade_exact import grade_exact_candidate
+-from verifyit.spec import ExactSpec
+ 
+ _NUMBER = r"-?\$?\d[\d,]*(?:\.\d+)?"
+ _BOXED_ANSWER = re.compile(rf"\\boxed\{{\s*({_NUMBER})\s*\}}")
+@@ -36,16 +32,25 @@
+ 
+ def process_results(doc: dict, results: list[str]) -> dict[str, float]:
+     """Score an extracted GSM8K answer with Minerva math equivalence."""
++    from eval.graders.minerva_math import is_equiv, normalize_final_answer
++
+     prediction = results[0]
+     if prediction == _FALLBACK:
+-        return {"exact_match": scored(0.0, reason="missing_answer").reward}
++        return {"exact_match": 0.0}
+ 
+     reference = doc["answer"].rsplit("#### ", 1)[-1]
+     candidate = normalize_final_answer(prediction)
+     reference = normalize_final_answer(reference)
+-    candidate_value = _rational_value(candidate)
+-    reference_value = _rational_value(reference)
+-    if candidate_value is not None and reference_value is not None:
+-        spec = ExactSpec((str(reference_value),), ignore_case=False, ignore_whitespace=False, strip_outer_whitespace=False)
+-        return {"exact_match": grade_exact_candidate(spec, str(candidate_value)).reward}
+     return {"exact_match": float(is_equiv(candidate, reference))}
++
++
++def verifyit_process_results(doc: dict, results: list[str]) -> dict[str, float]:
++    """Score source-extracted answers through Math without a Minerva fallback."""
++    from eval.graders.answer_equivalence import verifyit_math_answers_equivalent
++    from verifyit.grade import InvalidTask
++
++    if not isinstance(doc.get("answer"), str) or not doc["answer"].strip() or len(results) != 1:
++        raise InvalidTask("GSM8K requires a trusted reference and one filtered candidate")
++    reference = doc["answer"].rsplit("#### ", 1)[-1]
++    candidate = "" if results[0] == _FALLBACK else results[0]
++    return {"exact_match": float(verifyit_math_answers_equivalent(candidate, [reference]))}
+diff --git a/eval/lm_eval_tasks/gsm8k/gsm8k_verifyit.yaml b/eval/lm_eval_tasks/gsm8k/gsm8k_verifyit.yaml
+new file mode 100644
+--- /dev/null
++++ b/eval/lm_eval_tasks/gsm8k/gsm8k_verifyit.yaml
+@@ -0,0 +1,3 @@
++include: gsm8k.yaml
++task: gsm8k_verifyit
++process_results: !function utils.verifyit_process_results
+diff --git a/tests/graders/test_verifyit_math.py b/tests/graders/test_verifyit_math.py
+new file mode 100644
+--- /dev/null
++++ b/tests/graders/test_verifyit_math.py
+@@ -0,0 +1,65 @@
++"""Native Math mode composition and actual custom benchmark failure boundaries."""
++
++import importlib
++
++import pytest
++
++from eval.graders.answer_equivalence import verifyit_math_answers_equivalent
++from verifyit.grade import InvalidTask
++
++
++@pytest.mark.parametrize(
++    ("reference", "candidate", "expected"),
++    [
++        (r"\frac{1}{2}", "0.5", True),
++        (r"\frac{1}{2}", "0.6", False),
++        ("2*x", "x+x", True),
++        ("2*x", "3*x", False),
++        ("42", r"\boxed{42}", True),
++        ("42", r"\boxed{42", False),
++        ("42", "reasoning 99\n42", True),
++        ("42", "42 elephants and 7 giraffes", False),
++        ("42", "", False),
++        ("10", r"10\\%", False),
++        ("10", "10%", False),
++        ("10", r"10\%", False),
++        (r"10\%", r"10\%", True),
++        ("12", r"12^{\\text{th}}\\text{ grade}", False),
++        ("12", r"12^{\text{th}}\text{ grade}", False),
++        ("12", r"12^{\mathrm{th}} \text{ grade}", False),
++    ],
++)
++def test_native_math_compares_final_expressions_without_source_fallback(reference, candidate, expected):
++    assert verifyit_math_answers_equivalent(candidate, [reference]) is expected
++
++
++def test_later_invalid_reference_cannot_be_hidden_by_an_earlier_match():
++    with pytest.raises(InvalidTask):
++        verifyit_math_answers_equivalent("2", ["2", r"\frac{"])
++
++
++@pytest.mark.parametrize("name", ["AIME24", "AIME25", "MATH500"])
++def test_custom_math_invalid_reference_aborts_before_sample_metrics(name):
++    module = importlib.import_module(f"eval.chat_benchmarks.{name}.eval_instruct")
++    benchmark = getattr(module, name + "Benchmark")(verifyit_enabled=True)
++    reference_key = "expected_answer" if name == "AIME24" else "answer"
++    examples = [
++        {reference_key: reference, "model_answer": "2", "model_answers": ["2"] * 10} for reference in ["2", None]
++    ]
++    with pytest.raises(InvalidTask):
++        benchmark.evaluate_responses({"examples": examples})
++    assert all("sample_metrics" not in example for example in examples)
++
++
++@pytest.mark.parametrize("name", ["AIME24", "AIME25", "MATH500"])
++def test_opt_in_rejects_broken_box_while_default_keeps_source_behavior(name):
++    module = importlib.import_module(f"eval.chat_benchmarks.{name}.eval_instruct")
++    constructor = getattr(module, name + "Benchmark")
++    reference_key = "expected_answer" if name == "AIME24" else "answer"
++    metrics = []
++    for options in ({}, {"verifyit_enabled": False}, {"verifyit_enabled": True}):
++        benchmark = constructor(**options)
++        example = {reference_key: "42", "model_answer": r"\boxed{42", "model_answers": [r"\boxed{42"] * 10}
++        result = benchmark.evaluate_responses({"examples": [example]})
++        metrics.append(result["accuracy"] if name == "MATH500" else result["accuracy_avg"])
++    assert metrics == [1.0, 1.0, 0.0]
+diff --git a/eval/chat_benchmarks/AIME24/eval_instruct.py b/eval/chat_benchmarks/AIME24/eval_instruct.py
+--- a/eval/chat_benchmarks/AIME24/eval_instruct.py
++++ b/eval/chat_benchmarks/AIME24/eval_instruct.py
+@@ -39,6 +39,7 @@
+         max_tokens: int = 32768,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize AIME24 benchmark.
+@@ -51,6 +52,7 @@
+             system_instruction: Optional system instruction for the model
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.data_file = data_file
+         self.debug = debug
+         self.max_new_tokens = max_tokens
+@@ -73,22 +75,14 @@
+         def build_instances(_repeat_idx: int) -> List[Instance]:
+             all_instances = []
+             for idx, example in enumerate(examples):
+-                messages = [
+-                    {"role": "user", "content": PROMPT.format(problem=example["problem"])},
+-                ]
++                messages = [{"role": "user", "content": PROMPT.format(problem=example["problem"])}]
+ 
+                 templated_messages = self._prepare_messages(messages, model)
+ 
+                 instance = Instance(
+                     "generate_until",
+                     example,
+-                    (
+-                        templated_messages,
+-                        {
+-                            "max_new_tokens": self.max_new_tokens,
+-                            "until": list(END_OF_TURN_SEQUENCES),
+-                        },
+-                    ),
++                    (templated_messages, {"max_new_tokens": self.max_new_tokens, "until": list(END_OF_TURN_SEQUENCES)}),
+                     idx,
+                 )
+ 
+@@ -119,7 +113,20 @@
+         if results is None:
+             return None
+ 
++        equivalent = math_answers_equivalent
++        if self.verifyit_enabled:
++            from eval.graders.answer_equivalence import verifyit_math_answers_equivalent
++
++            equivalent = verifyit_math_answers_equivalent
+         examples = results["examples"]
++        if self.verifyit_enabled:
++            from verifyit.grade import InvalidTask
++
++            if not examples or any(type(example.get("expected_answer")) not in (str, int) for example in examples):
++                raise InvalidTask("AIME24 requires nonempty examples with trusted string or integer references")
++            for example in examples:
++                equivalent("", [str(example["expected_answer"])])
++
+         num_questions = len(examples)
+ 
+         # Calculate accuracy for each repetition
+@@ -127,8 +134,7 @@
+         correct_by_repeat = []
+         for i in range(self.n_repeat):
+             correct = [
+-                math_answers_equivalent(str(example["model_answers"][i]), [str(example["expected_answer"])])
+-                for example in examples
++                equivalent(str(example["model_answers"][i]), [str(example["expected_answer"])]) for example in examples
+             ]
+             correct_by_repeat.append(correct)
+             solved = sum(correct)
+diff --git a/eval/chat_benchmarks/AIME25/eval_instruct.py b/eval/chat_benchmarks/AIME25/eval_instruct.py
+--- a/eval/chat_benchmarks/AIME25/eval_instruct.py
++++ b/eval/chat_benchmarks/AIME25/eval_instruct.py
+@@ -32,6 +32,7 @@
+         max_tokens: int = 32768,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize AIME25 benchmark.
+@@ -43,6 +44,7 @@
+             logger: Optional logger instance
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.data_file = data_file
+         self.debug = debug
+         self.max_new_tokens = max_tokens
+@@ -69,9 +71,7 @@
+             seed = [s + i for s in self.seed]
+ 
+             for idx, example in enumerate(examples):
+-                messages = [
+-                    {"role": "user", "content": PROMPT.format(problem=example["problem"])},
+-                ]
++                messages = [{"role": "user", "content": PROMPT.format(problem=example["problem"])}]
+ 
+                 templated_messages = self._prepare_messages(messages, model)
+ 
+@@ -80,12 +80,7 @@
+                     example,
+                     (
+                         templated_messages,
+-                        {
+-                            "do_sample": False,
+-                            "max_new_tokens": self.max_new_tokens,
+-                            "temperature": 0.7,
+-                            "seed": seed,
+-                        },
++                        {"do_sample": False, "max_new_tokens": self.max_new_tokens, "temperature": 0.7, "seed": seed},
+                     ),
+                     idx,
+                 )
+@@ -121,16 +116,27 @@
+         if results is None:
+             return None
+ 
++        equivalent = math_answers_equivalent
++        if self.verifyit_enabled:
++            from eval.graders.answer_equivalence import verifyit_math_answers_equivalent
++
++            equivalent = verifyit_math_answers_equivalent
+         examples = results["examples"]
++        if self.verifyit_enabled:
++            from verifyit.grade import InvalidTask
++
++            if not examples or any(type(example.get("answer")) not in (str, int) for example in examples):
++                raise InvalidTask("AIME25 requires nonempty examples with trusted string or integer references")
++            for example in examples:
++                equivalent("", [str(example["answer"])])
++
+         num_questions = len(examples)
+ 
+         # Calculate accuracy for each repetition
+         all_results = []
+         correct_by_repeat = []
+         for i in range(self.n_repeat):
+-            correct = [
+-                math_answers_equivalent(example["model_answers"][i], [str(example["answer"])]) for example in examples
+-            ]
++            correct = [equivalent(example["model_answers"][i], [str(example["answer"])]) for example in examples]
+             correct_by_repeat.append(correct)
+             solved = sum(correct)
+             all_results.append(
+@@ -167,11 +173,11 @@
+         """Load AIME25 questions from the data file."""
+         with open(self.data_file, "r") as f:
+             questions = [json.loads(x) for x in f]
+- 
++
+         if self.debug:
+             questions = questions[:2]
+             self.logger.info(f"Debug mode enabled. Using only {len(questions)} questions.")
+- 
++
+         self.logger.info(f"Loaded {len(questions)} questions from {self.data_file}")
+         return questions
+ 
+diff --git a/eval/chat_benchmarks/MATH500/eval_instruct.py b/eval/chat_benchmarks/MATH500/eval_instruct.py
+--- a/eval/chat_benchmarks/MATH500/eval_instruct.py
++++ b/eval/chat_benchmarks/MATH500/eval_instruct.py
+@@ -41,6 +41,7 @@
+         system_instruction: Optional[str] = None,
+         num_samples: int = 1,
+         pass_at_k: Optional[Any] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize MATH500 benchmark.
+@@ -55,11 +56,9 @@
+             pass_at_k: k-list for pass@k aggregation (only used when num_samples > 1).
+         """
+         super().__init__(
+-            logger=logger,
+-            system_instruction=system_instruction,
+-            num_samples=num_samples,
+-            pass_at_k=pass_at_k,
++            logger=logger, system_instruction=system_instruction, num_samples=num_samples, pass_at_k=pass_at_k
+         )
++        self.verifyit_enabled = verifyit_enabled
+         self.data_file = data_file
+         self.debug = debug
+         self.seed = seed
+@@ -85,9 +84,7 @@
+         # Prepare instances for model
+         all_instances = []
+         for idx, example in enumerate(examples):
+-            messages = [
+-                {"role": "user", "content": PROMPT.format(problem=example["problem"])},
+-            ]
++            messages = [{"role": "user", "content": PROMPT.format(problem=example["problem"])}]
+ 
+             templated_messages = self._prepare_messages(messages, model)
+ 
+@@ -173,39 +170,39 @@
+         if results is None:
+             return None
+ 
++        equivalent = math_answers_equivalent
++        if self.verifyit_enabled:
++            from eval.graders.answer_equivalence import verifyit_math_answers_equivalent
++
++            equivalent = verifyit_math_answers_equivalent
+         examples = results["examples"]
++        if self.verifyit_enabled:
++            from verifyit.grade import InvalidTask
++
++            if not examples or any(type(example.get("answer")) not in (str, int) for example in examples):
++                raise InvalidTask("MATH500 requires nonempty examples with trusted string or integer references")
++            for example in examples:
++                equivalent("", [str(example["answer"])])
++
+         total = len(examples)
+ 
+         # ---- native pass@k aggregation (Stage 2b) ----
+         if results.get("pass_at_k"):
+-            num_correct = [
+-                sum(math_answers_equivalent(ans, [str(ex["answer"])]) for ans in ex["model_answers"]) for ex in examples
+-            ]
++            num_correct = [sum(equivalent(ans, [str(ex["answer"])]) for ans in ex["model_answers"]) for ex in examples]
+             self.record_pass_at_k_metrics(examples, num_correct)
+             pass_at_k_table = self.aggregate_pass_at_k(num_correct)
+             results.update(
+-                {
+-                    "num_total": total,
+-                    "num_samples": self.num_samples,
+-                    "num_correct": num_correct,
+-                    **pass_at_k_table,
+-                }
++                {"num_total": total, "num_samples": self.num_samples, "num_correct": num_correct, **pass_at_k_table}
+             )
+             return results
+ 
+         solved = 0
+         for example in examples:
+-            correct = math_answers_equivalent(example["model_answer"], [str(example["answer"])])
++            correct = equivalent(example["model_answer"], [str(example["answer"])])
+             record_sample_metrics(example, accuracy=correct)
+             solved += correct
+ 
+-        results.update(
+-            {
+-                "num_total": total,
+-                "num_solved": solved,
+-                "accuracy": solved / total,
+-            }
+-        )
++        results.update({"num_total": total, "num_solved": solved, "accuracy": solved / total})
+ 
+         return results
+ 

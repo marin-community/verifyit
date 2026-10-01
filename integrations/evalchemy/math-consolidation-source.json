@@ -1,0 +1,109 @@
+{
+  "files": [
+    {
+      "path": "eval/graders/answer_equivalence.py",
+      "before_sha256": "dd16358882720d727ff44c1142c36aa350ee8cc2d04d1e6ff21c81ea496e0e9e",
+      "after_sha256": "7233d9fcd533998f65384e8bd228deebe8702f56428e9b682f80c6180fed178b",
+      "before_lines": 265,
+      "after_lines": 249,
+      "kind": "production"
+    },
+    {
+      "path": "eval/graders/verifyit_judges.py",
+      "before_sha256": "81f51b9362e806bc1bc8391c80f5933d8889920181ac26a667912a73104820b6",
+      "after_sha256": "324eadc418ed507a4c773ce5bc9dc7701226cef23d582d4a89c3880f097caa5d",
+      "before_lines": 130,
+      "after_lines": 130,
+      "kind": "production"
+    },
+    {
+      "path": "eval/lm_eval_tasks/gsm8k/utils.py",
+      "before_sha256": "33b76d7b6e6659998fd35798ceed414332be9b49b1f2fdd62b496565287e6c55",
+      "after_sha256": "682588914e41c18a8361e08a0feef35bae648eaccec8150e02549e826785757b",
+      "before_lines": 51,
+      "after_lines": 56,
+      "kind": "production"
+    },
+    {
+      "path": "eval/lm_eval_tasks/gsm8k/gsm8k_verifyit.yaml",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after_sha256": "eb4b4a923ebe2c0665343c926eceef7a3f51b4ef8ebb4db8c6f42587240b72ad",
+      "before_lines": 0,
+      "after_lines": 3,
+      "kind": "production"
+    },
+    {
+      "path": "tests/graders/test_verifyit_math.py",
+      "before_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "after_sha256": "a295b26daaa36e725949ad080b602f101fb4b5fbc05a2953d5a8c7667856a31c",
+      "before_lines": 0,
+      "after_lines": 65,
+      "kind": "test"
+    },
+    {
+      "path": "eval/chat_benchmarks/AIME24/eval_instruct.py",
+      "before_sha256": "6df951c8192a94338b410cc3c44a1dc15328f29168ed45f9994c86a20eb16e63",
+      "after_sha256": "24b01c726cea5a1740771f3f4e03246e723f54ef4a04c0a65998325dba9e84e5",
+      "before_lines": 188,
+      "after_lines": 194,
+      "kind": "production"
+    },
+    {
+      "path": "eval/chat_benchmarks/AIME25/eval_instruct.py",
+      "before_sha256": "c53cd34a23de7aee06e9e7c51dc6419352e51bfec3e2d2769ce82976e7276f99",
+      "after_sha256": "addac7ba453fa3473ecc90a30c5fcfc1776e0ec194acb90a273ce455f564a48b",
+      "before_lines": 189,
+      "after_lines": 195,
+      "kind": "production"
+    },
+    {
+      "path": "eval/chat_benchmarks/MATH500/eval_instruct.py",
+      "before_sha256": "ea71e09800dd3b801a8298bea4ae573e0a232e2ae753f144d73938b63278cd7e",
+      "after_sha256": "3fe970317eef0879c7fedfedbc679a933f7bf87b1c2af7859ac16548d5145acc",
+      "before_lines": 233,
+      "after_lines": 230,
+      "kind": "production"
+    }
+  ],
+  "patch_sha256": "8d096c202dcd47422827b72ce271447a3de3b911d627f9e56c6ab12b18623070",
+  "prerequisites": [
+    "verifyit.patch",
+    "shared-judges-verifyit.patch"
+  ],
+  "applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/evidence/consolidation/evalchemy-math/export/applied",
+  "core_changes": 0,
+  "new_spec_classes": 0,
+  "production_loc": {
+    "before": 1056,
+    "after": 1057,
+    "net": 1
+  },
+  "accepted_archive_routes": [
+    "AIME24",
+    "MATH500"
+  ],
+  "fixture_only_routes": [
+    "AIME25",
+    "GSM8K"
+  ],
+  "archive_candidates": {
+    "AIME24": 900,
+    "MATH500": 1500
+  },
+  "evidence_base": "campaign/evidence/consolidation/evalchemy-math",
+  "evidence": [
+    "archive-comparison.json",
+    "final-comparison.json",
+    "format-equivalence.json",
+    "math-tests-final.log"
+  ],
+  "dependencies": "Enabled native Math path no longer imports or invokes Minerva. Original disabled source comparator and its optional Minerva imports remain maintained for opt-in compatibility. Existing math-verify dependency remains. Historical EquivalenceMethod.MINERVA enum label is retained for source aggregation compatibility; it is not a runtime dependency declaration.",
+  "differences": [
+    "Strict boxed parsing rejects malformed boxes, percentage/unit mismatches and unsupported ordinal forms rather than falling back to Minerva.",
+    "Unboxed candidates use their final nonempty line.",
+    "Trusted empty or malformed references abort the entire enabled batch.",
+    "MATH500 archived producer scores .946/.984/.906 differ from freshly reproduced pinned-source and native .938/.982/.906; fresh full result equality is established, historical producer parity is not claimed."
+  ],
+  "tests": "23 focused Math tests passed; explicit default and False preserve source while True selects native Math. GSM8K sibling task name preserves default dispatch.",
+  "manager_review": "Parent independently verified all six archived source/cutover full results, annotated examples and implementation hashes; core return counts include preflights and are not candidate score counts."
+}

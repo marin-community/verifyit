@@ -17,8 +17,9 @@ source revisions below.
 
 The previous integration campaign reached **155/196** required routes with its
 then-current implementations and evidence. That historical count is not fresh
-validation of the consolidated implementation. Fresh acceptance is **6/196** after six SkyRL judge routes passed archived-response
-replays. Shared core validation passed 857 tests, with two Go tests skipped because
+validation of the consolidated implementation. Fresh acceptance is **8/196**: six SkyRL judge routes and Evalchemy AIME24/MATH500
+passed fresh archived-response replays. Working-tree core validation, including pending Pytest changes, passed 857 tests,
+with two Go tests skipped because
 the host lacks Go. The required population remains: 46 SkyRL routes, 87 Harbor routes, 42 Evalchemy custom benchmarks and
 21 Evalchemy overrides. TaskTrove and coder1 are excluded; harness mapping counts
 remain report-only rather than an exhaustive replay requirement.
@@ -39,7 +40,15 @@ Fresh route status is summarized here independently of generated historical tabl
 | Routes | Fresh evidence | Acceptance |
 |---|---|---|
 | [Six SkyRL judge profiles](../../integrations/MarinSkyRL/judge-profiles-consolidation-source.json) | 36 archived-response rounds with original source results and HTTP request comparison | 6 accepted |
+| [AIME24 and MATH500](../../integrations/evalchemy/math-consolidation-source.json) | Three frozen archives each; 900 AIME24 and 1,500 MATH500 candidate results match freshly reproduced source | 2 accepted |
+| AIME25 and GSM8K | Actual framework fixtures, including repeated samples, pass@k and both GSM8K filters | Fixture-tested; no archived acceptance credit |
 | SimpleQA, SimpleQAMini, FinanceBench, OlympiadBench, OlympiadBenchFull | Seven framework scenarios, 30 direct Judge outcomes, 45 malformed-batch aborts and empty-candidate zero corrections | Fixture-tested; archived validation pending |
+
+The Math slice uses existing boxed parsing and removes Minerva from the enabled
+scoring/import path. It adds one net production line and no core code; the original
+disabled source path remains available. MATH500 historical producer scores differ
+from fresh pinned-source reproduction in two archives; acceptance here means
+complete equality with that fresh source run, not historical producer equality.
 
 Raw replay receipts are retained under the campaign evidence directory, outside
 this repository; they are not claimed as committed test assets. The repository's

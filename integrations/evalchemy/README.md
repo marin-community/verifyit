@@ -481,3 +481,28 @@ transport uses `max_completion_tokens`, retries incomplete output from 128 to
 near-parity policies; archived validation is still pending. See
 [checkpoint provenance](shared-judges-source.json). This frozen patch excludes
 later Math-family consolidation work.
+
+
+### Native Math consolidation
+
+Apply `math-consolidation.patch` after `verifyit.patch` and
+`shared-judges-verifyit.patch`. The patch uses the existing Math mode without a
+Minerva fallback. Enable `verifyit_enabled: true` for AIME24, AIME25 or MATH500;
+omission or false retains the original source comparator. For the local harness
+override, select `gsm8k_verifyit` instead of `gsm8k`; the sibling YAML includes the
+original filters and configuration without changing the default task name.
+
+The patch also switches the shared Judge client's deterministic math branch to
+the same native helper. Its historical `EquivalenceMethod.MINERVA` result label
+remains for source aggregation compatibility; the enabled path does not import
+or invoke Minerva. Candidate boxed answers use strict boxed parsing, and other
+answers use the last nonempty line. Empty or malformed trusted references abort
+the batch. Malformed boxes and unsupported unit/ordinal forms receive zero.
+
+[Provenance and scope](math-consolidation-source.json) records fresh source parity
+for three frozen AIME24 archives (900 candidate results) and three MATH500
+archives (1,500 results), plus AIME25 and GSM8K framework fixtures. MATH500's first
+two historical producer scores differ from freshly reproduced source scores;
+those differences are retained in the evidence rather than attributed to this
+cutover. No new Spec or core extension is required. Production code changes by
+one net line; original source code remains necessary for the disabled path.
