@@ -5456,17 +5456,19 @@
       "entity_id": "harbor:usaco",
       "evidence": [
         "docs/unification/harbor_semantics.json#usaco",
-        "docs/unification/harbor_inventory.json#usaco"
+        "docs/unification/harbor_inventory.json#usaco",
+        "integrations/harbor/usaco-pytest-verifyit.patch",
+        "evidence/e2e/wiring/harbor-usaco/final-manifest.json",
+        "evidence/e2e/wiring/harbor-usaco/manager-positive.json"
       ],
-      "gap_kind": "compiled_file_io_adapter",
-      "implementation_present": false,
+      "gap_kind": "implemented_pytest_client",
+      "implementation_present": true,
       "name": "usaco",
-      "needed_change": "Retain program compilation and convert hidden file-based input/output cases into explicit stdio executions, or retain native pytest wrapper; preserve all-case policy and compiler/runtime failure statuses.",
+      "needed_change": "Validate actual benchmark data and archived model traces; candidate execution inside the grader remains unverified.",
       "primitive_candidates": [
-        "stdio",
         "pytest"
       ],
-      "reason": "Generated pytest orchestrates compiled program stdin/stdout hidden cases; move execution cases to stdio preserving file-based I/O and all-case policy, or retain unchanged pytest wrapper. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "The opt-in generator places unchanged USACO pytest and source batch-judge assertions in a separate image and supplies the candidate solution artifact. Existing PytestSpec all-suite scoring preserves the source binary policy; malformed reference cases and execution limits are rejected before task generation.",
       "source_evidence": [
         {
           "functions": [
@@ -5609,8 +5611,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "Eight ordinary source/Harbor comparisons match across three synthetic USACO adapter tasks sampled from five: three positive/wrong pairs plus syntax-error and missing candidate. Source comparison runs its actual pytest command with source dependencies preinstalled, not repeated apt/uv bootstrap. Four source task-reference regressions and existing core empty-collection/timeout minimum-score tests pass. Full Python3.13 runtime image built with exact local core wheel. No actual USACO dataset or archived replay coverage.",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Source pytest suite, batch judge, input/output fixtures and verifier.toml in separate image",
+        "remaining_gap": "candidate_execution_in_grader",
+        "needed_change": "Candidate code executes within the source grader runtime; candidate/assertion isolation has not been established."
+      }
     },
     {
       "entity_id": "harbor:webgen_bench",

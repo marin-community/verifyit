@@ -481,3 +481,24 @@ exact local archive-wheel substitution described above. Installation witnesses
 hash all 41 core Python files and the task files inside actual grading containers.
 Evidence, patch order, source hashes and independent manager roundtrips are under
 `evidence/e2e/wiring/harbor-judge-family/implementation-provenance.json`.
+
+## USACO
+
+Apply `usaco-pytest-verifyit.patch` after
+`research-code-bench-runtime-verifyit.patch`, which supplies the shared core pin.
+Pass `--verifyit` to the adapter. The existing PytestSpec runs the unchanged
+source pytest suite and batch judge in a separate image. Every judged case must
+be accepted; a candidate that merely exists still scores zero when its judge
+test fails. Task generation rejects empty/malformed reference cases, impossible
+case counts and unavailable/nonfinite execution limits. Core pytest empty
+collection and timeout behavior remain minimum-score outcomes.
+
+Eight ordinary source/Harbor comparisons match across three synthetic task
+fixtures: correct/wrong pairs, syntax-error and missing candidate. The source
+comparison executes the source pytest command with its dependencies preinstalled;
+it does not repeat the apt/uv bootstrap for every case. Four task-reference
+regressions and two existing core minimum-score tests pass. Full Python3.13 task
+images were built with the local-wheel substitution described above. These are
+synthetic adapter fixtures, not actual USACO dataset or archived model coverage.
+Candidate execution in the grader remains an unverified trust boundary. Evidence
+is in `evidence/e2e/wiring/harbor-usaco/final-manifest.json`.
