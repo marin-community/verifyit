@@ -1,0 +1,37 @@
+{
+  "benchmarks": [
+    "SimpleQA",
+    "SimpleQAMini",
+    "OlympiadBench",
+    "OlympiadBenchDeterministic",
+    "OlympiadBenchFull"
+  ],
+  "fixture_only": true,
+  "applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/shared-judges-evalchemy-applied",
+  "patch": "integrations/evalchemy/shared-judges-verifyit.patch",
+  "patch_sha256": "d667215199728561055e3b1be5549e266070789cf73c2a936e3b3d4926ed6051",
+  "files": {
+    "eval/chat_benchmarks/SimpleQA/eval_instruct.py": "d2c7e30d138a715a12d1591b992326f57b0f7d7f8c832bd9aaf630706773aa1d",
+    "eval/chat_benchmarks/SimpleQAMini/eval_instruct.py": "fbb7a6d6c51803a5b5cbcfaaa313b6a8070cd22894181f5ebdcb9f72b601f045",
+    "eval/chat_benchmarks/OlympiadBench/eval_instruct.py": "0c783f7bfdebed54cfa8cf5898004acb76d7dab9ed170ae552e930780e232207",
+    "eval/chat_benchmarks/OlympiadBenchDeterministic/eval_instruct.py": "1419164d371b1f87d760ee230f2ac71382812310aa69134905fe1dcac4b4d0f4",
+    "eval/chat_benchmarks/OlympiadBenchFull/eval_instruct.py": "0d2742fc1d075588c3aa4769cc417bab2c09d01fd1ce9701c54fca2c68fa283b",
+    "eval/graders/verifyit_judges.py": "3be535464a9827b56f042d2d4602391cf26fcb0c71587f971605a060d1c24ce6",
+    "tests/graders/test_verifyit_judges.py": "b619ddfea707b9c9ee48d82d9abc1bc41d646527c53ab0a126a73ddfb9effb28"
+  },
+  "dependency": "Existing Evalchemy MathSpec/Minerva answer_equivalence adapter must be installed first.",
+  "source_contract": "Original SDK model/messages/temperature/token budgets, prompts, parsers, math gate, repetition and pass@k aggregation retained. Judge label score comes from ExactSpec inside ScriptSpec.",
+  "proof": {
+    "positive_scenarios": 8,
+    "matching_http_requests": 45,
+    "negative_batches": 18,
+    "durable_tests": 9
+  },
+  "scoring_fixes": [
+    "Incomplete, refusal, tool-call, duplicate-key, nonfinite and provider-error judge responses fail closed. Invalid labels or exhausted empty completions abort whole batch instead of returning partial metrics."
+  ],
+  "limitations": [
+    "HTTP fixtures only; no live judge or archived trace replay claimed.",
+    "Deterministic math path retains source Minerva fallback for unsupported MathSpec expressions."
+  ]
+}

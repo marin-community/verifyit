@@ -831,6 +831,33 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-plus/manager-presence/roundtrip.json",
                 ],
             )
+        elif name in {"SimpleQA", "SimpleQAMini", "OlympiadBench", "OlympiadBenchDeterministic", "OlympiadBenchFull"}:
+            entity.update(
+                status="native_fallback" if name == "OlympiadBenchDeterministic" else "retained_runtime_available",
+                reason_id="custom_source_judge_protocol",
+                reason=(
+                    "Opt-in client preserves source prompts, SDK requests, token-budget retries, "
+                    "label parsing, repetitions and pass@k. ScriptSpec executes judge transport and "
+                    "ExactSpec grades labels; Olympiad math uses MathSpec with source Minerva fallback. "
+                    "Deterministic Olympiad uses only the math route. Malformed judge responses abort "
+                    "the whole batch with zero verifier reward instead of returning partial metrics."
+                ),
+                primitive_candidates=["math"] if name == "OlympiadBenchDeterministic" else ["script", "exact", "math"],
+                needed_change=(
+                    "Enable verifyit_enabled=True. Eight actual evaluator fixture scenarios match source; "
+                    "three of thirteen OlympiadBench archived links are frozen but unavailable without "
+                    "CoreWeave credentials. No archived replay or live judge scoring is claimed."
+                ),
+                validation_status="source_custom_evaluator_http_fixtures_no_archived_replay",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/shared-judges-verifyit.patch",
+                    "integrations/evalchemy/shared-judges-source.json",
+                    "../evidence/e2e/wiring/evalchemy-shared-judges/manager/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-shared-judges/manager-negative/negative.json",
+                    "../evidence/e2e/wiring/evalchemy-shared-judges/archive-census.json",
+                ],
+            )
         elif record["classification"] == "adapter-hybrid":
             entity.update(
                 status="native_fallback",

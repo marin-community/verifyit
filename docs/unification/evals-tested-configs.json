@@ -20,15 +20,15 @@
     },
     "evalchemy-custom": {
       "total": 42,
-      "e2e_tested": 15,
+      "e2e_tested": 20,
       "archive_score_parity": 5,
-      "fixture_tested": 11,
-      "fixture_only": 10,
+      "fixture_tested": 16,
+      "fixture_only": 15,
       "real_response_source_parity_not_archive_score": 0,
-      "route_available": 15
+      "route_available": 20
     }
   },
-  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance. Plus frame-boundary fixtures use explicit30-second source/cutover budgets; three source missing-assert scoring corrections are recorded separately from parity.",
+  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance. Plus frame-boundary fixtures use explicit30-second source/cutover budgets; three source missing-assert scoring corrections are recorded separately from parity. Five judge clients use local HTTP fixtures with source request-body parity; malformed transport cases abort entire batches. OlympiadBench archive links are frozen but unavailable.",
   "records": [
     {
       "entity_id": "evalchemy-custom:eval/chat_benchmarks/AIME24/eval_instruct.py",
@@ -272,6 +272,81 @@
         {
           "kind": "archive_score_parity",
           "path": "evidence/e2e/wiring/evalchemy-nupa/replay-2/replay.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/OlympiadBench/eval_instruct.py",
+      "name": "OlympiadBench",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-shared-judges/manager/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-shared-judges/cutover/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/OlympiadBenchDeterministic/eval_instruct.py",
+      "name": "OlympiadBenchDeterministic",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-shared-judges/manager/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-shared-judges/cutover/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/OlympiadBenchFull/eval_instruct.py",
+      "name": "OlympiadBenchFull",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-shared-judges/manager/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-shared-judges/cutover/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/SimpleQA/eval_instruct.py",
+      "name": "SimpleQA",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-shared-judges/manager/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-shared-judges/cutover/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/SimpleQAMini/eval_instruct.py",
+      "name": "SimpleQAMini",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-shared-judges/manager/roundtrip.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-shared-judges/cutover/roundtrip.json"
         }
       ]
     },
