@@ -1090,11 +1090,35 @@ def main():
                     "../evidence/e2e/wiring/harness-bbq/trace-census.json",
                 ],
             )
+    libra_manifest = json.loads((root / "integrations/lm-eval-harness/libra-source.json").read_text())
+    libra_ids = {f"lm-eval-harness:{task['path']}" for task in libra_manifest["tasks"]}
+    for entity in entities:
+        if entity["entity_id"] in libra_ids:
+            entity.update(
+                status="native_route_available",
+                reason_id="libra_exact_token_composition",
+                reason=(
+                    "Source morphology and length grouping feed existing exact substring, character-token F1 "
+                    "and exact numeric-token comparison. First-positive set iteration remains hash-seed sensitive."
+                ),
+                primitive_candidates=["exact"],
+                needed_change="Enable verifyit_libra with pinned morphology packages; archived replay unvalidated.",
+                validation_status="all_eighteen_source_evaluator_fixtures_no_archived_replay",
+                blockers=[],
+                evidence=[
+                    "integrations/lm-eval-harness/libra-primitives-verifyit.patch",
+                    "integrations/lm-eval-harness/libra-source.json",
+                    "../evidence/e2e/wiring/harness-libra/roundtrip-final/roundtrip.json",
+                    "../evidence/e2e/wiring/harness-libra/negative/negative-batches.json",
+                    "../evidence/e2e/wiring/harness-libra/hash-seed-parity.json",
+                    "../evidence/e2e/wiring/harness-libra/trace-census.json",
+                ],
+            )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 471
+    assert len(harness_gaps) == 453
     assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 980
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11241
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11259
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {

@@ -260,3 +260,23 @@ metrics in five source evaluator fixtures, including ties and the final unknown
 alternative. Regression checks reject a NaN likelihood that the source previously
 counted correct and a bias aggregate with a missing comparison population.
 Evidence is under `evidence/e2e/wiring/harness-bbq`; no archived replay is claimed.
+
+## LIBRA length-group metrics
+
+Apply `libra-primitives-verifyit.patch` after the BBQ patch and install the
+harness `libra` extra. It pins the tested pymorphy3 normalizer and Russian
+dictionary; the source extra previously named pymorphy2 despite importing
+pymorphy3. Set task metadata `verifyit_libra: true` for the 18 configurations.
+
+Source morphology and length grouping remain. Existing exact substring, token
+F1 over characters, and exact comparison of extracted numbers calculate the
+three scoring profiles. Empty normalized references and nonstring predictions
+abort the whole evaluation before it returns grouped metrics. All 18 evaluator
+fixtures match source observations and per-length aggregates; 21 invalid-data
+and configuration cases abort without partial results.
+
+The source takes the first positive score while iterating a reference set.
+This behavior remains sensitive to Python's hash seed: the same F1 example
+scores 0.8 under seeds 0/3 and 0.857142857 under seeds 1/2 in both implementations.
+Evidence is in `evidence/e2e/wiring/harness-libra`. These are source fixtures;
+archived replay is not claimed.

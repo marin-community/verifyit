@@ -1,0 +1,77 @@
+{
+  "source_revision": "6d642546f4688648fced259eb3302efd36ece5af",
+  "tasks": [
+    {
+      "name": "librusec_history",
+      "path": "lm_eval/tasks/libra/librusec_history.yaml"
+    },
+    {
+      "name": "librusec_mhqa",
+      "path": "lm_eval/tasks/libra/librusec_mhqa.yaml"
+    },
+    {
+      "name": "long_context_multiq",
+      "path": "lm_eval/tasks/libra/long_context_multiq.yaml"
+    },
+    {
+      "name": "matreshka_names",
+      "path": "lm_eval/tasks/libra/matreshka_names.yaml"
+    },
+    {
+      "name": "matreshka_yes_no",
+      "path": "lm_eval/tasks/libra/matreshka_yes_no.yaml"
+    },
+    {
+      "name": "passkey",
+      "path": "lm_eval/tasks/libra/passkey.yaml"
+    },
+    {
+      "name": "passkey_with_librusec",
+      "path": "lm_eval/tasks/libra/passkey_with_librusec.yaml"
+    },
+    {
+      "name": "ru_2wikimultihopqa",
+      "path": "lm_eval/tasks/libra/ru_2wikimultihopqa.yaml"
+    },
+    {
+      "name": "ru_babilong_qa1",
+      "path": "lm_eval/tasks/libra/ru_babilong_qa1.yaml"
+    },
+    {
+      "name": "ru_babilong_qa2",
+      "path": "lm_eval/tasks/libra/ru_babilong_qa2.yaml"
+    },
+    {
+      "name": "ru_babilong_qa3",
+      "path": "lm_eval/tasks/libra/ru_babilong_qa3.yaml"
+    },
+    {
+      "name": "ru_babilong_qa4",
+      "path": "lm_eval/tasks/libra/ru_babilong_qa4.yaml"
+    },
+    {
+      "name": "ru_babilong_qa5",
+      "path": "lm_eval/tasks/libra/ru_babilong_qa5.yaml"
+    },
+    {
+      "name": "ru_gsm100",
+      "path": "lm_eval/tasks/libra/ru_gsm100.yaml"
+    },
+    {
+      "name": "ru_qasper",
+      "path": "lm_eval/tasks/libra/ru_qasper.yaml"
+    },
+    {
+      "name": "ru_quality",
+      "path": "lm_eval/tasks/libra/ru_quality.yaml"
+    },
+    {
+      "name": "ru_sci_abstract_retrieval",
+      "path": "lm_eval/tasks/libra/ru_sci_abstract_retrieval.yaml"
+    },
+    {
+      "name": "ru_sci_passage_count",
+      "path": "lm_eval/tasks/libra/ru_sci_passage_count.yaml"
+    }
+  ]
+}
