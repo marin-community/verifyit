@@ -1,0 +1,64 @@
+{
+  "repository": "https://github.com/marin-community/MarinSkyRL",
+  "pr": "https://github.com/marin-community/MarinSkyRL/pull/885",
+  "branch": "codex/verifyit-cutover",
+  "base": "8b4b6924704432df896143e2785b30e5f944a441",
+  "head": "992c9da0fe44c5313d9f95d2f298733a927cb60c",
+  "verifyit_repository": "https://github.com/marin-community/verifyit",
+  "verifyit_revision": "d3edc5d240d53edbd0c0e4a53c0e112629550f7e",
+  "verifyit_branch": "codex/verifier-unification-dependency",
+  "patch_sha256": "ea272cee85738357fd80b63630c93be3fb333e8dc844f5ecb3943b9a40a252d8",
+  "coverage": {
+    "included": 38,
+    "excluded": [
+      "dormant/coder1"
+    ],
+    "historical_real_trace_routes": 30,
+    "historical_source_fixture_routes": 15,
+    "fresh_replay_pairs": 9,
+    "fresh_representative_families": [
+      "mcqa",
+      "reasoning_gym",
+      "math"
+    ],
+    "historical_included": 45,
+    "subsequently_retired": [
+      "dormant/torl",
+      "dormant/naive_dapo",
+      "dormant/prime_math",
+      "dormant/qa_em",
+      "dormant/qa_browsecomp",
+      "dormant/qa_ruler",
+      "dormant/qa_f1"
+    ],
+    "retirement_revision": "8b4b6924704432df896143e2785b30e5f944a441",
+    "current_historical_real_trace_routes": 30,
+    "current_historical_source_fixture_routes": 8
+  },
+  "math_verify": "0.9.0",
+  "minimum_python_gym": "3.11",
+  "root_python": "3.12",
+  "validation_limits": [
+    "No full latest-main replay of all 38 current routes",
+    "No actual rootCPU or GPU training installation",
+    "No live judge or external code/Lean sandbox validation",
+    "Legacy agent packaging is unsupported; issue884"
+  ],
+  "issues": {
+    "coder1_deprecation": 880,
+    "design": 882,
+    "archival_agent_packaging": 884
+  },
+  "evidence": [
+    "evidence/e2e/wiring/skyrl-publication",
+    "evidence/pr/skyrl-cold-review"
+  ],
+  "initial_publication": {
+    "head": "af5ceb9831dfc1fc258bf4412f2a1efb98994004",
+    "base": "533a494a800f0be9a4fce24b322bce4a880e058d",
+    "record": "publication-initial-af5ceb9.json",
+    "patch": "publication-initial-af5ceb9.patch"
+  },
+  "cold_review_comment": "https://github.com/marin-community/MarinSkyRL/pull/885#issuecomment-5931930272",
+  "reviewed_revision": "992c9da0fe44c5313d9f95d2f298733a927cb60c"
+}
