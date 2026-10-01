@@ -2214,7 +2214,7 @@ requires-dist = [
     { name = "math-verify", marker = "extra == 'answer'", specifier = ">=0.9" },
     { name = "openai", marker = "extra == 'judge'", specifier = ">=1.59.9" },
     { name = "pyyaml", marker = "extra == 'schema'", specifier = ">=6.0" },
-    { name = "reasoning-gym", marker = "extra == 'reasoning-gym'", specifier = ">=0.1" },
+    { name = "reasoning-gym", marker = "extra == 'reasoning-gym'", specifier = ">=0.1.25" },
     { name = "sympy", marker = "extra == 'answer'", specifier = ">=1.12" },
     { name = "tomlkit", specifier = ">=0.13" },
     { name = "verifyit", extras = ["answer", "schema", "judge", "reasoning-gym"], marker = "extra == 'all'" },

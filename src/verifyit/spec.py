@@ -147,6 +147,7 @@ class ReasoningGymSpec:
     dataset: str
     entry: str = "entry.json"
     output: str = DEFAULT_OUTPUT
+    params: str | None = None
 
 
 @dataclass(frozen=True)

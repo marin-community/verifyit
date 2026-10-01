@@ -14,6 +14,7 @@ from verifyit.spec import (
     McqSpec,
     NumericSpec,
     PytestSpec,
+    ReasoningGymSpec,
     StdioSpec,
     parse_spec,
     render_spec,
@@ -66,3 +67,11 @@ def test_exact_substring_roundtrip_and_default_compatibility():
 def test_exact_substring_rejects_non_boolean_toml():
     with pytest.raises(ValueError, match="expects bool"):
         parse_spec('mode = "exact"\nexpected = "Paris"\nsubstring = 1\n')
+
+
+def test_reasoning_gym_params_roundtrip_and_legacy_default():
+    configured = ReasoningGymSpec(dataset="decimal_arithmetic", params="params.json")
+    assert parse_spec(render_spec(configured)) == configured
+    legacy = parse_spec('mode = "reasoning-gym"\ndataset = "decimal_arithmetic"\n')
+    assert legacy.params is None
+    assert "params" not in render_spec(legacy)

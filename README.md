@@ -108,6 +108,12 @@ For library use in a Python project, run:
 uv add "verifyit[answer] @ git+https://github.com/marin-community/verifyit@<sha>"
 ```
 
+The `reasoning-gym` spec optionally accepts `params`, a JSON object file beside the spec.
+It preserves configured dataset scoring; omitting it retains the default scorer.
+The optional extra requires reasoning-gym >=0.1.25, whose registered config dataclasses
+are validated before the public dataset factory runs. Invalid configuration is an invalid
+task; dataset construction failures remain infrastructure errors.
+
 Extras are `answer`, `schema`, `judge`, `reasoning-gym`, and `all`. Execution modes use the task
 image's toolchain.
 

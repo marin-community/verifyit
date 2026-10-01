@@ -27,7 +27,7 @@ verifyit = "verifyit.grade:main"
 answer = ["math-verify>=0.9", "sympy>=1.12"]
 schema = ["jsonschema>=4.20", "pyyaml>=6.0"]
 judge = ["openai>=1.59.9"]
-reasoning-gym = ["reasoning-gym>=0.1"]
+reasoning-gym = ["reasoning-gym>=0.1.25"]
 all = ["verifyit[answer,schema,judge,reasoning-gym]"]
 
 [dependency-groups]
