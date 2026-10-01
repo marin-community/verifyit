@@ -20,8 +20,16 @@ def first(value):
     return value.split(". ")[0] + ("." if ". " in value else "")
 
 
-def table(source, statuses=None):
-    selected = [r for r in rows if r["source"] == source and (statuses is None or r["status"] in statuses)]
+def table(source, statuses=None, *, required_only=False):
+    selected = [
+        r
+        for r in rows
+        if r["source"] == source
+        and (statuses is None or r["status"] in statuses)
+        and (not required_only or r.get("completion_scope") != "user_excluded")
+    ]
+    if required_only and not selected:
+        return ""
     result = ["| Entity | Status | Existing mode | Why / needed change |", "| --- | --- | --- | --- |"]
     for r in selected:
         reason = r["reason"]
@@ -148,7 +156,7 @@ text += """
 SKYRL_PENDING_SUMMARY
 
 """ + table(
-    "MarinSkyRL", {"not_integrated", "capability_gap"}
+    "MarinSkyRL", {"not_integrated", "capability_gap"}, required_only=True
 )
 text += "\n\nThe two external objectives are not correctness verifiers:\n\n" + table(
     "MarinSkyRL", {"not_a_correctness_verifier"}
@@ -274,13 +282,24 @@ summary = (
     f"{skyrl_counts['capability_gap']} native profile gaps; {external} external-objective placeholders separate |"
 )
 text = text.replace("SKYRL_SUMMARY_ROW", summary)
-pending_skyrl = [r for r in rows if r["source"] == "MarinSkyRL" and r["status"] in {"not_integrated", "capability_gap"}]
+pending_skyrl = [
+    r
+    for r in rows
+    if r["source"] == "MarinSkyRL"
+    and r["status"] in {"not_integrated", "capability_gap"}
+    and r.get("completion_scope") != "user_excluded"
+]
 pending_active = sum(bool(r.get("active_in_pinned_dispatch")) for r in pending_skyrl)
 pending_dormant = sum(bool(r.get("dormant")) for r in pending_skyrl)
 text = text.replace(
     "SKYRL_PENDING_SUMMARY",
-    f"The {len(pending_skyrl)} pending scoring routes comprise {pending_active} active routes and "
-    f"{pending_dormant} dormant implementations. Three dormant math variants now have opt-in source "
+    (
+        "No required SkyRL scoring routes remain pending. "
+        if not pending_skyrl
+        else f"The {len(pending_skyrl)} pending scoring routes comprise {pending_active} active routes and "
+        f"{pending_dormant} dormant implementations. "
+    )
+    + "Three dormant math variants now have opt-in source "
     "integrations and fixture evidence; archived traces remain unavailable. "
     f"{skyrl_counts['capability_gap']} rows need a native comparator/registry/schema/judge profile in an "
     "existing class; a task-owned structured source bridge remains an alternative. "
@@ -340,7 +359,11 @@ assert (
 assert all(0 <= count <= total for count, total in required_counts.values())
 required_tested = sum(count for count, _ in required_counts.values())
 required_total = sum(total for _, total in required_counts.values())
-assert required_total == 196, "required source census changed"
+excluded_skyrl = [
+    row for row in rows if row["source"] == "MarinSkyRL" and row.get("completion_scope") == "user_excluded"
+]
+assert skyrl_reporting["inventory_denominator"] == skyrl_reporting["denominator"] + len(excluded_skyrl)
+assert {row["name"] for row in excluded_skyrl} == {row["id"] for row in skyrl_reporting["excluded_routes"]}
 checkpoint = (
     f"Completion scope: all {required_counts['SkyRL'][1]} SkyRL verifiers, {harbor_total} Harbor adapters, "
     f"{custom_tested['total']} Evalchemy custom benchmarks and {override_tested['total']} Evalchemy task overrides "
@@ -350,7 +373,10 @@ checkpoint = (
     + "). Counts derive from SkyRL's tested-route metadata, Harbor's explicit execution evidence markers "
     "and the Evalchemy tested-config ledger; route availability alone does not count. "
     "Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. "
-    "TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required."
+    "TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required. "
+    f"SkyRL retains {skyrl_reporting['inventory_denominator']} inventoried scoring routes; coder1 is explicitly excluded "
+    "at the user's request and tracked for deprecation in [MarinSkyRL #880](https://github.com/marin-community/MarinSkyRL/issues/880). "
+    "Its partial integration, source hashes and unresolved contracts remain in the JSON register; it is not counted as tested."
 )
 text = text.replace("COMPLETION_CHECKPOINT", checkpoint)
 text = text.replace("HARBOR_TESTED", str(len(harbor_tested))).replace("HARBOR_TOTAL", str(harbor_total))

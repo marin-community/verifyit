@@ -1,6 +1,6 @@
 # Coverage gaps
 
-Completion scope: all 46 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **196 required routes**. The manager-reviewed checkpoint is **121/196 tested** (SkyRL 45/46, Harbor 32/87, custom 23/42, overrides 21/21). Counts derive from SkyRL's tested-route metadata, Harbor's explicit execution evidence markers and the Evalchemy tested-config ledger; route availability alone does not count. Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required.
+Completion scope: all 45 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **195 required routes**. The manager-reviewed checkpoint is **121/195 tested** (SkyRL 45/45, Harbor 32/87, custom 23/42, overrides 21/21). Counts derive from SkyRL's tested-route metadata, Harbor's explicit execution evidence markers and the Evalchemy tested-config ledger; route availability alone does not count. Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required. SkyRL retains 46 inventoried scoring routes; coder1 is explicitly excluded at the user's request and tracked for deprecation in [MarinSkyRL #880](https://github.com/marin-community/MarinSkyRL/issues/880). Its partial integration, source hashes and unresolved contracts remain in the JSON register; it is not counted as tested.
 
 The remaining work is primarily client integration, source-specific comparison/judge profiles, and execution validation. A specification is not an implemented migration. Retaining the source scorer is compatibility or a hybrid route, not complete native equivalence. No unavoidable new verifier category has been identified.
 
@@ -108,11 +108,9 @@ Fifteen Uncheatable category overrides now have an explicit trusted-installation
 
 ## SkyRL
 
-The 1 pending scoring routes comprise 0 active routes and 1 dormant implementations. Three dormant math variants now have opt-in source integrations and fixture evidence; archived traces remain unavailable. 0 rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
+No required SkyRL scoring routes remain pending. Three dormant math variants now have opt-in source integrations and fixture evidence; archived traces remain unavailable. 0 rows need a native comparator/registry/schema/judge profile in an existing class; a task-owned structured source bridge remains an alternative. The full register preserves active/dormant dispatch and source hashes.
 
-| Entity | Status | Existing mode | Why / needed change |
-| --- | --- | --- | --- |
-| dormant/coder1 | not_integrated | stdio, pytest, script | All four payload forms are wired with trusted tests outside the candidate sandbox. Preserve explicit bounded Python contracts and extend only semantics that keep trusted assertions outside candidate execution. |
+
 
 The two external objectives are not correctness verifiers:
 
