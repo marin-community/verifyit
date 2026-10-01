@@ -290,3 +290,24 @@ Each admission difference includes actual source predicate outcomes. Historical
 records without their RNG/detector state remain unreproducible; they are not
 classified as missing verifier dispatch. Evidence and the 25-patch manifest are
 under `evidence/e2e/wiring/skyrl-instruction-runtime/`.
+
+
+### Empty abstention correction (#891)
+
+Apply `empty-abstention-verifyit.patch` after the existing judge-profile client
+patches, and install verifyit at `cd00ed59e9c3fe99fd3460ae7c7df9e5ee60a811`
+or later. The existing published SkyRL dependency pin is unchanged by this
+export. Present empty final answers explicitly use `empty_output = "grade"`
+and reach the original judge; its C label yields 0.5. Missing artifacts,
+malformed provider replies and null actions remain failures at zero. Unfinished
+reasoning is rejected at zero before extraction can turn it into an abstention.
+There is no unconditional reward for empty output.
+
+Six actual `NemotronUltraEnv.step` roundtrips include exact source HTTP and
+feedback parity for empty, whitespace and completed-reasoning answers, plus
+incomplete-reasoning, empty-provider and null-action failure cases. The manager
+independently replayed all six; 29 client regressions pass. These new cases are
+local HTTP fixtures, alongside the existing archived judge-family evidence.
+See `empty-abstention-provenance.json` for source and patch hashes and
+`evidence/issues/skyrl-891/env-manager/roundtrip.json` for raw verdicts.
+This restores tested exported coverage, not deployment on current SkyRL main.

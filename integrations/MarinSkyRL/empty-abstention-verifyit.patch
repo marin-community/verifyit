@@ -1,0 +1,153 @@
+diff --git a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py
+--- a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py
++++ b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/env.py
+@@ -196,7 +196,10 @@
+         return None
+ 
+     def step(self, action: str) -> BaseTextEnvStepOutput:
+-        action = final_answer_text(action)
++        # The abstention adapter must distinguish unfinished reasoning from a
++        # present empty final answer before applying the source extraction.
++        if not (self.verifyit_enabled and self.agent == "abstention_simple_agent"):
++            action = final_answer_text(action)
+         try:
+             return self._step(action)
+         except (requests.RequestException, RuntimeError, ValueError) as error:
+diff --git a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_profiles_verifyit.py b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_profiles_verifyit.py
+--- a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_profiles_verifyit.py
++++ b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/judge_profiles_verifyit.py
+@@ -14,9 +14,10 @@
+ 
+ from verifyit.grade import InvalidTask, Status, run
+ from verifyit.modes.grade_exact import grade_exact_candidate
+-from verifyit.spec import ExactSpec, JudgeSpec, ScriptSpec, render_spec
++from verifyit.spec import EmptyOutputPolicy, ExactSpec, JudgeSpec, ScriptSpec, render_spec
+ 
+ from skyrl_gym.envs.nemotron_ultra.answer_extraction import (
++    REASONING_DELIMITERS,
+     final_answer_text,
+     last_boxed_answer,
+ )
+@@ -59,6 +60,7 @@
+         *,
+         system: str = "",
+         scan: str = "literal",
++        empty_output: EmptyOutputPolicy = EmptyOutputPolicy.ZERO,
+     ):
+         candidate_file.write_text(candidate)
+         spec_file.write_text(
+@@ -73,6 +75,7 @@
+                     strip_reasoning_blocks=True,
+                     label_scan=scan,
+                     output=str(candidate_file),
++                    empty_output=empty_output,
+                     request_timeout=judge["timeout_seconds"],
+                     max_completion_tokens=8192,
+                     reasoning_effort=judge.get("reasoning_effort") or "",
+@@ -91,7 +94,25 @@
+     if kind == "abstention":
+         question = _text(record.get("question"), "question")
+         expected = _text(record.get("answer"), "answer")
+-        response = final_answer_text(_text(data["text"], "response", nonempty=False))
++        raw_response = _text(data["text"], "response", nonempty=False)
++        response = final_answer_text(raw_response)
++        unfinished = not response and any(
++            opening in raw_response[(raw_response.rfind(closing) + len(closing)) if closing in raw_response else 0 :]
++            for opening, closing in REASONING_DELIMITERS
++        )
++        if unfinished:
++            return {
++                "schema_version": 1,
++                "status": "scored",
++                "reward": 0.0,
++                "detail": {
++                    "source_feedback": {
++                        "verdict": "incomplete",
++                        "extracted_answer": "",
++                        "reason": "incomplete_response",
++                    }
++                },
++            }
+         extracted = last_boxed_answer(response) or response
+         exact = grade_exact_candidate(
+             ExactSpec(
+@@ -124,6 +145,7 @@
+                 template,
+                 {"A": 1.0, "B": 0.0, "C": 0.5},
+                 scan="lines",
++                empty_output=EmptyOutputPolicy.GRADE,
+             )
+             feedback = {
+                 "verdict": {"A": "correct", "B": "incorrect", "C": "abstain"}[label],
+diff --git a/skyrl-gym/tests/test_judge_profiles_verifyit.py b/skyrl-gym/tests/test_judge_profiles_verifyit.py
+--- a/skyrl-gym/tests/test_judge_profiles_verifyit.py
++++ b/skyrl-gym/tests/test_judge_profiles_verifyit.py
+@@ -6,6 +6,7 @@
+ 
+ import pytest
+ 
++from skyrl_gym.envs.nemotron_ultra.env import NemotronUltraEnv
+ from skyrl_gym.envs.nemotron_ultra.judge import OpenAIJudge
+ from skyrl_gym.envs.nemotron_ultra.judge_profiles_verifyit import (
+     grade_judge_profile_verifyit,
+@@ -204,3 +205,60 @@
+     assert score == 0.0
+     assert detail["error_type"] == "verification_error"
+     assert len(owner.requests) == 2
++
++
++@pytest.mark.parametrize("response", ["", " \n\t", "<think>Completed reasoning.</think>"])
++def test_present_empty_abstention_reaches_the_source_judge_contract(server, response):
++    owner, judge = server
++    owner.reply = "C"
++    record = {"question": "Which field marks no random access?", "answer": "nil ReaderAt field"}
++    native = grade_abstention(response, record, judge)
++    requests = list(owner.requests)
++    owner.requests.clear()
++    cutover = grade_judge_profile_verifyit(response, record, judge, kind="abstention")
++    assert native == cutover
++    assert cutover[0] == 0.5
++    assert cutover[1]["verdict"] == "abstain"
++    assert owner.requests == requests
++
++
++@pytest.mark.parametrize("response", ["<think>unfinished", "<thinking>unfinished", "<|start_think|>unfinished"])
++def test_incomplete_reasoning_cannot_be_reclassified_as_empty_abstention(server, response):
++    owner, judge = server
++    owner.reply = "C"
++    record = {"question": "Which field marks no random access?", "answer": "nil ReaderAt field"}
++    assert grade_abstention(response, record, judge)[0] == 0.5
++    owner.requests.clear()
++    cutover = grade_judge_profile_verifyit(response, record, judge, kind="abstention")
++    assert cutover[0] == 0
++    assert cutover[1]["reason"] == "incomplete_response"
++    assert owner.requests == []
++
++
++def test_empty_candidate_does_not_turn_empty_judge_transport_into_abstention(server):
++    owner, judge = server
++    owner.reply = ""
++    record = {"question": "Which field marks no random access?", "answer": "nil ReaderAt field"}
++    result = grade_judge_profile_verifyit("", record, judge, kind="abstention")
++    assert result[0] == 0
++    assert result[1].get("verdict") != "abstain"
++    assert owner.requests
++
++
++@pytest.mark.parametrize("response, expected", [("", 0.5), ("<think>finished</think>", 0.5), ("<think>unfinished", 0.0)])
++def test_environment_preserves_empty_versus_incomplete_abstention(server, response, expected):
++    owner, judge = server
++    owner.reply = "C"
++    record = {"question": "Which field marks no random access?", "answer": "nil ReaderAt field"}
++    env = NemotronUltraEnv(
++        {"verifyit_enabled": True},
++        extras={"extra_info": {"nemotron_ultra": {
++            "route": "skyrl_gym", "agent": "abstention_simple_agent",
++            "record_json": json.dumps(record), "request_json": "{}",
++        }}},
++    )
++    env.general_judge = judge
++    result = env.step(response)
++    assert result["reward"] == expected
++    assert result["done"] is True
++    assert bool(owner.requests) == bool(expected)

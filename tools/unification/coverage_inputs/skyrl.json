@@ -19,15 +19,15 @@
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 29,
-      "implemented_not_validated": 16,
+      "implemented_validated": 30,
+      "implemented_not_validated": 15,
       "capability_gap": 0,
       "not_a_correctness_verifier": 2,
       "not_integrated": 2
     },
     "unwired_dormant_math_comparator_parity_audits": 0,
     "inherited_planning_existing_class_extension_routes": 23,
-    "validation_regressed_routes": 1
+    "validation_regressed_routes": 0
   },
   "classification_notes": [
     "The original 46 scoring routes have composition/extension specs. The newly recovered registered IPI route needs its upstream scoring contract established before a mapping can be specified; no new mode category is proposed.",
@@ -43,7 +43,7 @@
     "Standalone26 IFEval predicates and the pinned NVIDIA registry execute through source-owned IFEval extensions under ScriptSpec deadlines. NVIDIA runtime preserves source Python RNG advancement; deterministic language detection is a documented client fix. Missing historical hidden state is a replay limitation, not missing dispatch.",
     "Dormant BrowseComp/RULER/STEM use existing core schema/exact primitives for raw external judge output; both GenRM routes retain the full source cohort runtime inside ScriptSpec. These five routes have fixture evidence only; GenRM training-loop initialization and archived cohort replay are not claimed.",
     "Legacy math policy is the pinned source hybrid contract, not inferred solely from successful parsing. Ordinary parser rejection requires a real symmetric judge verdict; raised parser failures are unscored zero. All18 frozen archives match after correcting nested judge transcript extraction; previous missing-transcript reports are superseded.",
-    "Issues #890/#891 correction: indirect_prompt_injection_simple_agent was already registered in the pinned MOPD source but omitted from this inventory; native and cutover environments both lack its verifier. Abstention remains wired, but empty-response failure revokes its completed-validation claim. Counts are corrected known coverage, pending broader source-registry audit."
+    "Issues #890/#891 correction: IPI was registered in the pinned MOPD source but omitted from this inventory; its verifier remains unimplemented. Abstention completion is restored after the explicit empty-output policy and actual env.step regression proof. This is a tested client export, not a claim of deployment on SkyRL main. Broader source-registry audit remains pending."
   ],
   "real_trace_replay": {
     "verified_population": 5460,
@@ -1487,8 +1487,8 @@
     },
     {
       "id": "nemotron_ultra/abstention_simple_agent",
-      "status": "implemented_not_validated",
-      "not_covered_reason": "Known empty-response regression (#891): core judge returns no_output without a verdict label; client indexes that absent label and fails. Prior archived replay coverage did not exercise this case.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
@@ -1500,8 +1500,8 @@
         "script"
       ],
       "resolution_strategy": "existing_judge_labels_and_client_composition",
-      "needed_change": "Preserve the source empty-candidate judge path and handle missing labels without conflating empty output with missing artifacts; replay the reported case.",
-      "validation_gap": "Known empty-response regression; completed-validation claim revoked pending repair and source-parity regression.",
+      "needed_change": "Apply the empty-abstention client correction with verifyit cd00ed5 or later; published SkyRL dependency pin is unchanged.",
+      "validation_gap": "None for the tested exported route; deployment to current SkyRL main is not claimed.",
       "source_contract": "Normalized IDK receives .5; judge A/B/C maps 1/0/.5; omniscience diagnostic.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1518,13 +1518,17 @@
         "evidence/e2e/wiring/skyrl-judge-family/selection.json",
         "evidence/e2e/wiring/skyrl-judge-family/comparison.json",
         "evidence/e2e/wiring/skyrl-judge-family/implementation-provenance.json",
-        "https://github.com/marin-community/MarinSkyRL/issues/891"
+        "https://github.com/marin-community/MarinSkyRL/issues/891",
+        "integrations/MarinSkyRL/empty-abstention-verifyit.patch",
+        "integrations/MarinSkyRL/empty-abstention-provenance.json",
+        "evidence/issues/skyrl-891/env-manager/roundtrip.json",
+        "evidence/issues/skyrl-891/final-skyrl-tests.log"
       ],
       "observed_verified_execution_links": 446,
       "actual_replayed_links": 9,
       "core_extension_requirement": "existing_judge_label_extension_implemented",
-      "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
-      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation. Completion revoked by issue #891. Literal empty source responses reach the judge; only normalized [IDK] has an unconditional 0.5 shortcut.",
+      "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch + integrations/MarinSkyRL/empty-abstention-verifyit.patch",
+      "validation_scope": "Historical frozen real-link source/archive parity is retained. Issue #891 correction additionally passes six actual env.step cases with local HTTP and actual Script/Judge verdicts: valid present empty, whitespace and completed reasoning preserve source 0.5 when judge returns C; unfinished reasoning deliberately scores zero without judge; missing provider text and null action fail closed. Manager independently replayed all six; 29 client tests pass. New cases are fixtures, not additional archives. Existing published dependency pin remains unchanged.",
       "implemented_primitive_modes": [
         "exact",
         "judge",
@@ -2296,12 +2300,12 @@
   "tested_cutover_reporting": {
     "denominator": 46,
     "wired_routes": 45,
-    "tested_complete_routes": 44,
-    "real_trace_routes": 29,
+    "tested_complete_routes": 45,
+    "real_trace_routes": 30,
     "source_fixture_routes": 15,
     "route_specific_witness_pending": [],
     "partial_routes_reported_separately": 1,
-    "definition": "44 currently accepted tested routes: 29 real-trace routes and 15 source-fixture routes. Historical abstention replay evidence is retained but completion is revoked by #891. The required denominator includes the previously omitted registered IPI route (#890); coder1 alone remains user-excluded. This is a corrected known inventory, not a completed broader registry audit.",
+    "definition": "45 accepted tested routes: 30 with historical real-trace evidence and 15 source-fixture routes. Abstention completion is restored by manager-replayed issue #891 env.step fixtures and explicit empty-answer task policy. IPI remains required and unimplemented; coder1 alone remains user-excluded. This is a corrected known inventory, not a completed broader registry audit or current-main deployment claim.",
     "inventory_denominator": 47,
     "excluded_routes": [
       {
@@ -2310,9 +2314,7 @@
         "reason": "User requested skipping coder1 due to conversion difficulty and tracking deprecation in MarinSkyRL issue #880."
       }
     ],
-    "known_regressed_routes": [
-      "nemotron_ultra/abstention_simple_agent"
-    ],
+    "known_regressed_routes": [],
     "unimplemented_registered_routes": [
       "nemotron_ultra/indirect_prompt_injection_simple_agent"
     ]

@@ -306,8 +306,8 @@ text = text.replace(
         f"{pending_dormant} dormant implementations. "
     )
     + "Issue #890 adds a previously omitted source-registered generator whose native verifier was never implemented. "
-    "Issue #891 revokes abstention completion because empty output yields no judge label and the client fails; "
-    "literal empty source responses reach the judge, whereas only normalized [IDK] unconditionally scores 0.5. "
+    "Issue #891 is repaired and tested in the exported abstention adapter using an explicit empty-answer policy; "
+    "literal empty responses reach the judge, whereas only normalized [IDK] unconditionally scores 0.5. Existing SkyRL deployment pins are unchanged. "
     "The corrected inventory still needs a broader registry audit. Three dormant math variants now have opt-in source "
     "integrations and fixture evidence; archived traces remain unavailable. "
     f"{skyrl_counts['capability_gap']} rows need a native comparator/registry/schema/judge profile in an "
