@@ -297,3 +297,22 @@ All 49 configurations match source per-sample and aggregate scores on evaluator
 fixtures. Seven language-specific empty-reference regressions and 49 invalid
 batches pass. Evidence is in `evidence/e2e/wiring/harness-mlqa`; archived replay
 remains unvalidated because the tracker contains no matching MLQA runs.
+
+## LongBench metrics
+
+Apply `longbench-primitives-verifyit.patch` after the MLQA patch, install the
+pinned `longbench` extra and set task metadata `verifyit_longbench: true`.
+`longbench-source.json` enumerates 34 configurations: 21 compose existing
+exact and token-F1 primitives, and 13 run the source ROUGE or fuzzy code-similarity
+metric through ScriptSpec. Source normalization, Chinese segmentation, numeric
+match fractions, overlapping class handling and mean aggregation are preserved.
+The code-similarity route requires the audited difflib backend; installations
+using optional python-Levenshtein are rejected.
+
+Empty references and malformed predictions invalidate the whole evaluation.
+In particular, empty code references can no longer award blank output full
+similarity. Invalid tasks remain distinct from runtime failures, and both abort
+without returning partial aggregates. All 34 configurations match source scores
+on evaluator fixtures, including partial credit and alternative references.
+Evidence is in `evidence/e2e/wiring/harness-longbench`. Matching archived runs
+were unavailable in the tracker; this validation does not claim archive replay.

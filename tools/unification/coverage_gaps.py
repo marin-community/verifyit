@@ -1134,11 +1134,32 @@ def main():
                     "../evidence/e2e/wiring/harness-mlqa/trace-census.json",
                 ],
             )
+    longbench_manifest = json.loads((root / "integrations/lm-eval-harness/longbench-source.json").read_text())
+    longbench_routes = {f"lm-eval-harness:{task['path']}": task["route"] for task in longbench_manifest["tasks"]}
+    for entity in entities:
+        if entity["entity_id"] in longbench_routes:
+            entity.update(
+                status=longbench_routes[entity["entity_id"]],
+                reason_id="longbench_composed_or_retained",
+                reason="Source preparation feeds exact/token-F1 composition or pinned ScriptSpec ROUGE/code similarity.",
+                primitive_candidates=["exact", "script"],
+                needed_change="Enable verifyit_longbench with pinned dependencies; archived replay unvalidated.",
+                validation_status="all_thirty_four_source_evaluator_fixtures_no_archived_replay",
+                blockers=[],
+                evidence=[
+                    "integrations/lm-eval-harness/longbench-primitives-verifyit.patch",
+                    "integrations/lm-eval-harness/longbench-source.json",
+                    "../evidence/e2e/wiring/harness-longbench/roundtrip-final/roundtrip.json",
+                    "../evidence/e2e/wiring/harness-longbench/manager-roundtrip/roundtrip.json",
+                    "../evidence/e2e/wiring/harness-longbench/manager-negative/negative-batches.json",
+                    "../evidence/e2e/wiring/harness-longbench/trace-census.json",
+                ],
+            )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 404
-    assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 980
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11308
+    assert len(harness_gaps) == 370
+    assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 993
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11329
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {
