@@ -900,3 +900,42 @@ installed-image hashes. No eligible tracker archives exist. These are bounded
 source-contract fixtures, not archived model parity. Use the exact local wheel
 recipe above while the production core pin remains unpublished. No new security
 tests were run.
+
+
+### BIRD SQLite execution accuracy
+
+Apply `bird-bench-runtime-verifyit.patch` after the common Harbor dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate BIRD tasks with
+`--use-verifyit`. The separate verifier receives `/app/answer.sql`; its original
+database and gold SQL are private task assets. A structured Script producer
+calls the unchanged source SQLite comparator: candidate then gold, with set
+comparison of row tuples. Row order and duplicate multiplicity remain ignored,
+and valid empty results remain valid.
+
+Trusted SQL preflight runs read-only in a separate connection. Missing, empty
+or malformed gold is an invalid task; missing databases and gold-query timeouts
+are infrastructure failures. Candidate SQL errors and timeouts score zero.
+The three possible query windows retain the source's 600-second limit, with
+1850 seconds for Script execution and 1900 seconds for Harbor verification.
+
+`evidence/e2e/wiring/harbor-bird-bench/final-manifest.json` records 18 actual
+source/Harbor pairs: three frozen genuine rows with original, incorrect and
+missing candidates, plus nine ordinary SQL/status fixtures. Every primary
+score matches. SQL fixtures include NULL/BLOB values. Twelve regressions cover
+row sets, empty results, reference failures and timeout classification. An independent manager replay
+passed the genuine CTE/window-query task. Twelve immutable verifier images and
+four public database images have installed-file witnesses.
+
+The three rows were sampled from the source's bundled 150-row parity set;
+these are source oracles, not archived model traces. Two official SQLite files
+were fetched with bounded HTTP ranges and ZIP CRC checks, transferring about
+12.2 MB of the 763 MiB archive. Exact database hashes identify the snapshots;
+the Drive archive has no Git revision. This validates the implemented scoring
+contract, not every dataset task, deployment or SQL-engine isolation boundary.
+
+The production Dockerfile pins unpublished verifyit revision
+`a0861089947096aabe456ca4308ca46b1b001d7c`. For local rebuilding, build that
+revision's wheel from the campaign checkout/archive, copy it into the verifier
+context, add a Dockerfile `COPY`, and replace the Git URL install target with
+the wheel path. Keep the remaining Dockerfile commands and task assets. The
+recorded images use that exact wheel; publication is a separate step.

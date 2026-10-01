@@ -669,16 +669,18 @@
       "entity_id": "harbor:bird_bench",
       "evidence": [
         "docs/unification/harbor_semantics.json#bird_bench",
-        "docs/unification/harbor_inventory.json#bird_bench"
+        "docs/unification/harbor_inventory.json#bird_bench",
+        "integrations/harbor/bird-bench-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-bird-bench/final-manifest.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "bird_bench",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/bird_bench/src/bird_bench/task-template/tests/evaluate.py, adapters/bird_bench/src/bird_bench/task-template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate archived model candidates and full production deployment; core revision remains unpublished. No full dataset or SQL-engine isolation certification is claimed.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Execute predicted and ground-truth SQL against task database and compare result sets; retain SQL progress timeout and database state. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "Opt-in separate-image structured Script producer retains unchanged read-only SQLite candidate/gold execution and row-set equality, including duplicate/order insensitivity and valid empty results. Trusted gold is preflighted separately; invalid references and unavailable runtime assets remain unscored minimum while candidate errors/timeouts score0.",
       "source_evidence": [
         {
           "functions": [
@@ -737,8 +739,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "18actual source/Harbor pairs all match primary scores:9cases across three frozen genuine rows and9declared SQL/status fixtures.12regressions and12verifier+4publicDB image witnesses. Manager independently replayed the genuine CTE/window query. Three rows sampled before execution from bundled150-row parity selection; no archived traces. Two official DB entries fetched via bounded HTTP206ranges (~12.2MBcompressed), validated ZIPCRC and SHA256; no763MiB archive download. Exact snapshots recorded, Drive archive unversioned. Golden SQL failures receive invalid_task/infra_error distinctions at0; native source otherwise emits scalar execution accuracy.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Original database, gold SQL, source evaluator and verifier spec in separate verifier image; only candidate SQL transferred. Public agent image contains its original task database.",
+        "needed_change": "Validate production and archived traces; no new security tests or complete SQL-engine isolation claim."
+      }
     },
     {
       "entity_id": "harbor:bixbench",
