@@ -1021,10 +1021,33 @@ def main():
                     "validation_status": row["validation_gap"],
                 }
             )
+    for entity in entities:
+        if entity["entity_id"] in {
+            "lm-eval-harness:lm_eval/tasks/drop/default.yaml",
+            "evalchemy-override:eval/lm_eval_tasks/drop/drop.yaml",
+        }:
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="drop_source_runtime",
+                reason=(
+                    "Pinned DROP multi-span EM/F1 executes through ScriptSpec; "
+                    "source filters and numeric gating remain."
+                ),
+                primitive_candidates=["script"],
+                needed_change="Enable verifyit_drop_runtime metadata; replay archived inputs when available.",
+                validation_status="source_evaluator_fixtures_no_matching_archive",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/drop-runtime-verifyit.patch",
+                    "../evidence/e2e/wiring/harness-drop/roundtrip-positive/roundtrip.json",
+                    "../evidence/e2e/wiring/harness-drop/negative/negative-batches.json",
+                    "../evidence/e2e/wiring/harness-drop/trace-census.json",
+                ],
+            )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 493
-    assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 978
+    assert len(harness_gaps) == 492
+    assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 979
     assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11221
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"

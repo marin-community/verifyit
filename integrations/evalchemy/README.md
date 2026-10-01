@@ -173,3 +173,19 @@ configuration failures, four evaluator failure cases and four installer checks
 pass. No matching tracker links or local JSON/JSONL artifacts were found;
 archived replay is not claimed. Reproducible evidence is under
 `evidence/e2e/wiring/evalchemy-uncheatable`.
+
+## DROP multi-span scores
+
+After the harness and Uncheatable patches, apply `drop-runtime-verifyit.patch`
+to the harness checkout. Pass task metadata `verifyit_drop_runtime: true` through
+TaskManager overrides. Both the harness DROP definition and Evalchemy's DROP
+override use this route; Evalchemy's short-answer extraction remains in its
+source filter.
+
+Each filtered response executes the pinned source DROP scorer through
+`ScriptSpec`, returning EM and F1 to the evaluator. Numeric gating, optimal
+multi-span alignment and alternative-reference maxima retain source behavior.
+References that normalize to empty spans are invalid tasks and abort the batch,
+including when earlier samples scored successfully. Seven evaluator fixtures per
+source match per-sample and aggregate metrics. No DROP tracker links were found;
+archived replay is not claimed. Evidence is in `evidence/e2e/wiring/harness-drop`.
