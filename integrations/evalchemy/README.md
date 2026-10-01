@@ -402,3 +402,40 @@ unverified. The tested boundary is `evaluate_responses`. The original
 `run_benchmark` references missing `self.languages` and remains unchanged. Only
 Python execution is implemented by the source executor. No new verifier class
 is introduced.
+
+
+## LiveBench
+
+Apply `instructions-verifyit.patch` and `livebench-verifyit.patch`, build the
+included `eval/graders/livebench_runtime/Dockerfile`, and enable
+`verifyit_enabled=True`. The runtime README records the pinned Python image,
+package lock and required top-level `livebench` import path. The existing
+Evalchemy optional dependencies remain required; missing readers or runtimes
+abort grading. `VERIFYIT_LIVEBENCH_IMAGE` can select an equivalent validated
+image. Host verifyit was tested at `a2ebf259a9ad95871ad0d5655d6878999b353c67`;
+the callback container contains source runtime dependencies, not verifyit.
+
+All 49 category/task/subtask/release cells run through both JSONL and Hugging Face
+loaders with three frozen source-question fixtures per cell. Full metrics,
+ordered judgments and RNG state match the source. Twenty-four separately frozen
+public model-answer/judgment joins also match recorded scores and a fresh source
+replay; ten are positive. Archive source scorer revisions are not identified.
+Supplemental fixtures exercise the source house-traversal branch, absent from
+the downloaded question population, and full/partial/zero instruction scores.
+
+CTA uses ExactSpec; registered trusted instruction predicates use IfevalSpec.
+Other scorers retain their original callbacks under ScriptSpec, including
+source task/category/date aggregation. The documented image runs coding and
+AMPS callbacks. Source coding's six-second test and thirty-second task deadlines
+remain, under a 120-second outer deadline including startup. No additional
+network or memory restriction is imposed. Coding candidate code and trusted
+tests share the grader runtime; scoring parity does not establish isolation.
+
+Malformed trusted references, incomplete batches and missing dependencies abort
+without partial metrics, and failed batches remove judgment artifacts. Empty
+eligible HF tasks cannot reuse stale judgments. Candidate parse errors score
+zero; undetectable language no longer receives the source success fallback,
+and language detection is explicitly seeded. Nineteen regressions cover these
+cases. See `livebench-source.json` for exact hashes and
+`evidence/e2e/wiring/evalchemy-livebench/` for frozen selections and raw evidence.
+No new verifier class is introduced.

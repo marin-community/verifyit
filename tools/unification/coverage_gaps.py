@@ -1044,6 +1044,37 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-zeroeval/solution-availability.json",
                 ],
             )
+        elif name == "LiveBench":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_livebench_source_callbacks",
+                reason=(
+                    "CTA uses ExactSpec and instruction predicates use IfevalSpec; ScriptSpec retains "
+                    "the remaining source callbacks and complete task/category/release aggregation. "
+                    "Both JSONL and Hugging Face evaluator paths are wired."
+                ),
+                primitive_candidates=["exact", "ifeval", "script"],
+                needed_change=(
+                    "Apply the instruction helper and LiveBench patches, build the documented pinned "
+                    "runtime and enable verifyit_enabled=True. All 49 source contract/date cells have "
+                    "three frozen source-question fixtures through both loaders. Twenty-four frozen "
+                    "public answer/judgment joins match recorded and freshly reproduced scores; source "
+                    "archive scorer revisions are not identified. Malformed trusted tasks and missing "
+                    "dependencies abort the batch; undetectable language and candidate parse failures "
+                    "score zero. Coding candidate/assertion isolation remains unverified. "
+                    "Source coding time limits remain under a 120-second outer deadline."
+                ),
+                validation_status="source_evaluator_both_loaders_and_24_recorded_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/livebench-verifyit.patch",
+                    "integrations/evalchemy/livebench-source.json",
+                    "../evidence/e2e/wiring/evalchemy-livebench/final-comparison.json",
+                    "../evidence/e2e/wiring/evalchemy-livebench/final-archive/results.json",
+                    "../evidence/e2e/wiring/evalchemy-livebench/manager-final-archive/results.json",
+                    "../evidence/e2e/wiring/evalchemy-livebench/archive-score-comparison.json",
+                ],
+            )
         elif name == "BigCodeBench":
             entity.update(
                 status="retained_runtime_available",
