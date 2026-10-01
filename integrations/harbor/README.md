@@ -1119,7 +1119,7 @@ A positive report followed by a failed source process is an infrastructure
 error. Docker-copied workspace ownership requires Git's exact `/testbed`
 safe.directory setting in the verifier image; no wildcard is added.
 
-All 500 Verified tasks across 12 repositories and 80 versions preserve 2,500
+All 500 Verified tasks across 12 repositories and 80 repository/version combinations preserve 2,500
 source command/config/oracle assets byte-for-byte after generation. Three
 frozen genuine tasks (two Django and one pytest) have six actual source/Harbor
 oracle and unpatched roundtrips with equal full reports and 1/0 scores. Eight
