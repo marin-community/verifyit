@@ -1,0 +1,60 @@
+{
+  "source_revision": "e3f4a3d601896c437f37b0bd0a30e51651cce6d0",
+  "patch_sha256": "17c0cd1aab21d033e8a3801a3b1f2e8e65acd887c7efaf693d8146a99f2fdb9b",
+  "framework_files": {
+    "eval/chat_benchmarks/MixEval/eval_instruct.py": "81d7f657769c12e55873fd7aa3ea002462496332f1e9d2794db6ff011758d696",
+    "eval/graders/verifyit_mixeval.py": "b702f50e347621f1f95398f999931b4c07f87d6dcbd0a0a14d3ca747ce23ef78",
+    "tests/graders/test_verifyit_mixeval.py": "261649839bca232c26218bffe11d8054a311cbec91b7b46accd3510fe466a50d"
+  },
+  "source_files": {
+    "eval/chat_benchmarks/MixEval/eval_instruct.py": "eeef2210b1bf320d3ba7d359a67fcce4dd9142827f19ea0384c8f497b8b1347c",
+    "eval/chat_benchmarks/MixEval/mix_eval/compute_metrics.py": "2372c5fe1976ac47b642b05399c09aa598aef0ed522fa8a478eb701054049029",
+    "eval/chat_benchmarks/MixEval/mix_eval/utils/metric_utils.py": "e35c31d66935bc299fd69802a2ed555907bc3aa808068ab14247f884793d0fe2",
+    "eval/chat_benchmarks/MixEval/mix_eval/utils/judge_freeform_parser.py": "7e348df569ab26b8cb28ec7a29675e7a3760e78865af3fc5d6b8293826e77617",
+    "eval/chat_benchmarks/MixEval/mix_eval/utils/judge_multichoice_parser.py": "71bb9fea9028ed820945b47a88faf591825d379b834a225ba75e989359287b66",
+    "eval/chat_benchmarks/MixEval/mix_eval/prompts/judge_prompts.py": "f83950ed6b3566f2623af6a298af8f666c13b5731e444df756f05577e58bd6b8"
+  },
+  "fresh_applied": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/mixeval-evalchemy-applied",
+  "prerequisites": [
+    "verifyit",
+    "original MixEval dependencies"
+  ],
+  "contract": "ScriptSpec computes a fresh full batch through original source aggregation and parser helpers. Exact compares actual extracted MC labels and normalized FF substrings; Numeric compares source-rounded finite numbers with zero tolerance. Model FF fractional scores retain the source parser and unit scale. Source prompts, SDK settings, ordered api_parallel_num concurrency, split rounding and weighted category aggregation remain.",
+  "proof": {
+    "benchmarks": [
+      "mixeval",
+      "mixeval_hard"
+    ],
+    "profiles": [
+      "model/model",
+      "model/rule",
+      "rule/model",
+      "rule/rule"
+    ],
+    "framework_samples": 48,
+    "framework_batches": 8,
+    "http_requests": 24,
+    "ordinary_tests": 9,
+    "invalid_task_batches": 6,
+    "malformed_transport_batches": 6,
+    "source_fallback_empty_cache_corrections": 3
+  },
+  "source_oracles": {
+    "model_MC_profiles": "Untouched complete source evaluator.",
+    "rule_MC_profiles": "Original complete source evaluator fails with missing number_samples. Runner wraps only the untouched per-split rule-MC result to add independently counted metadata; contract-census.json independently recomputes weighted aggregates from source per-split judgments.",
+    "source_defect": "evidence/e2e/wiring/evalchemy-mixeval/source-count-defect.json"
+  },
+  "corrections": [
+    "Missing interpretations no longer receive random labels/fractional credit: source fixture aggregate 0.8 becomes 0. Empty model responses and stale positive cache fixtures each change 1 to 0.",
+    "Malformed judge transport/rating aborts the whole batch, retaining SDK retries but bypassing source outer 99 retries and random fallbacks.",
+    "Reject empty/nonfinite normalized references, malformed targets and reserved aggregate categories. Child InvalidTask remains invalid_task rather than infra_error.",
+    "Add missing rule-MC count metadata and map hard-benchmark generator split names to the scorer expected filenames. Fresh scoring does not trust cached judge or score files."
+  ],
+  "limitations": [
+    "Fixture-only actual evaluate_responses; no archived replay or live judge inference. No matching tracker/local named traces.",
+    "PYTHONHASHSEED=0 preserves source set-list ordering in returned rule-parser observations; no cross-hash-seed ordering equivalence claim.",
+    "The internal extract_base_model_response registry option is not exposed by the benchmark constructor and is rejected if manually enabled.",
+    "Fresh scoring uses isolated temporary files and returns original result/sample shapes; existing source cache files are not trusted or replaced.",
+    "Outer Script batch deadline is 1900 seconds; malformed transport aborts without positive partial aggregates."
+  ]
+}

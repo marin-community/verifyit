@@ -282,3 +282,25 @@ the batch. These corrections are reported separately from parity evidence.
 
 Source hashes, frame limits and patch dependencies are recorded in
 `custom-plus-source.json`. Evidence is under `evidence/e2e/wiring/evalchemy-plus`.
+
+## MixEval
+
+Apply `mixeval-verifyit.patch` and enable `verifyit_enabled=True` for `mixeval`
+or `mixeval_hard`. All four model/rule parser combinations run fresh scoring
+through ScriptSpec, preserving source prompts, ordered concurrency, split
+rounding and weighted category aggregation. Exact and Numeric grade the rule
+contracts; model free-form fractional scores retain the source parser.
+
+Eight profiles have 48 evaluator fixtures and 24 matching HTTP requests. The
+source rule-MC scorer omits count metadata and its complete aggregate fails;
+the correction is checked against untouched per-split scoring and an independent
+weighted-aggregate oracle. Missing interpretations, blank candidates and stale
+positive caches cannot award credit. Malformed judge transport aborts the batch
+after SDK retries, bypassing the source outer 99 retries and random fallback.
+
+Evidence is fixture-only. Use `PYTHONHASHSEED=0` to reproduce source ordering
+in parser observations. The internal base-model extraction flag is not exposed
+by the benchmark constructor and remains unsupported. Scoring uses temporary
+files; existing source caches are neither trusted nor replaced. The batch
+deadline is 1900 seconds. Source hashes and boundaries are in
+`mixeval-source.json`.

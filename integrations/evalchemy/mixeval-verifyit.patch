@@ -1,0 +1,483 @@
+--- a/eval/chat_benchmarks/MixEval/eval_instruct.py
++++ b/eval/chat_benchmarks/MixEval/eval_instruct.py
+@@ -45,6 +45,7 @@
+         debug: bool = False,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize MixEval benchmark.
+@@ -67,6 +68,7 @@
+         os.makedirs(output_dir, exist_ok=True)
+         if annotator_model == AUTO_ANNOTATOR_MODEL:
+             annotator_model = "gpt-3.5-turbo-0125"
++        self.verifyit_enabled = verifyit_enabled
+         self.multichoice_judge = annotator_model
+         self.freeform_judge = annotator_model
+         self.args = self._get_args(
+@@ -200,6 +202,10 @@
+         Returns:
+             Dictionary containing evaluation metrics and samples
+         """
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_mixeval import evaluate
++
++            return evaluate(self.args, results)
+         score_file = self._get_score_file()
+ 
+         if not os.path.exists(score_file):
+--- /dev/null
++++ b/eval/graders/verifyit_mixeval.py
+@@ -0,0 +1,300 @@
++"""Fresh MixEval scoring with retained parsers and existing grading primitives."""
++
++from collections import Counter
++from concurrent.futures import ThreadPoolExecutor
++import copy
++import dataclasses
++import hashlib
++import json
++import math
++import os
++from pathlib import Path
++import sys
++import tempfile
++from types import FunctionType, SimpleNamespace
++
++from verifyit.grade import InvalidTask, Status, run
++from verifyit.json_objects import unique_object
++from verifyit.modes.grade_exact import grade_exact_candidate
++from verifyit.modes.grade_math import grade_numeric_candidate
++from verifyit.spec import ExactSpec, NumericSpec, ScriptSpec, render_spec
++
++SOURCE_HASHES = {
++    "mix_eval/compute_metrics.py": "2372c5fe1976ac47b642b05399c09aa598aef0ed522fa8a478eb701054049029",
++    "mix_eval/utils/metric_utils.py": "e35c31d66935bc299fd69802a2ed555907bc3aa808068ab14247f884793d0fe2",
++    "mix_eval/utils/judge_freeform_parser.py": "7e348df569ab26b8cb28ec7a29675e7a3760e78865af3fc5d6b8293826e77617",
++    "mix_eval/utils/judge_multichoice_parser.py": "71bb9fea9028ed820945b47a88faf591825d379b834a225ba75e989359287b66",
++    "mix_eval/prompts/judge_prompts.py": "f83950ed6b3566f2623af6a298af8f666c13b5731e444df756f05577e58bd6b8",
++}
++
++
++def _source():
++    directory = Path(__file__).resolve().parents[1] / "chat_benchmarks/MixEval"
++    for name, digest in SOURCE_HASHES.items():
++        if hashlib.sha256((directory / name).read_bytes()).hexdigest() != digest:
++            raise InvalidTask("MixEval source scoring contract changed")
++    sys.path.append(str(directory))
++    from mix_eval import compute_metrics
++    from mix_eval.utils import metric_utils
++
++    return compute_metrics, metric_utils
++
++
++def evaluate(args, responses):
++    _source()
++    if args.free_form_parser not in {"model", "rule"} or args.multi_choice_parser not in {"model", "rule"}:
++        raise InvalidTask("Unknown MixEval parser configuration")
++    if args.benchmark not in {"mixeval", "mixeval_hard"}:
++        raise InvalidTask("Unknown MixEval benchmark")
++    if type(args.api_parallel_num) is not int or args.api_parallel_num <= 0:
++        raise InvalidTask("MixEval concurrency must be positive")
++    if not isinstance(args.model_name, str) or not args.model_name or Path(args.model_name).name != args.model_name:
++        raise InvalidTask("MixEval model name must be a single path component")
++    if args.extract_base_model_response:
++        raise InvalidTask("MixEval base-model registry extraction is outside this client contract")
++    suffix = "_hard" if args.benchmark == "mixeval_hard" else ""
++    splits = ["close_freeform" + suffix, "close_multichoice" + suffix]
++    if (
++        args.benchmark == "mixeval_hard"
++        and isinstance(responses, dict)
++        and set(responses) == {"close_freeform", "close_multichoice"}
++    ):
++        splits = ["close_freeform", "close_multichoice"]
++    if not isinstance(responses, dict) or set(responses) != set(splits):
++        raise InvalidTask("MixEval requires both complete response splits")
++    for split in splits:
++        rows = responses[split]
++        if not isinstance(rows, list) or not rows:
++            raise InvalidTask("MixEval response splits cannot be empty")
++        for row in rows:
++            if not isinstance(row, dict) or not isinstance(row.get("prompt"), str) or not row["prompt"].strip():
++                raise InvalidTask("MixEval requires a textual trusted prompt")
++            if (
++                not isinstance(row.get("response"), str)
++                or not isinstance(row.get("benchmark_name"), str)
++                or not row["benchmark_name"]
++                or row["benchmark_name"] == "overall"
++            ):
++                raise InvalidTask("MixEval requires response and benchmark labels")
++            target = row.get("target")
++            if not isinstance(target, list) or not target:
++                raise InvalidTask("MixEval references cannot be empty")
++            if "multichoice" in split:
++                options = row.get("options")
++                if (
++                    not isinstance(options, list)
++                    or not options
++                    or any(not isinstance(option, str) or not option.strip() for option in options)
++                    or len(target) != 1
++                    or type(target[0]) is not int
++                    or not 0 <= target[0] < len(options)
++                ):
++                    raise InvalidTask("Malformed MixEval multiple-choice reference")
++            elif any(not isinstance(answer, str) or not answer.strip() for answer in target):
++                raise InvalidTask("Malformed MixEval freeform reference")
++    with tempfile.TemporaryDirectory(prefix="verifyit-mixeval-") as directory:
++        root = Path(directory)
++        (root / "input.json").write_text(json.dumps({"args": vars(args), "responses": responses}, allow_nan=False))
++        (root / "run.sh").write_text('exec "$@"\n')
++        spec = ScriptSpec(
++            "run.sh",
++            args=(sys.executable, "-m", "eval.graders.verifyit_mixeval", str(root / "input.json")),
++            timeout=1900,
++            verdict_file="result.json",
++        )
++        (root / "verifier.toml").write_text(render_spec(spec))
++        verdict = run(root / "verifier.toml", root)
++    if verdict.status == Status.INVALID_TASK:
++        raise InvalidTask(str(verdict.detail))
++    if verdict.status != Status.SCORED:
++        raise RuntimeError(f"MixEval scoring failed: {verdict.status}: {verdict.detail}")
++    metrics = verdict.detail["metrics"]
++    if metrics.get("overall") != verdict.reward:
++        raise RuntimeError("MixEval aggregate disagrees with verifier reward")
++    name = (
++        args.multichoice_judge
++        if args.multichoice_judge == args.freeform_judge
++        else f"mc{args.multichoice_judge}_ff{args.freeform_judge}"
++    )
++    return {
++        name: {"metrics": metrics},
++        "samples": {"model_answers": responses, "judge_answers": verdict.detail["judge_answers"]},
++    }
++
++
++def main():
++    payload = json.loads(Path(sys.argv[1]).read_text())
++    metrics_module, source = _source()
++    args = SimpleNamespace(**payload["args"])
++    responses = payload["responses"]
++    core_verdicts = []
++
++    def reward(verdict):
++        if verdict.status != Status.SCORED:
++            raise RuntimeError("MixEval primitive did not score")
++        core_verdicts.append(dataclasses.asdict(verdict))
++        return verdict.reward
++
++    def exact(gold, prediction):
++        return (
++            reward(
++                grade_exact_candidate(
++                    ExactSpec(
++                        expected=(gold,), ignore_case=False, ignore_whitespace=False, strip_outer_whitespace=False
++                    ),
++                    prediction,
++                )
++            )
++            == 1
++        )
++
++    def freeform_rule(gold, predictions):
++        normalized = [item for answer in gold for item in source.normalize_str(answer)]
++        for answer in normalized:
++            if (
++                isinstance(answer, str)
++                and not answer.strip()
++                or isinstance(answer, float)
++                and not math.isfinite(answer)
++            ):
++                raise InvalidTask("MixEval normalized freeform reference is empty or nonfinite")
++        for prediction in predictions:
++            for answer in normalized:
++                if isinstance(prediction, str) and isinstance(answer, str):
++                    verdict = grade_exact_candidate(
++                        ExactSpec(
++                            expected=(answer,),
++                            ignore_case=False,
++                            ignore_whitespace=False,
++                            strip_outer_whitespace=False,
++                            substring=True,
++                        ),
++                        prediction,
++                    )
++                elif isinstance(prediction, float) and isinstance(answer, float):
++                    if not math.isfinite(prediction):
++                        continue
++                    verdict = grade_numeric_candidate(
++                        NumericSpec(expected=answer, tolerance_abs=0, tolerance_rel=0), prediction
++                    )
++                else:
++                    continue
++                if reward(verdict) == 1:
++                    return True
++        return False
++
++    rule = source.parse_multi_choice_response_rule
++    no_random_rule = FunctionType(
++        rule.__code__, {**rule.__globals__, "random": SimpleNamespace(choice=lambda choices: "-1")}, rule.__name__
++    )
++
++    def judge_rows(args, tasks, family):
++        factory = (
++            source.ChatGPTJudgeCloseendFreeform if family == "freeform" else source.ChatGPTJudgeCloseendMultichoice
++        )
++        judge = factory(args)
++
++        def one(original):
++            task = copy.deepcopy(original)
++            inputs = (
++                task["prompt"],
++                task["target"] if family == "freeform" else task["options"],
++                task["response"],
++            )
++            raw = judge.client.chat.completions.with_raw_response.create(
++                model=judge.JUDGE,
++                response_format={"type": "text"},
++                max_tokens=judge.MAX_NEW_TOKENS,
++                messages=judge.format_prompts(inputs),
++            )
++            transport = json.loads(raw.http_response.text, object_pairs_hook=unique_object)
++            json.dumps(transport, allow_nan=False)
++            if not isinstance(transport, dict) or transport.get("error") is not None:
++                raise RuntimeError("MixEval judge transport failed")
++            choices = transport.get("choices")
++            if not isinstance(choices, list) or len(choices) != 1 or choices[0].get("finish_reason") != "stop":
++                raise RuntimeError("MixEval judge returned incomplete output")
++            message = choices[0].get("message")
++            if (
++                not isinstance(message, dict)
++                or message.get("refusal")
++                or message.get("tool_calls")
++                or message.get("function_call")
++                or not isinstance(message.get("content"), str)
++            ):
++                raise RuntimeError("MixEval judge did not return textual judgment")
++            raw.parse()
++            task["judge_response"] = message["content"]
++            if family == "freeform":
++                score = source.get_score_from_judge(message["content"])
++                if score != -1 and (not math.isfinite(score) or not 0 <= score <= 1):
++                    raise RuntimeError("MixEval judge score lies outside its unit scale")
++                task["judge_score"] = score if score != -1 and task["response"].strip() else 0.0
++            else:
++                task["judge_option"] = (
++                    source.get_option_from_judge(message["content"]) if task["response"].strip() else "-1"
++                )
++            return task
++
++        try:
++            with ThreadPoolExecutor(max_workers=args.api_parallel_num) as executor:
++                return list(executor.map(one, tasks))
++        finally:
++            judge.client.close()
++
++    metrics_module.eval_multi_choice = exact
++    metrics_module.eval_freeform_rule = freeform_rule
++    metrics_module.parse_multi_choice_response_rule = no_random_rule
++    metrics_module.eval_freeform_model = lambda args, tasks: judge_rows(args, tasks, "freeform")
++    metrics_module.parse_multi_choice_response_model = lambda args, tasks: judge_rows(args, tasks, "multichoice")
++    original_rule_metric = metrics_module.compute_metric_closeended_multichoice_ruleparse
++
++    def counted_rule_metric(args):
++        result = original_rule_metric(args)
++        split = "close_multichoice_hard" if args.benchmark == "mixeval_hard" else "close_multichoice"
++        if split not in responses:
++            split = "close_multichoice"
++        counts = Counter(row["benchmark_name"] for row in responses[split])
++        counts["overall"] = len(responses[split])
++        result[args.model_name]["number_samples"] = dict(counts)
++        return result
++
++    metrics_module.compute_metric_closeended_multichoice_ruleparse = counted_rule_metric
++    args.output_dir = str(Path(sys.argv[1]).parent / "fresh")
++    args.compute_score_from_judged_file = False
++    directory = Path(args.output_dir) / args.model_name / args.benchmark / args.version
++    directory.mkdir(parents=True)
++    for split, rows in responses.items():
++        if args.benchmark == "mixeval_hard" and not split.endswith("_hard"):
++            split += "_hard"
++        (directory / f"{args.model_name}_{split}.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
++    metrics_module.compute_metrics_p(args)
++    name = (
++        args.multichoice_judge
++        if args.multichoice_judge == args.freeform_judge
++        else f"mc{args.multichoice_judge}_ff{args.freeform_judge}"
++    )
++    metrics = json.loads((directory / f"score_{name}.json").read_text())
++    if not metrics or any(
++        type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1
++        for value in metrics.values()
++    ):
++        raise RuntimeError("MixEval returned invalid aggregate scores")
++    judged = {}
++    for filename in directory.glob("judge_results_*.jsonl"):
++        key = "close_freeform" if filename.name.startswith("judge_results_ff") else "close_multichoice"
++        judged[key] = [json.loads(line) for line in filename.read_text().splitlines()]
++    result = {
++        "status": "scored",
++        "reward": metrics["overall"],
++        "detail": {"metrics": metrics, "judge_answers": judged, "primitive_verdicts": core_verdicts},
++    }
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(json.dumps(result, allow_nan=False))
++
++
++if __name__ == "__main__":
++    try:
++        main()
++    except InvalidTask as error:
++        result = {"status": "invalid_task", "reward": 0.0, "detail": {"error": str(error)}}
++        (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(json.dumps(result, allow_nan=False))
+--- /dev/null
++++ b/tests/graders/test_verifyit_mixeval.py
+@@ -0,0 +1,148 @@
++"""MixEval fresh scoring, count metadata and deterministic interpretation failures."""
++
++import json
++import threading
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++from types import SimpleNamespace
++
++import pytest
++from verifyit.grade import InvalidTask
++
++from eval.graders.verifyit_mixeval import evaluate
++
++
++def args(**changes):
++    values = dict(
++        benchmark="mixeval",
++        version="2024-06-01",
++        model_name="llama_3_8b",
++        output_dir="unused",
++        free_form_parser="rule",
++        multi_choice_parser="rule",
++        api_parallel_num=1,
++        extract_base_model_response=False,
++        compute_score_from_judged_file=False,
++        freeform_judge="fixture",
++        multichoice_judge="fixture",
++        verbose=False,
++    )
++    values.update(changes)
++    return SimpleNamespace(**values)
++
++
++def responses(freeform_target="2.35", freeform_response="The answer is 2.345", mc_response="A"):
++    return {
++        "close_freeform": [
++            {
++                "id": "ff",
++                "prompt": "Number?",
++                "target": [freeform_target],
++                "response": freeform_response,
++                "benchmark_name": "numeric",
++            }
++        ],
++        "close_multichoice": [
++            {
++                "id": "mc",
++                "prompt": "Color?",
++                "options": ["red", "blue"],
++                "target": [0],
++                "response": mc_response,
++                "benchmark_name": "choice",
++            }
++        ],
++    }
++
++
++def test_rule_profiles_keep_source_numeric_rounding_and_complete_counts():
++    result = evaluate(args(), responses())
++    assert result["fixture"]["metrics"] == {"overall": 1.0, "numeric": 1.0, "choice": 1.0}
++    assert result["samples"]["judge_answers"]["close_freeform"][0]["eval_result"] is True
++
++
++def test_no_interpretable_choice_scores_zero_instead_of_random_credit():
++    result = evaluate(args(), responses(mc_response="unrecognized"))
++    assert result["fixture"]["metrics"]["choice"] == 0
++    assert result["samples"]["judge_answers"]["close_multichoice"][0]["parsed_result"] == "-1"
++
++
++def test_hard_benchmark_accepts_actual_generator_split_names():
++    result = evaluate(args(benchmark="mixeval_hard"), responses())
++    assert result["fixture"]["metrics"]["overall"] == 1
++    assert set(result["samples"]["model_answers"]) == {"close_freeform", "close_multichoice"}
++
++
++def test_source_single_character_boundaries_remain_significant():
++    result = evaluate(args(), responses(freeform_target="a", freeform_response="cat"))
++    assert result["fixture"]["metrics"]["numeric"] == 0
++
++
++@pytest.mark.parametrize("reference", ["", "  "])
++def test_empty_reference_aborts_instead_of_vacuous_substring_credit(reference):
++    with pytest.raises(InvalidTask):
++        evaluate(args(), responses(freeform_target=reference, freeform_response="wrong"))
++
++
++def test_nonfinite_normalized_reference_preserves_invalid_task_status():
++    with pytest.raises(InvalidTask, match="nonfinite"):
++        evaluate(args(), responses(freeform_target="inf", freeform_response="infinity"))
++
++
++def test_reserved_aggregate_category_cannot_replace_sample_counts():
++    rows = responses()
++    rows["close_multichoice"][0]["benchmark_name"] = "overall"
++    with pytest.raises(InvalidTask):
++        evaluate(args(), rows)
++
++
++def test_empty_model_judgments_ignore_stale_positive_score_cache(tmp_path, monkeypatch):
++
++    class Handler(BaseHTTPRequestHandler):
++        def do_POST(self):
++            request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
++            body = json.dumps(
++                {
++                    "id": "fixture",
++                    "object": "chat.completion",
++                    "created": 0,
++                    "model": request["model"],
++                    "choices": [
++                        {
++                            "index": 0,
++                            "finish_reason": "stop",
++                            "message": {"role": "assistant", "content": "[[1]] [[A]]"},
++                        }
++                    ],
++                }
++            ).encode()
++            self.send_response(200)
++            self.send_header("Content-Type", "application/json")
++            self.send_header("Content-Length", str(len(body)))
++            self.end_headers()
++            self.wfile.write(body)
++
++        def log_message(self, *_):
++            pass
++
++    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
++    thread = threading.Thread(target=server.serve_forever, daemon=True)
++    thread.start()
++    monkeypatch.setenv("MODEL_PARSER_API", "fixture")
++    settings = args(
++        output_dir=str(tmp_path),
++        free_form_parser="model",
++        multi_choice_parser="model",
++        api_base_url=f"http://127.0.0.1:{server.server_port}/v1",
++    )
++    cache = tmp_path / settings.model_name / settings.benchmark / settings.version
++    cache.mkdir(parents=True)
++    (cache / "score_fixture.json").write_text(json.dumps({"overall": 1.0}))
++    try:
++        result = evaluate(settings, responses(freeform_response="", mc_response=""))
++    finally:
++        server.shutdown()
++        server.server_close()
++        thread.join()
++    assert result["fixture"]["metrics"]["overall"] == 0
++    assert result["samples"]["judge_answers"]["close_freeform"][0]["judge_score"] == 0
++    assert result["samples"]["judge_answers"]["close_multichoice"][0]["judge_option"] == "-1"

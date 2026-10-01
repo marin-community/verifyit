@@ -1013,6 +1013,37 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-repobench/archive-census.json",
                 ],
             )
+        elif name == "MixEval":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_mixeval_parser_runtime",
+                reason=(
+                    "ScriptSpec retains source parser requests and weighted aggregates; ExactSpec "
+                    "grades extracted labels and normalized substrings, and NumericSpec grades "
+                    "source-rounded finite numbers. Missing interpretations receive minimum scores."
+                ),
+                primitive_candidates=["exact", "numeric", "script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True. All eight default/hard parser profiles have "
+                    "fixture evaluator evidence with 48 samples and 24 matching HTTP requests. "
+                    "Source rule-MC aggregation lacks count metadata; the opt-in correction matches "
+                    "an independent count/aggregate oracle. Blank responses and stale positive caches "
+                    "cannot preserve credit; malformed judge batches abort. PYTHONHASHSEED=0 pins "
+                    "source observation ordering. The unexposed base-model extraction flag is "
+                    "unsupported. Existing cache files are neither trusted nor replaced. No archive replay."
+                ),
+                validation_status="source_custom_evaluator_fixtures_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/mixeval-verifyit.patch",
+                    "integrations/evalchemy/mixeval-source.json",
+                    "../evidence/e2e/wiring/evalchemy-mixeval/manager-final-hard/results.json",
+                    "../evidence/e2e/wiring/evalchemy-mixeval/default-parallel/results.json",
+                    "../evidence/e2e/wiring/evalchemy-mixeval/contract-census.json",
+                    "../evidence/e2e/wiring/evalchemy-mixeval/source-count-defect.json",
+                    "../evidence/e2e/wiring/evalchemy-mixeval/archive-census.json",
+                ],
+            )
         elif name == "WildBench":
             entity.update(
                 status="retained_runtime_available",

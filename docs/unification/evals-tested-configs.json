@@ -20,15 +20,15 @@
     },
     "evalchemy-custom": {
       "total": 42,
-      "e2e_tested": 34,
+      "e2e_tested": 35,
       "archive_score_parity": 5,
-      "fixture_tested": 30,
-      "fixture_only": 28,
+      "fixture_tested": 31,
+      "fixture_only": 29,
       "real_response_source_parity_not_archive_score": 1,
-      "route_available": 34
+      "route_available": 35
     }
   },
-  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance. Plus frame-boundary fixtures use explicit30-second source/cutover budgets; three source missing-assert scoring corrections are recorded separately from parity. Five judge clients use local HTTP fixtures with source request-body parity; malformed transport cases abort entire batches. OlympiadBench archive links are frozen but unavailable. IFEval540 saved source responses reproduce source scoring with detector seed0, not archived validated scores; IFBench300 genuine instruction rows use synthetic responses. The source IFEval full-driver typo remains outside the tested evaluate_responses boundary. MRCR generation-scoring and evaluator methods match source across74 fixtures with dataset selection and model outputs substituted; archived replay is unclaimed. HMMT uses three frozen questions and ten source repetitions through generation/evaluation; all 30 gold answers also have canonical/wrong supplemental grading. The bounded explicit symbolic transport returns display strings in model_answers and does not claim arbitrary SymPy equivalence. No HMMT archive replay is claimed. Five competitive-code clients have 66 fixture completion evaluations through actual source evaluators. Source macOS and pinned candidate-runtime outputs match; LCB source memory limits are separately preserved and tested. Legacy clients inherit their environment memory limit. No archive replay is claimed. FinanceBench and both HLE evaluator methods preserve full fixture results and HTTP request bodies. Malformed judge batches abort without partial metrics. HLE calibration CLI is excluded. FinanceBench has 14 tracker links with three frozen selections, but unavailable archive credentials prevent replay; both promotions remain fixture-only. CruxEval preserves both directions and pass@1/pass@5 across 90 fixture completions, including source nested-input regex truncation. Its 800 reference rows have a literal-type census; nine frozen tasks have evaluator replay. Bytes transport uses bounded canonical hexadecimal values. Missing command-runtime evidence is not Docker-specific. Three of 14 archive links are frozen but unavailable. RepoBench covers all six default language/subset cells with 18 evaluator fixtures, retaining source double rounding and globally weighted language labels. Fuzzywuzzy 0.18.0 uses the pure-Python difflib backend. Source directory lookup is appended on both routes for its absolute imports. No CodeBLEU or archived replay claim is made. WildBench covers the working score-mode evaluator with six local HTTP fixtures and source request/metric parity, including quoted prompt delimiters. Empty candidates receive source minimum 1 / verifyit reward 0 despite a positive judge response. Advertised pairwise mode fails in the source because references are None and remains unsupported. Both replay routes supply the missing max_tokens configuration field with the final source budget of 4096. No archive replay is claimed.",
+  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance. Plus frame-boundary fixtures use explicit30-second source/cutover budgets; three source missing-assert scoring corrections are recorded separately from parity. Five judge clients use local HTTP fixtures with source request-body parity; malformed transport cases abort entire batches. OlympiadBench archive links are frozen but unavailable. IFEval540 saved source responses reproduce source scoring with detector seed0, not archived validated scores; IFBench300 genuine instruction rows use synthetic responses. The source IFEval full-driver typo remains outside the tested evaluate_responses boundary. MRCR generation-scoring and evaluator methods match source across74 fixtures with dataset selection and model outputs substituted; archived replay is unclaimed. HMMT uses three frozen questions and ten source repetitions through generation/evaluation; all 30 gold answers also have canonical/wrong supplemental grading. The bounded explicit symbolic transport returns display strings in model_answers and does not claim arbitrary SymPy equivalence. No HMMT archive replay is claimed. Five competitive-code clients have 66 fixture completion evaluations through actual source evaluators. Source macOS and pinned candidate-runtime outputs match; LCB source memory limits are separately preserved and tested. Legacy clients inherit their environment memory limit. No archive replay is claimed. FinanceBench and both HLE evaluator methods preserve full fixture results and HTTP request bodies. Malformed judge batches abort without partial metrics. HLE calibration CLI is excluded. FinanceBench has 14 tracker links with three frozen selections, but unavailable archive credentials prevent replay; both promotions remain fixture-only. CruxEval preserves both directions and pass@1/pass@5 across 90 fixture completions, including source nested-input regex truncation. Its 800 reference rows have a literal-type census; nine frozen tasks have evaluator replay. Bytes transport uses bounded canonical hexadecimal values. Missing command-runtime evidence is not Docker-specific. Three of 14 archive links are frozen but unavailable. RepoBench covers all six default language/subset cells with 18 evaluator fixtures, retaining source double rounding and globally weighted language labels. Fuzzywuzzy 0.18.0 uses the pure-Python difflib backend. Source directory lookup is appended on both routes for its absolute imports. No CodeBLEU or archived replay claim is made. WildBench covers the working score-mode evaluator with six local HTTP fixtures and source request/metric parity, including quoted prompt delimiters. Empty candidates receive source minimum 1 / verifyit reward 0 despite a positive judge response. Advertised pairwise mode fails in the source because references are None and remains unsupported. Both replay routes supply the missing max_tokens configuration field with the final source budget of 4096. No archive replay is claimed. MixEval covers eight default/hard parser profiles with 48 evaluator fixtures and 24 matching HTTP requests. Source rule-MC aggregation requires missing count metadata; its oracle retains original per-split scoring and independently computes weighted aggregates. Random interpretation fallback, blank-response credit and stale positive caches are corrected to minimum scores. Malformed judge batches abort. Source observation ordering uses PYTHONHASHSEED=0; the unexposed base-model extraction option and archived replay are excluded.",
   "records": [
     {
       "entity_id": "evalchemy-custom:eval/chat_benchmarks/AIME24/eval_instruct.py",
@@ -410,6 +410,25 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/evalchemy-mrcr/cutover/roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/MixEval/eval_instruct.py",
+      "name": "MixEval",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-mixeval/default-parallel/results.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-mixeval/hard-parallel/results.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-mixeval/manager-final-hard/results.json"
         }
       ]
     },
