@@ -4509,16 +4509,17 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#sldbench",
         "docs/unification/harbor_inventory.json#sldbench",
-        "docs/unification/harbor_specs.md#native-score"
+        "integrations/harbor/sldbench-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-sldbench/final-manifest.json"
       ],
-      "gap_kind": "unbounded_metric_policy",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "sldbench",
-      "needed_change": "Retain symbolic-function execution and finite-prediction held-out R2; specify benchmark-approved unit-domain projection while preserving raw R2 and nonfinite/failed execution diagnostics.",
+      "needed_change": "Validate archived model candidates and production deployment; candidate law code still executes inside the source grader.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Execute supplied symbolic-law function and compute finite-prediction R2 over hidden data; unbounded negative score needs explicit native-score handling. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in generation snapshots the exact test split at a resolved dataset revision and retains the source grouped single/multitarget scorer through existing ScriptSpec. Native clipped negative R2 maps explicitly to scored0; source reward and full metrics are retained.",
       "source_evidence": [
         {
           "functions": [
@@ -4551,8 +4552,15 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "All eight actual source tasks with unchanged reference oracles were replayed: six fractional scores match exactly and two negative scores intentionally become0, with all metrics preserved. Three seeded ordinary wrong candidates and a missing candidate return0. Finalv2 moves reference preflight before the bridge: malformed data is invalid_task0 rather than historicalv1 infra_error0 (source\u22121). All scoring functions/data unchanged; finalv2 positive/status Trials and installed hashes verified. Three regressions pass. Real source-oracle evidence is conservatively classified fixture, not archived model traces. Production core pin is unpublished; exact local wheel used.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Pinned test parquet, source evaluator and verifier.toml in separate verifier image",
+        "remaining_gap": "candidate_execution_in_grader",
+        "needed_change": "Candidate law code executes in the source grader; candidate/assertion isolation is unverified. No new security tests."
+      }
     },
     {
       "entity_id": "harbor:sotopia",

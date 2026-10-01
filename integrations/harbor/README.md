@@ -639,3 +639,29 @@ model traces. Candidate expressions execute within the source grader; that
 trust boundary remains unverified. No new security tests were run. Use the
 exact local wheel recipe above: the production Dockerfile references a local
 verifyit revision that has not been published.
+
+
+## SLDBench
+
+Apply `sldbench-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate with `--verifyit`.
+Use `--dataset-revision` to select a revision; generation resolves it and stores
+the exact test split with the source evaluator in a separate verifier image.
+Existing ScriptSpec transfers `law.py` and `explain.md`. Source clipped negative
+R² maps to scored 0, retaining the original reward and all metrics. Reference
+preflight reports invalid data as invalid_task before loading the candidate.
+
+All eight real source tasks and unchanged reference oracles were replayed at
+dataset revision `721b846056f031737ff7fa72572c021324e3ec0e`: six fractional scores
+match exactly, and two negative scores become 0. Three seeded wrong candidates
+and a missing candidate score 0. Three regressions pass. Final v2 moves reference
+preflight before the bridge so malformed data produces invalid_task 0 rather
+than v1's infra_error 0; the source reports -1. Scoring functions and data remain
+unchanged, with targeted final-image positive and invalid-task checks. The
+manifest at `evidence/e2e/wiring/harbor-sldbench/final-manifest.json` records
+original data, task, patch, result and installed-image hashes.
+
+These are real source-oracle runs, conservatively counted as fixtures rather
+than archived model traces. Candidate code executes within the grader, and its
+trust boundary remains unverified. No new security tests were run. Use the exact
+local wheel recipe above while the production verifyit pin remains unpublished.
