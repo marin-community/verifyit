@@ -189,3 +189,25 @@ References that normalize to empty spans are invalid tasks and abort the batch,
 including when earlier samples scored successfully. Seven evaluator fixtures per
 source match per-sample and aggregate metrics. No DROP tracker links were found;
 archived replay is not claimed. Evidence is in `evidence/e2e/wiring/harness-drop`.
+
+## HumanEval pass@1
+
+Apply `humaneval-function-verifyit.patch` after the DROP patch. Pull the worker
+image `python@sha256:e41613d42d4891e4930f79523f93f81bbc7632584ec65e36ab055f41a800b41e`
+and pass task metadata `verifyit_humaneval_runtime: true` through TaskManager.
+Docker must be available to the evaluator process. The harness and Evalchemy
+HumanEval definitions are supported with one completion and `k: [1]`; other
+repeat counts and pass@k configurations are rejected.
+
+The source completion-building filter remains. `ScriptSpec` runs the source
+assertions in a supervisor, which calls a persistent candidate function in a
+separate container using bounded typed JSON. Candidate stdout is separate from
+the function transport. The worker receives the candidate and function inputs;
+source assertions remain in the supervisor. The pinned worker has no network,
+a read-only filesystem and explicit resource limits.
+
+Three frozen source tasks produce identical source and cutover scores for
+canonical, incorrect and correct-with-print completions on both framework
+routes. These are source fixtures, not archived model traces. The tracker has
+HumanEvalPlus runs, which use a different evaluation contract. Evidence and
+installation hashes are under `evidence/e2e/wiring/harness-humaneval`.

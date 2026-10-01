@@ -1044,10 +1044,33 @@ def main():
                     "../evidence/e2e/wiring/harness-drop/trace-census.json",
                 ],
             )
+    for entity in entities:
+        if entity["entity_id"] in {
+            "lm-eval-harness:lm_eval/tasks/humaneval/humaneval.yaml",
+            "evalchemy-override:eval/lm_eval_tasks/humaneval/humaneval.yaml",
+        }:
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="humaneval_function_runtime",
+                reason=(
+                    "ScriptSpec executes source HumanEval assertions against a persistent isolated function worker; "
+                    "source completion construction and pass@1 metrics remain."
+                ),
+                primitive_candidates=["script"],
+                needed_change="Enable verifyit_humaneval_runtime metadata with the pinned Docker image; pass@1 only.",
+                validation_status="source_evaluator_fixtures_no_archived_replay",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/humaneval-function-verifyit.patch",
+                    "../evidence/e2e/wiring/harness-humaneval/roundtrip-final/roundtrip.json",
+                    "../evidence/e2e/wiring/harness-humaneval/implementation-provenance.json",
+                    "../evidence/e2e/wiring/harness-humaneval/trace-census.json",
+                ],
+            )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 492
-    assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 979
+    assert len(harness_gaps) == 491
+    assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 980
     assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11221
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
