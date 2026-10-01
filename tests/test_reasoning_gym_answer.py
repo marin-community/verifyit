@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from verifyit.grade import InvalidTask, Status
+from verifyit.grade import InvalidTask, Status, main
 from verifyit.modes import grade_reasoning_gym
 from verifyit.spec import ReasoningGymSpec
 
@@ -76,11 +76,69 @@ def test_partial_credit_from_the_scorer_is_passed_through(tmp_path, workspace):
     assert grade(tests_dir, workspace, dataset="simple_equations").reward == 1.0
 
 
+@pytest.mark.parametrize(
+    "dataset,entry,candidate,expected",
+    [
+        ("letter_jumble", {"answer": "alpha beta"}, "ALPHA BETA", 1.0),
+        ("letter_jumble", {"answer": "alpha beta"}, "alpha wrong", 0.5),
+        ("letter_jumble", {"answer": "alpha beta"}, "alpha beta extra", 1.0),
+        ("letter_jumble", {"answer": "alpha beta"}, "wrong wrong", 0.0),
+        (
+            "word_sorting",
+            {"answer": "alpha, beta", "metadata": {"sorted_words": ["alpha", "beta"]}},
+            "alpha, wrong",
+            0.5,
+        ),
+        (
+            "word_sorting",
+            {"answer": "alpha, beta", "metadata": {"sorted_words": ["alpha", "beta"]}},
+            "beta, alpha",
+            0.2,
+        ),
+        ("simple_equations", {"answer": "42"}, "x = 42", 1 / 3),
+    ],
+)
+def test_extracted_candidate_preserves_dataset_partial_credit(dataset, entry, candidate, expected):
+    entry.setdefault("metadata", {})["source_dataset"] = dataset
+    result = grade_reasoning_gym.grade_reasoning_gym_candidate(ReasoningGymSpec(dataset=dataset), entry, candidate)
+    assert (result.reward, result.status) == (expected, Status.SCORED)
+
+
+def test_scorer_failure_clears_reward_files_and_records_infrastructure_error(tests_dir, workspace, tmp_path):
+    spec_path = tests_dir / "verifier.toml"
+    spec_path.write_text('mode = "reasoning-gym"\ndataset = "word_sorting"\n')
+    entry = {
+        "answer": "alpha, beta",
+        "metadata": {"source_dataset": "word_sorting", "sorted_words": ["alpha", "beta"]},
+    }
+    (tests_dir / "entry.json").write_text(json.dumps(entry))
+    answer(workspace, "alpha, beta")
+    logs_dir = tmp_path / "logs"
+    args = [str(spec_path), "--workspace", str(workspace), "--logs-dir", str(logs_dir)]
+    assert main(args) == 0
+    assert json.loads((logs_dir / "reward.json").read_text()) == {"reward": 1.0}
+    assert (logs_dir / "reward.txt").read_text() == "1.0\n"
+
+    # A missing evaluator field is a grader failure, not an incorrect candidate.
+    del entry["metadata"]["sorted_words"]
+    (tests_dir / "entry.json").write_text(json.dumps(entry))
+    assert main(args) == 0
+    verdict = json.loads((logs_dir / "verdict.json").read_text())
+    assert verdict["status"] == Status.INFRA_ERROR
+    assert "KeyError" in verdict["detail"]["error"]
+    assert not (logs_dir / "reward.json").exists()
+    assert not (logs_dir / "reward.txt").exists()
+
+
 @pytest.mark.parametrize("text", [None, "", "   \n"])
 def test_absent_or_blank_output_scores_zero_with_no_output(tests_dir, workspace, text):
     if text is not None:
         answer(workspace, text)
     reward = grade(tests_dir, workspace)
+    candidate_reward = grade_reasoning_gym.grade_reasoning_gym_candidate(
+        ReasoningGymSpec(dataset="needle_haystack"), NEEDLE_ENTRY, text
+    )
+    assert candidate_reward == reward
     assert reward.reward == 0.0
     assert reward.detail == {"reason": "no_output"}
 
