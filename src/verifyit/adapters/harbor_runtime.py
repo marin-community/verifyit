@@ -10,6 +10,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from verifyit.json_objects import unique_object
+
 VERDICT = "native-verdict.json"
 
 
@@ -29,14 +31,17 @@ def _reject_constant(value: str) -> None:
     raise ValueError(f"nonfinite JSON constant {value}")
 
 
-def _native_reward(logs: Path, reward_key: str) -> tuple[float, dict[str, float]]:
+def _native_reward(logs: Path, reward_key: str) -> tuple[float, dict[str, object]]:
     reward_json = logs / "reward.json"
     if reward_json.exists():
-        payload = json.loads(reward_json.read_text(), parse_constant=_reject_constant)
+        payload = json.loads(reward_json.read_text(), parse_constant=_reject_constant, object_pairs_hook=unique_object)
         if not isinstance(payload, dict) or reward_key not in payload:
             raise ValueError(f"native reward.json lacks {reward_key!r}")
+        # Auxiliary detail may contain nulls, text and nested records. Validate every
+        # number without allowing metadata to determine the primary reward.
+        json.dumps(payload, allow_nan=False)
         reward = _numeric(payload[reward_key])
-        metrics = {key: _numeric(value) for key, value in payload.items() if key != reward_key}
+        metrics = {key: value for key, value in payload.items() if key != reward_key}
         return reward, metrics
     if reward_key != "reward":
         raise ValueError(f"named reward {reward_key!r} requires reward.json")

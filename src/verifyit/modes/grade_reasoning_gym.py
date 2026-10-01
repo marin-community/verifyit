@@ -16,6 +16,7 @@ import reasoning_gym
 from reasoning_gym.factory import DATASETS
 
 from verifyit.grade import InvalidTask, Reward, read_output, scored
+from verifyit.json_objects import unique_object
 from verifyit.spec import ReasoningGymSpec
 
 CANDIDATE_DETAIL_CHARS = 200
@@ -34,15 +35,6 @@ def load_entry(path: Path) -> dict:
     return entry
 
 
-def _params_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
-    params = {}
-    for key, value in pairs:
-        if key in params:
-            raise ValueError(f"duplicate parameter key {key!r}")
-        params[key] = value
-    return params
-
-
 def grade(spec: ReasoningGymSpec, tests_dir: Path, workspace: Path) -> Reward:
     entry = load_entry(tests_dir / spec.entry)
     if spec.params is None:
@@ -57,7 +49,7 @@ def grade(spec: ReasoningGymSpec, tests_dir: Path, workspace: Path) -> Reward:
         if not params_path.is_file():
             raise InvalidTask(f"reasoning-gym params not found: {params_path}")
         try:
-            params = json.loads(params_path.read_text(), object_pairs_hook=_params_object)
+            params = json.loads(params_path.read_text(), object_pairs_hook=unique_object)
             if not isinstance(params, dict):
                 raise ValueError("params must be an object")
             json.dumps(params, allow_nan=False)

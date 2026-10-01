@@ -80,3 +80,53 @@ def test_native_json_keeps_named_numeric_metrics(native_task):
     reward = run(tests / "verifier.toml", workspace)
     assert (reward.status, reward.reward) == (Status.SCORED, 0.5)
     assert reward.detail["native_metrics"] == {"pass_rate": 0.75}
+
+
+def test_native_json_preserves_gdb_optional_metrics(native_task):
+    tests, workspace, _ = native_task
+    # Produced by the pinned GDB evaluator's write_reward serialization helper.
+    payload = {
+        "reward": 0.75,
+        "accuracy": 0.75,
+        "nima_score": None,
+        "format": "png",
+        "per_example": [{"score": 0.75, "note": "optional metric unavailable"}],
+    }
+    (tests / "native_reward.json").write_text(json.dumps(payload))
+    (tests / "test.sh").write_text(
+        'cp "$VERIFYIT_TESTS_DIR/native_reward.json" "$VERIFYIT_NATIVE_LOGS_DIR/reward.json"\n'
+    )
+    reward = run(tests / "verifier.toml", workspace)
+    assert (reward.status, reward.reward) == (Status.SCORED, 0.75)
+    assert reward.detail["native_metrics"] == {key: value for key, value in payload.items() if key != "reward"}
+
+
+@pytest.mark.parametrize("primary", [True, -0.1, 1.1, "NaN", None])
+def test_auxiliary_metadata_does_not_rescue_invalid_primary(native_task, primary):
+    tests, workspace, _ = native_task
+    (tests / "native_reward.json").write_text(json.dumps({"reward": primary, "accuracy": 1.0, "format": "png"}))
+    (tests / "test.sh").write_text(
+        'cp "$VERIFYIT_TESTS_DIR/native_reward.json" "$VERIFYIT_NATIVE_LOGS_DIR/reward.json"\n'
+    )
+    reward = run(tests / "verifier.toml", workspace)
+    assert (reward.status, reward.reward) == (Status.INFRA_ERROR, 0.0)
+
+
+def test_nested_nonfinite_metric_is_unscored(native_task):
+    tests, workspace, _ = native_task
+    (tests / "native_reward.json").write_text('{"reward":1,"metrics":{"samples":[1e999]}}')
+    (tests / "test.sh").write_text(
+        'cp "$VERIFYIT_TESTS_DIR/native_reward.json" "$VERIFYIT_NATIVE_LOGS_DIR/reward.json"\n'
+    )
+    reward = run(tests / "verifier.toml", workspace)
+    assert (reward.status, reward.reward) == (Status.INFRA_ERROR, 0.0)
+
+
+def test_duplicate_primary_reward_is_unscored(native_task):
+    tests, workspace, _ = native_task
+    (tests / "native_reward.json").write_text('{"reward":0,"reward":1}')
+    (tests / "test.sh").write_text(
+        'cp "$VERIFYIT_TESTS_DIR/native_reward.json" "$VERIFYIT_NATIVE_LOGS_DIR/reward.json"\n'
+    )
+    reward = run(tests / "verifier.toml", workspace)
+    assert (reward.status, reward.reward) == (Status.INFRA_ERROR, 0.0)
