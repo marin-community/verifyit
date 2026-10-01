@@ -18,7 +18,7 @@ source revisions below.
 The previous integration campaign reached **155/196** required routes with its
 then-current implementations and evidence. That historical count is not fresh
 validation of the consolidated implementation. Fresh acceptance is **8/196**: six SkyRL judge routes and Evalchemy AIME24/MATH500
-passed fresh archived-response replays. Working-tree core validation, including pending Pytest changes, passed 857 tests,
+passed fresh archived-response replays. Core validation at the committed shared-Judge checkpoint passed 848 tests,
 with two Go tests skipped because
 the host lacks Go. The required population remains: 46 SkyRL routes, 87 Harbor routes, 42 Evalchemy custom benchmarks and
 21 Evalchemy overrides. TaskTrove and coder1 are excluded; harness mapping counts
