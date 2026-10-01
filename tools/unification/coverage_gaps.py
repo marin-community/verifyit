@@ -892,6 +892,36 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-instructions/archive-census.json",
                 ],
             )
+        elif name == "HMMT":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_matharena_runtime",
+                reason=(
+                    "ScriptSpec runs pinned MathArena extraction in a candidate-only container, "
+                    "then bounded explicit symbolic reconstruction and untouched source comparison "
+                    "inside the supervised deadline. Trusted references stay outside that container. "
+                    "Source unordered-list multiplicity, numeric tolerance and repeated metrics remain."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True and load the pinned image/prerequisite RPC patches. "
+                    "Three frozen questions use ten source repetitions through generation and evaluation; "
+                    "78 supplemental comparisons cover all 30 gold canonical/wrong responses and 18 "
+                    "alternative forms. Fixture-only: no archived score replay. Returned model_answers "
+                    "are JSON primitives/display strings, not original symbolic objects. Unsupported "
+                    "expressions score zero; bounded explicit nodes do not claim arbitrary SymPy equivalence."
+                ),
+                validation_status="source_generation_and_evaluator_fixtures_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/hmmt-verifyit.patch",
+                    "integrations/evalchemy/hmmt-source.json",
+                    "../evidence/e2e/wiring/evalchemy-hmmt/manager-final/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-hmmt/supplemental/results.json",
+                    "../evidence/e2e/wiring/evalchemy-hmmt/negative/results.json",
+                    "../evidence/e2e/wiring/evalchemy-hmmt/archive-census.json",
+                ],
+            )
         elif name == "MRCR":
             entity.update(
                 status="retained_runtime_available",
