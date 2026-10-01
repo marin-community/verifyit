@@ -23,9 +23,10 @@ The owning host removes predeclared sessions and terminates its nested pytest
 process group even when the checker is killed.
 
 Unsupported contracts return zero with an explicit unsupported-task result:
-scalar/tuple identity, arbitrary class/type introspection, remote module bindings,
-arrays/sets/bytes/custom host objects or callables as arguments, and unsupported
-operator, conversion, hashing, context-manager, or async protocols. The admission
+scalar/tuple/bytes identity, arbitrary class/type introspection, remote module bindings,
+arrays/sets/custom host objects or callables as arguments, rich comparisons against
+trusted expected values, rounding/complex/reversal, context-manager or async
+protocols. The admission
 guards do not establish arbitrary Python equivalence. These limitations prevent
 whole-route promotion.
 
@@ -50,3 +51,21 @@ The source before/after replay driver, commands, image digest, mounted source
 hashes, raw verdicts, and precise pending contracts are saved beside
 `native-provenance.json`, `manager-parity.json`, and `pending-contracts.json` in
 that evidence directory. No archived E2E or complete coder1 coverage is claimed.
+
+`coder1-protocols-verifyit.patch` follows the math reference contract patch in the
+cumulative stack. It adds bytes by value and common arithmetic, bitwise, reflected,
+in-place, numeric conversion, hashing and formatting protocols. In-place calls
+preserve remote mutation and alias identity; returned values remain validated by
+the host. Trusted test assertions remain outside the candidate interpreter.
+
+The final source suite passes 69 tests. Twelve additional actual GeneralReact
+witnesses cover bytes and numeric behavior across functional, solution_file and
+pytest forms. Pinned native source, the cutover, the manager rerun and the exact
+installed package agree. The 23-patch stack and two source files are hash-verified;
+evidence is under `evidence/e2e/wiring/skyrl-coder-protocols/`.
+
+The remaining gap is a source contract limitation, not a missing verifier mode.
+Arbitrary Python tests can depend on class identity, introspection, callbacks and
+interpreter-local objects. Running those trusted tests inside candidate execution
+would expose the assertions to candidate mutation. The isolated integration does
+not claim that equivalence and remains partial.

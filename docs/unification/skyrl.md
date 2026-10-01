@@ -85,15 +85,18 @@ or resolve either complete SkyRL environment.
 
 ## Client-first reassessment
 
-The48 entries comprise46 scoring routes across17 contract families and two external
-objectives. Calendar joins the client/task-harness group, bringing it to 24 routes.
-The other 22 retain existing-class profile or comparator-parity requirements; three
-dormant math variants are audits, not proven missing APIs. The current register
-separates 31 implemented routes, four partially wired routes still pending and
-11 concrete existing-class behavior gaps. Three dormant math routes now have source integrations and fixture evidence. Source
-orchestration and metrics stay in clients. No new mode category is proposed; a generic source callback
-behind script is only a runtime bridge. The disjoint plan is recorded per entry in
-`skyrl.json` and detailed in [the composition contracts](skyrl-adapter-specs.md).
+The 48 entries comprise 46 scoring routes across 17 contract families and two
+external objectives. There are 42 wired routes and four partial routes. Wiring
+availability is distinct from tested cutovers: 37 of 46 complete routes have
+actual source/framework witnesses, comprising 27 with real trace replay and ten
+with source fixtures. Five wired routes still need route-specific witnesses:
+GSM8K multi-turn, search, searchcode, legacy text2sql and the SWE-pivot tool route.
+Their shared-helper tests do not establish framework cutover. The four partial
+routes have separate evidence and are not counted as complete tested routes.
+
+Source orchestration and metrics stay in clients. No new mode category is
+proposed. The disjoint plan is recorded per entry in `skyrl.json` and detailed in
+[the composition contracts](skyrl-adapter-specs.md).
 
 The original nine routes have source patches: AIME (normal and strict), GSM8K, GSM8K multi-turn,
 Search, SearchCode, MCQ, rounded chemistry, and inductive/transductive ARC. 52 client

@@ -247,3 +247,10 @@ preparation. Untagged legacy records retain bounded automatic admission, so both
 routes remain partial. Sixteen prepared framework roundtrips match source scores
 and HTTP requests, including the exact installed package. The frozen 18-archive
 replay still has two missing judge transcripts. See [the contract](math-judge.md).
+
+Apply `coder1-protocols-verifyit.patch` after the math reference contract patch and
+before the dependency pin. It adds bytes value transport and common numeric
+protocols, including in-place mutation, without moving trusted assertions into
+candidate execution. Sixty-nine source tests pass and twelve actual GeneralReact
+witnesses agree across native, cutover and exact-installed execution. Coder1 remains
+partial for arbitrary Python interoperability; see [the contract](coder1-partial.md).

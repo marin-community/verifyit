@@ -1899,7 +1899,7 @@
     {
       "id": "dormant/coder1",
       "status": "not_integrated",
-      "not_covered_reason": "Partial source integration now wires all four payload forms (stdio, functional, solution_file, pytest) through ScriptSpec; non-stdio trusted tests use PytestSpec outside the candidate sandbox. Whole-route coverage remains pending: arbitrary source-valid Python type/module introspection, arrays/sets/bytes or host user objects as arguments, scalar/tuple identity, arithmetic/conversion/hash/context-manager/async protocols are explicitly unsupported rather than equivalent. This exported implementation has no eligible archived verified traces in the full pinned census.",
+      "not_covered_reason": "All four payload forms are wired with trusted tests outside the candidate sandbox. Bytes value transport and common arithmetic, reflected/in-place, numeric conversion, hashing and formatting protocols are supported. Arbitrary class/type/module introspection, host callbacks/custom objects, arrays/sets, scalar/tuple/bytes identity, rich comparison against trusted values and unsupported protocols remain outside the isolated contract.",
       "active_in_pinned_dispatch": false,
       "dormant": true,
       "correctness_verifier": true,
@@ -1912,8 +1912,8 @@
         "script"
       ],
       "resolution_strategy": "task_harness",
-      "needed_change": "Complete or explicitly contract the remaining typed Python semantics while preserving candidate/grader isolation; validate strict malformed transport, total execution budgets and owning-host session cleanup. Keep source format/answer shaping only for genuine scored outcomes and preserve source extraction/prefix behavior. Export and apply-check the reviewed partial source patch before claiming deployable integration.",
-      "validation_gap": "Eight controlled actual GeneralReactTask positive/wrong pairs across the four forms match pinned native source, with manager independent before/after reruns; these are not archived trace replay. Whole-source arbitrary-Python equivalence and deployable patch validation remain incomplete.",
+      "needed_change": "Preserve explicit bounded Python contracts and extend only semantics that keep trusted assertions outside candidate execution. Arbitrary same-interpreter Python equivalence cannot be restored by moving the tests into the candidate interpreter without weakening the trust boundary.",
+      "validation_gap": "No eligible archived coder1 links in the full pinned census. Eight prior four-form witnesses and twelve additional bytes/numeric GeneralReact witnesses match native source; the latter also pass with the exact installed package and fresh exported stack. Whole-source arbitrary-Python equivalence remains unsupported.",
       "source_contract": "Ground truth pytest/functional/solution_file/stdin-out; prefix injection, fuzzy output, format+answer reward.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1929,7 +1929,13 @@
         "evidence/e2e/wiring/skyrl-coder1/native-provenance.json",
         "evidence/e2e/wiring/skyrl-coder1/patched-dispatch.json",
         "evidence/e2e/wiring/skyrl-coder1/manager-parity.json",
-        "evidence/e2e/wiring/skyrl-coder1/pending-contracts.json"
+        "evidence/e2e/wiring/skyrl-coder1/pending-contracts.json",
+        "integrations/MarinSkyRL/coder1-protocols-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-coder-protocols/worker-final.json",
+        "evidence/e2e/wiring/skyrl-coder-protocols/native-final.json",
+        "evidence/e2e/wiring/skyrl-coder-protocols/installed.json",
+        "evidence/e2e/wiring/skyrl-coder-protocols/implementation-provenance.json",
+        "evidence/e2e/wiring/skyrl-coder-protocols/pending-contracts.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
@@ -1945,7 +1951,8 @@
         "pytest",
         "exact",
         "numeric"
-      ]
+      ],
+      "validation_scope": "69 source tests pass. Twelve ordinary bytes/numeric GeneralReact cases cover functional, solution_file and pytest forms, positive/wrong outputs and in-place alias preservation; native, worker, manager and exact-installed runs agree. The 23-patch stack applies cleanly and source bytes match."
     },
     {
       "id": "dormant/qa_em",
@@ -2192,5 +2199,21 @@
         "exact"
       ]
     }
-  ]
+  ],
+  "tested_cutover_reporting": {
+    "denominator": 46,
+    "wired_routes": 42,
+    "tested_complete_routes": 37,
+    "real_trace_routes": 27,
+    "source_fixture_routes": 10,
+    "route_specific_witness_pending": [
+      "gsm8k_multi_turn",
+      "search",
+      "searchcode",
+      "text2sql",
+      "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent"
+    ],
+    "partial_routes_reported_separately": 4,
+    "definition": "Count actual source/framework cutovers, not helper-only parity or wiring availability; four partial routes have separate evidence but are not included as complete tested routes."
+  }
 }
