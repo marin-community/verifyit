@@ -55,7 +55,11 @@ def _matches(candidate: str, spec: ExactSpec) -> bool:
 
 
 def _validate_spec(spec: ExactSpec) -> None:
-    if not spec.expected or any(not isinstance(value, str) for value in spec.expected):
+    if (
+        not isinstance(spec.expected, (tuple, list))
+        or not spec.expected
+        or any(not isinstance(value, str) for value in spec.expected)
+    ):
         raise InvalidTask("exact expects at least one expected string")
     if any(
         type(value) is not bool

@@ -53,7 +53,10 @@ The last nonempty response line must be a complete `SCORE: value` label: referen
 The opt-in `labels` rubric supplies one reference, trusted `system_prompt`/`prompt_template`
 strings using only `{question}`, `{reference}` and `{candidate}`, and a nonempty
 `label_scores` table of finite rewards in `[0, 1]`. Its final line must exactly name one
-configured label; contradictory labels in the answer invalidate the result. Optional
+configured label; contradictory labels in the answer invalidate the result.
+`label_scan = "lines"` recognizes only completed label lines for bare labels such as
+`A`/`B`/`C`, leaving letters inside explanatory prose alone; the default `literal`
+scan remains unchanged. Optional
 `strip_reasoning_blocks` removes completed think/thinking blocks before label parsing.
 Unfinished reasoning, malformed labels, HTTP errors and non-completed responses are
 infrastructure failures with zero reward; label judging does not retry HTTP failures.

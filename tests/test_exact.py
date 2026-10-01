@@ -115,3 +115,14 @@ def test_source_lower_semantics_are_separate_from_casefold():
     spec = ExactSpec(("ß".lower(),), ignore_case=False, ignore_whitespace=False, substring=True)
     assert grade_exact.grade_exact_candidate(spec, "SS".lower()).reward == 0.0
     assert grade_exact.grade_exact_candidate(spec, "Straße".lower()).reward == 1.0
+
+
+@pytest.mark.parametrize("expected", ["idk", b"idk", {"i": 1, "d": 1, "k": 1}])
+def test_direct_reference_container_cannot_award_character_list_credit(tmp_path, expected):
+    spec = ExactSpec(expected=expected)
+    with pytest.raises(InvalidTask, match="expected string"):
+        grade_exact.grade_exact_candidate(spec, "i,d,k")
+    _answer(tmp_path, "i,d,k")
+    result = dispatch(spec, tmp_path, tmp_path)
+    assert result.status == Status.INVALID_TASK
+    assert result.reward == 0.0

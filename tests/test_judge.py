@@ -432,3 +432,31 @@ def test_judge_positional_output_argument_preserves_public_constructor():
     spec = JudgeSpec((), (), "", "", (), "reference", "", True, 120.0, "custom-answer.txt")
     assert spec.output == "custom-answer.txt"
     assert spec.system_prompt == ""
+
+
+@pytest.mark.parametrize(
+    "reply,reward,status",
+    [
+        ("Assistant gives an Answer.\nA", 1.0, Status.SCORED),
+        ("A\nB", 0.0, Status.INFRA_ERROR),
+        ("B", 0.0, Status.SCORED),
+        ("C", 0.5, Status.SCORED),
+        ("", 0.0, Status.INFRA_ERROR),
+        ("Answer: A", 0.0, Status.INFRA_ERROR),
+    ],
+)
+def test_completed_line_labels_do_not_scan_letters_inside_prose(tmp_path, fake_judge, reply, reward, status):
+    fake_judge.replies = [reply]
+    workspace = _workspace(tmp_path, "candidate")
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(_label_spec(label_scores={"A": 1.0, "B": 0.0, "C": 0.5}, label_scan="lines")))
+    result = run(spec_path, workspace)
+    assert (result.status, result.reward) == (status, reward)
+
+
+@pytest.mark.parametrize("label_scan", ["tokens", "", None, 1])
+def test_unsupported_label_scan_is_invalid_before_judge_call(tmp_path, fake_judge, label_scan):
+    workspace = _workspace(tmp_path, "candidate")
+    with pytest.raises(grade_judge.InvalidTask):
+        grade_judge.grade(_label_spec(label_scan=label_scan), tmp_path, workspace)
+    assert fake_judge.requests == []

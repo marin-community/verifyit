@@ -121,6 +121,8 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
 def _validate_label_spec(spec: JudgeSpec, references: tuple[str, ...]) -> None:
     if len(references) != 1 or len(spec.references) != 1 or not spec.prompt_template.strip() or not spec.label_scores:
         raise InvalidTask("label rubric requires one reference, a prompt template and labels")
+    if not isinstance(spec.label_scan, str) or spec.label_scan not in {"literal", "lines"}:
+        raise InvalidTask("label_scan must be literal or lines")
     if type(spec.strip_reasoning_blocks) is not bool:
         raise InvalidTask("strip_reasoning_blocks must be boolean")
     if not isinstance(spec.label_scores, dict):
@@ -211,7 +213,12 @@ def _judge_labels(spec: JudgeSpec, reference: str, candidate: str) -> Reward:
             raise RuntimeError("judge completion is incomplete or has no text")
         answer = _label_answer(choice.message.content, spec.strip_reasoning_blocks)
         final = answer.rsplit("\n", 1)[-1].strip()
-        observed = {label for label in spec.label_scores if label in answer}
+        completed_lines = {line.strip() for line in answer.splitlines()}
+        observed = {
+            label
+            for label in spec.label_scores
+            if (label in completed_lines if spec.label_scan == "lines" else label in answer)
+        }
         if final not in spec.label_scores or observed != {final}:
             raise RuntimeError("judge returned malformed or contradictory verdict labels")
         return scored(

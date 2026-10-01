@@ -241,6 +241,7 @@ class JudgeSpec:
     max_completion_tokens: int = 8192
     incomplete_retry_tokens: int = 0
     reasoning_effort: str = ""
+    label_scan: str = "literal"
 
 
 @dataclass(frozen=True)
