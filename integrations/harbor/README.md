@@ -178,20 +178,25 @@ zero, and invalid trusted config leaves no reward. Broader task instances,
 scientific data and saved model traces remain unvalidated. Evidence is in
 `evidence/e2e/wiring/harbor-replicationbench/`.
 
-Apply `bfcl-script-verifyit.patch` after the Harbor dispatcher patch. Its
-generated `ScriptSpec` executes the original `test.sh` and category-specific
-evaluator through verifyit's structured native-runtime bridge. The benchmark
-continues on Python 3.10 for the tested Python categories; verifyit uses a
-separate Python 3.11 environment pinned to local commit
-`aece7bd55701b60945135c4091578bb49bbd726e`. The image proof replaced only
-the unpublished Git install with a wheel from that exact commit. Eleven
-generated-image cases ran the pinned source script, direct CLI and actual Harbor
-Verifier, covering simple, live relevance, irrelevance and reordered parallel
-calls. Boolean-as-number and overflowing numeric-string comparisons no longer
-earn source false-positive credit. Invalid trusted references abort generation;
-malformed protected evaluator code leaves no reward. Other categories and
-archived candidate workspaces remain unvalidated while AWS SSO is expired.
-Evidence is in `evidence/e2e/wiring/harbor-bfcl/`.
+Apply `bfcl-isolation-verifyit.patch` after the Harbor dispatcher and
+`answer-isolation-verifyit.patch`; it cumulatively replaces
+`bfcl-script-verifyit.patch`. Its generated `ScriptSpec` executes the original
+`test.sh` and category-specific evaluator in a separate verifier image. Only
+`/app/result.json` crosses from the stopped agent environment. The evaluator
+runs on Python 3.10; verifyit uses Python 3.11 pinned to
+`ca7fce7c50f61a3b4b26fe1f9609853effadb87c`. Local image proofs substitute a wheel
+from that commit for its unpublished Git install. Candidate JSON must be a
+bounded regular file with finite values; linked files and special files fail
+closed. Boolean-as-number and overflowing numeric-string comparisons no longer
+earn source false-positive credit. Invalid trusted references abort generation.
+
+All 13 categories generate isolated tasks. Eight actual Harbor Trials cover
+passing and wrong simple, reordered parallel, irrelevance and live relevance
+answers. A wrong answer scored one when a surviving agent process rewrote the
+shared evaluator, then zero after isolation. This remains a retained source
+scorer, not a native BFCL comparator. Java, JavaScript and other category
+execution and archived candidate workspaces remain unvalidated. Evidence is in
+`evidence/e2e/wiring/harbor-bfcl/isolation-final-manifest.json`.
 
 Apply `dabstep-isolation-verifyit.patch` after the Harbor dispatcher and
 `answer-isolation-verifyit.patch`; it cumulatively replaces

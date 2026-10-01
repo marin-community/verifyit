@@ -519,14 +519,17 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#bfcl",
         "docs/unification/harbor_inventory.json#bfcl",
-        "integrations/harbor/bfcl-script-verifyit.patch",
+        "integrations/harbor/bfcl-isolation-verifyit.patch",
         "evidence/e2e/wiring/harbor-bfcl/image-results-branches.json",
-        "evidence/e2e/wiring/harbor-bfcl/manager-image-results-branches.json"
+        "evidence/e2e/wiring/harbor-bfcl/manager-image-results-branches.json",
+        "evidence/e2e/wiring/harbor-bfcl/isolation-final-manifest.json",
+        "evidence/e2e/wiring/harbor-bfcl/manager-shared-attack-v1.json",
+        "evidence/e2e/wiring/harbor-bfcl/manager-isolated-attack-v1.json"
       ],
       "gap_kind": "implemented_native_runtime_bridge",
       "implementation_present": true,
       "name": "bfcl",
-      "needed_change": "Isolate protected verifier files from the live agent process before deployment. Validate the other generated task categories and archived candidate workspaces before wider deployment; the retained source scorer is not a native BFCL comparator.",
+      "needed_change": "Validate additional generated task categories and archived candidate workspaces before wider deployment; the retained source scorer is not a native BFCL comparator.",
       "primitive_candidates": [
         "script"
       ],
@@ -562,11 +565,11 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "native_fallback",
-      "validation_limit": "Eleven bounded generated-image cases executed pinned original test.sh, direct verifyit CLI and actual Harbor Verifier, including simple, live relevance, irrelevance and reordered parallel calls. Boolean/numeric and overflowing numeric-string source false positives became scored zero; malformed trusted evaluator was unscored. Other categories and saved model-run workspaces remain unvalidated; frozen bfclparity-pi tracker links could not be replayed while AWS SSO credentials were expired. Harbor currently runs this route in the shared agent container; a surviving candidate process can target the uploaded trusted files. The GAIA witness demonstrates this boundary class, not a per-route exploit.",
+      "validation_limit": "Eleven bounded generated-image cases executed pinned original test.sh, direct verifyit CLI and actual Harbor Verifier. Eight further separate-environment Harbor Trials cover passing and wrong simple, reordered parallel, irrelevance and live relevance answers. A wrong-answer evaluator-mutation attack scored one in the shared image and zero after isolation. Candidate JSON is bounded, finite and read without following symlinks or special files. All 13 categories generate isolated tasks; Java, JavaScript and other category execution and saved model-run workspaces remain unvalidated. These are source-generated fixtures, not archived trace replays.",
       "boundary_hardening": {
-        "status": "shared_candidate_reachable",
+        "status": "separate_verifier_validated",
         "trusted_assets": "/tests/evaluate.py and generated ground truth",
-        "needed_change": "Keep these trusted files outside the live agent container and run the verifier in a separate environment; then replay source and Harbor scoring plus a mutation witness."
+        "needed_change": "No known boundary change; validate other generated categories and archived model traces before deployment."
       }
     },
     {
@@ -9219,7 +9222,7 @@
         "stdio"
       ],
       "rows": 5116,
-      "source_contract": "TACO stdin/stdout problems with oracle solutions.\n\nEvery task ships one file the template varies: ``solution/solution.py``, run against\n``tests/inputs/input_<n>.txt`` / ``tests/outputs/output_<n>.txt`` pairs by the old grader\n(``python3 /app/solution.py < input_n.txt``, output compared after squashing whitespace). That\nmaps directly onto ``stdio``, token comparison matching the old grader's whitespace squash, except\nfor the rare prompt that promises a numeric tolerance instead of an exact match.\n\nA meaningful slice of TACO (LeetCode- and Codewars-derived problems) is written as a bare function\ndefinition — ``class Solution: def foo(self, ...)`` or a top-level ``def foo(...)`` with no driver\nthat reads stdin or prints a result. The old grader ran those against stdin fixtures anyway, so\ntheir stdout was always empty; they cannot be graded by ``stdio`` and are rejected rather than\nconverted.",
+      "source_contract": "TACO stdin/stdout problems with oracle solutions.\n\nEvery task ships one file the template varies: ``solution/solution.py``, run against\n``tests/inputs/input_<n>.txt`` / ``tests/outputs/output_<n>.txt`` pairs by the old grader\n(``python3 /app/solution.py < input_n.txt``, output compared after squashing whitespace). That\nmaps directly onto ``stdio``, token comparison matching the old grader's whitespace squash, except\nfor the rare prompt that promises a numeric tolerance instead of an exact match.\n\nA meaningful slice of TACO (LeetCode- and Codewars-derived problems) is written as a bare function\ndefinition \u2014 ``class Solution: def foo(self, ...)`` or a top-level ``def foo(...)`` with no driver\nthat reads stdin or prints a result. The old grader ran those against stdin fixtures anyway, so\ntheir stdout was always empty; they cannot be graded by ``stdio`` and are rejected rather than\nconverted.",
       "source_path": "experiments/post_training/tasktrove/converters/taco.py",
       "source_sha256": "7ea128ef059343fe0b2417b1266c392ea912123fab16023323eadd3110018321"
     }
@@ -9499,11 +9502,11 @@
       ],
       "gap_kind": "client_wiring_and_replay_artifact_requirements",
       "name": "ot-tblite-recovery",
-      "needed_change": "Candidate filesystem/workspace changes plus task’s original pytest assertions and service state. Emit and validate the corresponding client spec/structured native-runtime bridge; recover genuine saved workspace/artifacts before selecting full model-run replays.",
+      "needed_change": "Candidate filesystem/workspace changes plus task\u2019s original pytest assertions and service state. Emit and validate the corresponding client spec/structured native-runtime bridge; recover genuine saved workspace/artifacts before selecting full model-run replays.",
       "primitive_candidates": [
         "pytest"
       ],
-      "reason": "not implemented in current client patch Representative artifact listing/manifest does not include a full candidate workspace snapshot. Candidate filesystem/workspace changes plus task’s original pytest assertions and service state.",
+      "reason": "not implemented in current client patch Representative artifact listing/manifest does not include a full candidate workspace snapshot. Candidate filesystem/workspace changes plus task\u2019s original pytest assertions and service state.",
       "source_evidence": {
         "download_dir": null,
         "git_commit_id": "f075e463472c7790b85793b392dff1fff20cc0e3",

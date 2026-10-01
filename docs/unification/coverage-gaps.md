@@ -8,7 +8,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Evalchemy 42 custom benchmarks | 8 native integrations + 3 math hybrids | 31 not integrated (20 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 15 retained-runtime overrides | 2 not integrated; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 31 source-patched (21 with selected real traces, 10 without eligible real traces) | 4 partial client/harness routes + 11 native profile gaps; 2 external-objective placeholders separate |
-| Harbor 87 adapters | 13 native primitive clients + 3 structured source-runtime bridges | 71 not integrated; 9 wired routes need verifier isolation |
+| Harbor 87 adapters | 13 native primitive clients + 3 structured source-runtime bridges | 71 not integrated; 8 wired routes need verifier isolation |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
@@ -221,18 +221,17 @@ The 71 unwired adapters are named individually. Four answer-file clients invoke 
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
-| bfcl | native_fallback | script | A generated ScriptSpec executes the preserved BFCL test.sh and category-specific evaluator inside the original task Python, then converts its binary reward to a structured verdict. Isolate protected verifier files from the live agent process before deployment. |
+| bfcl | native_fallback | script | A generated ScriptSpec executes the preserved BFCL test.sh and category-specific evaluator inside the original task Python, then converts its binary reward to a structured verdict. Validate additional generated task categories and archived candidate workspaces before wider deployment; the retained source scorer is not a native BFCL comparator. |
 | dabstep | native_fallback | numeric, exact, script | A generated ScriptSpec runs the original DABstep test.sh and protected question_scorer through verifyit's structured native-runtime bridge. Reference isolation and source verifier wiring are implemented; validate additional generated tasks and matching model rollouts when available. |
 | tau3-bench | native_fallback | script | Native state/tool-action/NL evaluation remains in tau2; verifyit provides structured score/status/process boundary. Isolate protected verifier files from the live agent process before deployment. |
 
 ### Shared verifier boundary
 
-9 wired clients still grade in Harbor's shared agent container. Harbor uploads trusted files after the agent phase, while a surviving candidate process can modify them. A generated GAIA task reproduced a wrong answer scoring one after its uploaded reference changed. This establishes the shared-container failure mode, not a per-route exploit for every row. These routes have client wiring but require a protected verifier environment before deployment. ARC-AGI-2, AIME, GAIA, GPQA Diamond, SATBench, DABstep and ReplicationBench now use separate verifier images on bounded generated fixtures; GAIA, DABstep and ReplicationBench passed corresponding mutation replays.
+8 wired clients still grade in Harbor's shared agent container. Harbor uploads trusted files after the agent phase, while a surviving candidate process can modify them. A generated GAIA task reproduced a wrong answer scoring one after its uploaded reference changed. This establishes the shared-container failure mode, not a per-route exploit for every row. These routes have client wiring but require a protected verifier environment before deployment. ARC-AGI-2, AIME, GAIA, GPQA Diamond, SATBench, DABstep, ReplicationBench and BFCL now use separate verifier images on bounded generated fixtures; GAIA, DABstep, ReplicationBench and BFCL passed corresponding mutation replays.
 
 | Wired route | Candidate-reachable trusted assets |
 | --- | --- |
 | autocodebench | /tests/test_outputs.py and protected tests |
-| bfcl | /tests/evaluate.py and generated ground truth |
 | bigcodebench_hard | /tests/test_outputs.py and protected tests |
 | codepde | /tests/verifyit/nRMSE_evaluator.py and reference HDF5 |
 | compilebench | /tests/test_outputs.py and protected tests |
