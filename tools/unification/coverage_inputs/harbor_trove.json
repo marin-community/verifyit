@@ -4903,17 +4903,19 @@
       "entity_id": "harbor:swebench",
       "evidence": [
         "docs/unification/harbor_semantics.json#swebench",
-        "docs/unification/harbor_inventory.json#swebench"
+        "docs/unification/harbor_inventory.json#swebench",
+        "integrations/harbor/swebench-runtime-verifyit.patch",
+        "integrations/harbor/swebench-runtime-provenance.json",
+        "evidence/e2e/wiring/harbor-swebench/final-manifest.json"
       ],
-      "gap_kind": "protected_repo_workspace_adapter",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "swebench",
-      "needed_change": "Restore pinned repository/tests and apply genuine candidate code patch; convert official FAIL_TO_PASS/PASS_TO_PASS outcomes to exact IDs, using pytest only for actual pytest reporters.",
+      "needed_change": "Validate genuine archived candidates and broader production environments. Candidate code executes inside the grading runtime; separate images do not establish candidate/assertion isolation.",
       "primitive_candidates": [
-        "pytest",
         "script"
       ],
-      "reason": "FAIL_TO_PASS/PASS_TO_PASS via official SWE-bench parser; pytest tasks map with protected IDs, non-pytest parser-based tasks retain script. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in separate-image Script client preserves native SWE-bench4.0.3 parser, repository/version test commands, protected test restoration and binary FULL resolution. All repair and protected IDs must succeed; skipped IDs cannot disappear from the denominator. Positive reports from failed source executions remain infrastructure errors.",
       "source_evidence": [
         {
           "functions": [
@@ -4942,8 +4944,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "All500 Verified source tasks across12repositories/80versions preserve2500 command/config/oracle assets byte-for-byte and pass reference validation. Three frozen genuine tasks (two Django, one pytest) have six actual source/Harbor oracle/unpatched roundtrips with equal full reports and1/0 scores; this is not500task execution. Eight source regressions, manager actual positive, finalformatted positive and empty-reference native1\u2192invalid_task0. Three frozen tracker archives were inaccessible; no saved model-score parity claimed. v3matrix helper is AST-identical to finalformatted v4 proof.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Pinned source test patch/config and source grader in separate verifier image; candidate /testbed exported and trusted test files restored by unchanged source commands.",
+        "needed_change": "Candidate code executes inside grader runtime; complete assertion/process isolation remains unverified."
+      }
     },
     {
       "entity_id": "harbor:swebench_multilingual",

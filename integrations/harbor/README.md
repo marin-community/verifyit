@@ -1096,3 +1096,44 @@ execution parity. Provider replies are local fixtures, not live judge-quality
 measurements. Images require verifyit revision
 `a0861089947096aabe456ca4308ca46b1b001d7c` or its recorded wheel; Harbor deployment
 and archive replay remain separate work.
+
+
+## SWEbench source runtime
+
+Apply `swebench-runtime-verifyit.patch` after the Harbor verifyit dispatcher and
+`research-code-bench-runtime-verifyit.patch` shared packaging helper. Generate
+with `swebench --verifyit`; the default standalone adapter import still works
+without Harbor installed. Opt-in generation requires Harbor. The verifier
+image installs the published verifyit ancestor
+`a0861089947096aabe456ca4308ca46b1b001d7c` on Python 3.12 and retains the native
+`swebench==4.0.3` parser, even though the source generator uses swebench 4.1.0.
+The source 3000-second default timeout and repository-specific setup, test
+commands, trusted test restoration and cleanup remain unchanged.
+
+The separate image receives candidate `/testbed` and grades the native FULL
+resolution report through ScriptSpec. Every FAIL_TO_PASS and PASS_TO_PASS ID
+must appear as a success: source reports can omit skipped tests from both
+outcome lists and otherwise award vacuous credit. Empty repair references
+are invalid; the 11 genuine rows with empty maintenance sets remain valid.
+A positive report followed by a failed source process is an infrastructure
+error. Docker-copied workspace ownership requires Git's exact `/testbed`
+safe.directory setting in the verifier image; no wildcard is added.
+
+All 500 Verified tasks across 12 repositories and 80 versions preserve 2,500
+source command/config/oracle assets byte-for-byte after generation. Three
+frozen genuine tasks (two Django and one pytest) have six actual source/Harbor
+oracle and unpatched roundtrips with equal full reports and 1/0 scores. Eight
+regression tests cover skipped IDs, protected failures, missing reports,
+empty reference sets and failed final reward writes. A manager independently
+replayed a positive with three repair and 165 protected IDs. The final
+formatted image additionally scores its positive one and rejects an empty
+reference task that the source scores one.
+
+These are source-task fixtures, not 500 runtime replays or saved model-score
+parity. Three frozen tracker archives were inaccessible. Candidate code still
+executes inside the grader; separate images do not establish candidate/assertion
+isolation. Historical missing-workspace, image-cleanup and Git ownership
+failures remain in the evidence. The six-case v3 helper is AST-identical to the
+final formatted v4 helper. `swebench-runtime-provenance.json` records pinned
+assets and image witnesses; raw evidence is under
+`evidence/e2e/wiring/harbor-swebench/` outside Git.

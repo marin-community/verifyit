@@ -1,0 +1,296 @@
+--- a/adapters/swebench/pyproject.toml
++++ b/adapters/swebench/pyproject.toml
+@@ -24,4 +24,4 @@
+ include = ["swebench_adapter", "swebench_adapter.*"]
+ 
+ [tool.setuptools.package-data]
+-swebench_adapter = ["task-template/**/*"]
++swebench_adapter = ["task-template/**/*", "assets/*.py"]
+--- a/adapters/swebench/src/swebench_adapter/adapter.py
++++ b/adapters/swebench/src/swebench_adapter/adapter.py
+@@ -10,6 +10,7 @@
+ from typing import Callable, Iterable, List, Optional, Tuple
+ 
+ from datasets import load_dataset
++
+ 
+ from .utils import get_image_names, get_test_commands, read_text, render_literal
+ 
+@@ -112,8 +113,10 @@
+         all_tasks: bool = True,
+         max_timeout_sec: float = 3000.0,
+         template_dir: Optional[Path] = None,
++        verifyit: bool = False,
+         **kwargs: object,
+     ) -> None:
++        self.verifyit = verifyit
+         self.out_root = Path(output_dir)
+         self.out_root.mkdir(parents=True, exist_ok=True)
+         self.limit = limit
+@@ -215,7 +218,40 @@
+         paths.solve_sh_path.write_text(solve_sh)
+         paths.solve_sh_path.chmod(0o755)
+ 
++        if self.verifyit:
++            self._package_verifyit(paths.task_dir)
+         return paths.task_dir
++
++    def _package_verifyit(self, task: Path) -> None:
++        from harbor.tasks.verifyit_source_runtime import package_source_runtime
++
++        tests = task / "tests"
++        (tests / "test.sh").rename(tests / "source_test.sh")
++        shutil.copy2(Path(__file__).parent / "assets" / "verifyit_grade.py", tests)
++        package_source_runtime(
++            task,
++            artifacts=["/testbed"],
++            dockerfile=(task / "environment" / "Dockerfile").read_text(),
++            timeout=int(self.max_timeout),
++        )
++        spec = tests / "verifier.toml"
++        spec.write_text(
++            spec.read_text().replace('workspace = "/app"', 'workspace = "/testbed"')
++        )
++        dockerfile = tests / "Dockerfile"
++        dockerfile.write_text(
++            dockerfile.read_text().replace(
++                "RUN python3 -m venv /opt/verifyit",
++                "RUN /root/.local/bin/uv venv --python 3.12 --seed /opt/verifyit",
++            )
++        )
++        dockerfile.write_text(
++            dockerfile.read_text()
++            + "\nRUN git config --system --add safe.directory /testbed\n"
++        )
++        (tests / "native_bridge.sh").write_text(
++            "#!/bin/sh\nexec /opt/verifyit/bin/python /tests/verifyit_grade.py\n"
++        )
+ 
+     def generate_many(
+         self,
+--- a/adapters/swebench/src/swebench_adapter/main.py
++++ b/adapters/swebench/src/swebench_adapter/main.py
+@@ -79,6 +79,11 @@
+         help="Only generate these task IDs",
+     )
+ 
++    ap.add_argument(
++        "--verifyit",
++        action="store_true",
++        help="Use verifyit with the pinned source scoring runtime",
++    )
+     args = ap.parse_args()
+ 
+     if not args.all and not args.instance_id and not args.task_ids:
+@@ -94,6 +99,7 @@
+         all_tasks=args.all,
+         max_timeout_sec=args.timeout,
+         template_dir=args.template_dir,
++        verifyit=args.verifyit,
+     )
+ 
+     conv.run()
+--- /dev/null
++++ b/adapters/swebench/src/swebench_adapter/assets/verifyit_grade.py
+@@ -0,0 +1,103 @@
++"""Preserve SWE-bench's pinned report contract through verifyit Script grading."""
++
++import json
++import os
++import subprocess
++from dataclasses import asdict
++from pathlib import Path
++
++from verifyit.grade import InvalidTask, infra_error, invalid_task, scored
++from verifyit.json_objects import unique_object
++
++
++def references(datum):
++    expected = {}
++    for group in ("FAIL_TO_PASS", "PASS_TO_PASS"):
++        values = datum.get(group)
++        if isinstance(values, str):
++            try:
++                values = json.loads(values)
++            except json.JSONDecodeError as error:
++                raise InvalidTask(f"Malformed SWE-bench {group} JSON") from error
++        if not isinstance(values, list) or any(
++            not isinstance(value, str) or not value.strip() for value in values
++        ):
++            raise InvalidTask(f"Malformed SWE-bench {group} reference")
++        if len(values) != len(set(values)):
++            raise InvalidTask(f"Duplicated SWE-bench {group} reference")
++        expected[group] = set(values)
++    if not expected["FAIL_TO_PASS"]:
++        raise InvalidTask("SWE-bench requires at least one repair test")
++    return expected
++
++
++def evaluate_report(datum, report, source_returncode=0):
++    expected = references(datum)
++    entry = report.get(datum["instance_id"])
++    if not isinstance(entry, dict) or not isinstance(entry.get("resolved"), bool):
++        raise RuntimeError("SWE-bench produced no valid instance report")
++    if entry["resolved"] and source_returncode != 0:
++        raise RuntimeError(
++            "SWE-bench positive report disagrees with failed source execution"
++        )
++    groups = entry.get("tests_status")
++    if not isinstance(groups, dict):
++        raise RuntimeError("SWE-bench produced no test status report")
++    complete = True
++    for name, required in expected.items():
++        group = groups.get(name)
++        if not isinstance(group, dict):
++            raise RuntimeError(f"SWE-bench omitted report group {name}")
++        passed, failed = group.get("success"), group.get("failure")
++        if not isinstance(passed, list) or not isinstance(failed, list):
++            raise RuntimeError("SWE-bench test outcomes must be lists")
++        if any(not isinstance(value, str) for value in passed + failed):
++            raise RuntimeError("SWE-bench test outcome IDs must be strings")
++        # Native grading can omit skipped tests from both lists. Such omissions
++        # must not make a nonempty protected reference set vacuously successful.
++        complete = complete and set(passed) == required and not failed
++    return scored(
++        float(entry["resolved"] and complete),
++        source_resolved=entry["resolved"],
++        source_report=entry,
++    )
++
++
++def main():
++    tests = Path(os.environ["VERIFYIT_TESTS_DIR"])
++    logs = Path(os.environ["VERIFYIT_LOGS_DIR"])
++    source_logs = Path("/logs/verifier")
++    try:
++        datum = json.loads(
++            (tests / "config.json").read_text(), object_pairs_hook=unique_object
++        )
++        references(datum)
++        for name in ("report.json", "reward.txt", "reward.json"):
++            (source_logs / name).unlink(missing_ok=True)
++        result = subprocess.run(
++            ["bash", str(tests / "source_test.sh")],
++            cwd="/testbed",
++            capture_output=True,
++            text=True,
++        )
++        (source_logs / "source-stdout.txt").write_text(result.stdout)
++        (source_logs / "source-stderr.txt").write_text(result.stderr)
++        if result.returncode not in (0, 1):
++            raise RuntimeError(
++                f"SWE-bench source runtime exited {result.returncode}: {result.stderr[-2000:]}"
++            )
++        report = json.loads(
++            (source_logs / "report.json").read_text(), object_pairs_hook=unique_object
++        )
++        verdict = evaluate_report(datum, report, result.returncode)
++    except InvalidTask as error:
++        verdict = invalid_task(str(error))
++    except Exception as error:
++        verdict = infra_error(f"{type(error).__name__}: {error}")
++    (logs / "native-verdict.json").write_text(
++        json.dumps(asdict(verdict), allow_nan=False)
++    )
++
++
++if __name__ == "__main__":
++    main()
+--- /dev/null
++++ b/adapters/swebench/tests/test_verifyit_contract.py
+@@ -0,0 +1,95 @@
++"""Regressions for SWE-bench report omissions and protected passing tests."""
++
++import importlib.util
++import json
++import shlex
++import subprocess
++from pathlib import Path
++
++import pytest
++from swebench.harness.constants import ResolvedStatus
++from swebench.harness.grading import get_eval_tests_report, get_resolution_status
++from verifyit.grade import InvalidTask
++
++spec = importlib.util.spec_from_file_location(
++    "swebench_verifyit_grade",
++    Path(__file__).parents[1] / "src/swebench_adapter/assets/verifyit_grade.py",
++)
++assert spec is not None and spec.loader is not None
++verifier = importlib.util.module_from_spec(spec)
++spec.loader.exec_module(verifier)
++
++
++@pytest.mark.parametrize(
++    "outcomes,expected,source_expected",
++    [
++        ({"repair": "PASSED", "protected": "PASSED"}, 1, True),
++        ({"repair": "PASSED", "protected": "FAILED"}, 0, False),
++        ({"repair": "SKIPPED", "protected": "PASSED"}, 0, True),
++        ({"repair": "PASSED", "protected": "SKIPPED"}, 0, True),
++        ({}, 0, False),
++    ],
++)
++def test_native_report_requires_complete_repair_and_protected_success(
++    outcomes, expected, source_expected
++):
++    datum = {
++        "instance_id": "fixture",
++        "FAIL_TO_PASS": ["repair"],
++        "PASS_TO_PASS": ["protected"],
++    }
++    report = get_eval_tests_report(outcomes, datum)
++    resolved = get_resolution_status(report) == ResolvedStatus.FULL.value
++    assert resolved is source_expected
++    verdict = verifier.evaluate_report(
++        datum, {"fixture": {"resolved": resolved, "tests_status": report}}
++    )
++    assert verdict.reward == expected
++
++
++def test_empty_maintenance_set_is_valid_but_empty_repair_reference_is_not():
++    datum = {
++        "instance_id": "fixture",
++        "FAIL_TO_PASS": '["repair"]',
++        "PASS_TO_PASS": "[]",
++    }
++    report = get_eval_tests_report(
++        {"repair": "PASSED"}, {"FAIL_TO_PASS": ["repair"], "PASS_TO_PASS": []}
++    )
++    assert (
++        verifier.evaluate_report(
++            datum, {"fixture": {"resolved": True, "tests_status": report}}
++        ).reward
++        == 1
++    )
++    datum["FAIL_TO_PASS"] = "[]"
++    with pytest.raises(InvalidTask, match="repair test"):
++        verifier.evaluate_report(
++            datum, {"fixture": {"resolved": True, "tests_status": report}}
++        )
++
++
++def test_missing_source_report_is_not_an_ordinary_wrong_candidate():
++    datum = {"instance_id": "fixture", "FAIL_TO_PASS": ["repair"], "PASS_TO_PASS": []}
++    with pytest.raises(RuntimeError, match="instance report"):
++        verifier.evaluate_report(datum, {})
++
++
++def test_failed_final_reward_write_cannot_publish_earlier_positive_report(tmp_path):
++    datum = {"instance_id": "fixture", "FAIL_TO_PASS": ["repair"], "PASS_TO_PASS": []}
++    report = {
++        "fixture": {
++            "resolved": True,
++            "tests_status": get_eval_tests_report({"repair": "PASSED"}, datum),
++        }
++    }
++    report_path = tmp_path / "report.json"
++    reward_path = tmp_path / "reward.txt"
++    reward_path.mkdir()
++    script = f"set -e\nprintf %s {shlex.quote(json.dumps(report))} > {shlex.quote(str(report_path))}\necho 1 > {shlex.quote(str(reward_path))}\n"
++    completed = subprocess.run(["bash", "-c", script], capture_output=True, text=True)
++    assert completed.returncode == 1
++    with pytest.raises(RuntimeError, match="positive report disagrees"):
++        verifier.evaluate_report(
++            datum, json.loads(report_path.read_text()), completed.returncode
++        )
