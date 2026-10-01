@@ -12,7 +12,7 @@ from fractions import Fraction
 
 from verifyit.grade import InvalidTask, Reward, scored
 from verifyit.modes.grade_exact import grade_exact_candidate
-from verifyit.spec import ExactSpec
+from verifyit.spec import EmptyOutputPolicy, ExactSpec
 
 TEX_FRACTION = re.compile(r"\\[dt]?frac\{(-?\d+(?:\.\d+)?)\}\{(-?\d+(?:\.\d+)?)\}")
 TEX_FRACTION_COMMAND = re.compile(r"\\[dt]?frac(?=\{)")
@@ -26,7 +26,13 @@ ANSWER_TAG = re.compile(r"<answer>(.*?)</answer>", re.DOTALL)
 
 def grade_literal_candidate(expected: str, candidate: str) -> Reward:
     """Compare literal strings through the existing exact mode's strict options."""
-    spec = ExactSpec(expected=(expected,), ignore_case=False, ignore_whitespace=False, strip_outer_whitespace=False)
+    spec = ExactSpec(
+        expected=(expected,),
+        ignore_case=False,
+        ignore_whitespace=False,
+        strip_outer_whitespace=False,
+        empty_output=EmptyOutputPolicy.GRADE,
+    )
     return grade_exact_candidate(spec, candidate)
 
 

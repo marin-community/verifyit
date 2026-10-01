@@ -19,6 +19,7 @@ from typing import Any
 from verifyit.spec import (
     DEFAULT_WORKSPACE,
     RUBRIC_REFERENCE,
+    EmptyOutputPolicy,
     ExactSpec,
     JudgeSpec,
     MathSpec,
@@ -144,13 +145,22 @@ def local_output_path(output: str, workspace: Path) -> Path:
     return path
 
 
+def empty_output_policy(spec: Spec) -> EmptyOutputPolicy:
+    """Validate the explicit policy shared by output-file and direct text grading."""
+    policy = getattr(spec, "empty_output", None)
+    if not isinstance(policy, EmptyOutputPolicy):
+        raise InvalidTask("empty_output must be 'zero' or 'grade'")
+    return policy
+
+
 def read_output(spec: Spec, workspace: Path) -> str | None:
-    """Read a non-empty candidate from an output-file spec."""
+    """Read a present answer under its task policy; an absent file is never an answer."""
+    policy = empty_output_policy(spec)
     output = local_output_path(spec.output, workspace)  # type: ignore[union-attr]
     if not output.is_file():
         return None
     text = output.read_text(errors="replace")
-    return text if text.strip() else None
+    return text if text.strip() or policy is EmptyOutputPolicy.GRADE else None
 
 
 def positive_candidate(spec: Spec) -> str | None:

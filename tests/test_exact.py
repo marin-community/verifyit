@@ -8,7 +8,7 @@ import pytest
 from verifyit.grade import InvalidTask, Status
 from verifyit.grade import grade as dispatch
 from verifyit.modes import grade_exact
-from verifyit.spec import ExactSpec
+from verifyit.spec import EmptyOutputPolicy, ExactSpec
 
 
 def _answer(workspace: Path, text: str) -> None:
@@ -126,3 +126,18 @@ def test_direct_reference_container_cannot_award_character_list_credit(tmp_path,
     result = dispatch(spec, tmp_path, tmp_path)
     assert result.status == Status.INVALID_TASK
     assert result.reward == 0.0
+
+
+@pytest.mark.parametrize("text", ["", " \n\t"])
+def test_explicit_empty_equality_requires_grade_policy_and_a_present_file(tmp_path, text):
+    zero = ExactSpec(expected=("",))
+    configured = ExactSpec(expected=("",), empty_output=EmptyOutputPolicy.GRADE)
+    assert grade_exact.grade_exact_candidate(zero, text).reward == 0
+    assert grade_exact.grade_exact_candidate(configured, text).reward == 1
+    _answer(tmp_path, text)
+    assert grade_exact.grade(zero, tmp_path, tmp_path).reward == 0
+    assert grade_exact.grade(configured, tmp_path, tmp_path).reward == 1
+    (tmp_path / "answer.txt").unlink()
+    assert grade_exact.grade(configured, tmp_path, tmp_path).reward == 0
+    with pytest.raises(InvalidTask):
+        grade_exact.grade_exact_candidate(ExactSpec(expected=(), empty_output=EmptyOutputPolicy.GRADE), text)

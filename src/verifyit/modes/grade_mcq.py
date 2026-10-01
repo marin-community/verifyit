@@ -15,7 +15,7 @@ import re
 import string
 from pathlib import Path
 
-from verifyit.grade import InvalidTask, Reward, read_output, scored
+from verifyit.grade import InvalidTask, Reward, empty_output_policy, read_output, scored
 from verifyit.spec import McqSpec
 
 ANSWER = re.compile(r"Answer\s*:\s*(?!Answer)\s*([A-Za-z0-9])(?![A-Za-z0-9])\s*")
@@ -35,6 +35,7 @@ def grade_mcq_candidate(spec: McqSpec, candidate: str) -> Reward:
     The caller extracts the candidate from its own output format. An empty candidate
     means no answer was found; an option outside the declared range scores zero.
     """
+    empty_output_policy(spec)
     if not 1 <= spec.options <= MAX_OPTIONS:
         raise InvalidTask(f"mcq options must be 1..{MAX_OPTIONS}, got {spec.options}")
     letters = string.ascii_uppercase[: spec.options]

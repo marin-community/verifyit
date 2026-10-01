@@ -20,7 +20,7 @@ from verifyit.adapters.harness_profiles import generation_profile, profile_task_
 from verifyit.grade import InvalidTask, Reward
 from verifyit.modes.grade_exact import grade_exact_candidate
 from verifyit.modes.grade_mcq import grade_mcq_candidate
-from verifyit.spec import ExactSpec, McqSpec
+from verifyit.spec import EmptyOutputPolicy, ExactSpec, McqSpec
 
 
 def exact_match(candidate: str, references: Sequence[str], **options) -> Reward:
@@ -57,7 +57,13 @@ def exact_match(candidate: str, references: Sequence[str], **options) -> Reward:
     normalized_references = normalize(references)
     results = [
         grade_exact_candidate(
-            ExactSpec((reference,), ignore_case=False, ignore_whitespace=False, strip_outer_whitespace=False),
+            ExactSpec(
+                (reference,),
+                ignore_case=False,
+                ignore_whitespace=False,
+                strip_outer_whitespace=False,
+                empty_output=EmptyOutputPolicy.GRADE,
+            ),
             value,
         )
         for reference in normalized_references

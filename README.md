@@ -26,23 +26,40 @@ shaping belong in the client rather than this bounded correctness scalar.
 
 ## Modes
 
-| mode | contract |
-|---|---|
-| `mcq` | expected option letter |
-| `math` | expression equality through math-verify |
-| `numeric` | numeric equality with explicit tolerances |
-| `exact` | normalized string equality; optional single-reference substring containment |
-| `json-schema` | JSON, YAML, or TOML checked against JSON Schema |
-| `xml-elements` | required XML elements and attributes |
-| `csv-columns` | required CSV header columns |
-| `ifeval` | deterministic instruction-following constraints |
-| `reasoning-gym` | the named reasoning-gym scorer and entry |
-| `stdio` | program stdout over hidden cases |
-| `pytest` | pytest JSON report with required and protected tests |
-| `junit` | JUnit XML report |
-| `gotest` | `go test -json` events |
-| `judge` | reference-answer, checklist or configured final-label rubric through a model endpoint |
-| `script` | legacy `test.sh` fallback with normalized reward files and fail-closed errors |
+| mode | contract | empty or absent candidate contract |
+|---|---|---|
+| `mcq` | expected option letter | `empty_output`; no option still scores zero |
+| `math` | expression equality through math-verify | `empty_output`; an absent expression cannot match |
+| `numeric` | numeric equality with explicit tolerances | `empty_output`; no number scores zero; numeric zero is data |
+| `exact` | normalized equality or single-reference substring | `empty_output`; explicit `grade` permits an intentionally empty expected string |
+| `json-schema` | JSON, YAML, or TOML checked against JSON Schema | `empty_output`; decoded null and empty collections follow the schema |
+| `xml-elements` | required elements and attributes | `empty_output`; an empty document is invalid XML |
+| `csv-columns` | required header columns | `empty_output`; missing columns fail, a valid header-only table can pass |
+| `ifeval` | deterministic constraints | `empty_output`; explicit `grade` evaluates constraints against empty text |
+| `reasoning-gym` | named scorer and trusted entry | `empty_output`; explicit `grade` delegates empty text to the scorer |
+| `stdio` | program stdout over hidden cases | empty stdout may match an explicit empty expected output; failed execution cannot pass |
+| `pytest` | required and protected tests | no collected tests or missing/malformed report cannot earn reward |
+| `junit` | JUnit XML report | absent or empty test reports cannot earn reward |
+| `gotest` | Go test events | absent tests or incomplete events cannot earn reward |
+| `judge` | reference, checklist or final-label rubric | `empty_output`; explicit `grade` sends present empty text to the configured rubric |
+| `script` | declared verdict or scalar reward producer | missing/malformed reward is failure; no implicit empty reward |
+
+Every answer-file spec has an explicit typed `empty_output` policy. Parsing an omitted
+policy materializes `zero`, and rendering always writes it. `zero` gives a present empty
+or whitespace-only file the minimum score. `grade` passes that text, unchanged, to the
+mode's validated task contract. It never supplies a fixed abstention reward or judge label.
+A missing file stays minimum under either policy; provider failures and incomplete judge
+responses remain infrastructure failures. The five execution/report modes use their
+artifact contracts in the table instead of an answer-file policy.
+
+This policy concerns submitted text, not trusted references or decoded truthiness. Missing
+or malformed required references remain invalid tasks. A JSON document containing `null`,
+`[]`, `{}`, `0`, `false`, or `""` is a present document; its schema decides whether it is valid.
+Direct text-candidate APIs honor the same policy, while already-decoded JSON values retain
+schema semantics. Clients must preserve absent or incomplete transport as failure instead
+of converting it into a present empty answer. For example, an abstention task may set
+`empty_output = "grade"` and let a completed judge label map to 0.5; a missing response or
+unfinished reasoning block is not a valid abstention.
 
 For `judge`, a length-truncated or content-filtered judge response is an infrastructure
 error. Only explicit `finish_reason="stop"` completes grading; tool requests and missing or

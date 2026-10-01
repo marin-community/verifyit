@@ -66,11 +66,19 @@ class Compare(StrEnum):
     FLOAT = "float"
 
 
+class EmptyOutputPolicy(StrEnum):
+    """Whether a present empty answer is scored zero or passed to its grader."""
+
+    ZERO = "zero"
+    GRADE = "grade"
+
+
 @dataclass(frozen=True)
 class McqSpec:
     expected: str
     options: int = 4
     output: str = DEFAULT_OUTPUT
+    empty_output: EmptyOutputPolicy = field(default=EmptyOutputPolicy.ZERO, kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -78,6 +86,7 @@ class MathSpec:
     expected: str
     math_type: MathType = MathType.SCALAR
     output: str = DEFAULT_OUTPUT
+    empty_output: EmptyOutputPolicy = field(default=EmptyOutputPolicy.ZERO, kw_only=True)
     profile: MathProfile = MathProfile.ANCHORED
     allow_additive_constant: bool = False
 
@@ -88,6 +97,7 @@ class NumericSpec:
     tolerance_abs: float = 1e-6
     tolerance_rel: float = 1e-6
     output: str = DEFAULT_OUTPUT
+    empty_output: EmptyOutputPolicy = field(default=EmptyOutputPolicy.ZERO, kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -97,6 +107,7 @@ class ExactSpec:
     ignore_whitespace: bool = True
     ordered: bool = True
     output: str = DEFAULT_OUTPUT
+    empty_output: EmptyOutputPolicy = field(default=EmptyOutputPolicy.ZERO, kw_only=True)
     strip_outer_whitespace: bool = True
     substring: bool = False
 
@@ -106,6 +117,7 @@ class JsonSchemaSpec:
     schema: str = "schema.json"
     format: SchemaFormat = SchemaFormat.JSON
     output: str = DEFAULT_OUTPUT
+    empty_output: EmptyOutputPolicy = field(default=EmptyOutputPolicy.ZERO, kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -119,6 +131,7 @@ class XmlElementsSpec:
     required: tuple[str, ...] = ()
     any_of: tuple[str, ...] = ()
     output: str = DEFAULT_OUTPUT
+    empty_output: EmptyOutputPolicy = field(default=EmptyOutputPolicy.ZERO, kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -128,6 +141,7 @@ class CsvColumnsSpec:
     required: tuple[str, ...] = ()
     any_of: tuple[str, ...] = ()
     output: str = DEFAULT_OUTPUT
+    empty_output: EmptyOutputPolicy = field(default=EmptyOutputPolicy.ZERO, kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -140,6 +154,7 @@ class Constraint:
 class IfevalSpec:
     constraints: tuple[Constraint, ...]
     output: str = DEFAULT_OUTPUT
+    empty_output: EmptyOutputPolicy = field(default=EmptyOutputPolicy.ZERO, kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -147,6 +162,7 @@ class ReasoningGymSpec:
     dataset: str
     entry: str = "entry.json"
     output: str = DEFAULT_OUTPUT
+    empty_output: EmptyOutputPolicy = field(default=EmptyOutputPolicy.ZERO, kw_only=True)
     params: str | None = None
 
 
@@ -235,6 +251,7 @@ class JudgeSpec:
     exact_gate: bool = True
     request_timeout: float = 120.0
     output: str = DEFAULT_OUTPUT
+    empty_output: EmptyOutputPolicy = field(default=EmptyOutputPolicy.ZERO, kw_only=True)
     system_prompt: str = ""
     prompt_template: str = ""
     label_scores: dict[str, float] = field(default_factory=dict)

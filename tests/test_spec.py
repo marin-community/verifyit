@@ -6,6 +6,7 @@ import pytest
 from verifyit.spec import (
     Compare,
     Constraint,
+    EmptyOutputPolicy,
     ExactSpec,
     IfevalSpec,
     MathProfile,
@@ -18,6 +19,7 @@ from verifyit.spec import (
     StdioSpec,
     parse_spec,
     render_spec,
+    spec_from_table,
 )
 
 
@@ -75,3 +77,29 @@ def test_reasoning_gym_params_roundtrip_and_legacy_default():
     legacy = parse_spec('mode = "reasoning-gym"\ndataset = "decimal_arithmetic"\n')
     assert legacy.params is None
     assert "params" not in render_spec(legacy)
+
+
+@pytest.mark.parametrize(
+    "mode,fields",
+    [
+        ("mcq", {"expected": "A"}),
+        ("math", {"expected": "1"}),
+        ("numeric", {"expected": 1.0}),
+        ("exact", {"expected": [""]}),
+        ("json-schema", {}),
+        ("xml-elements", {"required": ["answer"]}),
+        ("csv-columns", {"required": ["answer"]}),
+        ("ifeval", {"constraints": [{"name": "punctuation:no_comma"}]}),
+        ("reasoning-gym", {"dataset": "decimal_arithmetic"}),
+        ("judge", {"references": ["reference"]}),
+    ],
+)
+def test_output_modes_materialize_and_render_explicit_empty_policy(mode, fields):
+    default = spec_from_table({"mode": mode, **fields})
+    assert default.empty_output is EmptyOutputPolicy.ZERO
+    assert 'empty_output = "zero"' in render_spec(default)
+    configured = spec_from_table({"mode": mode, **fields, "empty_output": "grade"})
+    assert configured.empty_output is EmptyOutputPolicy.GRADE
+    assert parse_spec(render_spec(configured)) == configured
+    with pytest.raises(ValueError):
+        spec_from_table({"mode": mode, **fields, "empty_output": "reward_half"})

@@ -3,10 +3,11 @@
 
 r"""Grade mathematical answers, either symbolically or as a number with tolerance.
 
-The candidate is the last ``\boxed{}`` expression, or the last non-empty line when the output has
+The default anchored profile takes the last ``\boxed{}`` expression, or the last non-empty line when the output has
 none. Both sides are parsed as anchored LaTeX (``$...$``) so math-verify reads a whole expression
 instead of the first bare number it finds, falling back to parsing the raw text with math-verify's
-own anchors (``the answer is ...``) when the anchored parse yields nothing.
+own anchors (``the answer is ...``) when the anchored parse yields nothing. Other profiles retain
+raw source extraction or require a boxed expression; their parser options remain task-controlled.
 
 ``math_type`` selects the comparison. Set and interval answers allow math-verify's set/relation
 comparison, so an expected ``(2, \infty)`` accepts a candidate ``x > 2``. A list is an ordered
@@ -22,7 +23,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from verifyit.grade import InvalidTask, Reward, numeric_tolerance, read_output, scored
+from verifyit.grade import InvalidTask, Reward, empty_output_policy, numeric_tolerance, read_output, scored
 from verifyit.modes.extract import BOXED, extract_boxed, last_line, strip_math_delimiters
 from verifyit.spec import MathProfile, MathSpec, MathType, NumericSpec
 
@@ -130,6 +131,7 @@ def _additive_constant_match(expected: list, candidate: list) -> bool:
 
 def grade_math_candidate(spec: MathSpec, candidate: str) -> Reward:
     """Score extracted math content; backend deadlines become infrastructure failures."""
+    empty_output_policy(spec)
     if type(spec.allow_additive_constant) is not bool:
         raise InvalidTask("allow_additive_constant must be boolean")
     if not isinstance(spec.profile, MathProfile) or not isinstance(spec.math_type, MathType):
@@ -249,6 +251,7 @@ def _last_number(text: str) -> float | None:
 
 def grade_numeric_candidate(spec: NumericSpec, value: float) -> Reward:
     """Score a numeric value after the caller extracts it from its submission format."""
+    empty_output_policy(spec)
     tolerance = numeric_tolerance(spec)
     if not math.isfinite(value):
         return scored(0.0, reason="nonfinite_candidate", expected=spec.expected)

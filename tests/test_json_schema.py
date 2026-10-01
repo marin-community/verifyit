@@ -236,3 +236,14 @@ def test_grid_schema_rejects_boolean_cells_even_when_python_equality_matches(tes
     answer(workspace, "[[false, true]]")
     reward = grade_json_schema.grade(JsonSchemaSpec(), tests_dir, workspace)
     assert (reward.reward, reward.status) == (0.0, Status.SCORED)
+
+
+@pytest.mark.parametrize("instance", [None, [], {}, 0, False, ""])
+def test_present_json_falsy_values_are_data_not_missing_output(tmp_path, instance):
+    (tmp_path / "schema.json").write_text("{}")
+    (tmp_path / "answer.txt").write_text(json.dumps(instance))
+    spec = JsonSchemaSpec()
+    assert grade_json_schema.grade(spec, tmp_path, tmp_path).reward == 1
+    assert grade_json_schema.grade_json_schema_candidate({}, instance).reward == 1
+    (tmp_path / "answer.txt").unlink()
+    assert grade_json_schema.grade(spec, tmp_path, tmp_path).reward == 0

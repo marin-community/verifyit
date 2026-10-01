@@ -3,11 +3,12 @@
 
 """Mode judge: IFEval gate, exact gate, then an LLM judge.
 
-Two rubrics. ``reference`` ports the Nemotron open-QA harness: most correct responses match a
+Three rubrics. ``reference`` ports the Nemotron open-QA harness: most correct responses match a
 reference verbatim once normalized, so the exact gate answers them for free and only the survivors
 reach the model. ``checklist`` ports the rewardkit checklist graders: each criterion is a yes/no
 question put to the model on its own, and the reward is the fraction answered yes, as rewardkit's
-default mean aggregation scored them. Either rubric can sit behind ``constraints``, deterministic
+default mean aggregation scored them. ``labels`` maps a configured final verdict label to its
+explicit task score. All rubrics can sit behind ``constraints``, deterministic
 IFEval checks that must all pass first.
 
 The judge is any OpenAI-compatible chat endpoint, configured through ``VERIFYIT_JUDGE_BASE_URL``,
@@ -110,7 +111,8 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
     if failed:
         return scored(0.0, gate="constraints", failed=failed)
     if spec.rubric == RUBRIC_REFERENCE:
-        if spec.exact_gate and normalize(boxed_answer(candidate)) in {normalize(r) for r in references}:
+        normalized = normalize(boxed_answer(candidate))
+        if spec.exact_gate and normalized and normalized in {normalize(r) for r in references}:
             return scored(1.0, gate="exact")
         return _judge_reference(spec, references, candidate)
     if spec.rubric == RUBRIC_LABELS:
@@ -202,16 +204,11 @@ def _judge_labels(spec: JudgeSpec, reference: str, candidate: str) -> Reward:
                 **options,
             ),
         )
-        if not response.choices:
-            raise RuntimeError("judge returned no completion choices")
-        choice = response.choices[0]
-        if choice.message.tool_calls or choice.message.function_call or choice.message.refusal:
-            raise RuntimeError("judge completion contains a tool call or refusal")
+        choice = _completion_choice(response)
         if choice.finish_reason == "length" and index + 1 < len(budgets):
             continue
-        if choice.finish_reason != "stop" or not isinstance(choice.message.content, str):
-            raise RuntimeError("judge completion is incomplete or has no text")
-        answer = _label_answer(choice.message.content, spec.strip_reasoning_blocks)
+        content = _completed_text(choice)
+        answer = _label_answer(content, spec.strip_reasoning_blocks)
         final = answer.rsplit("\n", 1)[-1].strip()
         completed_lines = {line.strip() for line in answer.splitlines()}
         observed = {
@@ -328,10 +325,24 @@ def _complete(client: openai.OpenAI, model: str, prompt: str, timeout: float) ->
         temperature=0.0,
         timeout=timeout,
     )
+    return _completed_text(_completion_choice(response))
+
+
+def _completion_choice(response: ChatCompletion):
+    if len(response.choices) != 1:
+        raise RuntimeError("judge must return exactly one completion choice")
     choice = response.choices[0]
-    if choice.finish_reason != "stop":
-        raise RuntimeError(f"judge response is incomplete: finish_reason={choice.finish_reason!r}")
-    return choice.message.content or ""
+    message = choice.message
+    if message.role != "assistant" or message.tool_calls or message.function_call or message.refusal:
+        raise RuntimeError("judge completion is not an assistant text response or contains a tool call or refusal")
+    return choice
+
+
+def _completed_text(choice) -> str:
+    content = choice.message.content
+    if choice.finish_reason != "stop" or not isinstance(content, str) or not content.strip():
+        raise RuntimeError("judge completion is incomplete or has no text")
+    return content
 
 
 def _score(reply: str, allowed_scores: tuple[float, ...]) -> float | None:

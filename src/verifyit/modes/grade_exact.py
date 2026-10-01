@@ -22,9 +22,9 @@ import re
 from collections import Counter
 from pathlib import Path
 
-from verifyit.grade import InvalidTask, Reward, read_output, scored
+from verifyit.grade import InvalidTask, Reward, empty_output_policy, read_output, scored
 from verifyit.modes.extract import extract_boxed
-from verifyit.spec import ExactSpec
+from verifyit.spec import EmptyOutputPolicy, ExactSpec
 
 ITEM_SEPARATOR = re.compile(r"[\n,]")
 MAX_DETAIL_CHARS = 400
@@ -79,6 +79,11 @@ def _validate_spec(spec: ExactSpec) -> None:
 def grade_exact_candidate(spec: ExactSpec, candidate: str) -> Reward:
     """Score answer content after the caller extracts it from its submission format."""
     _validate_spec(spec)
+    policy = empty_output_policy(spec)
+    if not isinstance(candidate, str):
+        raise InvalidTask("exact candidate must be text")
+    if policy is EmptyOutputPolicy.ZERO and not candidate.strip():
+        return scored(0.0, reason="empty_output")
     return scored(
         float(_matches(candidate, spec)),
         extracted=candidate.strip()[:MAX_DETAIL_CHARS],

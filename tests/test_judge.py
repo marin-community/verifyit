@@ -10,7 +10,7 @@ import pytest
 
 from verifyit.grade import Status, run, write_reward
 from verifyit.modes import grade_judge
-from verifyit.spec import Constraint, JudgeSpec, render_spec
+from verifyit.spec import Constraint, EmptyOutputPolicy, JudgeSpec, render_spec
 
 # The dataset's own reference answer, apostrophe included: the gate must fold case, spacing and
 # punctuation without mangling non-ASCII text.
@@ -460,3 +460,81 @@ def test_unsupported_label_scan_is_invalid_before_judge_call(tmp_path, fake_judg
     with pytest.raises(grade_judge.InvalidTask):
         grade_judge.grade(_label_spec(label_scan=label_scan), tmp_path, workspace)
     assert fake_judge.requests == []
+
+
+@pytest.mark.parametrize("candidate", ["", " \n\t"])
+def test_explicit_empty_judge_policy_delegates_present_text_to_task_labels(tmp_path, fake_judge, candidate):
+    fake_judge.replies = ["C"]
+    spec = _label_spec(empty_output=EmptyOutputPolicy.GRADE, label_scores={"A": 1.0, "B": 0.0, "C": 0.5})
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(spec))
+    _workspace(tmp_path, candidate)
+    result = run(spec_path, tmp_path)
+    assert (result.status, result.reward, result.detail["verdict"]) == (Status.SCORED, 0.5, "C")
+    assert len(fake_judge.requests) == 1
+    assert fake_judge.requests[0]["messages"][-1]["content"] == spec.prompt_template.format(
+        question=spec.question, reference=spec.references[0], candidate=candidate
+    )
+    (tmp_path / "answer.txt").unlink()
+    missing = run(spec_path, tmp_path)
+    assert (missing.status, missing.reward) == (Status.SCORED, 0.0)
+    assert len(fake_judge.requests) == 1
+
+
+@pytest.mark.parametrize("fault", ["default_policy", "invalid_reference", "incomplete_provider", "empty_provider"])
+def test_empty_judge_policy_never_turns_task_or_transport_failure_into_abstention(tmp_path, fake_judge, fault):
+    fake_judge.replies = ["C"]
+    overrides = {"empty_output": EmptyOutputPolicy.GRADE, "label_scores": {"A": 1.0, "B": 0.0, "C": 0.5}}
+    status = Status.INFRA_ERROR
+    if fault == "default_policy":
+        overrides["empty_output"] = EmptyOutputPolicy.ZERO
+        status = Status.SCORED
+    elif fault == "invalid_reference":
+        overrides["references"] = ("",)
+        status = Status.INVALID_TASK
+    elif fault == "incomplete_provider":
+        fake_judge.finish_reason = "length"
+    else:
+        fake_judge.replies = [""]
+    _workspace(tmp_path, "")
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(_label_spec(**overrides)))
+    result = run(spec_path, tmp_path)
+    assert (result.status, result.reward) == (status, 0.0)
+    if fault in {"default_policy", "invalid_reference"}:
+        assert fake_judge.requests == []
+
+
+def test_empty_judged_answer_cannot_pass_a_vacuous_normalized_exact_gate(tmp_path, fake_judge):
+    fake_judge.replies = ["SCORE: 0"]
+    spec = JudgeSpec(references=("!!!",), empty_output=EmptyOutputPolicy.GRADE)
+    _workspace(tmp_path, "")
+    result = grade_judge.grade(spec, tmp_path, tmp_path)
+    assert result.reward == 0
+    assert len(fake_judge.requests) == 1
+
+
+@pytest.mark.parametrize("rubric", ["reference", "checklist"])
+@pytest.mark.parametrize(
+    "message_fields",
+    [
+        {"refusal": "Cannot judge."},
+        {"tool_calls": [{"id": "call_1", "type": "function", "function": {"name": "tool", "arguments": "{}"}}]},
+        {"function_call": {"name": "tool", "arguments": "{}"}},
+        {"role": "user"},
+    ],
+)
+def test_score_rubrics_reject_positive_text_in_invalid_envelope(tmp_path, fake_judge, rubric, message_fields):
+    fake_judge.replies = ["SCORE: 1"]
+    fake_judge.message_fields = message_fields
+    spec = (
+        JudgeSpec(references=("reference",), exact_gate=False)
+        if rubric == "reference"
+        else JudgeSpec(rubric="checklist", criteria=("Correct answer",))
+    )
+    workspace = _workspace(tmp_path, "candidate")
+    spec_path = tmp_path / "verifier.toml"
+    spec_path.write_text(render_spec(spec))
+    result = run(spec_path, workspace)
+    assert (result.status, result.reward) == (Status.INFRA_ERROR, 0.0)
+    assert len(fake_judge.requests) == 1
