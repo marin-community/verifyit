@@ -1044,6 +1044,34 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-zeroeval/solution-availability.json",
                 ],
             )
+        elif name == "alpaca_eval":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_alpaca_preference_glm_runtime",
+                reason=(
+                    "ScriptSpec retains all AE1/AE2 selector profiles, source judge requests, "
+                    "weighted preference/ranking parsing and ordinary/length-controlled metrics. "
+                    "Malformed judge results abort the complete batch."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True with original reference/GLM assets and dependencies. "
+                    "Eight fixture profiles preserve 160 fresh HTTP requests and full source metrics, "
+                    "except an inapplicable AE1 NaN becomes null. Empty responses receive minimum "
+                    "preference; all-blank ordinary/discrete/length-controlled win rates are zero. "
+                    "Stale annotation caches are bypassed. No archived replay is claimed."
+                ),
+                validation_status="source_evaluator_fixtures_rng_parity_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/alpaca-verifyit.patch",
+                    "integrations/evalchemy/alpaca-source.json",
+                    "../evidence/e2e/wiring/evalchemy-alpaca/manager-ae2-auto/results.json",
+                    "../evidence/e2e/wiring/evalchemy-alpaca/final-rng-summary.json",
+                    "../evidence/e2e/wiring/evalchemy-alpaca/edge-final-cutover-all_empty/results.json",
+                    "../evidence/e2e/wiring/evalchemy-alpaca/tests.stdout",
+                ],
+            )
         elif name == "MTBench":
             entity.update(
                 status="retained_runtime_available",

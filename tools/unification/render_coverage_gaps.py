@@ -58,7 +58,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Source population | Implemented / available | Remaining coverage |
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,329 guarded native routes + 993 retained-runtime routes available | 370 configs have no cutover; breakdown below |
-| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 24 source runtimes | 6 not integrated (4 client/comparator audits + 1 private-solution blocker + 1 native profile gap) |
+| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 25 source runtimes | 5 not integrated (3 client/comparator audits + 1 private-solution blocker + 1 native profile gap) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 17 retained-runtime overrides | 0 unwired; GSM hybrid retains its fallback; plus 1 orchestration group |
 SKYRL_SUMMARY_ROW
 HARBOR_SUMMARY_ROW

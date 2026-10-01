@@ -1,13 +1,13 @@
 # Coverage gaps
 
-Completion scope: all 45 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **195 required routes**. The manager-reviewed checkpoint is **143/195 tested** (SkyRL 45/45, Harbor 41/87, custom 36/42, overrides 21/21). Counts derive from SkyRL's tested-route metadata, Harbor's explicit execution evidence markers and the Evalchemy tested-config ledger; route availability alone does not count. Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required. SkyRL retains 46 inventoried scoring routes; coder1 is explicitly excluded at the user's request and tracked for deprecation in [MarinSkyRL #880](https://github.com/marin-community/MarinSkyRL/issues/880). Its partial integration, source hashes and unresolved contracts remain in the JSON register; it is not counted as tested.
+Completion scope: all 45 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **195 required routes**. The manager-reviewed checkpoint is **144/195 tested** (SkyRL 45/45, Harbor 41/87, custom 37/42, overrides 21/21). Counts derive from SkyRL's tested-route metadata, Harbor's explicit execution evidence markers and the Evalchemy tested-config ledger; route availability alone does not count. Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required. SkyRL retains 46 inventoried scoring routes; coder1 is explicitly excluded at the user's request and tracked for deprecation in [MarinSkyRL #880](https://github.com/marin-community/MarinSkyRL/issues/880). Its partial integration, source hashes and unresolved contracts remain in the JSON register; it is not counted as tested.
 
 The remaining work is primarily client integration, source-specific comparison/judge profiles, and execution validation. A specification is not an implemented migration. Retaining the source scorer is compatibility or a hybrid route, not complete native equivalence. No unavoidable new verifier category has been identified. WildBench coverage is its working score mode: the advertised pairwise path fails in the original source because references are None. Its default missing max_tokens field also needs the documented 4096-token configuration workaround. MTBench coverage is single mode with all four judge profiles and both source provider protocols; its pairwise-baseline result columns and pairwise-all singleton model selection fail in the original evaluator and remain excluded.
 
 | Source population | Implemented / available | Remaining coverage |
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,329 guarded native routes + 993 retained-runtime routes available | 370 configs have no cutover; breakdown below |
-| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 24 source runtimes | 6 not integrated (4 client/comparator audits + 1 private-solution blocker + 1 native profile gap) |
+| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 25 source runtimes | 5 not integrated (3 client/comparator audits + 1 private-solution blocker + 1 native profile gap) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 17 retained-runtime overrides | 0 unwired; GSM hybrid retains its fallback; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 45 source-patched (30 with selected real traces, 15 without eligible real traces) | 1 partial client/harness routes + 0 native profile gaps; 2 external-objective placeholders separate |
 | Harbor 87 adapters | 19 native primitive clients + 22 structured source-runtime bridges | 46 not integrated; 6 wired routes need verifier isolation |
@@ -23,7 +23,7 @@ Evidence audited 2026-10-01. These are distinct configurations exercised through
 
 | Population | Routes available / total | E2E tested / total | Fixture only | Archived-score parity | Real responses, different producer contract |
 | --- | --- | --- | --- | --- | --- |
-| evalchemy-custom | 36 / 42 | 36 / 42 | 30 | 5 | 1 |
+| evalchemy-custom | 37 / 42 | 37 / 42 | 31 | 5 | 1 |
 | evalchemy-override | 21 / 21 | 21 / 21 | 20 | 1 | 0 |
 | lm-eval-harness | 12,322 / 12,692 | 224 / 12,692 | 220 | 3 | 1 |
 
@@ -62,7 +62,6 @@ The 6 remaining custom benchmarks are named below. Script/stdio/pytest candidate
 | LiveBench | not_integrated | script | gen_judgments dispatches multiple category/task/date scorer families; no per-family trusted scorer and metric adapter is integrated. |
 | MultiPLE | not_integrated | script | Language-specific compiler/runtime dispatch and functional tests cannot be inferred as Python tests; explicit language images and source runner adapter are absent. |
 | SWEbench | not_integrated | script | run_evaluation requires repository/image preparation, candidate patch application and protected test identities; no task-image adapter is wired. |
-| alpaca_eval | capability_gap | judge, script | Alpaca evaluator pairwise annotations and leaderboard aggregation, including length control, are source-owned; no annotation-to-verdict client is integrated. |
 | zeroeval | not_integrated | script | Partial ScriptSpec client covers five source task dispatches, but Zebra's private solution dataset is gated. Provide genuine Zebra private solutions and validate its grid metrics. |
 
 ### Implemented source and math runtimes
@@ -97,6 +96,7 @@ The 6 remaining custom benchmarks are named below. Script/stdio/pytest candidate
 | SimpleQA | retained_runtime_available | script, exact, math | Opt-in client preserves source prompts, SDK requests, token-budget retries, label parsing, repetitions and pass@k. Enable verifyit_enabled=True. |
 | SimpleQAMini | retained_runtime_available | script, exact, math | Opt-in client preserves source prompts, SDK requests, token-budget retries, label parsing, repetitions and pass@k. Enable verifyit_enabled=True. |
 | WildBench | retained_runtime_available | script | ScriptSpec preserves score-mode source SDK requests and category aggregates; JSONSchema validates finite judgments from 1 to 10. Enable verifyit_enabled=True. |
+| alpaca_eval | retained_runtime_available | script | ScriptSpec retains all AE1/AE2 selector profiles, source judge requests, weighted preference/ranking parsing and ordinary/length-controlled metrics. Enable verifyit_enabled=True with original reference/GLM assets and dependencies. |
 
 ## Evalchemy overrides
 

@@ -1,0 +1,573 @@
+--- a/eval/chat_benchmarks/alpaca_eval/eval_instruct.py
++++ b/eval/chat_benchmarks/alpaca_eval/eval_instruct.py
+@@ -48,6 +48,7 @@
+         annotator_model: str = "gpt-4o-mini-2024-07-18",
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize Alpaca benchmark.
+@@ -64,6 +65,7 @@
+             system_instruction: Optional system instruction for the model
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.dataset_name = dataset_name
+         self.subset = subset
+         self.split = split
+@@ -170,6 +172,11 @@
+         if results is None:
+             return None
+ 
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_alpaca import evaluate as verifyit_evaluate
++
++            return verifyit_evaluate(self.annotator_conf, results)
++
+         model_outputs = results["model_outputs"]
+         model_identifier = results["model_identifier"]
+ 
+--- /dev/null
++++ b/eval/graders/verifyit_alpaca.py
+@@ -0,0 +1,376 @@
++"""Alpaca source preference parsing and leaderboard metrics under ScriptSpec."""
++
++import hashlib
++import importlib
++import json
++import math
++from numbers import Real
++import os
++from pathlib import Path
++import random
++import shutil
++import sys
++import tempfile
++
++import numpy as np
++from verifyit.grade import InvalidTask, Status, run
++from verifyit.json_objects import unique_object
++from verifyit.spec import ScriptSpec, render_spec
++
++from eval.graders.verifyit_instructions import _state
++
++CONFIGS = {
++    "weighted_alpaca_eval_gpt-4o-mini-2024-07-18",
++    "weighted_alpaca_eval_gpt4_turbo",
++    "alpaca_eval_gpt4_0613",
++    "alpaca_eval_gpt4",
++}
++SOURCE_HASHES = {
++    "plotting.py": "c8568d537e39d3a0c10b5758a400a8dfa97fc945386457fc78484be6b8a867fc",
++    "constants.py": "0ae112e43df345f87997d621760e55ede9bd2a2d50e49c6b54e308828ac171c6",
++    "__init__.py": "4f1e3089d7e970aa379b9a317afbf6a46efe26d555aa2b9b69d1797307770651",
++    "types.py": "f072d25de85944b389db8c69a8de081531903681baed5ce7586905bfeb0b8cc7",
++    "completion_parsers.py": "f5ab163c81ff789eddf58a05b3948000238578afc9357bdd0e33aec8f5e3ee87",
++    "utils.py": "864e4a3b752fe0c4e3fb779e7f3d07635db707ed83dc9540a6f83ba16d85be17",
++    "processors.py": "d964b289d880229aaa43db5f34e85a95a3d0f4637995a8bd648a82d47af57926",
++    "main.py": "9d008a38f03f4733c58f103beaff73154070cd0c30e857b919471e09a29ccc50",
++    "analyze.py": "75e2019a90ba64ccf090dc129c18e4942acf328c3c01c90b8c63b3a77f9700ea",
++    "metrics/glm_winrate.py": "2bad5aacd48da13b85b4890289440fa59a01a87606746461d36d240964c1f702",
++    "metrics/__init__.py": "838fe2fb462dae5fa5b8ee60c005211e9467d09452e601566e4c3c0a57bcf3dd",
++    "metrics/helpers.py": "405b0cd6787960f8158c4bc63c0bf1cf11a038a8ae69b89baa95b7ea83c50a90",
++    "metrics/winrate.py": "4f3598d1e35ef0a79d9e119d0c2785f8d7513c6df4002c47ecada56e464b6a37",
++    "annotators/__init__.py": "d47c2a73c1fd01d6cfb1cc2a33b36c3e434d49875a8d986febd65b697afa6e56",
++    "annotators/pairwise_evaluator.py": "72f5900dce8c511ab866cb0ad5ef73f51c94ec83d4f55340f24a98ee9f75b38d",
++    "annotators/base.py": "6a8c0e215fc37f0b6133952ad25681b76fe83c0e2b07d70bd00340123b772642",
++    "decoders/sambanova_api.py": "22e218010483f3bf6d205c24db56715030d06a6e2ef2922fb2a55cead440279f",
++    "decoders/huggingface_api.py": "786d0e8010f9a0d2db9d676e0480539002d371976cdc43c7fd7a64fd7a3b6ae2",
++    "decoders/replicate.py": "432360dbe1eaf3396b30761d74756e2e5ed969eeb3f2c4b4e7c61bd3caa1011e",
++    "decoders/cache.py": "eecf448a4a7c18227822cee5679e116008ca563f629350bd501272685ff630d4",
++    "decoders/__init__.py": "5e3a47fc502c754044f6c220f41c3d155d084b498ff29cdfe6a5b5ac82309728",
++    "decoders/google.py": "fac114bc1103259853c57849053218c0789101258bc15e2704ea1450728ecc99",
++    "decoders/huggingface_local.py": "df0cb604f1a84fb6c61585d7d024cf575745004f0171042ade9cefa363cbd830",
++    "decoders/test.py": "8b4530016cfb09b80455e0ca8df422076d93bdcd2ef88120c1a5dc8acb2ce394",
++    "decoders/bedrock_anthropic.py": "b338d25508e41c68700706d5268b1e73603cd237d913d927c0ffba513f51d8e5",
++    "decoders/openai.py": "457ee8b094d4fc1a3d44069853923bffe31fcc60571cd9cbb3b35791118d6277",
++    "decoders/vllm_local.py": "359ae8f4e9af6c465b45e43724645aa682e34fb19d7c60ba2058004265eea358",
++    "decoders/anthropic.py": "876a3804b91ff930b7fcc622a949dd0a9cbc3018bfe01d0565b130f0f9a25590",
++    "decoders/cohere.py": "6bacf7c7b6e4477c7e04a26c6cd1a9f9ada94ebe86edf86f8119882f83278696",
++    "decoders/jinachat.py": "eb64fe716c8255d2cbebb9bbd06f59d0a8f2c14419f8b56d72e4f1062c5b4f79",
++    "evaluators_configs/cohere/configs.yaml": "f9c35ac8520686bf0265dcf454bcab4085781a3664635d8d4cc43caf3c2d9704",
++    "evaluators_configs/bedrock_claude_2/configs.yaml": "8771eee5040e91fc810e47674c047a6d5dd2d2f4b97efe7f50846856fb618d6d",
++    "evaluators_configs/alpaca_eval_gpt4_0613/configs.yaml": "a8033eea21e5e616181341ebe7f849d2846b9ab89c48dd8391db0539631f19a2",
++    "evaluators_configs/test/configs.yaml": "51651c1190613f091bed47cf5794ff7baf6b74d412dab8c3bffd5979f20a8675",
++    "evaluators_configs/claude_2/configs.yaml": "9e20b9e84febbaaddd46f93d6359b3c949dd7f44ba33f07a5a239907f3a53e35",
++    "evaluators_configs/oasst_pythia_12b/configs.yaml": "e1b36e084a4b5302f5c51d9e391d2e744f3595185c54ae3397a055b2d970373b",
++    "evaluators_configs/improved_lmsys_gpt4/configs.yaml": "8a6081f6fac72090aed522071651af312e92265bfa6ff337baaa44254e01a629",
++    "evaluators_configs/guanaco_33b/configs.yaml": "b22fa07e77ae36ae855641aebc44f049e444613c774b6ff778187a852085fc43",
++    "evaluators_configs/weighted_alpaca_eval_gpt4_turbo/configs.yaml": "fd5c656d9959ffd63b986c8216a81e83e001d17ced5a08defc1c857ce9dd033e",
++    "evaluators_configs/claude/configs.yaml": "933154082c037a13beb8eb8aa74f47c842e156c8729789717eabc2f48ddb786c",
++    "evaluators_configs/weighted_alpaca_eval_gpt4_turbo_new/configs.yaml": "0bd8580c1bca28c038d7c45afcf8af8c8d418ff427e624df88bfc90f57a2558f",
++    "evaluators_configs/LlaMa-3-70B-SambaNova/configs.yaml": "0255758f8cc90dc3cd0887604f41e3c89b1c8f4a412bce68a1c7df37f6575afc",
++    "evaluators_configs/alpaca_eval_clf_cot_gpt4_turbo/configs.yaml": "eac83bfa754d8a8de9898f00ec00bdb6c9088c7eb2a75e2bae5bf96241b9b3dc",
++    "evaluators_configs/alpaca_eval_gpt4_fn/configs.yaml": "d9e5f176dc10d6b0e5b33f15259892b8402e3121ca0f8b2dc8c1f112b346fa35",
++    "evaluators_configs/gpt35_turbo_instruct/configs.yaml": "055a996bac2f628659c636eb565bb07bf6a87980cee753f4e5ebc21e4e4e5bae",
++    "evaluators_configs/gpt-3.5-turbo-1106_ranking/configs.yaml": "16cf886838feebbc997aa5c8d410631eabf29cd68a91abbed5ee43e06a77364d",
++    "evaluators_configs/weighted_alpaca_eval_gpt4_turbo_greedy/configs.yaml": "4d6325a3c01f814cccd5c0421dfad76b68aeb82a7ea4d9d4a868497c9d39a338",
++    "evaluators_configs/alpaca_eval_llama3_70b_fn/configs.yaml": "e856592c79fbba244234ec3671f464aa0d9679e6a63af58592e92e869c668716",
++    "evaluators_configs/alpaca_eval_clf_gpt4_turbo/configs.yaml": "869db4f666a9cbf338c3a5c9637eb1b7d923b543b9faf03482e8845cf1921dd6",
++    "evaluators_configs/gpt4_turbo_cot_clf/configs.yaml": "53e793d13575a740646f8796c264f5e23745477f68f220a17bb4488c742f307e",
++    "evaluators_configs/alpaca_eval_gpt4/configs.yaml": "676717d3992d559307d63661ef1271132dfd613100f747f6ce8d58a7077c623d",
++    "evaluators_configs/claude_ranking/configs.yaml": "7ca0cd172cbbb1f1e694ee647a055fb3944c5b1465082ffe90e883cb93405cbb",
++    "evaluators_configs/aviary_gpt4/configs.yaml": "a86cbe472eb8ef1ffc8d31c3f260aef37cddba75a47cc0ff3fb9a72ad7543107",
++    "evaluators_configs/LlaMa-3-8B-SambaNova/configs.yaml": "da82627735884e1e3e004131012b459554e21e98057815f5d0a53b846b478b6e",
++    "evaluators_configs/gpt4_turbo_logprob/configs.yaml": "2b8d2380332c89664bd85170ba5021771a4217407e42a6ae9b853ca4033ae8ac",
++    "evaluators_configs/weighted_alpaca_eval_cot_gpt4_turbo/configs.yaml": "7f3bbd8608c399a3df59538f2cd545f9987b7d85be381c59d1c1ad9404682877",
++    "evaluators_configs/alpaca_farm/configs.yaml": "0edae68f8da45cedf08de427e4ceab06e0c9712d67220f9e150b35442e7752e3",
++    "evaluators_configs/improved_aviary_gpt4/configs.yaml": "1d8b000db159ff6096308407e11942d2dd8a5ff977468de04cb80e012cef8f63",
++    "evaluators_configs/alpaca_eval_gpt4_turbo_fn/configs.yaml": "865962092dd6cd2630f7b6e2c6d0482458437bcbeb1e83b0ae96bb2cb533084d",
++    "evaluators_configs/alpaca_farm_greedy_gpt4/configs.yaml": "538b1ded4fc335e30033a4e7e4240cd49b7d9c0cf33aaca98b31bbc34e408b0c",
++    "evaluators_configs/LlaMa-3-405B-SambaNova/configs.yaml": "80017aecead209fefd1b0812b56300306756b7cd6c6533a0c29313ee41eb72f3",
++    "evaluators_configs/gpt4_turbo_cot_logprob/configs.yaml": "8e8124a9d10cdb60f559d9f5cd5a66e782fce472ec4dc48d8bf5b92dcc263765",
++    "evaluators_configs/weighted_alpaca_eval_gpt-4o-mini-2024-07-18/configs.yaml": "b511e07c4baa955b92f4cf1d1de5cc1d63b78077d7f3d91d5f0c00d92ca0a3d2",
++    "evaluators_configs/bedrock_claude/configs.yaml": "e1ec459300cc6a197550a98f3d7ed997ac13ab58cc616a7e79337adbfb15a05e",
++    "evaluators_configs/chatgpt_fn/configs.yaml": "183a585168bc3b2665a8c0a6bbaf499b55ebde2443e0837832c836ac1e870881",
++    "evaluators_configs/alpaca_eval_cot_gpt4_turbo_fn/configs.yaml": "f1fd14d8bf12b5cbb2ce135878a2dfbec1da4eed921e52d7cca1f39f90370ab0",
++    "evaluators_configs/text_davinci_003/configs.yaml": "c87413db237104e67bfbb44cbe3396eda39173ef99662fbc06086f134679b91b",
++    "evaluators_configs/chatgpt/configs.yaml": "cf9acc318ee9a670c192694a02cd0031a797722337b7e04bd76da3c554caddf9",
++    "evaluators_configs/gpt4/configs.yaml": "dea1b73411b1dae1debf54a497dbdc5dfd7e302dc663c27c51e2c46e51124b53",
++    "evaluators_configs/alpaca_eval_gpt4_0314/configs.yaml": "10eead1d2964751cf07b59fb81fc7af9958232ee3d3491b90132fe97f3aa384e",
++    "evaluators_configs/claude_3_opus_ranking/configs.yaml": "bfcd1049a8cecab5df449a7ecf45e8a9fbe8caa19ad3fee34916281bfe2419e3",
++    "evaluators_configs/gpt4_turbo/configs.yaml": "e835e3c7c76605e4ad3959cc807d6007f6a845a5edf6c462d19522fa35ecf12e",
++    "evaluators_configs/lmsys_gpt4/configs.yaml": "0089a32f77e5ce79798bc1070be387d423e19c3493a117f4f97f6921957540f5",
++    "evaluators_configs/gpt4_turbo_clf/configs.yaml": "2b7a8dc95b530cdbcc56ff9d5aeb54d9dff50bec2bec34eb768c608a8da47800",
++    "evaluators_configs/alpaca_eval_vllm_llama3_70b_fn/configs.yaml": "616030a767fdaeabb1522855e2a99e72f90ff6c1cd7605b5cda9ce23336eb3c2",
++    "evaluators_configs/mistral-large-2402_ranking/configs.yaml": "5bcd05dc33d9c2571c91a3b95bf15efba38fdabce9b602c5571687cf1dd73fc2",
++    "evaluators_configs/alpaca_eval_gpt4/alpaca_eval.txt": "cf4bace43fa6ac71944b9ca2506587ad7c509478a219e98a3950abf9d5b42a98",
++    "evaluators_configs/alpaca_eval_clf_gpt4_turbo/alpaca_eval_clf.txt": "784227e6dc2832fc08c43d2c8ea3a308e7523780187a1aaad2f85e30bac85f62",
++}
++
++
++def _directory():
++    return Path(__file__).resolve().parents[1] / "chat_benchmarks/alpaca_eval/src/alpaca_eval"
++
++
++def _validate_source():
++    directory = _directory()
++    for name, expected in SOURCE_HASHES.items():
++        if hashlib.sha256((directory / name).read_bytes()).hexdigest() != expected:
++            raise InvalidTask("Alpaca source scoring contract changed")
++
++
++def _validate(config, results):
++    if config not in CONFIGS:
++        raise InvalidTask("Unregistered Alpaca annotator configuration")
++    rows = results.get("model_outputs")
++    model = results.get("model_identifier")
++    if not isinstance(rows, list) or not rows or not isinstance(model, str) or not model.strip():
++        raise InvalidTask("Alpaca requires a named model and response rows")
++    instructions = []
++    for row in rows:
++        if not isinstance(row, dict) or not isinstance(row.get("instruction"), str) or not row["instruction"].strip():
++            raise InvalidTask("Alpaca requires nonempty trusted instructions")
++        if row.get("generator") != model or not isinstance(row.get("output"), str):
++            raise InvalidTask("Alpaca requires aligned textual model responses")
++        instructions.append(row["instruction"])
++    if len(set(instructions)) != len(instructions):
++        raise InvalidTask("Alpaca instructions must be unique")
++    total = results.get("total_examples", rows)
++    if not isinstance(total, list) or len(total) < len(rows):
++        raise InvalidTask("Alpaca completion denominator must include every response")
++
++
++def evaluate(config, results):
++    _validate_source()
++    _validate(config, results)
++    constants = importlib.import_module("alpaca_eval.constants")
++    payload = {
++        "config": config,
++        "results": results,
++        "ae2": constants.IS_ALPACA_EVAL_2,
++        "random_state": random.getstate(),
++    }
++    with tempfile.TemporaryDirectory(prefix="verifyit-alpaca-") as directory:
++        root = Path(directory)
++        (root / "input.json").write_text(json.dumps(payload, allow_nan=False))
++        (root / "run.sh").write_text('exec "$@"\n')
++        specification = ScriptSpec(
++            "run.sh",
++            args=(sys.executable, "-m", "eval.graders.verifyit_alpaca", str(root / "input.json")),
++            timeout=900,
++            verdict_file="result.json",
++        )
++        (root / "verifier.toml").write_text(render_spec(specification))
++        verdict = run(root / "verifier.toml", root)
++    if verdict.status == Status.INVALID_TASK:
++        raise InvalidTask(str(verdict.detail))
++    if verdict.status != Status.SCORED:
++        raise RuntimeError(f"Alpaca verifier failed: {verdict.status}: {verdict.detail}")
++    metrics = verdict.detail["metrics"]
++    _validate_metrics(metrics, len(results["model_outputs"]), payload["ae2"])
++    if verdict.reward != metrics["win_rate"] / 100:
++        raise RuntimeError("Alpaca reward differs from source win rate")
++    state = _state(verdict.detail["random_state"])
++    random.setstate(state)
++    return metrics
++
++
++def _validate_metrics(metrics, count, ae2):
++    required = {"win_rate", "standard_error", "discrete_win_rate", "n_total"}
++    if ae2:
++        required.update({"length_controlled_winrate", "lc_standard_error"})
++    if not isinstance(metrics, dict) or not required <= metrics.keys() or metrics["n_total"] != count:
++        raise RuntimeError("Alpaca returned incomplete metrics")
++    for name in required:
++        value = metrics[name]
++        if not isinstance(value, Real) or isinstance(value, bool) or not math.isfinite(value) or value < 0:
++            raise RuntimeError("Alpaca computed metric is nonfinite or invalid")
++    for name in ("win_rate", "discrete_win_rate", *(["length_controlled_winrate"] if ae2 else [])):
++        if metrics[name] > 100:
++            raise RuntimeError("Alpaca win rate is outside its source scale")
++
++
++def _completion(raw, kwargs):
++    response = json.loads(raw.http_response.text, object_pairs_hook=unique_object)
++    json.dumps(response, allow_nan=False)
++    if not isinstance(response, dict) or response.get("error"):
++        raise RuntimeError("Alpaca judge transport returned an error")
++    choices = response.get("choices")
++    if not isinstance(choices, list) or len(choices) != 1:
++        raise RuntimeError("Alpaca requires one judge completion")
++    choice = choices[0]
++    message = choice.get("message")
++    if (
++        not isinstance(message, dict)
++        or message.get("refusal")
++        or message.get("tool_calls")
++        or message.get("function_call")
++        or not isinstance(message.get("content"), str)
++    ):
++        raise RuntimeError("Alpaca judge refused or returned no text")
++    if kwargs.get("logprobs"):
++        if kwargs.get("max_tokens") != 1 or choice.get("finish_reason") not in {"length", "stop"}:
++            raise RuntimeError("Alpaca weighted classifier did not complete its one-token contract")
++        tokens = choice.get("logprobs", {}).get("content")
++        if not isinstance(tokens, list) or len(tokens) != 1:
++            raise RuntimeError("Alpaca weighted classifier requires one token's logprobs")
++        token = tokens[0]
++        if (
++            not isinstance(token, dict)
++            or not isinstance(token.get("token"), str)
++            or not token["token"]
++            or message["content"] != token["token"]
++            or type(token.get("logprob")) not in (int, float)
++            or not math.isfinite(token["logprob"])
++            or token["logprob"] > 0
++        ):
++            raise RuntimeError("Alpaca weighted classifier omitted its complete token observation")
++        alternatives = token.get("top_logprobs")
++        if not isinstance(alternatives, list) or not alternatives:
++            raise RuntimeError("Alpaca weighted classifier omitted alternatives")
++        names = []
++        for alternative in alternatives:
++            if (
++                not isinstance(alternative, dict)
++                or not isinstance(alternative.get("token"), str)
++                or type(alternative.get("logprob")) not in (int, float)
++                or not math.isfinite(alternative["logprob"])
++                or alternative["logprob"] > 0
++            ):
++                raise RuntimeError("Alpaca weighted classifier has invalid logprobs")
++            names.append(alternative["token"])
++        if len(set(names)) != len(names) or not {"m", "M"}.intersection(names):
++            raise RuntimeError("Alpaca weighted classifier has no usable preference alternatives")
++    elif choice.get("finish_reason") != "stop":
++        raise RuntimeError("Alpaca ranking judge returned an incomplete completion")
++    return raw.parse()
++
++
++def _install_transport(source_utils):
++    original = source_utils.get_all_clients
++
++    def clients(*args, **kwargs):
++        values = original(*args, **kwargs)
++        for client in values:
++            raw_create = client.chat.completions.with_raw_response.create
++
++            def create(*, _raw_create=raw_create, **request):
++                return _completion(_raw_create(**request), request)
++
++            client.chat.completions.create = create
++        return values
++
++    source_utils.get_all_clients = clients
++
++
++def _install_annotations(annotators, rows):
++    original = annotators.PairwiseAnnotator.annotate_head2head
++    expected = {row["instruction"]: row["output"] for row in rows}
++
++    def annotate(self, *args, **kwargs):
++        result = original(self, *args, **kwargs)
++        if not isinstance(result, list) or len(result) != len(rows):
++            raise RuntimeError("Alpaca dropped or duplicated annotations")
++        observed = []
++        for row in result:
++            instruction = row.get("instruction")
++            if instruction not in expected or row.get("output_2") != expected[instruction]:
++                raise RuntimeError("Alpaca annotations do not match current responses")
++            if not isinstance(row.get("output_1"), str) or not row["output_1"].strip():
++                raise InvalidTask("Alpaca trusted reference output is empty")
++            preference = row.get("preference")
++            if (
++                not isinstance(preference, Real)
++                or isinstance(preference, bool)
++                or not math.isfinite(preference)
++                or preference not in [0]
++                and not 1 <= preference <= 2
++            ):
++                raise RuntimeError("Alpaca returned an invalid preference")
++            if not row["output_2"].strip():
++                row["preference"] = 1
++            observed.append(instruction)
++        if len(set(observed)) != len(expected):
++            raise RuntimeError("Alpaca annotations do not cover the complete response batch")
++        return result
++
++    annotators.PairwiseAnnotator.annotate_head2head = annotate
++
++
++def _plain(value):
++    if isinstance(value, np.generic):
++        return value.item()
++    raise TypeError(f"Unsupported result type: {type(value).__name__}")
++
++
++def main():
++    path = Path(sys.argv[1])
++    payload = json.loads(path.read_text())
++    try:
++        _validate_source()
++        _validate(payload["config"], payload["results"])
++        if type(payload["ae2"]) is not bool:
++            raise InvalidTask("Alpaca environment profile must be boolean")
++        os.environ["IS_ALPACA_EVAL_2"] = str(payload["ae2"])
++        runtime = path.parent / "runtime/alpaca_eval"
++        shutil.copytree(_directory(), runtime, ignore=shutil.ignore_patterns("__pycache__", "annotations_seed*.json"))
++        sys.path.insert(0, str(runtime.parent))
++        source = importlib.import_module("alpaca_eval.main")
++        _install_transport(source.utils)
++        rows = payload["results"]["model_outputs"]
++        references = source.constants.ALPACAEVAL_REFERENCE_OUTPUTS()
++        references_by_instruction = {}
++        for reference in references:
++            references_by_instruction.setdefault(reference["instruction"], []).append(reference)
++        for row in rows:
++            matches = references_by_instruction.get(row["instruction"], [])
++            if len(matches) != 1 or not isinstance(matches[0].get("output"), str) or not matches[0]["output"].strip():
++                raise InvalidTask("Alpaca instruction lacks one nonempty trusted reference")
++        _install_annotations(source.annotators, rows)
++        random.setstate(_state(payload["random_state"]))
++        leaderboard, annotations = source.evaluate(
++            model_outputs=rows,
++            is_return_instead_of_print=True,
++            is_overwrite_leaderboard=True,
++            annotators_config=payload["config"],
++            caching_path=None,
++        )
++        metrics = leaderboard.loc[payload["results"]["model_identifier"]].to_dict()
++        absent = []
++        # AE1 cached tables may carry AE2-only columns from other models.
++        if (
++            not payload["ae2"]
++            and "length_controlled_winrate" in metrics
++            and isinstance(metrics["length_controlled_winrate"], Real)
++            and math.isnan(metrics["length_controlled_winrate"])
++        ):
++            metrics["length_controlled_winrate"] = None
++            absent.append("length_controlled_winrate")
++        metrics.update(
++            num_examples=len(rows), completion_rate=len(rows) / len(payload["results"].get("total_examples", rows))
++        )
++        _validate_metrics(metrics, len(rows), payload["ae2"])
++        blank_source_predictions = {}
++        if all(not row["output"].strip() for row in rows):
++            for name in ("win_rate", "discrete_win_rate", *(["length_controlled_winrate"] if payload["ae2"] else [])):
++                blank_source_predictions[name] = metrics[name]
++                metrics[name] = 0.0
++        verdict = {
++            "status": "scored",
++            "reward": metrics["win_rate"] / 100,
++            "detail": {
++                "metrics": metrics,
++                "annotations": annotations,
++                "inapplicable_source_columns": absent,
++                "all_blank_source_predictions": blank_source_predictions,
++                "random_state": random.getstate(),
++            },
++        }
++    except InvalidTask as error:
++        verdict = {"status": "invalid_task", "reward": 0.0, "detail": {"error": str(error)}}
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(
++        json.dumps(verdict, allow_nan=False, default=_plain)
++    )
++
++
++if __name__ == "__main__":
++    main()
+--- /dev/null
++++ b/tests/graders/test_verifyit_alpaca.py
+@@ -0,0 +1,161 @@
++"""Actual Alpaca Script grading with a local one-token judge fixture.
++
++The source benchmark's cached reference dataset and GLM assets are required.
++No remote model is called.
++"""
++
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++import importlib
++import json
++import math
++from pathlib import Path
++import random
++import threading
++
++import pytest
++from verifyit.grade import InvalidTask
++
++from eval.graders import verifyit_alpaca as adapter
++
++
++@pytest.fixture
++def batch(monkeypatch):
++    directory = Path(__file__).resolve().parents[2] / "eval/chat_benchmarks/alpaca_eval/src"
++    monkeypatch.syspath_prepend(str(directory))
++    monkeypatch.setenv("IS_ALPACA_EVAL_2", "True")
++    constants = importlib.import_module("alpaca_eval.constants")
++    monkeypatch.setattr(constants, "IS_ALPACA_EVAL_2", True)
++    data = constants.ALPACAEVAL_REFERENCE_OUTPUTS()
++    indices = sorted(random.Random(20261001).sample(range(len(data)), 20))
++    rows = [
++        {
++            "instruction": data[i]["instruction"],
++            "dataset": data[i]["dataset"],
++            "datasplit": "eval",
++            "generator": "verifyit-test",
++            "output": f"Candidate response {i}.",
++        }
++        for i in indices
++    ]
++    return {"model_identifier": "verifyit-test", "model_outputs": rows}
++
++
++@pytest.fixture
++def judge(monkeypatch):
++    settings = {"fault": None, "requests": 0}
++
++    class Handler(BaseHTTPRequestHandler):
++        def do_POST(self):
++            self.rfile.read(int(self.headers["Content-Length"]))
++            settings["requests"] += 1
++            token = {
++                "token": "m",
++                "logprob": math.log(0.2),
++                "bytes": [109],
++                "top_logprobs": [{"token": "m", "logprob": math.log(0.2)}, {"token": "M", "logprob": math.log(0.8)}],
++            }
++            choice = {
++                "index": 0,
++                "finish_reason": "length",
++                "message": {"role": "assistant", "content": "m"},
++                "logprobs": {"content": [token]},
++            }
++            # Permit one genuine success before the malformed completion.
++            if settings["requests"] == 2:
++                if settings["fault"] == "missing_token":
++                    token.pop("token")
++                elif settings["fault"] == "missing_logprobs":
++                    choice.pop("logprobs")
++                elif settings["fault"] == "refusal":
++                    choice["message"]["refusal"] = "Cannot judge"
++            data = json.dumps(
++                {
++                    "id": "fixture",
++                    "object": "chat.completion",
++                    "created": 0,
++                    "model": "fixture",
++                    "choices": [choice],
++                    "usage": {"prompt_tokens": 10, "completion_tokens": 1, "total_tokens": 11},
++                }
++            ).encode()
++            self.send_response(200)
++            self.send_header("Content-Type", "application/json")
++            self.send_header("Content-Length", str(len(data)))
++            self.end_headers()
++            self.wfile.write(data)
++
++        def log_message(self, *args):
++            pass
++
++    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
++    thread = threading.Thread(target=server.serve_forever, daemon=True)
++    thread.start()
++    monkeypatch.setenv("OPENAI_API_KEY", "fixture")
++    monkeypatch.setenv("OPENAI_BASE_URL", f"http://127.0.0.1:{server.server_port}/v1")
++    try:
++        yield settings
++    finally:
++        server.shutdown()
++        server.server_close()
++        thread.join()
++
++
++@pytest.fixture
++def verdicts(monkeypatch):
++    observed = []
++    original = adapter.run
++
++    def run(*args, **kwargs):
++        result = original(*args, **kwargs)
++        observed.append(result)
++        return result
++
++    monkeypatch.setattr(adapter, "run", run)
++    return observed
++
++
++def test_one_token_length_completion_preserves_source_probability(batch, judge, verdicts):
++    result = adapter.evaluate("weighted_alpaca_eval_gpt4_turbo", batch)
++    assert judge["requests"] == 20
++    annotations = verdicts[0].detail["annotations"]
++    expected = sum(row["preference"] - 1 for row in annotations) / len(annotations) * 100
++    assert result["win_rate"] == pytest.approx(expected)
++    assert verdicts[0].reward == result["win_rate"] / 100
++
++
++@pytest.mark.parametrize("fault", ["missing_token", "missing_logprobs", "refusal"])
++def test_malformed_judge_aborts_entire_batch_without_advancing_rng(batch, judge, verdicts, fault):
++    judge["fault"] = fault
++    before = random.getstate()
++    with pytest.raises(RuntimeError):
++        adapter.evaluate("weighted_alpaca_eval_gpt4_turbo", batch)
++    assert random.getstate() == before
++    assert verdicts[0].status.value == "infra_error"
++    assert verdicts[0].reward == 0
++
++
++def test_all_blank_overrides_positive_regularized_length_prediction(batch, judge, verdicts):
++    for row in batch["model_outputs"]:
++        row["output"] = ""
++    result = adapter.evaluate("weighted_alpaca_eval_gpt4_turbo", batch)
++    assert result["win_rate"] == result["discrete_win_rate"] == result["length_controlled_winrate"] == 0
++    detail = verdicts[0].detail
++    assert detail["all_blank_source_predictions"]["length_controlled_winrate"] > 0
++    assert all(row["preference"] == 1 for row in detail["annotations"])
++
++
++def test_mixed_blank_preserves_source_aggregation_after_minimum_correction(batch, judge, verdicts):
++    batch["model_outputs"][0]["output"] = ""
++    result = adapter.evaluate("weighted_alpaca_eval_gpt4_turbo", batch)
++    annotations = verdicts[0].detail["annotations"]
++    assert next(row for row in annotations if not row["output_2"])["preference"] == 1
++    assert result["win_rate"] == pytest.approx(sum(row["preference"] - 1 for row in annotations) * 5)
++    assert verdicts[0].detail["all_blank_source_predictions"] == {}
++
++
++def test_missing_trusted_reference_is_invalid_task_before_judge(batch, judge, verdicts):
++    batch["model_outputs"][0]["instruction"] = "Unmatched fixture instruction"
++    with pytest.raises(InvalidTask):
++        adapter.evaluate("weighted_alpaca_eval_gpt4_turbo", batch)
++    assert judge["requests"] == 0
++    assert verdicts[0].status.value == "invalid_task"

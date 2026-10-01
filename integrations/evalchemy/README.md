@@ -351,3 +351,26 @@ Pairwise-all selects only one model even when multiple answer files exist,
 creates no matches and fails loading judgments. Evidence is fixture-only; no
 matching archive traces were found. Source and installed-module hashes are
 recorded in `mtbench-source.json` and its linked provenance.
+
+## AlpacaEval
+
+Apply `instructions-verifyit.patch` first for the shared RNG-state validator, then
+`alpaca-verifyit.patch`. Set `verifyit_enabled=True` on `AlpacaBenchmark`; the
+disabled path retains its original imports and constructor argument positions.
+The source Alpaca package, dependencies, reference datasets and GLM assets remain
+required. `alpaca-source.json` pins the client and source implementation.
+
+ScriptSpec supervises the original preference parser and corpus-level statistical
+scorer. All eight AE1/AE2 selector profiles preserve 160 fresh local HTTP requests
+and source metrics. AE1-auto uses the explicitly fresh baseline, not its earlier
+cached witness. Final weighted/ranking replays preserve preadvanced Python and
+NumPy RNG states. These are evaluator fixtures, not archived validated scores.
+
+Incomplete/refused/malformed judge output aborts the whole batch. The weighted
+one-token classifier may validly finish at its length limit with complete token
+and logprob observations. Blank candidates receive loss preferences before source
+aggregation; all-blank ordinary, discrete and length-controlled win rates are zero.
+The source regularized LC prediction remains diagnostic, while uncertainty fields
+retain source values. Fresh scoring bypasses annotation caches. Only the
+inapplicable AE1 cached LC NaN is represented as null; computed nonfinite metrics
+fail. No new verifier class is introduced.
