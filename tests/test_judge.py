@@ -270,3 +270,15 @@ def test_missing_context_remains_invalid_when_candidate_is_unreadable(tmp_path, 
     reward = grade(spec, tests_dir=tmp_path, workspace=tmp_path)
 
     assert (reward.reward, reward.status) == (0.0, Status.INVALID_TASK)
+
+
+@pytest.mark.parametrize("candidate", ["Mars", "the red planet"])
+def test_missing_runtime_keeps_exact_gate_and_blocks_environment_endpoint(fake_judge, candidate):
+    spec = JudgeSpec(references=("Mars",))
+    if candidate == "Mars":
+        reward = grade_judge.grade_candidate(spec, candidate, runtime=None)
+        assert (reward.reward, reward.status) == (1.0, Status.SCORED)
+    else:
+        with pytest.raises(RuntimeError, match="explicit endpoint selection"):
+            grade_judge.grade_candidate(spec, candidate, runtime=None)
+    assert fake_judge.prompts == []

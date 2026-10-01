@@ -28,7 +28,7 @@ from verifyit.grade import InvalidTask, Reward, read_output, scored
 from verifyit.modes.extract import extract_boxed
 from verifyit.modes.grade_ifeval import resolve_checks
 from verifyit.modes.ifeval import Check
-from verifyit.spec import RUBRIC_CHECKLIST, RUBRIC_REFERENCE, RUBRICS, JudgeSpec, Spec
+from verifyit.spec import RUBRIC_CHECKLIST, RUBRIC_REFERENCE, RUBRICS, JudgeRuntimeSource, JudgeSpec, Spec
 
 BASE_URL_ENV = "VERIFYIT_JUDGE_BASE_URL"
 API_KEY_ENV = "VERIFYIT_JUDGE_API_KEY"
@@ -77,18 +77,31 @@ SCORE_PATTERN = re.compile(r"score\s*[:=]\s*\**\s*(\d+(?:\.\d+)?)", re.IGNORECAS
 logger = logging.getLogger(__name__)
 
 
-def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
+def grade(
+    spec: Spec,
+    tests_dir: Path,
+    workspace: Path,
+    runtime: JudgeRuntimeSource | None = JudgeRuntimeSource.ENVIRONMENT,
+) -> Reward:
     assert isinstance(spec, JudgeSpec)
     _validate_spec(spec)
     context = _context(spec, tests_dir)
-    return grade_candidate(spec, read_output(spec, workspace) or "", context=context)
+    return grade_candidate(spec, read_output(spec, workspace) or "", context=context, runtime=runtime)
 
 
-def grade_candidate(spec: JudgeSpec, candidate: str, *, context: str = "") -> Reward:
+def grade_candidate(
+    spec: JudgeSpec,
+    candidate: str,
+    *,
+    context: str = "",
+    runtime: JudgeRuntimeSource | None = JudgeRuntimeSource.ENVIRONMENT,
+) -> Reward:
     """Grade candidate text with decoded context, without reading or writing files.
 
     The caller supplies the contents of any context file named by the spec.
     Empty candidate text scores zero, as it does through the file-based API.
+    An explicit runtime=None permits deterministic gates only; the default
+    selects the legacy environment endpoint.
     """
     _validate_spec(spec)
     references = tuple(reference for reference in spec.references if reference.strip())
@@ -105,8 +118,8 @@ def grade_candidate(spec: JudgeSpec, candidate: str, *, context: str = "") -> Re
     if spec.rubric == RUBRIC_REFERENCE:
         if spec.exact_gate and normalize(boxed_answer(candidate)) in {normalize(r) for r in references}:
             return scored(1.0, gate="exact")
-        return _judge_reference(spec, references, candidate)
-    return _judge_checklist(spec, criteria, context, candidate)
+        return _judge_reference(spec, references, candidate, runtime)
+    return _judge_checklist(spec, criteria, context, candidate, runtime)
 
 
 def _validate_spec(spec: JudgeSpec) -> None:
@@ -157,7 +170,9 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def _client(spec: JudgeSpec) -> tuple[openai.OpenAI, str]:
+def _client(spec: JudgeSpec, runtime: JudgeRuntimeSource | None) -> tuple[openai.OpenAI, str]:
+    if runtime is None:
+        raise RuntimeError("remote judge grading requires an explicit endpoint selection")
     base_url = os.environ.get(BASE_URL_ENV, "").strip()
     model = spec.model.strip() or os.environ.get(MODEL_ENV, "").strip()
     if not base_url:
@@ -172,8 +187,10 @@ def _question(spec: JudgeSpec) -> str:
     return f"\nQuestion:\n{spec.question.strip()}\n" if spec.question.strip() else ""
 
 
-def _judge_reference(spec: JudgeSpec, references: tuple[str, ...], candidate: str) -> Reward:
-    client, model = _client(spec)
+def _judge_reference(
+    spec: JudgeSpec, references: tuple[str, ...], candidate: str, runtime: JudgeRuntimeSource | None
+) -> Reward:
+    client, model = _client(spec, runtime)
     prompt = REFERENCE_PROMPT.format(
         question=_question(spec),
         references="\n".join(f"- {reference}" for reference in references),
@@ -185,8 +202,10 @@ def _judge_reference(spec: JudgeSpec, references: tuple[str, ...], candidate: st
     return scored(score, model=model, reasoning=_reasoning(reply))
 
 
-def _judge_checklist(spec: JudgeSpec, criteria: tuple[str, ...], context: str, candidate: str) -> Reward:
-    client, model = _client(spec)
+def _judge_checklist(
+    spec: JudgeSpec, criteria: tuple[str, ...], context: str, candidate: str, runtime: JudgeRuntimeSource | None
+) -> Reward:
+    client, model = _client(spec, runtime)
     context_block = f"\nReference context (not the candidate):\n{context.strip()}\n" if context.strip() else ""
     results = []
     for criterion in criteria:
