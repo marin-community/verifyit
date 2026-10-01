@@ -613,3 +613,29 @@ These are bounded scoring fixtures, not actual dataset conversions or archived
 model replays. Aggregate metrics, including ROUGE and BARTScore, remain
 source-owned and were not validated here. No new security tests were run.
 Use the local core wheel recipe above for the unpublished verifyit revision.
+
+
+## LLMSR-Bench
+
+Apply `llmsr-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate with `--verifyit`.
+The existing ScriptSpec bridge transfers the discovered equation into a
+separate verifier image containing the source fitter and task CSVs. Finite
+negative R² becomes scored 0; raw R² and the other diagnostics remain available.
+The source threshold that rounds R² at or above 0.95 to 1 is unchanged. Trusted
+CSV validation distinguishes invalid tasks from unavailable reference files.
+
+The manifest at `evidence/e2e/wiring/harbor-llmsr/final-manifest.json` records
+33 actual Harbor fixture roundtrips across all five source splits, including
+literal equations, bounded TRF and BFGS fitting, and domain errors. There are
+23 exact primary-score matches and 10 intentional negative-to-zero adaptations;
+all 33 auxiliary metric payloads match. Three supplemental cases verify invalid
+reference, missing reference and missing candidate statuses. Three ordinary
+regression tests pass. Independent manager Trials verify BFGS and negative R².
+
+The official dataset files returned HTTP 403 with the configured token. These
+are declared synthetic source-schema fixtures, not official rows or archived
+model traces. Candidate expressions execute within the source grader; that
+trust boundary remains unverified. No new security tests were run. Use the
+exact local wheel recipe above: the production Dockerfile references a local
+verifyit revision that has not been published.

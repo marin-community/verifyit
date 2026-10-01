@@ -3055,16 +3055,17 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#llmsr_bench",
         "docs/unification/harbor_inventory.json#llmsr_bench",
-        "docs/unification/harbor_specs.md#native-score"
+        "integrations/harbor/llmsr-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-llmsr/final-manifest.json"
       ],
-      "gap_kind": "unbounded_metric_policy",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "llmsr_bench",
-      "needed_change": "Keep fitting and held-out R2 evaluator; declare benchmark-approved mapping for negative/unbounded R2 into unit reward and retain raw R2. No approved projection is implemented, so selecting R2 directly would violate the core reward contract.",
+      "needed_change": "Validate actual gated dataset rows and archived model candidates; candidate expressions still execute inside the source grader runtime.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Fit symbolic equation parameters on training CSV and compute test R2; near-oracle R2 rounded to1. Native R2 may be negative, explicit scalar transform needed. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in generation packages training/test CSVs and the source equation fitter in a separate verifier image through existing ScriptSpec. Finite negative R2 maps explicitly to scored0 while raw R2 and all auxiliary metrics remain intact; the source near-oracle threshold is preserved.",
       "source_evidence": [
         {
           "functions": [
@@ -3098,8 +3099,15 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "33 actual Harbor fixture roundtrips across all five source splits cover literal expressions, bounded TRF and BFGS fitting, and domain errors. 23 primary scores match exactly; 10 finite negative R2 scores intentionally become0. All33 auxiliary metric payloads match exactly. Three supplemental cases distinguish malformed reference invalid_task0, unavailable reference infra_error0, and missing candidate scored0. Actual dataset files returned403 with the configured token, so no official dataset or archived replay coverage is claimed. Exact local wheel images are validated; the production pin remains unpublished.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Source fitter, CSV reference data and verifier.toml in the separate verifier image",
+        "remaining_gap": "candidate_execution_in_grader",
+        "needed_change": "Candidate expressions execute in the source grader; candidate/assertion isolation is unverified. No new security tests were performed."
+      }
     },
     {
       "entity_id": "harbor:medagentbench",

@@ -1,0 +1,269 @@
+diff --git a/adapters/llmsr_bench/adapter.py b/adapters/llmsr_bench/adapter.py
+index be77830..e101df4 100644
+--- a/adapters/llmsr_bench/adapter.py
++++ b/adapters/llmsr_bench/adapter.py
+@@ -19,6 +19,8 @@ import hashlib
+ import json
+ 
+ import h5py
++
++from harbor.tasks.verifyit_source_runtime import package_source_runtime
+ from huggingface_hub import hf_hub_download
+ 
+ # For loading from HuggingFace
+@@ -247,6 +249,7 @@ class LLMSRBenchAdapter:
+     def __init__(self, task_dir: Path, **kwargs: object):
+         self.task_dir = Path(task_dir)
+         self._config = kwargs
++        self.verifyit_enabled = bool(kwargs.get("verifyit", False))
+ 
+         self.dataset_name = str(kwargs.get("dataset", "lsrtransform"))
+         cache_dir = kwargs.get("cache_dir", None)
+@@ -309,6 +312,24 @@ class LLMSRBenchAdapter:
+         self._copy_template(output_dir)
+         self._save_data_files(task_data, output_dir)
+         self._customize_task(output_dir, task_data)
++        if self.verifyit_enabled:
++            tests = output_dir / "tests"
++            shutil.copytree(output_dir / "environment/data", tests / "data")
++            dockerfile = (output_dir / "environment/Dockerfile").read_text()
++            package_source_runtime(
++                output_dir,
++                artifacts=["/logs/agent/discovered_equation.txt"],
++                dockerfile=dockerfile + "\nWORKDIR /app\n",
++                timeout=600,
++            )
++            bridge = tests / "native_bridge.sh"
++            bridge.write_text(
++                bridge.read_text().replace(
++                    "exec /opt/verifyit",
++                    "export VERIFYIT_LLMSR_STRICT=1\n"
++                    "python3 /tests/check_reference.py || exit 0\nexec /opt/verifyit",
++                )
++            )
+ 
+     def _copy_template(self, output_dir: Path) -> None:
+         if TEMPLATE_DIR.exists():
+diff --git a/adapters/llmsr_bench/run_adapter.py b/adapters/llmsr_bench/run_adapter.py
+index 37786d0..832e420 100644
+--- a/adapters/llmsr_bench/run_adapter.py
++++ b/adapters/llmsr_bench/run_adapter.py
+@@ -144,6 +144,9 @@ Parity subset (--split parity):
+         help="Tasks per dataset for parity subset (default: 23)",
+     )
+ 
++    parser.add_argument(
++        "--verifyit", action="store_true", help="Use verifyit for source scoring"
++    )
+     return parser.parse_args()
+ 
+ 
+@@ -179,6 +182,7 @@ def process_dataset(
+     split: str,
+     task_seed: int,
+     per_dataset: int,
++    verifyit: bool = False,
+ ) -> tuple[int, list[tuple[str, str]]]:
+     """Process a single dataset and return success count and failed tasks."""
+     logger.info(f"\n{'=' * 70}")
+@@ -187,7 +191,10 @@ def process_dataset(
+ 
+     try:
+         adapter = LLMSRBenchAdapter(
+-            task_dir=output_dir, dataset=dataset_name, cache_dir=cache_dir
++            task_dir=output_dir,
++            dataset=dataset_name,
++            cache_dir=cache_dir,
++            verifyit=verifyit,
+         )
+ 
+         all_ids = _collect_ids(adapter, task_ids, ids_file)
+@@ -298,6 +305,7 @@ def main() -> None:
+             split=args.split,
+             task_seed=args.task_seed,
+             per_dataset=args.per_dataset,
++            verifyit=args.verifyit,
+         )
+         total_success += success
+         total_tasks += success + len(failed)
+diff --git a/adapters/llmsr_bench/template/tests/test.sh b/adapters/llmsr_bench/template/tests/test.sh
+index 65f790d..da9876c 100755
+--- a/adapters/llmsr_bench/template/tests/test.sh
++++ b/adapters/llmsr_bench/template/tests/test.sh
+@@ -16,7 +16,7 @@ if [ ! -f /logs/agent/discovered_equation.txt ]; then
+ fi
+ 
+ python3 << 'PY'
+-import ast, json, re, sys, hashlib
++import ast, json, re, sys, hashlib, os, math
+ from pathlib import Path
+ 
+ import numpy as np
+@@ -37,6 +37,8 @@ DEBUG_PATH  = Path("/logs/verifier/debug.txt")
+ ORACLE_R2_THRESHOLD = 0.95
+ 
+ def write_reward(x: float):
++    if os.environ.get("VERIFYIT_LLMSR_STRICT") == "1" and math.isfinite(x) and x < 0:
++        x = 0.0  # Explicit unit-reward adaptation; raw R2 remains in metrics.
+     REWARD_PATH.write_text(f"{float(x):.6f}")
+ 
+ def write_metrics(d: dict):
+@@ -460,10 +462,23 @@ try:
+     write_metrics(metrics)
+ 
+ except Exception as e:
++    if os.environ.get("VERIFYIT_LLMSR_STRICT") == "1":
++        raise
+     DEBUG_PATH.write_text(f"FATAL: {type(e).__name__}: {e}\n")
+     write_reward(0.0)
+     write_metrics({"r2": 0.0, "mse": 1e10, "nmse": 1e10, "n_fitted_params": 0.0})
+     sys.exit(0)
+ PY
+ 
++if [ "${VERIFYIT_LLMSR_STRICT:-0}" = "1" ]; then
++  python3 - <<'METRICS'
++import json
++from pathlib import Path
++logs = Path("/logs/verifier")
++metrics = json.loads((logs / "metrics.json").read_text())
++metrics["reward"] = float((logs / "reward.txt").read_text())
++(logs / "reward.json").write_text(json.dumps(metrics, allow_nan=False))
++METRICS
++fi
++
+ echo "Test script completed"
+diff --git a/adapters/llmsr_bench/template/tests/check_reference.py b/adapters/llmsr_bench/template/tests/check_reference.py
+new file mode 100644
+index 0000000..a38ca39
+--- /dev/null
++++ b/adapters/llmsr_bench/template/tests/check_reference.py
+@@ -0,0 +1,57 @@
++"""Validate protected numerical data before reading a candidate expression."""
++
++import csv
++import json
++import math
++import os
++from pathlib import Path
++
++
++def validate_data(directory: Path) -> None:
++    expected = None
++    for name in ("train_data.csv", "test_data.csv", "ood_test_data.csv"):
++        path = directory / name
++        if name == "ood_test_data.csv" and not path.exists():
++            continue
++        with path.open(newline="") as stream:
++            rows = list(csv.reader(stream))
++        if len(rows) < 2 or len(rows[0]) < 2:
++            raise ValueError(f"{name} requires named inputs, target and data rows")
++        columns = rows[0]
++        if any(not value.strip() for value in columns) or len(set(columns)) != len(
++            columns
++        ):
++            raise ValueError(f"{name} has empty or duplicate column names")
++        if expected is not None and columns != expected:
++            raise ValueError(f"{name} columns differ from training data")
++        expected = columns
++        for row in rows[1:]:
++            if len(row) != len(columns) or not all(
++                math.isfinite(float(value)) for value in row
++            ):
++                raise ValueError(
++                    f"{name} contains malformed or nonfinite reference data"
++                )
++
++
++def main() -> int:
++    try:
++        validate_data(Path("/data"))
++    except (OSError, ValueError) as error:
++        status = "invalid_task" if isinstance(error, ValueError) else "infra_error"
++        private = Path(os.environ["VERIFYIT_LOGS_DIR"])
++        (private / "native-verdict.json").write_text(
++            json.dumps(
++                {
++                    "status": status,
++                    "reward": 0.0,
++                    "detail": {"error": str(error)},
++                }
++            )
++        )
++        return 1
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/adapters/llmsr_bench/tests/test_verifyit_scores.py b/adapters/llmsr_bench/tests/test_verifyit_scores.py
+new file mode 100644
+index 0000000..dcf2a76
+--- /dev/null
++++ b/adapters/llmsr_bench/tests/test_verifyit_scores.py
+@@ -0,0 +1,66 @@
++"""Numerical regressions for retained LLMSR scoring."""
++
++import ast
++import importlib.util
++import math
++import os
++from pathlib import Path
++
++import numpy as np
++import pandas as pd
++import pytest
++
++
++@pytest.fixture
++def scorer():
++    source = Path(__file__).parents[1] / "template/tests/test.sh"
++    body = source.read_text().split("python3 << 'PY'\n", 1)[1].split("\nPY\n", 1)[0]
++    tree = ast.parse(body)
++    functions = [
++        node
++        for node in tree.body
++        if isinstance(node, ast.FunctionDef)
++        and node.name
++        in {
++            "compute_output_base_metrics",
++            "write_reward",
++            "eval_on_df",
++            "safe_eval_expr",
++        }
++    ]
++    namespace = {"np": np, "pd": pd, "os": os, "math": math}
++    exec(
++        compile(ast.Module(body=functions, type_ignores=[]), str(source), "exec"),
++        namespace,
++    )
++    return namespace
++
++
++def test_domain_failure_is_rejected_before_metric_computation(scorer):
++    frame = pd.DataFrame({"x": [-1.0, 0.0, 1.0], "y": [0.0, 0.0, 1.0]})
++    assert scorer["eval_on_df"](frame, "y", ["x"], "sqrt(x)", {}) == (None, None, None)
++
++
++def test_negative_r2_becomes_minimum_without_losing_diagnostic(
++    scorer, monkeypatch, tmp_path
++):
++    monkeypatch.setenv("VERIFYIT_LLMSR_STRICT", "1")
++    result = scorer["compute_output_base_metrics"](
++        np.array([3.0, 3.0]), np.array([0.0, 1.0])
++    )
++    output = tmp_path / "reward.txt"
++    scorer["REWARD_PATH"] = output
++    scorer["write_reward"](result["r2"])
++    assert float(output.read_text()) == 0.0
++    assert result["r2"] == -25.0
++
++
++def test_reference_schema_failure_is_not_candidate_failure(tmp_path):
++    source = Path(__file__).parents[1] / "template/tests/check_reference.py"
++    spec = importlib.util.spec_from_file_location("llmsr_reference", source)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    (tmp_path / "train_data.csv").write_text("x,y\n0,1\n")
++    (tmp_path / "test_data.csv").write_text("x,y\n0,nan\n")
++    with pytest.raises(ValueError, match="nonfinite reference"):
++        module.validate_data(tmp_path)
