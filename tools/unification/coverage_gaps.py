@@ -1013,6 +1013,36 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-repobench/archive-census.json",
                 ],
             )
+        elif name == "WildBench":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_wildbench_score_judge_runtime",
+                reason=(
+                    "ScriptSpec preserves score-mode source SDK requests and category aggregates; "
+                    "JSONSchema validates finite judgments from 1 to 10. Structured original-response "
+                    "blankness forces the source minimum 1, corresponding to verifyit reward 0."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True. Six evaluator fixtures preserve source HTTP "
+                    "bodies and metrics, including quoted prompt delimiters and fractional scores. "
+                    "Eight malformed judge batches abort without partial metrics. Source default "
+                    "configuration lacks max_tokens; both replay routes explicitly use its final "
+                    "4096-token budget. Pairwise mode remains unsupported: the source evaluator "
+                    "constructs None references and fails before judging. No archive replay claimed."
+                ),
+                validation_status="source_score_mode_evaluator_fixtures_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/wildbench-verifyit.patch",
+                    "integrations/evalchemy/wildbench-source.json",
+                    "../evidence/e2e/wiring/evalchemy-wildbench/manager/results.json",
+                    "../evidence/e2e/wiring/evalchemy-wildbench/quoted-cutover/results.json",
+                    "../evidence/e2e/wiring/evalchemy-wildbench/empty-structured/results.json",
+                    "../evidence/e2e/wiring/evalchemy-wildbench/source-defects.json",
+                    "../evidence/e2e/wiring/evalchemy-wildbench/archive-census.json",
+                ],
+            )
         elif name == "HMMT":
             entity.update(
                 status="retained_runtime_available",
