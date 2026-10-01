@@ -90,8 +90,37 @@
   "gsm8k_current_source_parity_pairs": 8,
   "ci": {
     "run": 36869482613,
-    "state": "pending",
-    "recorded_success": false
+    "state": "completed",
+    "conclusion": "success",
+    "recorded_success": true,
+    "head": "40cc1bbb2f5e0d4ab7753053f967d92dd778d85e",
+    "jobs": [
+      {
+        "name": "lint",
+        "conclusion": "success"
+      },
+      {
+        "name": "skyrl_gym_tests",
+        "conclusion": "success"
+      },
+      {
+        "name": "skyrl_train_macos_install",
+        "conclusion": "success"
+      },
+      {
+        "name": "infra_tests",
+        "conclusion": "success"
+      },
+      {
+        "name": "skyrl_train_tests",
+        "conclusion": "success"
+      },
+      {
+        "name": "iris_launcher_tests",
+        "conclusion": "success"
+      }
+    ],
+    "evidence": "evidence/e2e/wiring/skyrl-publication/ci-final-36869482613.json"
   },
   "manager_reviewed_revision": "40cc1bbb2f5e0d4ab7753053f967d92dd778d85e"
 }
