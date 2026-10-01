@@ -2,26 +2,26 @@
   "schema_version": 1,
   "project": "MarinSkyRL",
   "source_revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
-  "verifyit_audit_revision": "67db341c77449f0977bb034c6d7fca034038b98f",
+  "verifyit_audit_revision": "eaa768d773885c597c03e708690b57034490ba91",
   "population_definition": "All built-in gym registrations; all Nemotron _step agent branches; dormant GeneralReactTask/WebResearchTask dispatch and exported unused scorers. External user-registered gym envs are open extension points, not enumerable repository verifiers.",
   "counts": {
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 31,
-    "pending_scoring_routes": 15,
-    "pending_active_scoring_routes": 11,
+    "source_patched_routes": 37,
+    "pending_scoring_routes": 9,
+    "pending_active_scoring_routes": 5,
     "pending_dormant_scoring_routes": 4,
     "zero_core_extension_unwired_routes": 4,
-    "existing_class_behavior_gap_routes": 11,
-    "real_replayed_source_routes": 21,
+    "existing_class_behavior_gap_routes": 5,
+    "real_replayed_source_routes": 27,
     "implemented_routes_missing_real_traces": 10,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
-      "implemented_validated": 21,
+      "implemented_validated": 27,
       "implemented_not_validated": 10,
-      "capability_gap": 11,
+      "capability_gap": 5,
       "not_a_correctness_verifier": 2,
       "not_integrated": 4
     },
@@ -1403,20 +1403,20 @@
     },
     {
       "id": "nemotron_ultra/abstention_simple_agent",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_composes_existing_exact_and_judge_primitives",
       "native_fallback_in_cutover": false,
       "contract_family": "rubric",
       "existing_primitive_candidate": [
         "judge",
         "script"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Custom three-label prompt parser and reward projection; binary judge cannot represent abstention directly.",
+      "resolution_strategy": "existing_judge_labels_and_client_composition",
+      "needed_change": null,
       "validation_gap": null,
       "source_contract": "Normalized IDK receives .5; judge A/B/C maps 1/0/.5; omniscience diagnostic.",
       "source": {
@@ -1429,27 +1429,33 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#rubric",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-judge-family/selection.json",
+        "evidence/e2e/wiring/skyrl-judge-family/comparison.json",
+        "evidence/e2e/wiring/skyrl-judge-family/implementation-provenance.json"
       ],
       "observed_verified_execution_links": 446,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 9,
+      "core_extension_requirement": "existing_judge_label_extension_implemented",
+      "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
     },
     {
       "id": "nemotron_ultra/multichallenge_simple_agent",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_composes_existing_exact_and_judge_primitives",
       "native_fallback_in_cutover": false,
       "contract_family": "rubric",
       "existing_primitive_candidate": [
         "judge"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Preserve context/expected pass criteria per item and source prompt/verdict parser.",
+      "resolution_strategy": "existing_judge_labels_and_client_composition",
+      "needed_change": null,
       "validation_gap": null,
       "source_contract": "Per-rubric question YES/NO source prompt; average reward.",
       "source": {
@@ -1462,28 +1468,34 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#rubric",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-judge-family/selection.json",
+        "evidence/e2e/wiring/skyrl-judge-family/comparison.json",
+        "evidence/e2e/wiring/skyrl-judge-family/implementation-provenance.json"
       ],
       "observed_verified_execution_links": 14,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 9,
+      "core_extension_requirement": "existing_judge_label_extension_implemented",
+      "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
     },
     {
       "id": "nemotron_ultra/jailbreak_engagement_with_disclaimer",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_composes_existing_exact_and_judge_primitives",
       "native_fallback_in_cutover": false,
       "contract_family": "rubric",
       "existing_primitive_candidate": [
         "judge",
         "script"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "resolution_strategy": "existing_judge_labels_and_client_composition",
+      "needed_change": null,
       "validation_gap": null,
       "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
       "source": {
@@ -1496,28 +1508,34 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#rubric",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-judge-family/selection.json",
+        "evidence/e2e/wiring/skyrl-judge-family/comparison.json",
+        "evidence/e2e/wiring/skyrl-judge-family/implementation-provenance.json"
       ],
       "observed_verified_execution_links": 11,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 4,
+      "core_extension_requirement": "existing_judge_label_extension_implemented",
+      "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
     },
     {
       "id": "nemotron_ultra/jailbreak_hard_refusal_no_redirection",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_composes_existing_exact_and_judge_primitives",
       "native_fallback_in_cutover": false,
       "contract_family": "rubric",
       "existing_primitive_candidate": [
         "judge",
         "script"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "resolution_strategy": "existing_judge_labels_and_client_composition",
+      "needed_change": null,
       "validation_gap": null,
       "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
       "source": {
@@ -1530,28 +1548,34 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#rubric",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-judge-family/selection.json",
+        "evidence/e2e/wiring/skyrl-judge-family/comparison.json",
+        "evidence/e2e/wiring/skyrl-judge-family/implementation-provenance.json"
       ],
       "observed_verified_execution_links": 8,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 3,
+      "core_extension_requirement": "existing_judge_label_extension_implemented",
+      "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
     },
     {
       "id": "nemotron_ultra/jailbreak_hard_refusal_with_helplines",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_composes_existing_exact_and_judge_primitives",
       "native_fallback_in_cutover": false,
       "contract_family": "rubric",
       "existing_primitive_candidate": [
         "judge",
         "script"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "resolution_strategy": "existing_judge_labels_and_client_composition",
+      "needed_change": null,
       "validation_gap": null,
       "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
       "source": {
@@ -1564,28 +1588,34 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#rubric",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-judge-family/selection.json",
+        "evidence/e2e/wiring/skyrl-judge-family/comparison.json",
+        "evidence/e2e/wiring/skyrl-judge-family/implementation-provenance.json"
       ],
       "observed_verified_execution_links": 17,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 3,
+      "core_extension_requirement": "existing_judge_label_extension_implemented",
+      "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
     },
     {
       "id": "nemotron_ultra/jailbreak_refusal_with_explanation",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native.",
+      "status": "implemented_validated",
+      "not_covered_reason": null,
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_composes_existing_exact_and_judge_primitives",
       "native_fallback_in_cutover": false,
       "contract_family": "rubric",
       "existing_primitive_candidate": [
         "judge",
         "script"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Source YAML templates plus custom label parser and aggregation; checklist average alone not equivalent to product.",
+      "resolution_strategy": "existing_judge_labels_and_client_composition",
+      "needed_change": null,
       "validation_gap": null,
       "source_contract": "Policy selects YAML label/reward templates; combine by product/average/first.",
       "source": {
@@ -1598,11 +1628,17 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#rubric",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-judge-family/selection.json",
+        "evidence/e2e/wiring/skyrl-judge-family/comparison.json",
+        "evidence/e2e/wiring/skyrl-judge-family/implementation-provenance.json"
       ],
       "observed_verified_execution_links": 86,
-      "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "actual_replayed_links": 8,
+      "core_extension_requirement": "existing_judge_label_extension_implemented",
+      "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
     },
     {
       "id": "nemotron_ultra/reasoning_gym_simple_agent",

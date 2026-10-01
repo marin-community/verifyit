@@ -6,7 +6,7 @@ index 6ef2bde..2057034 100644
  description = "Marin's typed launcher and RL training runtime"
  requires-python = "==3.12.*"
  dependencies = [
-+    "verifyit[answer,schema,reasoning-gym,pytest,judge] @ git+https://github.com/marin-community/verifyit@67db341c77449f0977bb034c6d7fca034038b98f",
++    "verifyit[answer,schema,reasoning-gym,pytest,judge] @ git+https://github.com/marin-community/verifyit@eaa768d773885c597c03e708690b57034490ba91",
      "aiohttp>=3.13.3",
      "boto3",
      "datasets>=4.0.0",
@@ -18,7 +18,7 @@ index f1b7544..db31f01 100644
  ]
  
  [project.optional-dependencies]
-+verifyit = ["verifyit[answer,pytest] @ git+https://github.com/marin-community/verifyit@67db341c77449f0977bb034c6d7fca034038b98f"]
++verifyit = ["verifyit[answer,pytest] @ git+https://github.com/marin-community/verifyit@eaa768d773885c597c03e708690b57034490ba91"]
  skyrl-train = ["skyrl-train[vllm]", 'torchdata']
  verl = ["verl[vllm,gpu]","vllm==0.8.5"]
  tinker = ["tinker", "chz"]
@@ -34,7 +34,7 @@ index 510a493..48f35fb 100644
 +requires-python = ">=3.11"
  
  dependencies = [
-+    "verifyit[answer,schema,reasoning-gym,pytest,judge] @ git+https://github.com/marin-community/verifyit@67db341c77449f0977bb034c6d7fca034038b98f",
++    "verifyit[answer,schema,reasoning-gym,pytest,judge] @ git+https://github.com/marin-community/verifyit@eaa768d773885c597c03e708690b57034490ba91",
      "func_timeout",
      "loguru",
      "numpy",

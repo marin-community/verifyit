@@ -169,3 +169,23 @@ and NS-tools with existing MathSpec, JudgeSpec and a total ScriptSpec deadline.
 The bounded trusted reference domain and two missing external judge transcripts
 remain explicit gaps; neither source route is promoted to complete integration.
 See [the contract and evidence](math-judge.md).
+
+
+Apply `judge-profiles-verifyit.patch` after `math-judge-verifyit.patch`, with the
+dependency patch last. `verifyit_enabled = true` wires abstention, MultiChallenge
+and all four jailbreak policy routes through existing ExactSpec and JudgeSpec
+primitives under a total ScriptSpec deadline. Source clients retain answer
+extraction, prompt wording, rubric averaging, policy composition and feedback.
+Abstention's normalized `[IDK]` receives 0.5 without a model request; other answers
+use complete-line A/B/C labels. MultiChallenge and jailbreak retain bracketed
+labels. Judge failures discard the entire composite reward.
+
+Nineteen source parity and failure tests pass, including literal braces in
+conversation context and partial-credit failure handling. Thirty-six frozen
+archived traces across six routes match pinned-native and installed verifyit
+scores and rewards. Archived external judge text is served by exact source
+message keys over local HTTP, without fresh model generation; every cutover
+trace records actual child primitive verdicts. Evidence and rerun commands are
+in `evidence/e2e/wiring/skyrl-judge-family/`. The dependency pin includes
+complete-line label parsing and rejection of malformed direct ExactSpec
+reference containers.
