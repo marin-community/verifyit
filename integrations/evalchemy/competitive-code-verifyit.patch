@@ -1,0 +1,823 @@
+diff --git a/eval/chat_benchmarks/LiveCodeBench/eval_instruct.py b/eval/chat_benchmarks/LiveCodeBench/eval_instruct.py
+--- a/eval/chat_benchmarks/LiveCodeBench/eval_instruct.py
++++ b/eval/chat_benchmarks/LiveCodeBench/eval_instruct.py
+@@ -61,6 +61,7 @@
+         max_tokens: int = 32768,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize LiveCodeBench benchmark.
+@@ -72,6 +73,7 @@
+             system_instruction: Optional system instruction for the model
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.debug = debug
+         self.max_new_tokens = max_tokens
+         self.seed = seed
+@@ -199,12 +201,19 @@
+                 self.logger.debug(f"Evaluating {example['difficulty']} problem...")
+ 
+                 # Add timeout handling
+-                curr_res = self.check_correctness(
+-                    problem=problem_to_check,
+-                    completion=post_process_code(last_code),
+-                    timeout=6,
+-                    is_extracted=not problem_to_check["is_stdin"],
+-                )
++                if self.verifyit_enabled:
++                    from eval.graders.verifyit_competitive_code import grade_problem
++
++                    curr_res = grade_problem(
++                        'lcb', problem_to_check, post_process_code(last_code), timeout=6
++                    )
++                else:
++                    curr_res = self.check_correctness(
++                        problem=problem_to_check,
++                        completion=post_process_code(last_code),
++                        timeout=6,
++                        is_extracted=not problem_to_check["is_stdin"],
++                    )
+ 
+                 # Log the result
+                 self.logger.debug(f"Result for {example['difficulty']}: {curr_res}")
+@@ -213,6 +222,8 @@
+                 response_entry["reason"] = "" if curr_res else "Code is incorrect."
+ 
+             except Exception as e:
++                if self.verifyit_enabled:
++                    raise
+                 self.logger.error(f"Error evaluating {example['difficulty']} example: {str(e)}")
+                 response_entry["correctness"] = False
+                 response_entry["reason"] = f"Evaluation error: {str(e)}"
+@@ -220,6 +231,8 @@
+             return response_entry
+ 
+         except Exception as outer_e:
++            if self.verifyit_enabled:
++                raise
+             self.logger.error(f"Outer error in evaluate_single_example: {str(outer_e)}")
+             return {
+                 "content": example.get("model_answer"),
+@@ -236,6 +249,11 @@
+ 
+         self.logger.info(f"Evaluating {len(responses['examples'])} examples...")
+         self.logger.warning(f"Expect some output leaks from the code / test execution into stdout")
++
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_competitive_code import validate_batch
++
++            validate_batch('lcb', responses["examples"], self.n_repeat)
+ 
+         # First, organize completions by repeat index
+         examples_by_repeat = defaultdict(list)
+@@ -273,6 +291,8 @@
+                         result = future.result()
+                         results[idx] = (result, example)
+                     except Exception as e:
++                        if self.verifyit_enabled:
++                            raise
+                         self.logger.error(f"Future error for example {idx}: {str(e)}")
+                         results[idx] = (
+                             {
+diff --git a/eval/chat_benchmarks/LiveCodeBenchv5/eval_instruct.py b/eval/chat_benchmarks/LiveCodeBenchv5/eval_instruct.py
+--- a/eval/chat_benchmarks/LiveCodeBenchv5/eval_instruct.py
++++ b/eval/chat_benchmarks/LiveCodeBenchv5/eval_instruct.py
+@@ -53,6 +53,7 @@
+         max_tokens: int = 32768,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize LiveCodeBenchV5 benchmark.
+@@ -64,6 +65,7 @@
+             system_instruction: Optional system instruction for the model
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.debug = debug
+         self.max_new_tokens = max_tokens
+         self.seed = seed
+@@ -191,12 +193,19 @@
+                 self.logger.debug(f"Evaluating {example['difficulty']} problem...")
+ 
+                 # Add timeout handling
+-                curr_res = self.check_correctness(
+-                    problem=problem_to_check,
+-                    completion=post_process_code(last_code),
+-                    timeout=6,
+-                    is_extracted=not problem_to_check["is_stdin"],
+-                )
++                if self.verifyit_enabled:
++                    from eval.graders.verifyit_competitive_code import grade_problem
++
++                    curr_res = grade_problem(
++                        'lcb', problem_to_check, post_process_code(last_code), timeout=6
++                    )
++                else:
++                    curr_res = self.check_correctness(
++                        problem=problem_to_check,
++                        completion=post_process_code(last_code),
++                        timeout=6,
++                        is_extracted=not problem_to_check["is_stdin"],
++                    )
+ 
+                 # Log the result
+                 self.logger.debug(f"Result for {example['difficulty']}: {curr_res}")
+@@ -205,6 +214,8 @@
+                 response_entry["reason"] = "" if curr_res else "Code is incorrect."
+ 
+             except Exception as e:
++                if self.verifyit_enabled:
++                    raise
+                 self.logger.error(f"Error evaluating {example['difficulty']} example: {str(e)}")
+                 response_entry["correctness"] = False
+                 response_entry["reason"] = f"Evaluation error: {str(e)}"
+@@ -212,6 +223,8 @@
+             return response_entry
+ 
+         except Exception as outer_e:
++            if self.verifyit_enabled:
++                raise
+             self.logger.error(f"Outer error in evaluate_single_example: {str(outer_e)}")
+             return {
+                 "content": example.get("model_answer"),
+@@ -228,6 +241,11 @@
+ 
+         self.logger.info(f"Evaluating {len(responses['examples'])} examples...")
+         self.logger.warning(f"Expect some output leaks from the code / test execution into stdout")
++
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_competitive_code import validate_batch
++
++            validate_batch('lcb', responses["examples"], self.n_repeat)
+ 
+         # First, organize completions by repeat index
+         examples_by_repeat = defaultdict(list)
+@@ -265,6 +283,8 @@
+                         result = future.result()
+                         results[idx] = (result, example)
+                     except Exception as e:
++                        if self.verifyit_enabled:
++                            raise
+                         self.logger.error(f"Future error for example {idx}: {str(e)}")
+                         results[idx] = (
+                             {
+diff --git a/eval/chat_benchmarks/LiveCodeBenchv5_official/eval_instruct.py b/eval/chat_benchmarks/LiveCodeBenchv5_official/eval_instruct.py
+--- a/eval/chat_benchmarks/LiveCodeBenchv5_official/eval_instruct.py
++++ b/eval/chat_benchmarks/LiveCodeBenchv5_official/eval_instruct.py
+@@ -60,6 +60,7 @@
+         max_tokens: int = 32768,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize LiveCodeBenchV5 benchmark.
+@@ -71,6 +72,7 @@
+             system_instruction: Optional system instruction for the model
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.debug = debug
+         self.max_new_tokens = max_tokens
+         self.seed = seed
+@@ -198,12 +200,19 @@
+                 self.logger.debug(f"Evaluating {example['difficulty']} problem...")
+ 
+                 # Add timeout handling
+-                curr_res = self.check_correctness(
+-                    problem=problem_to_check,
+-                    completion=post_process_code(last_code),
+-                    timeout=6,
+-                    is_extracted=not problem_to_check["is_stdin"],
+-                )
++                if self.verifyit_enabled:
++                    from eval.graders.verifyit_competitive_code import grade_problem
++
++                    curr_res = grade_problem(
++                        'lcb', problem_to_check, post_process_code(last_code), timeout=6
++                    )
++                else:
++                    curr_res = self.check_correctness(
++                        problem=problem_to_check,
++                        completion=post_process_code(last_code),
++                        timeout=6,
++                        is_extracted=not problem_to_check["is_stdin"],
++                    )
+ 
+                 # Log the result
+                 self.logger.debug(f"Result for {example['difficulty']}: {curr_res}")
+@@ -212,6 +221,8 @@
+                 response_entry["reason"] = "" if curr_res else "Code is incorrect."
+ 
+             except Exception as e:
++                if self.verifyit_enabled:
++                    raise
+                 self.logger.error(f"Error evaluating {example['difficulty']} example: {str(e)}")
+                 response_entry["correctness"] = False
+                 response_entry["reason"] = f"Evaluation error: {str(e)}"
+@@ -219,6 +230,8 @@
+             return response_entry
+ 
+         except Exception as outer_e:
++            if self.verifyit_enabled:
++                raise
+             self.logger.error(f"Outer error in evaluate_single_example: {str(outer_e)}")
+             return {
+                 "content": example.get("model_answer"),
+@@ -235,6 +248,11 @@
+ 
+         self.logger.info(f"Evaluating {len(responses['examples'])} examples...")
+         self.logger.warning(f"Expect some output leaks from the code / test execution into stdout")
++
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_competitive_code import validate_batch
++
++            validate_batch('lcb', responses["examples"], self.n_repeat)
+ 
+         # First, organize completions by repeat index
+         examples_by_repeat = defaultdict(list)
+@@ -272,6 +290,8 @@
+                         result = future.result()
+                         results[idx] = (result, example)
+                     except Exception as e:
++                        if self.verifyit_enabled:
++                            raise
+                         self.logger.error(f"Future error for example {idx}: {str(e)}")
+                         results[idx] = (
+                             {
+diff --git a/eval/chat_benchmarks/CodeElo/eval_instruct.py b/eval/chat_benchmarks/CodeElo/eval_instruct.py
+--- a/eval/chat_benchmarks/CodeElo/eval_instruct.py
++++ b/eval/chat_benchmarks/CodeElo/eval_instruct.py
+@@ -51,6 +51,7 @@
+         max_tokens: int = 32768,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize CodeElo benchmark.
+@@ -62,6 +63,7 @@
+             system_instruction: Optional system instruction for the model
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.debug = debug
+         self.max_new_tokens = max_tokens
+         self.seed = seed
+@@ -221,12 +223,19 @@
+                 self.logger.debug(f"Evaluating problem...")
+ 
+                 # Add timeout handling
+-                curr_res = self.check_correctness(
+-                    problem=problem_to_check,
+-                    completion=post_process_code(last_code),
+-                    timeout=problem_to_check["time_limit_ms"] / 1000,
+-                    is_extracted=False,
+-                )
++                if self.verifyit_enabled:
++                    from eval.graders.verifyit_competitive_code import grade_problem
++
++                    curr_res = grade_problem(
++                        'codeelo', problem_to_check, post_process_code(last_code), timeout=problem_to_check["time_limit_ms"] / 1000
++                    )
++                else:
++                    curr_res = self.check_correctness(
++                        problem=problem_to_check,
++                        completion=post_process_code(last_code),
++                        timeout=problem_to_check["time_limit_ms"] / 1000,
++                        is_extracted=False,
++                    )
+ 
+                 # Log the result
+                 self.logger.debug(f"Result: {curr_res}")
+@@ -235,6 +244,8 @@
+                 response_entry["reason"] = "" if curr_res else "Code is incorrect."
+ 
+             except Exception as e:
++                if self.verifyit_enabled:
++                    raise
+                 self.logger.error(f"Error evaluating example: {str(e)}")
+                 response_entry["correctness"] = False
+                 response_entry["reason"] = f"Evaluation error: {str(e)}"
+@@ -242,6 +253,8 @@
+             return response_entry
+ 
+         except Exception as outer_e:
++            if self.verifyit_enabled:
++                raise
+             self.logger.error(f"Outer error in evaluate_single_example: {str(outer_e)}")
+             return {
+                 "content": example.get("model_answer"),
+@@ -258,6 +271,11 @@
+ 
+         self.logger.info(f"Evaluating {len(responses['examples'])} examples...")
+         self.logger.warning(f"Expect some output leaks from the code / test execution into stdout")
++
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_competitive_code import validate_batch
++
++            validate_batch('codeelo', responses["examples"], self.n_repeat)
+ 
+         # First, organize completions by repeat index
+         examples_by_repeat = defaultdict(list)
+@@ -295,6 +313,8 @@
+                         result = future.result()
+                         results[idx] = (result, example)
+                     except Exception as e:
++                        if self.verifyit_enabled:
++                            raise
+                         self.logger.error(f"Future error for example {idx}: {str(e)}")
+                         results[idx] = (
+                             {
+diff --git a/eval/chat_benchmarks/CodeForces/eval_instruct.py b/eval/chat_benchmarks/CodeForces/eval_instruct.py
+--- a/eval/chat_benchmarks/CodeForces/eval_instruct.py
++++ b/eval/chat_benchmarks/CodeForces/eval_instruct.py
+@@ -50,6 +50,7 @@
+         max_tokens: int = 32768,
+         logger: Optional[logging.Logger] = None,
+         system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
+     ):
+         """
+         Initialize CodeForces benchmark.
+@@ -61,6 +62,7 @@
+             system_instruction: Optional system instruction for the model
+         """
+         super().__init__(logger=logger, system_instruction=system_instruction)
++        self.verifyit_enabled = verifyit_enabled
+         self.debug = debug
+         self.seed = seed
+         self.max_new_tokens = max_tokens
+@@ -213,12 +215,19 @@
+                 self.logger.debug(f"Evaluating problem...")
+ 
+                 # Add timeout handling
+-                curr_res = self.check_correctness(
+-                    problem=problem_to_check,
+-                    completion=post_process_code(last_code),
+-                    timeout=problem_to_check["time_limit"],
+-                    is_extracted=False,
+-                )
++                if self.verifyit_enabled:
++                    from eval.graders.verifyit_competitive_code import grade_problem
++
++                    curr_res = grade_problem(
++                        'codeforces', problem_to_check, post_process_code(last_code), timeout=problem_to_check["time_limit"]
++                    )
++                else:
++                    curr_res = self.check_correctness(
++                        problem=problem_to_check,
++                        completion=post_process_code(last_code),
++                        timeout=problem_to_check["time_limit"],
++                        is_extracted=False,
++                    )
+ 
+                 # Log the result
+                 self.logger.debug(f"Result: {curr_res}")
+@@ -227,6 +236,8 @@
+                 response_entry["reason"] = "" if curr_res else "Code is incorrect."
+ 
+             except Exception as e:
++                if self.verifyit_enabled:
++                    raise
+                 self.logger.error(f"Error evaluating example: {str(e)}")
+                 response_entry["correctness"] = False
+                 response_entry["reason"] = f"Evaluation error: {str(e)}"
+@@ -234,6 +245,8 @@
+             return response_entry
+ 
+         except Exception as outer_e:
++            if self.verifyit_enabled:
++                raise
+             self.logger.error(f"Outer error in evaluate_single_example: {str(outer_e)}")
+             return {
+                 "content": example.get("model_answer"),
+@@ -250,6 +263,11 @@
+ 
+         self.logger.info(f"Evaluating {len(responses['examples'])} examples...")
+         self.logger.warning(f"Expect some output leaks from the code / test execution into stdout")
++
++        if self.verifyit_enabled:
++            from eval.graders.verifyit_competitive_code import validate_batch
++
++            validate_batch('codeforces', responses["examples"], self.n_repeat)
+ 
+         # First, organize completions by repeat index
+         examples_by_repeat = defaultdict(list)
+@@ -287,6 +305,8 @@
+                         result = future.result()
+                         results[idx] = (result, example)
+                     except Exception as e:
++                        if self.verifyit_enabled:
++                            raise
+                         self.logger.error(f"Future error for example {idx}: {str(e)}")
+                         results[idx] = (
+                             {
+diff --git a/eval/graders/verifyit_competitive_code.py b/eval/graders/verifyit_competitive_code.py
+new file mode 100644
+--- /dev/null
++++ b/eval/graders/verifyit_competitive_code.py
+@@ -0,0 +1,256 @@
++"""Source competitive-programming contracts with candidate-only execution."""
++
++import hashlib
++import importlib
++import json
++import math
++import os
++from pathlib import Path
++import signal
++import subprocess
++import sys
++import tempfile
++import time
++import uuid
++
++from lm_eval.verifyit_humaneval import DOCKER, score
++from verifyit.grade import InvalidTask, Status, run
++from verifyit.spec import ScriptSpec, render_spec
++
++from eval.graders.verifyit_code import IMAGE
++
++SOURCE_HASHES = {
++    "eval/graders/livecodebench.py": "7039dc9679475c19ce60a84b4f4f0348e74114eb4d17f16e315bb441a79ce04c",
++    "eval/chat_benchmarks/CodeElo/codeelo_utils.py": "854a5deaf66458d05c7496546fb29df760da81fcad4698d4aa14b30b873ce8ae",
++    "eval/chat_benchmarks/CodeForces/codeforces_utils.py": "9bdaf3a16965156de24355d67c8dcecd1e818452dea27f8a733b1a4be30c0f72",
++}
++PROFILES = {"lcb", "codeelo", "codeforces"}
++
++
++def _sources():
++    root = Path(__file__).resolve().parents[2]
++    for name, expected in SOURCE_HASHES.items():
++        if hashlib.sha256((root / name).read_bytes()).hexdigest() != expected:
++            raise InvalidTask("Competitive-code source contract changed")
++
++
++def prepare_tests(profile, problem):
++    _sources()
++    if profile not in PROFILES or not isinstance(problem, dict):
++        raise InvalidTask("Unknown competitive-code task profile")
++    try:
++        if profile == "lcb":
++            tests = problem["test"]
++            if isinstance(tests, str):
++                tests = json.loads(tests)
++            stdin_mode = bool(tests) and tests[0].get("testtype") != "functional"
++        elif profile == "codeelo":
++            tests = [{"input": pair[0], "output": pair[1]} for pair in problem["examples"]]
++            stdin_mode = True
++        else:
++            tests = problem["official_tests"]
++            stdin_mode = True
++        if not isinstance(tests, list) or not tests:
++            raise InvalidTask("Competitive-code task has no tests")
++        normalized = []
++        for test in tests:
++            if not isinstance(test, dict) or "input" not in test or "output" not in test or test["output"] is None:
++                raise InvalidTask("Malformed competitive-code test")
++            expected = test["output"]
++            if stdin_mode and not isinstance(test["input"], str):
++                raise InvalidTask("Stdin test input must be text")
++            if profile != "lcb":
++                if not isinstance(expected, str):
++                    raise InvalidTask("Legacy stdin reference must be text")
++                expected = expected.strip()
++                if expected.endswith("-"):
++                    expected = expected[: expected.rfind("-")].rstrip()
++            normalized.append({"input": test["input"], "output": expected})
++        json.dumps(normalized, allow_nan=False)
++    except (KeyError, TypeError, ValueError, IndexError, AttributeError) as error:
++        raise InvalidTask("Malformed competitive-code test contract") from error
++    return normalized, stdin_mode
++
++
++def validate_batch(profile, examples, expected_repeats):
++    if not isinstance(examples, list) or not examples:
++        raise InvalidTask("Competitive-code evaluation requires samples")
++    repeats = None
++    for example in examples:
++        prepare_tests(profile, example)
++        outputs, answers = example.get("model_outputs"), example.get("model_answers")
++        if (
++            not isinstance(outputs, list)
++            or not outputs
++            or not isinstance(answers, list)
++            or len(outputs) != len(answers)
++        ):
++            raise InvalidTask("Competitive-code outputs must align with parsed answers")
++        if repeats is not None and repeats != len(outputs):
++            raise InvalidTask("Competitive-code repetitions must align across samples")
++        if len(outputs) != expected_repeats:
++            raise InvalidTask("Competitive-code batch omitted configured repetitions")
++        repeats = len(outputs)
++        if profile != "lcb":
++            limit = example.get("time_limit_ms" if profile == "codeelo" else "time_limit")
++            rating = example.get("rating")
++            if type(limit) not in (int, float) or not math.isfinite(limit) or limit <= 0:
++                raise InvalidTask("Legacy competitive-code task has an invalid time limit")
++            if "rating" not in example or not (
++                profile == "codeforces" and rating is None or type(rating) in (int, float) and math.isfinite(rating)
++            ):
++                raise InvalidTask("Legacy competitive-code task has invalid rating metadata")
++        if not isinstance(example.get("difficulty"), str) or not example["difficulty"]:
++            raise InvalidTask("Competitive-code sample lacks difficulty metadata")
++
++
++def _timeout(signum, frame):
++    raise TimeoutError("Candidate execution exceeded its source deadline")
++
++
++def _compare(source, actual, expected):
++    if not source._score(actual, expected):
++        return False
++    if actual == expected:
++        return True
++    if isinstance(actual, (list, tuple)) and isinstance(expected, (list, tuple)):
++        # Source integer coercion truncates non-integral floats and can award wrong answers.
++        try:
++            return all(float(value) == int(value) for value in [*actual, *expected])
++        except (TypeError, ValueError, OverflowError):
++            return False
++    return True
++
++
++def _check(candidate, tests, profile, stdin_mode, timeout, deadline):
++    source = importlib.import_module("eval.graders.livecodebench") if profile == "lcb" else None
++    for test in tests:
++        signal.setitimer(
++            signal.ITIMER_REAL,
++            max(0.001, min(timeout if profile == "lcb" else float("inf"), deadline - time.monotonic())),
++        )
++        value = test["input"]
++        if stdin_mode:
++            actual = candidate(value)
++        elif isinstance(value, (list, tuple)):
++            actual = candidate(*value)
++        elif isinstance(value, dict):
++            actual = candidate(**value)
++        else:
++            actual = candidate(value)
++        signal.setitimer(signal.ITIMER_REAL, max(0.001, deadline - time.monotonic()))
++        assert _compare(source, actual, test["output"]) if source else actual == test["output"]
++
++
++def grade_problem(profile, problem, completion, timeout=6):
++    tests, stdin_mode = prepare_tests(profile, problem)
++    if not isinstance(completion, str) or not completion.strip():
++        return False
++    if type(timeout) not in (int, float) or not math.isfinite(timeout) or timeout <= 0:
++        raise InvalidTask("Invalid candidate timeout")
++    deadline = (
++        max(timeout * 2, 30) if profile == "lcb" else (timeout + 1) * len(tests) + (5 if profile == "codeelo" else 60)
++    )
++    name = "verifyit-competitive-" + uuid.uuid4().hex
++    try:
++        with tempfile.TemporaryDirectory(prefix="verifyit-competitive-") as directory:
++            root = Path(directory)
++            payload = {
++                "profile": profile,
++                "tests": tests,
++                "stdin_mode": stdin_mode,
++                "completion": completion,
++                "timeout": timeout,
++                "deadline": deadline,
++                "name": name,
++            }
++            (root / "input.json").write_text(json.dumps(payload, allow_nan=False))
++            (root / "run.sh").write_text('exec "$@"\n')
++            specification = ScriptSpec(
++                "run.sh",
++                args=(sys.executable, "-m", "eval.graders.verifyit_competitive_code", str(root / "input.json")),
++                timeout=deadline + 15,
++                verdict_file="result.json",
++            )
++            (root / "verifier.toml").write_text(render_spec(specification))
++            verdict = run(root / "verifier.toml", root)
++    finally:
++        if DOCKER:
++            subprocess.run(
++                [DOCKER, "rm", "-f", name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10
++            )
++    if verdict.status == Status.INVALID_TASK:
++        raise InvalidTask(str(verdict.detail))
++    if verdict.status != Status.SCORED:
++        raise RuntimeError(f"Competitive-code verifier failed: {verdict.status}: {verdict.detail}")
++    return bool(verdict.reward)
++
++
++def main():
++    payload = json.loads(Path(sys.argv[1]).read_text())
++    _sources()
++    if DOCKER is None:
++        raise RuntimeError("Docker is unavailable")
++    subprocess.run(
++        [DOCKER, "image", "inspect", IMAGE],
++        check=True,
++        stdout=subprocess.DEVNULL,
++        stderr=subprocess.DEVNULL,
++        timeout=10,
++    )
++    completion = payload["completion"]
++    if payload["stdin_mode"]:
++        if payload["profile"] != "lcb" and '__name__ == "__main__"' in completion:
++            completion = '__name__ = "__main__"\n' + completion
++        prediction = (
++            "import contextlib, io, sys\n"
++            "def _verifyit_entry(raw):\n"
++            "    output = io.StringIO()\n"
++            "    saved = sys.stdin\n"
++            "    try:\n"
++            "        sys.stdin = io.StringIO(raw)\n"
++            "        with contextlib.redirect_stdout(output):\n"
++            f"            exec({completion!r}, {{}})\n"
++            "        return output.getvalue().strip()\n"
++            "    finally:\n"
++            "        sys.stdin = saved\n"
++        )
++    else:
++        name = completion.split("(")[0].split()[-1]
++        prediction = completion + f"\n_verifyit_entry = {name}\n"
++    deadline = time.monotonic() + payload["deadline"]
++    reference = (
++        "from eval.graders.verifyit_competitive_code import _check\n"
++        "def _verifyit_check(candidate):\n"
++        f"    _check(candidate, {payload['tests']!r}, {payload['profile']!r}, {payload['stdin_mode']!r}, {payload['timeout']!r}, {deadline!r})\n"
++        "_verifyit_check(_verifyit_entry)\n"
++    )
++    signal.signal(signal.SIGALRM, _timeout)
++    signal.setitimer(signal.ITIMER_REAL, payload["deadline"])
++    try:
++        passed = score(
++            reference,
++            prediction,
++            payload["name"],
++            image=IMAGE,
++            memory_bytes=1024 * 1024 * 1024 if payload["profile"] == "lcb" else None,
++            resource_limit_bytes=1024 * 1024 * 1024 if payload["profile"] == "lcb" else None,
++        )
++    except TimeoutError:
++        passed = False
++    finally:
++        signal.setitimer(signal.ITIMER_REAL, 0)
++    verdict = {
++        "status": "scored",
++        "reward": float(passed),
++        "detail": {"profile": payload["profile"], "tests": len(payload["tests"]), "image": IMAGE},
++    }
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(json.dumps(verdict))
++
++
++if __name__ == "__main__":
++    try:
++        main()
++    except InvalidTask as error:
++        verdict = {"status": "invalid_task", "reward": 0.0, "detail": {"error": str(error)}}
++        (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(json.dumps(verdict))
+diff --git a/tests/graders/test_verifyit_competitive_code.py b/tests/graders/test_verifyit_competitive_code.py
+new file mode 100644
+--- /dev/null
++++ b/tests/graders/test_verifyit_competitive_code.py
+@@ -0,0 +1,137 @@
++"""Competitive-code source semantics and ordinary execution-failure regressions."""
++
++import subprocess
++
++import pytest
++
++from eval.graders import livecodebench
++from eval.graders.verifyit_competitive_code import DOCKER, IMAGE, grade_problem
++from verifyit.grade import InvalidTask
++
++
++@pytest.fixture(scope="module", autouse=True)
++def candidate_image():
++    if DOCKER is None:
++        pytest.skip("Docker is required for isolated candidate grading")
++    if subprocess.run([DOCKER, "image", "inspect", IMAGE], capture_output=True, timeout=10).returncode:
++        pytest.skip("Load the pinned candidate image")
++
++
++def functional(tests):
++    return {"test": [{**test, "testtype": "functional"} for test in tests]}
++
++
++def test_function_state_persists_across_tests():
++    tests = functional([{"input": [], "output": 1}, {"input": [], "output": 2}])
++    candidate = "count=0\ndef next_value():\n global count\n count+=1\n return count"
++    assert grade_problem("lcb", tests, candidate)
++
++
++def test_function_keyword_arguments_and_printed_output():
++    tests = functional([{"input": {"a": 2, "b": 3}, "output": 5}])
++    assert grade_problem("lcb", tests, 'def add(a,b):\n print("working")\n return a+b')
++
++
++def test_lossless_list_coercion_and_truncating_source_false_positive():
++    tests = functional([{"input": [], "output": [1.1]}])
++    assert livecodebench._score([1.9], [1.1])
++    assert not grade_problem("lcb", tests, "def answer(): return [1.9]")
++    assert grade_problem("lcb", tests, "def answer(): return [1.1]")
++    integral = functional([{"input": [], "output": [1, 2]}])
++    assert grade_problem("lcb", integral, 'def answer(): return ("1", 2.0)')
++
++
++@pytest.mark.parametrize("profile", ["codeelo", "codeforces"])
++def test_legacy_stdin_strips_reference_marker_and_keeps_exact_comparison(profile):
++    problem = (
++        {"examples": [["", "5-\n"]]} if profile == "codeelo" else {"official_tests": [{"input": "", "output": "5-\n"}]}
++    )
++    assert grade_problem(profile, problem, 'if __name__ == "__main__":\n print(5)')
++    assert not grade_problem(profile, problem, 'print("5.0")')
++
++
++def test_lcb_stdin_retains_numeric_string_comparison():
++    problem = {"test": [{"input": "", "output": "5", "testtype": "stdin"}]}
++    assert grade_problem("lcb", problem, 'print("5.0")')
++    assert not grade_problem("lcb", problem, 'print("6.0")')
++
++
++def test_candidate_timeout_scores_zero_and_removes_container():
++    before = subprocess.check_output(
++        [DOCKER, "ps", "-aq", "--filter", "name=verifyit-competitive-"], text=True
++    ).splitlines()
++    tests = functional([{"input": [], "output": 1}])
++    assert not grade_problem("lcb", tests, "def answer():\n while True: pass", timeout=0.1)
++    after = subprocess.check_output(
++        [DOCKER, "ps", "-aq", "--filter", "name=verifyit-competitive-"], text=True
++    ).splitlines()
++    assert set(after) <= set(before)
++
++
++def test_empty_tests_cannot_award_vacuous_pass():
++    with pytest.raises(InvalidTask):
++        grade_problem("lcb", {"test": []}, "def answer(): return 1")
++
++
++def test_missing_repetitions_cannot_return_partial_positive_metrics():
++    from eval.chat_benchmarks.LiveCodeBench.eval_instruct import LiveCodeBenchBenchmark
++
++    benchmark = LiveCodeBenchBenchmark(verifyit_enabled=True)
++    code = "def answer(): return 1"
++    example = {
++        "difficulty": "Easy",
++        "is_stdin": False,
++        "test": [{"input": [], "output": 1, "testtype": "functional"}],
++        "model_outputs": [code],
++        "model_answers": [[code]],
++    }
++    with pytest.raises(InvalidTask):
++        benchmark.evaluate_responses({"examples": [example]})
++
++
++def test_missing_execution_runtime_aborts_batch(monkeypatch, tmp_path):
++    from eval.chat_benchmarks.LiveCodeBench.eval_instruct import LiveCodeBenchBenchmark
++
++    benchmark = LiveCodeBenchBenchmark(verifyit_enabled=True)
++    code = "def answer(): return 1"
++    example = {
++        "difficulty": "Easy",
++        "is_stdin": False,
++        "test": [{"input": [], "output": 1, "testtype": "functional"}],
++        "model_outputs": [code] * benchmark.n_repeat,
++        "model_answers": [[code]] * benchmark.n_repeat,
++    }
++    monkeypatch.setenv("PATH", str(tmp_path))
++    with pytest.raises(RuntimeError):
++        benchmark.evaluate_responses({"examples": [example]})
++
++
++def test_source_memory_budget_accepts_candidate_above_old_rpc_default():
++    size = 600 * 1024 * 1024
++    tests = functional([{"input": [], "output": size}])
++    candidate = (
++        f"def answer():\n value=bytearray({size})\n for i in range(0,len(value),4096): value[i]=1\n return len(value)"
++    )
++    assert grade_problem("lcb", tests, candidate)
++
++
++@pytest.mark.parametrize("profile", ["codeelo", "codeforces"])
++def test_legacy_profiles_inherit_environment_memory_budget(profile):
++    size = 600 * 1024 * 1024
++    problem = (
++        {"examples": [["", str(size)]]}
++        if profile == "codeelo"
++        else {"official_tests": [{"input": "", "output": str(size)}]}
++    )
++    assert grade_problem(
++        profile, problem, f"value=bytearray({size})\nfor i in range(0,len(value),4096): value[i]=1\nprint(len(value))"
++    )
++
++
++def test_lcb_source_address_space_limit_rejects_sparse_allocation():
++    size = 1536 * 1024 * 1024
++    tests = functional([{"input": [], "output": size}])
++    candidate = f"def answer():\n import mmap\n value=mmap.mmap(-1,{size})\n return len(value)"
++    assert not grade_problem("lcb", tests, candidate)
++    legacy = {"examples": [["", str(size)]]}
++    assert grade_problem("codeelo", legacy, f"import mmap\nvalue=mmap.mmap(-1,{size})\nprint(len(value))")

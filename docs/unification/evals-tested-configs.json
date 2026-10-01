@@ -20,15 +20,15 @@
     },
     "evalchemy-custom": {
       "total": 42,
-      "e2e_tested": 24,
+      "e2e_tested": 29,
       "archive_score_parity": 5,
-      "fixture_tested": 20,
-      "fixture_only": 18,
+      "fixture_tested": 25,
+      "fixture_only": 23,
       "real_response_source_parity_not_archive_score": 1,
-      "route_available": 24
+      "route_available": 29
     }
   },
-  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance. Plus frame-boundary fixtures use explicit30-second source/cutover budgets; three source missing-assert scoring corrections are recorded separately from parity. Five judge clients use local HTTP fixtures with source request-body parity; malformed transport cases abort entire batches. OlympiadBench archive links are frozen but unavailable. IFEval540 saved source responses reproduce source scoring with detector seed0, not archived validated scores; IFBench300 genuine instruction rows use synthetic responses. The source IFEval full-driver typo remains outside the tested evaluate_responses boundary. MRCR generation-scoring and evaluator methods match source across74 fixtures with dataset selection and model outputs substituted; archived replay is unclaimed. HMMT uses three frozen questions and ten source repetitions through generation/evaluation; all 30 gold answers also have canonical/wrong supplemental grading. The bounded explicit symbolic transport returns display strings in model_answers and does not claim arbitrary SymPy equivalence. No HMMT archive replay is claimed.",
+  "boundary": "Distinct indexed source configs/custom benchmarks with actual outer evaluator roundtrip artifacts. No guard-enumeration or direct adapter-only call counts. Fixture and archive sets may overlap; e2e_tested is their deduplicated union. Source-config math500 real-response parity differs from original producer scores. This is a historical evidence census, not a claim that all configurations were rerun at the current commit. The seventy retained-runtime fixtures override datasets, splits and few-shot count while preserving each YAML scorer, filters, aggregation and RNG semantics. Custom HumanEval and MBPP fixtures use pinned Linux source-scorer parity; macOS exact-float disagreements for MBPP180/493 are retained as platform provenance. Plus frame-boundary fixtures use explicit30-second source/cutover budgets; three source missing-assert scoring corrections are recorded separately from parity. Five judge clients use local HTTP fixtures with source request-body parity; malformed transport cases abort entire batches. OlympiadBench archive links are frozen but unavailable. IFEval540 saved source responses reproduce source scoring with detector seed0, not archived validated scores; IFBench300 genuine instruction rows use synthetic responses. The source IFEval full-driver typo remains outside the tested evaluate_responses boundary. MRCR generation-scoring and evaluator methods match source across74 fixtures with dataset selection and model outputs substituted; archived replay is unclaimed. HMMT uses three frozen questions and ten source repetitions through generation/evaluation; all 30 gold answers also have canonical/wrong supplemental grading. The bounded explicit symbolic transport returns display strings in model_answers and does not claim arbitrary SymPy equivalence. No HMMT archive replay is claimed. Five competitive-code clients have 66 fixture completion evaluations through actual source evaluators. Source macOS and pinned candidate-runtime outputs match; LCB source memory limits are separately preserved and tested. Legacy clients inherit their environment memory limit. No archive replay is claimed.",
   "records": [
     {
       "entity_id": "evalchemy-custom:eval/chat_benchmarks/AIME24/eval_instruct.py",
@@ -87,6 +87,36 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/evalchemy-amc-math/guarded-amc/amc-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/CodeElo/eval_instruct.py",
+      "name": "CodeElo",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-competitive-code/manager-final/results.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-competitive-code/cutover-resource-final/results.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/CodeForces/eval_instruct.py",
+      "name": "CodeForces",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-competitive-code/manager-final/results.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-competitive-code/cutover-resource-final/results.json"
         }
       ]
     },
@@ -211,6 +241,51 @@
         {
           "kind": "fixture",
           "path": "evidence/e2e/wiring/evalchemy-jee/source-roundtrip.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/LiveCodeBench/eval_instruct.py",
+      "name": "LiveCodeBench",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-competitive-code/manager-final/results.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-competitive-code/cutover-resource-final/results.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/LiveCodeBenchv5/eval_instruct.py",
+      "name": "LiveCodeBenchv5",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-competitive-code/manager-final/results.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-competitive-code/cutover-resource-final/results.json"
+        }
+      ]
+    },
+    {
+      "entity_id": "evalchemy-custom:eval/chat_benchmarks/LiveCodeBenchv5_official/eval_instruct.py",
+      "name": "LiveCodeBenchv5_official",
+      "source": "evalchemy-custom",
+      "evidence": [
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-competitive-code/manager-final/results.json"
+        },
+        {
+          "kind": "fixture",
+          "path": "evidence/e2e/wiring/evalchemy-competitive-code/cutover-resource-final/results.json"
         }
       ]
     },

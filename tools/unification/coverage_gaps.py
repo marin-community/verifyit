@@ -892,6 +892,37 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-instructions/archive-census.json",
                 ],
             )
+        elif name in {"LiveCodeBench", "LiveCodeBenchv5", "LiveCodeBenchv5_official", "CodeElo", "CodeForces"}:
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_competitive_code_runtime",
+                reason=(
+                    "ScriptSpec supervises isolated candidate function/stdin execution and trusted "
+                    "source comparison. Three LCB clients preserve argument/state and numeric/list "
+                    "coercion; legacy CodeElo/CodeForces retain stdin reference cleanup and exact "
+                    "equality. All difficulty and repetition aggregates remain in the original client."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True and apply the pinned candidate/RPC exports. "
+                    "Sixty-six fixture completion evaluations cover all five actual evaluators. "
+                    "LCB retains 1 GiB AS/DATA/STACK bounds; legacy uncapped profiles inherit the "
+                    "execution environment limit. Truncating integer-list coercion no longer "
+                    "awards false credit. Baselines use the macOS source runtime; no archive "
+                    "replay or broader platform/library equivalence is claimed."
+                ),
+                validation_status="source_custom_evaluator_fixtures_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/competitive-code-verifyit.patch",
+                    "integrations/evalchemy/competitive-code-source.json",
+                    "integrations/lm-eval-harness/function-rpc-memory-verifyit.patch",
+                    "../evidence/e2e/wiring/evalchemy-competitive-code/manager-final/results.json",
+                    "../evidence/e2e/wiring/evalchemy-competitive-code/cutover-resource-final/results.json",
+                    "../evidence/e2e/wiring/evalchemy-competitive-code/negative-resource-final/results.json",
+                    "../evidence/e2e/wiring/evalchemy-competitive-code/archive-census.json",
+                ],
+            )
         elif name == "HMMT":
             entity.update(
                 status="retained_runtime_available",

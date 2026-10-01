@@ -1,0 +1,95 @@
+diff --git a/lm_eval/verifyit_humaneval.py b/lm_eval/verifyit_humaneval.py
+--- a/lm_eval/verifyit_humaneval.py
++++ b/lm_eval/verifyit_humaneval.py
+@@ -82,9 +82,19 @@
+     image=IMAGE,
+     result_observation="identity",
+     max_bytes=MAX_BYTES,
++    memory_bytes=256 * 1024 * 1024,
++    resource_limit_bytes=None,
+ ):
+     if DOCKER is None:
+         raise RuntimeError("Docker executable is unavailable")
++    if memory_bytes is not None and (
++        type(memory_bytes) is not int or memory_bytes <= 0
++    ):
++        raise InvalidTask("Candidate memory limit must be a positive byte count")
++    if resource_limit_bytes is not None and (
++        type(resource_limit_bytes) is not int or resource_limit_bytes <= 0
++    ):
++        raise InvalidTask("Candidate resource limit must be a positive byte count")
+     entry = entry_point(reference)
+     worker = Path(__file__).with_name("verifyit_function_worker.py").resolve()
+     process = subprocess.Popen(  # noqa: S603 - fixed worker command; candidate source travels over stdin.
+@@ -100,8 +110,7 @@
+             "--read-only",
+             "--pids-limit",
+             "64",
+-            "--memory",
+-            "256m",
++            *(["--memory", str(memory_bytes)] if memory_bytes is not None else []),
+             "--cpus",
+             "1",
+             "--cap-drop",
+@@ -132,6 +141,11 @@
+                 "entry_point": entry,
+                 "result_observation": result_observation,
+                 "max_bytes": max_bytes,
++                **(
++                    {"resource_limit_bytes": resource_limit_bytes}
++                    if resource_limit_bytes is not None
++                    else {}
++                ),
+             },
+         )
+         if read(process.stdout) != {"ready": True}:
+diff --git a/lm_eval/verifyit_function_worker.py b/lm_eval/verifyit_function_worker.py
+--- a/lm_eval/verifyit_function_worker.py
++++ b/lm_eval/verifyit_function_worker.py
+@@ -100,6 +100,15 @@
+     transport = sys.stdout.buffer
+     sys.stdout = sys.stderr
+     request = read(sys.stdin.buffer)
++    resource_limit = request.get("resource_limit_bytes")
++    if resource_limit is not None:
++        # Only the Linux execution worker needs this optional Unix module.
++        import resource
++
++        if type(resource_limit) is not int or resource_limit <= 0:
++            raise ValueError("invalid candidate resource limit")
++        for kind in (resource.RLIMIT_AS, resource.RLIMIT_DATA, resource.RLIMIT_STACK):
++            resource.setrlimit(kind, (resource_limit, resource_limit))
+     scope = {}
+     # Candidate execution is confined to its container.
+     exec(request["code"], scope)  # noqa: S102
+diff --git a/tests/unit/test_verifyit_humaneval.py b/tests/unit/test_verifyit_humaneval.py
+--- a/tests/unit/test_verifyit_humaneval.py
++++ b/tests/unit/test_verifyit_humaneval.py
+@@ -1,9 +1,11 @@
+ """HumanEval function calls preserve typed values and pass@1 semantics."""
++
++import uuid
+ 
+ import pytest
+ from verifyit.grade import InvalidTask
+ 
+-from lm_eval.verifyit_humaneval import pass_at_k
++from lm_eval.verifyit_humaneval import pass_at_k, score
+ 
+ 
+ REFERENCE = """
+@@ -39,3 +41,14 @@
+     assert pass_at_k([reference], [["def solution(): return None"]], [1]) == {
+         "pass@1": 0.0
+     }
++
++
++def test_default_memory_budget_still_rejects_oversized_candidate():
++    size = 600 * 1024 * 1024
++    reference = (
++        f"def check(candidate):\n    assert candidate() == {size}\ncheck(solution)\n"
++    )
++    prediction = f"def solution():\n    value = bytearray({size})\n    for i in range(0, len(value), 4096): value[i] = 1\n    return len(value)\n"
++    assert not score(
++        reference, prediction, "verifyit-memory-default-" + uuid.uuid4().hex
++    )

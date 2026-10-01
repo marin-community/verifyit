@@ -1,0 +1,75 @@
+{
+  "benchmarks": [
+    "LiveCodeBench",
+    "LiveCodeBenchv5",
+    "LiveCodeBenchv5_official",
+    "CodeElo",
+    "CodeForces"
+  ],
+  "fixture_only": true,
+  "source_revision": "e3f4a3d601896c437f37b0bd0a30e51651cce6d0",
+  "applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/competitive-code-memory-evalchemy-applied",
+  "patch": "integrations/evalchemy/competitive-code-verifyit.patch",
+  "patch_sha256": "a9cce306d30b0b9fdd836d188097042ce93fd4e84768fc07ce172895f611fb53",
+  "files": {
+    "eval/chat_benchmarks/LiveCodeBench/eval_instruct.py": "d1a7238a5b036f55c1b4c53cea858becd7737376b955b2733166ebf90d7dd398",
+    "eval/chat_benchmarks/LiveCodeBenchv5/eval_instruct.py": "d70971efbb5db5d81462338f8a7384e608ffad7b8408cbc431cf154b4bead915",
+    "eval/chat_benchmarks/LiveCodeBenchv5_official/eval_instruct.py": "5c8f0953ff0f71fd2cb45987d897ac3d17395741dc853b5cd6e3279837f3f608",
+    "eval/chat_benchmarks/CodeElo/eval_instruct.py": "95bf657086ff652733a70bde8c5653f13a942918fb1539806c2437e9df64aad5",
+    "eval/chat_benchmarks/CodeForces/eval_instruct.py": "5fcb134ea1bb27c0f38894361a71e037a7468769d73077a007a06906c01baefe",
+    "eval/graders/verifyit_competitive_code.py": "23387d56215224a7c83eb28fc9c02ca0184502173a5e0c7e7135a8804d364d21",
+    "tests/graders/test_verifyit_competitive_code.py": "0477af90e1a684121a5b48b3b852800ac7f9afb7fbbf707b0f04c34d3b5ee6d3"
+  },
+  "source_files": {
+    "eval/graders/livecodebench.py": "7039dc9679475c19ce60a84b4f4f0348e74114eb4d17f16e315bb441a79ce04c",
+    "eval/chat_benchmarks/CodeElo/codeelo_utils.py": "854a5deaf66458d05c7496546fb29df760da81fcad4698d4aa14b30b873ce8ae",
+    "eval/chat_benchmarks/CodeForces/codeforces_utils.py": "9bdaf3a16965156de24355d67c8dcecd1e818452dea27f8a733b1a4be30c0f72"
+  },
+  "image": "sha256:c65c33e0fdd600e418f020d233aca4178c79c3a3208657f51a31dfc77c2c22f3",
+  "image_archive": {
+    "path": "evidence/e2e/wiring/evalchemy-code-family/candidate-image.tar",
+    "sha256": "025e05e47c474bc9811766bc54fd8b6c1e0c9b75c9f9bf1c3d00a714001f868d",
+    "bytes": 69135360
+  },
+  "runtime_dependencies": [
+    "integrations/evalchemy/humaneval-function-verifyit.patch",
+    "integrations/lm-eval-harness/function-rpc-values-verifyit.patch",
+    "integrations/lm-eval-harness/function-rpc-plus-verifyit.patch",
+    "integrations/evalchemy/custom-code-verifyit.patch",
+    "integrations/lm-eval-harness/function-rpc-memory-verifyit.patch"
+  ],
+  "source_contract": "Three LCB clients retain functional argument expansion, persistent function state, stdin capture, source numeric/list coercion and difficulty/repetition metrics. CodeElo/CodeForces retain their canonical stdin-only contracts, reference trailing-marker cleanup, exact output equality and source main-guard behavior. Candidate-only RPC runs programs without trusted test answers; ScriptSpec supervisor compares data returns.",
+  "execution_bounds": "LCB retains six-second per-test and thirty-second whole-run budgets. CodeElo uses source milliseconds and (timeout+1)*tests+5 seconds; CodeForces uses source seconds and (timeout+1)*tests+60. Legacy source has no per-test alarm. LCB retains 1 GiB AS/DATA/STACK limits in the candidate worker plus a 1 GiB Docker memory limit. Legacy profiles inherit the execution environment limit, matching their uncapped source. Older RPC callers retain the 256 MiB Docker default. Process-group and container cleanup run on timeout.",
+  "proof": {
+    "frameworks": 5,
+    "framework_samples": 18,
+    "completion_evaluations": 66,
+    "durable_tests": 14,
+    "shared_regressions": 41,
+    "negative_scenarios": 17
+  },
+  "scoring_fixes": [
+    "LCB integer-list coercion previously awarded [1.9] against [1.1]; lossless coercion remains but truncation no longer earns credit. Canonical fractional lists still match.",
+    "Empty/malformed tests, missing configured repetitions and invalid trusted metadata abort batches. Infrastructure errors propagate through source thread collection instead of becoming partial aggregate metrics."
+  ],
+  "limitations": [
+    "Fixture-only actual evaluate_responses methods; source parsing has_code produces fixture model_answers. No model inference, dataset loading or archived-score replay claimed.",
+    "Candidate runtime is the existing pinned Python/numpy image. Baseline original scorers execute on macOS; Linux source resource-limit behavior is separately exercised with ordinary allocation regressions.",
+    "Source APIs and comparison helpers are pinned; arbitrary source future versions or external candidate libraries are outside this evidence."
+  ],
+  "rpc_export": {
+    "patch": "integrations/lm-eval-harness/function-rpc-memory-verifyit.patch",
+    "patch_sha256": "97dad8a8898069fd521529848a79d811e92af6212adb4284a1283a1517305b13",
+    "applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/competitive-code-memory-harness-applied",
+    "baseline_files": {
+      "lm_eval/verifyit_humaneval.py": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/plus-family-lm-eval-harness-applied/lm_eval/verifyit_humaneval.py",
+      "lm_eval/verifyit_function_worker.py": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/plus-family-lm-eval-harness-applied/lm_eval/verifyit_function_worker.py",
+      "tests/unit/test_verifyit_humaneval.py": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/uncheatable-patch-validation/tests/unit/test_verifyit_humaneval.py"
+    },
+    "files": {
+      "lm_eval/verifyit_humaneval.py": "52c78e80e31a3cbc9006ffd7c614211d994c356506a277ecee5cd2cb66ad727a",
+      "lm_eval/verifyit_function_worker.py": "fec18465a58965920f9fe7f5b849c045a03cb9d6302683038d5bee7a856757c3",
+      "tests/unit/test_verifyit_humaneval.py": "209ec61a7d49fa4f1a50181d0c57eb147d8a4860efa64add9445fd056bc6c4e7"
+    }
+  }
+}
