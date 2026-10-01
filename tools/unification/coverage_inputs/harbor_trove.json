@@ -2423,16 +2423,18 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#gdb",
         "docs/unification/harbor_inventory.json#gdb",
-        "docs/unification/harbor_specs.md#artifact-judge"
+        "docs/unification/harbor_specs.md#artifact-judge",
+        "evidence/e2e/wiring/harbor-gdb/source-census.json",
+        "evidence/e2e/wiring/harbor-gdb/blockers.json"
       ],
       "gap_kind": "metric_projection_and_status",
       "implementation_present": false,
       "name": "gdb",
-      "needed_change": "Wrap official graphics evaluator, retain every finite metric, explicitly select primary metric and native NIMA/10 projection; convert import_failed/unknown benchmark/evaluate_failed results into unscored status instead of native zero.",
+      "needed_change": "Complete source-contract and scoring validation across 39 contracts. Preserve the seven blocked frozen payloads: one layout-1 video/image mismatch and six typography7/8 scalar versus structured-gold mismatches. Resolve native ZIP/HF schema differences without substituted gold; unavailable intended primary must return minimum rather than auxiliary credit.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Official graphics/design metric map, primary metric selection and NIMA /10 transform; preserve multimodal artifacts and all finite auxiliary metrics. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "GDB has 39 intended-primary/output contracts in pinned lica-gdb 0.2.1. Its complete source runtime builds and a draft ScriptSpec client generates 110 of 117 frozen real HF payloads, but complete source/Harbor scoring validation across its contracts is pending. Generation and metadata compatibility do not establish cutover coverage.",
       "source_evidence": [
         {
           "functions": [
@@ -2478,7 +2480,7 @@
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
       "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "validation_limit": "The pre-execution per-contract inventory checkpoint records 117 frozen rows, 110 generated payloads, 7 generation failures and 0 scored roundtrips. Five truncated previews were recovered at identical row offsets. Full source runtime build, pinned ZIP asset retrieval and three primary-metric regressions are preparation only; no execution evidence marker or completed integration claim."
     },
     {
       "entity_id": "harbor:gpqa-diamond",
