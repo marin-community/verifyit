@@ -819,6 +819,12 @@ def evalchemy_entities(root):
                 entity["status"] = "capability_gap"
                 entity["blockers"].append("existing_mode_profile_or_comparator")
         entities.append(entity)
+    uncheatable_manifest = json.loads((root / "integrations/evalchemy/uncheatable-source.json").read_text())
+    uncheatable_tasks = {
+        f"uncheatable_eval_{Path(name).stem}"
+        for name in uncheatable_manifest["files"]
+        if name.endswith(".yaml") and not name.startswith("_")
+    }
     for record in inventory["harness_overrides"]:
         name = record.get("task")
         entity = base_entity("evalchemy-override", record, inventory["revision"], name)
@@ -865,6 +871,27 @@ def evalchemy_entities(root):
                 primitive_candidates=["exact", "math"],
                 needed_change="Map non-rational Minerva semantics if removing source fallback is required.",
                 validation_status="real_trace",
+            )
+        elif name in uncheatable_tasks:
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="override_uncheatable_runtime",
+                reason=(
+                    "Installed source-pinned category callbacks and rolling likelihood observations "
+                    "execute through ScriptSpec; source token/byte denominators and all three "
+                    "corpus aggregates are retained. Single-rank execution only."
+                ),
+                primitive_candidates=["script"],
+                needed_change="Validate archived rolling-likelihood runs when matching artifacts become available.",
+                validation_status="source_evaluator_fixtures_only",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/uncheatable-runtime-verifyit.patch",
+                    "integrations/evalchemy/install_uncheatable.py",
+                    "../evidence/e2e/wiring/evalchemy-uncheatable/roundtrip/evaluator-roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-uncheatable/negative/negative-batches.json",
+                    "../evidence/e2e/wiring/evalchemy-uncheatable/trace-census.json",
+                ],
             )
         else:
             reason = (

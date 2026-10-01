@@ -6,7 +6,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,221 guarded native routes + 978 retained-runtime routes available | 493 configs have no cutover; breakdown below |
 | Evalchemy 42 custom benchmarks | 8 native integrations + 3 math hybrids | 31 not integrated (20 client/comparator audits + 11 native profile gaps) |
-| Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid | 17 not integrated; plus 1 orchestration group |
+| Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 15 retained-runtime overrides | 2 not integrated; plus 1 orchestration group |
 | SkyRL 46 scoring routes | 31 source-patched (21 with selected real traces, 10 without eligible real traces) | 4 partial client/harness routes + 11 native profile gaps; 2 external-objective placeholders separate |
 | Harbor 87 adapters | 13 native primitive clients + 3 structured source-runtime bridges | 71 not integrated; 9 wired routes need verifier isolation |
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
@@ -38,7 +38,7 @@ The source population additionally has 834 groups and 456 templates (1,290 orche
 
 ## Evalchemy custom benchmarks
 
-The 34 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
+The 31 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
 
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
@@ -84,26 +84,13 @@ The 34 remaining custom benchmarks are named below. Script/stdio/pytest candidat
 
 ## Evalchemy overrides
 
+Fifteen Uncheatable category overrides now have an explicit trusted-installation ScriptSpec route. Source rolling-likelihood scoring and all three corpus metrics are retained; this is single-rank runtime integration, with source/evaluator fixtures and no matching saved tracker or local JSON/JSONL traces. DROP and HumanEval remain unwired.
+
 | Entity | Status | Existing mode | Why / needed change |
 | --- | --- | --- | --- |
 | drop | not_integrated | exact, script | DROP normalized exact and token F1 require both named outputs and alternative/multi-span answer handling. Implement the source override adapter preserving its metric observations and source aggregation. |
 | gsm8k | native_fallback | exact, math | Canonical Fraction equality calls strict exact; non-rational predictions retain source Minerva symbolic scoring. Map non-rational Minerva semantics if removing source fallback is required. |
 | humaneval | not_integrated | script | Generated code functional correctness requires trusted tests and execution resource/pass@k handling. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_ao3_english | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_ao3_nonenglish | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_arxiv_computer_science | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_arxiv_math | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_arxiv_other | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_arxiv_physics | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_bbc_news | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_biorxiv_all | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_github_cpp | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_github_javascript | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_github_markdown | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_github_other | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_github_python | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_wikipedia_english | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
-| uncheatable_eval_wikipedia_nonenglish | not_integrated | script | Weighted raw likelihood/token/byte metrics need original observations and corpus aggregation, not candidate exact reward. Implement the source override adapter preserving its metric observations and source aggregation. |
 
 ## SkyRL
 

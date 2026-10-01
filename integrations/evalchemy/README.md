@@ -142,3 +142,34 @@ Evidence and independent rerun commands are under
 `evidence/e2e/wiring/evalchemy-nupa`. Downloads comprise only active sample and
 configuration/result shards (86,065,656 bytes), with archive checksums verified;
 no model regeneration or dataset download is needed for replay.
+
+## Uncheatable rolling-likelihood overrides
+
+After the existing harness patch sequence, apply
+`uncheatable-runtime-verifyit.patch` to the harness checkout. Install the audited
+Evalchemy task definitions under that checkout's trusted task directory:
+
+```sh
+python integrations/evalchemy/install_uncheatable.py \
+  --evalchemy-root /path/to/evalchemy --harness-root /path/to/lm-eval-harness
+```
+
+Use Evalchemy's existing `--include_path` argument with
+`/path/to/lm-eval-harness/lm_eval/tasks/evalchemy_uncheatable`. That include path
+is appended after Evalchemy's default definitions, so the installed entries take
+precedence. The installed metadata opts the fifteen category tasks into the
+public task factory's corpus-runtime route; the group remains orchestration.
+
+The source category selection, token/byte denominators, word/byte perplexity and
+bits per byte execute through verifyit's ScriptSpec boundary. This is retained
+source runtime, not native primitive reimplementation. Only single-rank
+execution is supported. Pinned configuration, helper, filter, scorer and
+aggregation drift is rejected; malformed likelihoods or aggregate overflow abort
+the batch without returning partial metrics.
+
+All fifteen category factory/evaluator fixtures match the source metrics and
+retain two selected documents while excluding one other category. Six early
+configuration failures, four evaluator failure cases and four installer checks
+pass. No matching tracker links or local JSON/JSONL artifacts were found;
+archived replay is not claimed. Reproducible evidence is under
+`evidence/e2e/wiring/evalchemy-uncheatable`.

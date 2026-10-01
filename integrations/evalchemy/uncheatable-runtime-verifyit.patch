@@ -1,0 +1,259 @@
+diff --git a/lm_eval/evaluator.py b/lm_eval/evaluator.py
+index 16faddc..c3abaf2 100644
+--- a/lm_eval/evaluator.py
++++ b/lm_eval/evaluator.py
+@@ -632,6 +632,10 @@ def evaluate(
+         from verifyit.adapters import harness_mmmu
+ 
+         harness_mmmu.validate_mmmu_task(task)
++        if getattr(task, "_verifyit_corpus_config", None) is not None:
++            from lm_eval.verifyit_uncheatable import validate_task
++
++            validate_task(task)
+         task.apply_filters()
+ 
+         ### Collect values of metrics on all datapoints ###
+diff --git a/lm_eval/tasks/_factory.py b/lm_eval/tasks/_factory.py
+index 12c5e2a..eeebe9a 100644
+--- a/lm_eval/tasks/_factory.py
++++ b/lm_eval/tasks/_factory.py
+@@ -4,6 +4,7 @@ import inspect
+ import logging
+ from copy import deepcopy
+ from dataclasses import fields
++from pathlib import Path
+ from typing import TYPE_CHECKING, Any, cast
+ 
+ from lm_eval.api.group import Group
+@@ -71,6 +72,13 @@ class TaskFactory:
+             cfg.pop(key, None)
+ 
+         task_name = cfg["task"]
++        if (
++            entry.yaml_path is not None
++            and Path(entry.yaml_path).resolve().parent.name == "evalchemy_uncheatable"
++        ):
++            from lm_eval.verifyit_uncheatable import validate_config
++
++            validate_config(cfg, entry.yaml_path)
+ 
+         if "class" in cfg:  # PY_TASK route
+             cls = cfg["class"]
+diff --git a/lm_eval/verifyit_runtime.py b/lm_eval/verifyit_runtime.py
+index 0e23bef..96b4001 100644
+--- a/lm_eval/verifyit_runtime.py
++++ b/lm_eval/verifyit_runtime.py
+@@ -139,6 +139,10 @@ def score(payload):
+         "sha256": hashlib.sha256(config_path.read_bytes()).hexdigest(),
+     }
+     config = load_yaml(config_path, resolve_func=True)
++    if config_path.parent.name == "evalchemy_uncheatable":
++        from lm_eval.verifyit_uncheatable import validate_config
++
++        validate_config(config, config_path)
+     selected_profile = corpus_config_profile(config)
+     stage = payload.get("stage", "complete")
+     if not isinstance(stage, str) or stage not in {"observations", "complete"}:
+diff --git a/lm_eval/verifyit_uncheatable.py b/lm_eval/verifyit_uncheatable.py
+new file mode 100644
+index 0000000..e35dbaf
+--- /dev/null
++++ b/lm_eval/verifyit_uncheatable.py
+@@ -0,0 +1,197 @@
++"""Pinned Evalchemy category overrides installed in the trusted harness tree."""
++
++import hashlib
++from functools import partial
++from pathlib import Path
++from types import CodeType, FunctionType
++
++from datasets import Dataset
++from lm_eval.api import metrics as source_metrics
++from lm_eval.api.filter import FilterEnsemble
++from lm_eval.api.task import ConfigurableTask
++from lm_eval.config.task import TaskConfig
++from lm_eval.filters.selection import TakeFirstFilter
++from lm_eval.tasks._yaml_loader import load_yaml
++from verifyit.grade import InvalidTask
++
++PINNED_FILES = {
++    "_uncheatable_eval.yaml": "f6fcb7f0bf4d8a124ee9b54fdad46910981f2ffc6d16ca4ee7dd983b0c716172",
++    "_uncheatable_eval_template": "1bb90990a54f473e655da7a3a78ac88dc0c9c3e685ffa28050de822a0fa25fcf",
++    "ao3_english.yaml": "93040a8f702134cfb9264bd14f2fa52336208910eb30c374d19264063546c39f",
++    "ao3_nonenglish.yaml": "ff8e24ae990b4878732834d1396183971233d75ff844bd1f2c8fa0168e0ef0fe",
++    "arxiv_computer_science.yaml": "036918197215779fd290d75ec8fdb863737a31ef800ef824ffc8ebba21e73c95",
++    "arxiv_math.yaml": "65270ad34119efe1974b40b7c09ced626be466c6d496780b92b590031c864a0e",
++    "arxiv_other.yaml": "f26ccaed83b4bb032d9afc96b3fc119272e788f339794aabab4ef25acb34305c",
++    "arxiv_physics.yaml": "0acf32bf70add57f6c3f693b4fe617ebd96606cda9f137d4fb11421781af0cfa",
++    "bbc_news.yaml": "9db75b8afdd18dc5415e65bf790e1e96d3ad30dcfcb53c59306009a6fa400008",
++    "biorxiv_all.yaml": "08f4cb04fb9526ed78ea3a536084fbbd61e0e3ffffcb3e70cf75b18bc430b334",
++    "documents.py": "1e8753e77ec64e18a4c5d35bd1d4f7c229b266d0de3587880a910993b053e48e",
++    "github_cpp.yaml": "1cd65beb0abdac7071cc2eeff2567d7dd1b4dd2790ab87b9d06e0b8a1f32e1a0",
++    "github_javascript.yaml": "813b5663310727b078739243bd2aa4d29a63040f64c45746ea6caf65932e0b1a",
++    "github_markdown.yaml": "c116bed225276f6f295fecf6660487de24f647f952bda525e59608ef9b418d53",
++    "github_other.yaml": "7e883cd0d4e3bd721c02d4a92c15d916f453894984ae91392c3105c8542f7594",
++    "github_python.yaml": "c26889f1337ee8c3c53bc85bdc890210afebe87d4233915a963051862bd41bca",
++    "wikipedia_english.yaml": "7c76b960ac57b14ed0696b7d824e57e4fd31bc0df36b38815e2041c3bf1fca0a",
++    "wikipedia_nonenglish.yaml": "eab7f9cdaea3730d85620d579b8ec4a41675de2206455a857cae12ab4e61f2e7",
++}
++
++
++def validate_config(config, config_path, *, effective=False):
++    root = Path(__file__).resolve().parent / "tasks" / "evalchemy_uncheatable"
++    config_path = Path(config_path).resolve()
++    if config_path.parent != root or config_path.name not in PINNED_FILES:
++        raise InvalidTask(
++            "Uncheatable configuration is outside its trusted installation"
++        )
++    for name, digest in PINNED_FILES.items():
++        path = root / name
++        if (
++            not path.resolve().is_relative_to(root)
++            or not path.is_file()
++            or hashlib.sha256(path.read_bytes()).hexdigest() != digest
++        ):
++            raise InvalidTask(f"Changed Uncheatable source installation: {name}")
++    expected = load_yaml(config_path, resolve_func=True)
++    for key in (
++        "task",
++        "dataset_path",
++        "dataset_name",
++        "dataset_kwargs",
++        "output_type",
++        "doc_to_text",
++        "doc_to_target",
++        "doc_to_choice",
++        "process_docs",
++        "process_results",
++        "class",
++        "metric_list",
++    ):
++        if config.get(key) != expected.get(key):
++            raise InvalidTask(f"Uncheatable source configuration drift: {key}")
++    for key in (
++        "training_split",
++        "validation_split",
++        "test_split",
++        "fewshot_split",
++        "filter_list",
++        "doc_to_decontamination_query",
++    ):
++        if config.get(key) != expected.get(key):
++            raise InvalidTask(f"Uncheatable source configuration drift: {key}")
++    if config.get("should_decontaminate", False) is not False:
++        raise InvalidTask("Uncheatable decontamination changes the sample population")
++    repeats = config.get("repeats", 1)
++    fewshot = config.get("num_fewshot")
++    if type(repeats) is not int or repeats != 1:
++        raise InvalidTask("Uncheatable requires one response per document")
++    if fewshot is not None and (type(fewshot) is not int or fewshot != 0):
++        raise InvalidTask("Uncheatable requires zero fewshot examples")
++    expected_fewshot = (
++        TaskConfig(**expected).fewshot_config
++        if effective
++        else expected.get("fewshot_config")
++    )
++    if config.get("fewshot_config") != expected_fewshot:
++        raise InvalidTask("Uncheatable fewshot configuration changed")
++    metadata = config.get("metadata")
++    if (
++        not isinstance(metadata, dict)
++        or metadata.get("verifyit_corpus_runtime") is not True
++        or metadata.get("verifyit_source_contract") != "evalchemy-uncheatable-v1"
++    ):
++        raise InvalidTask("Uncheatable requires its pinned runtime opt-in metadata")
++    callback = config.get("process_docs")
++    if not isinstance(callback, FunctionType):
++        raise InvalidTask("Uncheatable requires the pinned category callback")
++    namespace = callback.__globals__
++    helper_path = root / "documents.py"
++    if (
++        Path(namespace.get("__file__", "")).resolve() != helper_path
++        or namespace.get("Dataset") is not Dataset
++    ):
++        raise InvalidTask("Uncheatable category callback has changed source globals")
++    compiled = compile(helper_path.read_text(), str(helper_path), "exec")
++    for code in compiled.co_consts:
++        if not isinstance(code, CodeType):
++            continue
++        function = namespace.get(code.co_name)
++        if (
++            not isinstance(function, FunctionType)
++            or function.__code__ != code
++            or function.__globals__ is not namespace
++            or function.__defaults__ is not None
++            or function.__closure__ is not None
++        ):
++            raise InvalidTask(
++                "Uncheatable category helper has changed code/globals/defaults"
++            )
++    if namespace.get(callback.__name__) is not callback:
++        raise InvalidTask("Uncheatable category callback identity changed")
++
++
++def validate_task(task):
++    config_path = getattr(task, "_verifyit_corpus_config", None)
++    if config_path is None or Path(config_path).parent.name != "evalchemy_uncheatable":
++        return
++    fields = (
++        "task",
++        "dataset_path",
++        "dataset_name",
++        "dataset_kwargs",
++        "output_type",
++        "doc_to_text",
++        "doc_to_target",
++        "doc_to_choice",
++        "process_docs",
++        "process_results",
++        "class",
++        "metric_list",
++        "training_split",
++        "validation_split",
++        "test_split",
++        "fewshot_split",
++        "filter_list",
++        "doc_to_decontamination_query",
++        "should_decontaminate",
++        "repeats",
++        "num_fewshot",
++        "fewshot_config",
++        "metadata",
++    )
++    if (
++        type(task).process_results is not ConfigurableTask.process_results
++        or getattr(task.process_results, "__func__", None)
++        is not ConfigurableTask.process_results
++    ):
++        raise InvalidTask("Uncheatable task scorer changed")
++    expected_aggregators = {
++        "word_perplexity": source_metrics.weighted_perplexity,
++        "byte_perplexity": source_metrics.weighted_perplexity,
++        "bits_per_byte": source_metrics.bits_per_byte,
++    }
++    if task.aggregation() != expected_aggregators:
++        raise InvalidTask("Uncheatable metric aggregation changed")
++    filters = getattr(task, "_filters", ())
++    if len(filters) != 1:
++        raise InvalidTask("Uncheatable requires the default response filter")
++    ensemble = filters[0]
++    if (
++        type(ensemble) is not FilterEnsemble
++        or ensemble.name != "none"
++        or getattr(ensemble.apply, "__func__", None) is not FilterEnsemble.apply
++        or len(ensemble.filters) != 1
++    ):
++        raise InvalidTask("Uncheatable response filter changed")
++    factory = ensemble.filters[0]
++    if (
++        not isinstance(factory, partial)
++        or factory.func is not TakeFirstFilter
++        or factory.args
++        or factory.keywords
++    ):
++        raise InvalidTask("Uncheatable response filter constructor changed")
++    validate_config(
++        {key: getattr(task.config, key, None) for key in fields},
++        config_path,
++        effective=True,
++    )

@@ -49,7 +49,7 @@ The remaining work is primarily client integration, source-specific comparison/j
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,221 guarded native routes + 978 retained-runtime routes available | 493 configs have no cutover; breakdown below |
 | Evalchemy 42 custom benchmarks | 8 native integrations + 3 math hybrids | 31 not integrated (20 client/comparator audits + 11 native profile gaps) |
-| Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid | 17 not integrated; plus 1 orchestration group |
+| Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 15 retained-runtime overrides | 2 not integrated; plus 1 orchestration group |
 SKYRL_SUMMARY_ROW
 HARBOR_SUMMARY_ROW
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
@@ -123,13 +123,16 @@ The source population additionally has 834 groups and 456 templates (1,290 orche
 
 ## Evalchemy custom benchmarks
 
-The 34 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
+The 31 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
 
 """ + table(
     "evalchemy-custom", {"not_integrated", "capability_gap"}
 )
 text += "\n\n### Implemented math/source fallbacks\n\n" + table("evalchemy-custom", {"native_fallback"})
-text += "\n\n## Evalchemy overrides\n\n" + table("evalchemy-override", {"not_integrated", "native_fallback"})
+text += (
+    "\n\n## Evalchemy overrides\n\nFifteen Uncheatable category overrides now have an explicit trusted-installation ScriptSpec route. Source rolling-likelihood scoring and all three corpus metrics are retained; this is single-rank runtime integration, with source/evaluator fixtures and no matching saved tracker or local JSON/JSONL traces. DROP and HumanEval remain unwired.\n\n"
+    + table("evalchemy-override", {"not_integrated", "native_fallback"})
+)
 text += """
 
 ## SkyRL
