@@ -4685,16 +4685,21 @@
       "entity_id": "harbor:spreadsheetbench-verified",
       "evidence": [
         "docs/unification/harbor_semantics.json#spreadsheetbench-verified",
-        "docs/unification/harbor_inventory.json#spreadsheetbench-verified"
+        "docs/unification/harbor_inventory.json#spreadsheetbench-verified",
+        "integrations/harbor/spreadsheetbench-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-spreadsheetbench/final-summary.json",
+        "evidence/e2e/wiring/harbor-spreadsheetbench/final-manifest.json",
+        "evidence/e2e/wiring/harbor-spreadsheetbench/installed-image-hashes.json",
+        "evidence/e2e/wiring/harbor-spreadsheetbench/provenance.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "spreadsheetbench-verified",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/spreadsheetbench-verified/src/spreadsheetbench_verified/task-template/tests/evaluate.py preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate archived model candidates and production deployment using a published core pin.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Compare declared workbook cell ranges across multiple testcases; reward=passing-case fraction and auxiliary hard reward; keep datetime/value normalization. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "Opt-in generation retains the native workbook comparator through existing ScriptSpec in a separate verifier image. LibreOffice recalculation must produce a readable converted workbook before evaluation. Fixed testcase denominators, per-case outcomes, soft reward and hard reward are preserved.",
       "source_evidence": [
         {
           "functions": [
@@ -4734,8 +4739,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Source census covers all400 verified tasks and workbook answer ranges; three seeded real source tasks plus five declared workbook fixtures yield16 exact reward and full-report matches through actual Harbor Trials. Eleven ordinary edges preserve candidate missing/malformed and partial scoring, distinguish trusted task/infrastructure defects, and prevent cached blank formulas scoring1 after LibreOffice failure or missing converted output. Five regressions pass; all16 installed verifier images and all41 core Python files match generated assets and the pinned wheel. No eligible spreadsheet archive links exist in TRACKER.md, so this is source-oracle/workbook fixture evidence, not archive parity. Production core pin remains unpublished.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Native evaluator, trusted reference workbooks and verifier.toml in the separate verifier image; only candidate output workbooks are transferred.",
+        "needed_change": "Ordinary source-contract parity and recalculation failure semantics are validated; archived traces and security scope remain unverified."
+      }
     },
     {
       "entity_id": "harbor:strongreject",

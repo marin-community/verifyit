@@ -719,3 +719,34 @@ The upstream agent split has no implemented static adapter/verifier and is not
 included in the existing-contract coverage claim. No new security tests were
 run. Use the exact local core wheel recipe above while the production verifyit
 pin remains unpublished.
+
+
+## SpreadsheetBench Verified
+
+Apply `spreadsheetbench-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate with `--verifyit`.
+Existing ScriptSpec transfers `/app/output` to a separate verifier image with
+the native evaluator and reference workbooks. LibreOffice is installed at image
+build time; readable workbooks must produce readable recalculated output before
+comparison. Missing or malformed candidate files remain failed cases in the
+fixed denominator. Trusted reference defects produce distinct invalid-task or
+infrastructure verdicts. Native per-case results, soft reward, and hard reward
+are retained in the verdict details.
+
+The source census covers all 400 verified tasks. Three seeded real source tasks
+and five declared workbook fixtures produce 16 exact reward and full-report
+matches through actual Harbor Trials, including fractional scoring, quoted and
+multiple ranges, column-only ranges, blank sheets, formulas, and numeric/date/time
+normalization. Eleven ordinary edge cases cover missing and malformed files,
+invalid task ranges/counts, partial submissions, and recalculation failures.
+The source gives a wrong formula credit when both cached values are blank and
+LibreOffice fails; the opt-in route returns an unscored infrastructure minimum.
+Five regression tests pass. All 16 installed verifier images and their reference
+workbooks match generated assets; all 41 core Python files match the pinned wheel.
+
+`evidence/e2e/wiring/harbor-spreadsheetbench/final-manifest.json` links the raw
+source/Trial evidence, census, selected workbooks, and installed-image hashes.
+The tracker has no eligible spreadsheet archive links. This is source-oracle
+and workbook-fixture evidence, not archived model parity. No new security tests
+were run. Use the exact local wheel recipe above while the production verifyit
+pin is unpublished.
