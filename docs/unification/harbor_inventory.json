@@ -9348,7 +9348,7 @@
       "execution_evidence": [],
       "client_patch": null,
       "status_gap": null,
-      "contract": "Normalized substring heuristic falls back to binary hosted judge when available; retain permissive normalization or tighten explicitly with source-side parity decision. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
+      "contract": "The source calls the hosted A/B/C judge first when configured, then falls back to normalized bidirectional substring matching when the judge is unavailable; retain this precedence and distinguish configured-provider failures from the intentional no-key fallback. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented.",
       "specification": "harbor_specs.md#judge-profile",
       "requirements": [
         "retain task image, cwd, services, protected test upload and declared environment",

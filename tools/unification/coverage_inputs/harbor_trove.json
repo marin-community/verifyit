@@ -4455,17 +4455,25 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#seal0",
         "docs/unification/harbor_inventory.json#seal0",
-        "docs/unification/harbor_specs.md#judge-profile"
+        "docs/unification/harbor_specs.md#judge-profile",
+        "integrations/harbor/seal0-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-seal0/final-summary.json",
+        "evidence/e2e/wiring/harbor-seal0/final-manifest.json",
+        "evidence/e2e/wiring/harbor-seal0/installed-image-hashes.json",
+        "evidence/e2e/wiring/harbor-seal0/request-equality.json",
+        "evidence/e2e/wiring/harbor-seal0/provenance.json",
+        "evidence/e2e/wiring/harbor-seal0/census.json",
+        "evidence/e2e/wiring/harbor-seal0/selection.json"
       ],
-      "gap_kind": "heuristic_and_judge_composition",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "seal0",
-      "needed_change": "Retain normalized substring heuristic and optional hosted-judge fallback; decide explicitly whether to preserve permissive source normalization or tighten it, then test both deterministic and unavailable-judge paths.",
+      "needed_change": "Validate archived candidates and live judge deployments with a published core pin; text/unit containment remains the source contract.",
       "primitive_candidates": [
-        "exact",
-        "judge"
+        "script",
+        "numeric"
       ],
-      "reason": "Normalized substring heuristic falls back to binary hosted judge when available; retain permissive normalization or tighten explicitly with source-side parity decision. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in ScriptSpec retains judge-first Seal-0 execution and intentional no-key normalized bidirectional-containment fallback. Configured provider failures are infra errors. Exact Decimal validation rejects unequal whole numeric literals that the source-positive fallback conflates; equal float-domain literals use zero-tolerance NumericSpec. The source return, provider decisions and complete request/response are retained.",
       "source_evidence": [
         {
           "functions": [
@@ -4499,8 +4507,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "All 111 dataset rows inventoried; three seeded genuine rows and ordinary fixtures yielded 36 actual source/Trial outcomes, including six source-positive numeric corrections and strict provider failures. Ten HTTP request bodies match exactly, 17 regressions pass, and 36 installed images match source/core hashes. Independent underflow Trial passed. Source fixtures and a local Anthropic endpoint do not establish archive parity or live judge quality; the core pin is unpublished.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Retained source scorer, task data and verifier.toml in a separate verifier image; only answer.txt transfers from the candidate environment.",
+        "needed_change": "Ordinary source scoring and failure statuses validated; archived model candidates, live judge quality and published-core deployment remain unverified."
+      }
     },
     {
       "entity_id": "harbor:simpleqa",

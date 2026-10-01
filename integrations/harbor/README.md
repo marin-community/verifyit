@@ -973,3 +973,39 @@ The generated image pins unpublished verifyit revision
 `a0861089947096aabe456ca4308ca46b1b001d7c`; deployment requires that revision to be
 available. Local images install the recorded wheel from that revision in place
 of the Git URL. Publication remains separate from this integration.
+
+## Seal-0
+
+Apply `seal0-runtime-verifyit.patch` after the base Harbor dispatcher and
+`research-code-bench-runtime-verifyit.patch` helper, then generate with
+`--verifyit`. The retained source scorer runs through Script mode in a separate
+image, with only `/app/answer.txt` transferred from the candidate environment.
+The source calls the configured Anthropic judge first; absent credentials select
+the original normalized bidirectional-containment fallback. Configured provider
+failures now return infrastructure errors rather than falling back to credit.
+
+The one-token A/B/C request stays unchanged. Complete single-letter decisions
+with `end_turn`, or `max_tokens` plus exactly one integer output token, remain
+valid. Malformed replies cannot award credit. Missing/empty answers score zero;
+missing trusted data is an infrastructure error and malformed trusted fields
+invalidate the task.
+
+The source fallback conflates `8.7` and `87` by stripping punctuation. For two
+whole numeric literals that the no-key source fallback accepted, exact Decimal
+comparison rejects unequal values before float conversion. Equal float-domain
+values also use zero-tolerance NumericSpec; equal finite decimals outside that
+domain retain their source score. This preserves name/unit containment and
+source-negative results while preventing decimal, sign and float-collision
+credit. Every correction retains the original source reward.
+
+`evidence/e2e/wiring/harbor-seal0/final-manifest.json` records all 111 source rows,
+three frozen genuine source selections, and 36 actual source/Trial outcomes.
+Ten judge HTTP request bodies match exactly, 17 regressions pass, and 36 installed
+verifier images match the source assets and 41 core Python files. An independent
+underflow Trial confirms source reward 1 becomes scored zero. These are source
+fixtures with a local Anthropic endpoint, not archive parity or live judge quality.
+
+The production image pins unpublished verifyit revision
+`a0861089947096aabe456ca4308ca46b1b001d7c`. Local images install its recorded wheel;
+production deployment requires that revision to be available. Publication is
+separate from this integration.
