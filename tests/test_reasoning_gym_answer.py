@@ -4,6 +4,7 @@
 import json
 
 import pytest
+import reasoning_gym
 
 from verifyit.grade import InvalidTask, Status, main
 from verifyit.modes import grade_reasoning_gym
@@ -102,6 +103,47 @@ def test_extracted_candidate_preserves_dataset_partial_credit(dataset, entry, ca
     entry.setdefault("metadata", {})["source_dataset"] = dataset
     result = grade_reasoning_gym.grade_reasoning_gym_candidate(ReasoningGymSpec(dataset=dataset), entry, candidate)
     assert (result.reward, result.status) == (expected, Status.SCORED)
+
+
+def test_metadata_evaluated_graph_color_scores_candidates_and_file_outputs(tests_dir, workspace, tmp_path):
+    entry = reasoning_gym.create_dataset(
+        "graph_color",
+        seed=7,
+        size=1,
+        min_num_vertices=3,
+        max_num_vertices=3,
+        num_colors=3,
+        edge_probability=0.99,
+    )[0]
+    assert entry["answer"] is None
+    candidates = [
+        (json.dumps(entry["metadata"]["possible_answer"]), 1.0),
+        ("not json", 0.0),
+        (json.dumps({vertex: 1 for vertex in entry["metadata"]["puzzle"]["vertices"]}), 0.01),
+    ]
+    (tests_dir / "entry.json").write_text(json.dumps(entry))
+    spec_path = tests_dir / "verifier.toml"
+    spec_path.write_text('mode = "reasoning-gym"\ndataset = "graph_color"\n')
+    spec = ReasoningGymSpec(dataset="graph_color")
+    logs_dir = tmp_path / "logs"
+    args = [str(spec_path), "--workspace", str(workspace), "--logs-dir", str(logs_dir)]
+    for candidate, expected in candidates:
+        result = grade_reasoning_gym.grade_reasoning_gym_candidate(spec, entry, candidate)
+        assert (result.reward, result.status) == (expected, Status.SCORED)
+        answer(workspace, candidate)
+        assert main(args) == 0
+        verdict = json.loads((logs_dir / "verdict.json").read_text())
+        assert (verdict["reward"], verdict["status"]) == (expected, Status.SCORED)
+        assert json.loads((logs_dir / "reward.json").read_text()) == {"reward": expected}
+        assert float((logs_dir / "reward.txt").read_text()) == expected
+
+    # Losing the source entry's answer field makes the rerun an invalid task.
+    del entry["answer"]
+    (tests_dir / "entry.json").write_text(json.dumps(entry))
+    assert main(args) == 0
+    assert json.loads((logs_dir / "verdict.json").read_text())["status"] == Status.INVALID_TASK
+    assert not (logs_dir / "reward.json").exists()
+    assert not (logs_dir / "reward.txt").exists()
 
 
 def test_scorer_failure_clears_reward_files_and_records_infrastructure_error(tests_dir, workspace, tmp_path):

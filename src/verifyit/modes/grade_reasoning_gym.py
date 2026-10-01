@@ -3,7 +3,7 @@
 
 """Mode reasoning-gym: score the answer file with the reasoning-gym dataset's own scorer.
 
-The task ships the generated entry (its gold answer and metadata) as JSON under tests/; the spec
+The task ships the generated entry (its reference answer or null and metadata) as JSON under tests/; the spec
 names the dataset it came from. ``score_answer`` returns a float in [0, 1], which becomes the
 reward directly -- several reasoning-gym datasets award partial credit. A dataset name the library
 does not know, or an entry file that is missing or not an entry, is a task defect.
@@ -47,8 +47,8 @@ def grade_reasoning_gym_candidate(spec: ReasoningGymSpec, entry: dict, candidate
     metadata = entry.get("metadata")
     if not isinstance(metadata, dict) or metadata.get("source_dataset") != spec.dataset:
         raise InvalidTask("reasoning-gym entry dataset differs from its verifier")
-    if not isinstance(entry.get("answer"), str) or not entry["answer"].strip():
-        raise InvalidTask("reasoning-gym entry requires a nonempty answer")
+    if "answer" not in entry or (entry["answer"] is not None and not isinstance(entry["answer"], str)):
+        raise InvalidTask("reasoning-gym entry requires an answer field containing a string or null")
     if candidate is None or not candidate.strip():
         return scored(0.0, reason="no_output")
     answer = candidate.strip()
