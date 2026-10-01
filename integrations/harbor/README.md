@@ -939,3 +939,37 @@ revision's wheel from the campaign checkout/archive, copy it into the verifier
 context, add a Dockerfile `COPY`, and replace the Git URL install target with
 the wheel path. Keep the remaining Dockerfile commands and task assets. The
 recorded images use that exact wheel; publication is a separate step.
+
+## WideSearch
+
+Apply `widesearch-runtime-verifyit.patch` after the base Harbor dispatcher and
+`research-code-bench-runtime-verifyit.patch` shared helper, then generate with
+`--verifyit`. The separate Script verifier exports `/workspace` and retains
+`evaluate.py`, `metric_utils.py`, and `test.sh`. Item F1 remains the primary
+reward, with all seven native score channels recorded. Integer/float alignment,
+first-key deduplication, judge vocabulary alignment, blank cells, and native
+row/item denominators are preserved. Multiple metrics on one field expand the
+item denominator in the pinned Harbor port; upstream uses required-field count.
+The 200 published configurations have one metric per field.
+
+Missing or empty predictions score zero. Missing trusted assets and failed
+judge replies produce infrastructure errors; malformed or empty trusted tables
+are invalid tasks. Duplicate JSON keys and incomplete column decisions cannot
+leave positive key credit. Collisions introduced by candidate preprocessing,
+trusted preprocessing, or judge mapping remain distinct, without silently
+shrinking the denominator. Judge requests retain their source prompts and
+provider environment settings.
+
+`evidence/e2e/wiring/harbor-widesearch/final-manifest.json` records 24 actual
+source/Trial pairs with exact full native reports and 23 ordinary edge cases.
+The census covers all 200 source configurations, including 973 blank cells and
+16 tables with original duplicate keys. Three frozen Chinese source tables and
+an English fixture cover the metric contracts. Six durable regressions, 48
+installed verifier images, and an independent source-table Trial passed.
+The evidence uses local HTTP judge fixtures, not live-model or trajectory-archive
+parity. Initial missing-workspace packaging failures are retained separately.
+
+The generated image pins unpublished verifyit revision
+`a0861089947096aabe456ca4308ca46b1b001d7c`; deployment requires that revision to be
+available. Local images install the recorded wheel from that revision in place
+of the Git URL. Publication remains separate from this integration.

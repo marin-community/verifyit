@@ -5913,16 +5913,23 @@
       "entity_id": "harbor:widesearch",
       "evidence": [
         "docs/unification/harbor_semantics.json#widesearch",
-        "docs/unification/harbor_inventory.json#widesearch"
+        "docs/unification/harbor_inventory.json#widesearch",
+        "integrations/harbor/widesearch-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-widesearch/final-summary.json",
+        "evidence/e2e/wiring/harbor-widesearch/final-manifest.json",
+        "evidence/e2e/wiring/harbor-widesearch/installed-image-hashes.json",
+        "evidence/e2e/wiring/harbor-widesearch/provenance.json",
+        "evidence/e2e/wiring/harbor-widesearch/census.json",
+        "evidence/e2e/wiring/harbor-widesearch/selection.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "widesearch",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/widesearch/template/tests/evaluate.py, adapters/widesearch/template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate archived model candidates and production deployment with a published core pin and live judge; no new core primitive is needed.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Table matching uses per-cell exact/URL/numeric/date/model comparators and row/item F1; primary reward=f1_by_item with named metrics JSON, explicit reward_key required. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "Opt-in generation runs the unchanged Harbor table scorer through existing ScriptSpec in a separate image. Native dtype harmonization, first-key deduplication, judge alignment, six metrics and expanded metric-column denominators are retained with all seven score channels. Malformed judge replies and ambiguous aligned keys receive explicit minimum-reward statuses.",
       "source_evidence": [
         {
           "functions": [
@@ -5994,8 +6001,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "All 200 source configurations inventoried. Twenty-four actual source/Trial pairs match primary rewards and complete native reports; 23 ordinary edges preserve finite native diagnostics while enforcing expected statuses. Six regressions, 48 installed image witnesses and an independent selected-source Trial passed. Frozen source tables and local HTTP judge fixtures are not archived candidate or live judge parity. The core pin is unpublished.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Retained scorer, metric functions, gold CSV, evaluation configuration and verifier.toml in a separate image; only candidate workspace artifacts transfer.",
+        "needed_change": "Source-fixture scoring and ordinary status behavior validated. Archived model traces, live judge quality and production deployment with a published core pin remain unverified."
+      }
     }
   ],
   "implementation_revision": "b5b6e111aadb8ece8ea5c1527ee78494b763c21c",
