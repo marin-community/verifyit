@@ -1,0 +1,420 @@
+diff --git a/infra/rl_data/sources.py b/infra/rl_data/sources.py
+index 900d409..7a8af15 100644
+--- a/infra/rl_data/sources.py
++++ b/infra/rl_data/sources.py
+@@ -217,6 +217,17 @@ def _nemotron_ultra_messages(raw_input: Any) -> list[dict[str, Any]]:
+     return messages
+ 
+ 
++def _freeze_instruction_references(example: Mapping[str, Any], index: int, seed: int) -> Mapping[str, Any]:
++    """Resolve hidden instruction references before serializing a task for generation."""
++    if type(seed) is not int:
++        raise ValueError("Instruction reference seed must be an integer")
++    from skyrl_gym.envs.nemotron_ultra.instruction_references import freeze_instruction_references
++
++    record = freeze_instruction_references(dict(example), f"{seed}:{example.get('uuid', index)}:{index}")
++    record["instruction_reference_seed"] = seed
++    return record
++
++
+ def _prepare_nemotron_ultra(
+     example: Mapping[str, Any],
+     index: int,
+@@ -224,6 +235,7 @@ def _prepare_nemotron_ultra(
+     *,
+     agents: frozenset[str],
+     blend: str,
++    instruction_reference_seed: int | None = None,
+ ) -> PreparedRow:
+     del contract
+     request = example.get("responses_create_params")
+@@ -249,6 +261,9 @@ def _prepare_nemotron_ultra(
+     if _NEMOTRON_PLACEHOLDER_KEY in example:
+         raise ValueError("Nemotron Ultra math placeholder was not restored before row preparation.")
+ 
++    if instruction_reference_seed is not None and agent == "instruction_following_simple_agent":
++        example = _freeze_instruction_references(example, index, instruction_reference_seed)
++
+     return {
+         "data_source": NEMOTRON_ULTRA_RL_DATASET,
+         "prompt": _nemotron_ultra_messages(request.get("input")),
+@@ -1118,7 +1133,7 @@ def gretel_text_to_sql_source() -> Source:
+     )
+ 
+ 
+-def _nemotron_ultra_source(*, name: str, agents: frozenset[str], blend: str) -> Source:
++def _nemotron_ultra_source(*, name: str, agents: frozenset[str], blend: str, instruction_reference_seed: int | None = None) -> Source:
+     return Source(
+         name,
+         NEMOTRON_ULTRA_RL_DATASET,
+@@ -1126,22 +1141,22 @@ def _nemotron_ultra_source(*, name: str, agents: frozenset[str], blend: str) ->
+         "train",
+         True,
+         "row_selected",
+-        lambda example, index, contract: _prepare_nemotron_ultra(example, index, contract, agents=agents, blend=blend),
++        lambda example, index, contract: _prepare_nemotron_ultra(example, index, contract, agents=agents, blend=blend, instruction_reference_seed=instruction_reference_seed),
+         _load_nemotron_ultra_rows,
+         deduplicate_by_prompt=False,
+     )
+ 
+ 
+-def nemotron_ultra_rlvr1_source() -> Source:
+-    return _nemotron_ultra_source(name="nemotron_ultra_rlvr1", agents=NEMOTRON_ULTRA_RLVR1_AGENTS, blend="rlvr1")
++def nemotron_ultra_rlvr1_source(*, instruction_reference_seed: int | None = None) -> Source:
++    return _nemotron_ultra_source(name="nemotron_ultra_rlvr1", agents=NEMOTRON_ULTRA_RLVR1_AGENTS, blend="rlvr1", instruction_reference_seed=instruction_reference_seed)
+ 
+ 
+-def nemotron_ultra_rlvr2_source() -> Source:
+-    return _nemotron_ultra_source(name="nemotron_ultra_rlvr2", agents=NEMOTRON_ULTRA_RLVR2_AGENTS, blend="rlvr2")
++def nemotron_ultra_rlvr2_source(*, instruction_reference_seed: int | None = None) -> Source:
++    return _nemotron_ultra_source(name="nemotron_ultra_rlvr2", agents=NEMOTRON_ULTRA_RLVR2_AGENTS, blend="rlvr2", instruction_reference_seed=instruction_reference_seed)
+ 
+ 
+-def nemotron_ultra_mopd_source() -> Source:
+-    return _nemotron_ultra_source(name="nemotron_ultra_mopd", agents=NEMOTRON_ULTRA_MOPD_AGENTS, blend="mopd")
++def nemotron_ultra_mopd_source(*, instruction_reference_seed: int | None = None) -> Source:
++    return _nemotron_ultra_source(name="nemotron_ultra_mopd", agents=NEMOTRON_ULTRA_MOPD_AGENTS, blend="mopd", instruction_reference_seed=instruction_reference_seed)
+ 
+ 
+ def generate_reasoning_gym_rows(*, tasks: tuple[str, ...], rows_per_task: int, seed: int, start_index: int = 0):
+diff --git a/skyrl-gym/skyrl_gym/envs/instruction_verifyit.py b/skyrl-gym/skyrl_gym/envs/instruction_verifyit.py
+index 55ee9f3..a0e6f16 100644
+--- a/skyrl-gym/skyrl_gym/envs/instruction_verifyit.py
++++ b/skyrl-gym/skyrl_gym/envs/instruction_verifyit.py
+@@ -123,7 +123,7 @@ def _references(kind: str, data: Any):
+     if kind != "nemotron":
+         raise ReferenceError("Unknown instruction profile")
+     from verifiable_instructions import instructions_registry
+-    from skyrl_gym.envs.nemotron_ultra.instruction_following import _ensure_nltk_data
++    from skyrl_gym.envs.nemotron_ultra.instruction_following import _ensure_nltk_data, build_instruction
+     from importlib.metadata import distribution
+ 
+     provenance = json.loads(
+@@ -139,6 +139,8 @@ def _references(kind: str, data: Any):
+ 
+     if not isinstance(data, dict):
+         raise ReferenceError("Instruction record must be an object")
++    if "instruction_reference_seed" in data and data.get("instruction_reference_revision") != "f46a5ac87b1400a4f8973039844b6be9b56e3faf":
++        raise ReferenceError("Frozen instruction references do not match the pinned registry")
+     ids = data.get("instruction_id_list")
+     kwargs = data.get("kwargs")
+     if (
+@@ -191,7 +193,13 @@ def _references(kind: str, data: Any):
+                 raise ReferenceError("Empty instruction word policy")
+         instruction = instructions_registry.INSTRUCTION_DICT[identity](identity)
+         parameters = inspect.signature(instruction.build_description).parameters
++        if identity == "keywords:exclude_word_harder":
++            keyword = arguments.get("keyword")
++            if not isinstance(keyword, str) or not keyword.strip():
++                raise ReferenceError("Exclusion keyword must be frozen before grading")
+         for key, parameter in parameters.items():
++            if identity == "keywords:exclude_word_harder" and key == "instruction":
++                continue
+             if parameter.kind in {
+                 inspect.Parameter.VAR_POSITIONAL,
+                 inspect.Parameter.VAR_KEYWORD,
+@@ -231,7 +239,7 @@ def _references(kind: str, data: Any):
+                 raise ReferenceError("Vacuous minimum instruction count")
+         state = random.getstate()
+         try:
+-            instruction.build_description(**arguments)
++            instruction = build_instruction(identity, arguments)
+         except Exception as error:
+             raise ReferenceError("Invalid instruction kwargs") from error
+         if random.getstate() != state:
+diff --git a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_following.py b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_following.py
+index de5c2cd..88e8b1e 100644
+--- a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_following.py
++++ b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_following.py
+@@ -5,9 +5,10 @@
+ from __future__ import annotations
+ 
+ import threading
++import random
+ from typing import Any
+ 
+-from verifiable_instructions import instructions_registry
++from verifiable_instructions import instructions_registry, instructions_util
+ 
+ _NLTK_LOCK = threading.Lock()
+ _NLTK_READY = False
+@@ -30,6 +31,27 @@ def _ensure_nltk_data() -> None:
+         _NLTK_READY = True
+ 
+ 
++def build_instruction(instruction_id: str, arguments: dict[str, Any]):
++    """Build source references while preserving an explicitly requested zero index."""
++    instruction = instructions_registry.INSTRUCTION_DICT[instruction_id](instruction_id)
++    zero_start = instruction_id == "new:copy_span_idx" and type(arguments.get("n_start")) is int and arguments["n_start"] == 0
++    prepared = {**arguments, "n_start": 1} if zero_start else dict(arguments)
++    if instruction_id == "count:count_increment_word":
++        for key in ("keyword1", "keyword2"):
++            if not prepared.get(key):
++                # The source default returns a list where its checker needs a word.
++                prepared[key] = instructions_util.generate_keywords(num_keywords=1)[0]
++    instruction.build_description(**prepared)
++    if zero_start:
++        # The pinned dependency treats zero as missing and otherwise randomizes it.
++        instruction._n_start = 0
++    if instruction_id == "length_constraints:nth_paragraph_first_word" and arguments.get("nth_paragraph") is None:
++        if instruction._nth_paragraph > instruction._num_paragraphs:
++            # randint's upper bound is inclusive; the source samples one past the end.
++            instruction._nth_paragraph = random.randint(1, instruction._num_paragraphs)
++    return instruction
++
++
+ def grade_instruction_following(text: str, record: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+     """Evaluate every per-row constraint with NVIDIA's pinned instruction registry."""
+     _ensure_nltk_data()
+@@ -37,9 +59,7 @@ def grade_instruction_following(text: str, record: dict[str, Any]) -> tuple[floa
+     errors: list[str | None] = []
+     for instruction_id, kwargs in zip(record["instruction_id_list"], record["kwargs"]):
+         try:
+-            instruction_cls = instructions_registry.INSTRUCTION_DICT[instruction_id]
+-            instruction = instruction_cls(instruction_id)
+-            instruction.build_description(**{key: value for key, value in (kwargs or {}).items() if value is not None})
++            instruction = build_instruction(instruction_id, {key: value for key, value in (kwargs or {}).items() if value is not None})
+             results.append(bool(instruction.check_following(text)))
+             errors.append(None)
+         except Exception as error:
+diff --git a/skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_references.py b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_references.py
+new file mode 100644
+index 0000000..bdc599b
+--- /dev/null
++++ b/skyrl-gym/skyrl_gym/envs/nemotron_ultra/instruction_references.py
+@@ -0,0 +1,66 @@
++"""Resolve source-generated instruction parameters before candidate generation."""
++
++import json
++import random
++import subprocess
++import sys
++from importlib.metadata import distribution
++
++from skyrl_gym.envs.nemotron_ultra.instruction_following import build_instruction
++
++
++def freeze_instruction_references(record: dict, seed: str) -> dict:
++    """Run registry construction in a private process with a reproducible seed."""
++    result = subprocess.run(
++        [sys.executable, "-m", __name__],
++        input=json.dumps({"record": record, "seed": seed}, allow_nan=False),
++        text=True,
++        capture_output=True,
++        timeout=60,
++        check=True,
++    )
++    return json.loads(result.stdout)
++
++
++def _resolve(record, seed):
++    provenance = json.loads(
++        distribution("verifiable-instructions").read_text("direct_url.json") or "{}"
++    )
++    revision = "f46a5ac87b1400a4f8973039844b6be9b56e3faf"
++    if provenance.get("vcs_info", {}).get("commit_id") != revision:
++        raise ValueError("Instruction preparation requires the pinned registry")
++    random.seed(seed)
++    identities, parameters = record.get("instruction_id_list"), record.get("kwargs")
++    if (
++        not isinstance(identities, list)
++        or not identities
++        or not isinstance(parameters, list)
++        or len(identities) != len(parameters)
++    ):
++        raise ValueError("Instruction references must have aligned IDs and kwargs")
++    resolved = []
++    for identity, arguments in zip(identities, parameters):
++        if not isinstance(identity, str) or not isinstance(arguments, dict):
++            raise ValueError("Instruction reference is malformed")
++        original = build_instruction(
++            identity, {k: v for k, v in arguments.items() if v is not None}
++        )
++        frozen = original.get_instruction_args()
++        if frozen is None:
++            frozen = {}
++        if not isinstance(frozen, dict):
++            raise ValueError("Instruction does not expose resolved arguments")
++        json.dumps(frozen, allow_nan=False)
++        before = random.getstate()
++        restored = build_instruction(identity, frozen)
++        if random.getstate() != before or vars(restored) != vars(original):
++            raise ValueError(
++                "Instruction arguments do not preserve its resolved reference"
++            )
++        resolved.append(frozen)
++    return {**record, "kwargs": resolved, "instruction_reference_revision": revision}
++
++
++if __name__ == "__main__":
++    data = json.load(sys.stdin)
++    print(json.dumps(_resolve(data["record"], data["seed"]), allow_nan=False))
+diff --git a/skyrl-gym/tests/test_instruction_reference_preparation.py b/skyrl-gym/tests/test_instruction_reference_preparation.py
+new file mode 100644
+index 0000000..e8698be
+--- /dev/null
++++ b/skyrl-gym/tests/test_instruction_reference_preparation.py
+@@ -0,0 +1,148 @@
++"""Freeze stochastic task references before a candidate reaches the environment."""
++
++import copy
++import json
++import random
++
++import pytest
++from omegaconf import OmegaConf
++
++from infra.rl_data.sources import (
++    nemotron_ultra_mopd_source,
++    nemotron_ultra_rlvr1_source,
++    nemotron_ultra_rlvr2_source,
++)
++from skyrl_gym.envs.nemotron_ultra.env import NemotronUltraEnv
++from skyrl_gym.envs.instruction_verifyit import grade_nemotron_instructions
++from skyrl_gym.envs.nemotron_ultra.instruction_following import (
++    grade_instruction_following,
++)
++
++
++@pytest.mark.parametrize(
++    "factory",
++    [
++        nemotron_ultra_mopd_source,
++        nemotron_ultra_rlvr1_source,
++        nemotron_ultra_rlvr2_source,
++    ],
++)
++def test_preparation_serializes_reference_before_framework_roundtrip(factory):
++    raw = {
++        "uuid": "frozen",
++        "agent_ref": {"name": "instruction_following_simple_agent"},
++        "responses_create_params": {
++            "input": [{"role": "user", "content": "Write a response"}]
++        },
++        "instruction_id_list": ["keywords:exclude_word_harder"],
++        "kwargs": [{"instruction": "red blue green"}],
++    }
++    original = copy.deepcopy(raw)
++    source = factory(instruction_reference_seed=13)
++    state = random.getstate()
++    row = source.prepare_row(raw, 0, None)
++    assert row == source.prepare_row(raw, 0, None)
++    assert random.getstate() == state
++    assert raw == original
++    record = json.loads(row["extra_info"]["nemotron_ultra"]["record_json"])
++    assert record["kwargs"][0]["keyword"] == "blue"
++    for candidate, expected in [("certain permitted sentence", 1.0), ("a blue b", 0.0)]:
++        scores = []
++        for enabled in [False, True]:
++            env = NemotronUltraEnv(
++                OmegaConf.create({"verifyit_enabled": enabled}), extras=row
++            )
++            env.init(row["prompt"])
++            try:
++                scores.append(env.step(candidate)["reward"])
++            finally:
++                env.close()
++        assert scores == [expected, expected]
++
++
++def test_explicit_keyword_needs_no_unused_random_instruction():
++    record = {
++        "instruction_id_list": ["keywords:exclude_word_harder"],
++        "kwargs": [{"keyword": "blue"}],
++    }
++    for candidate in ["a blue b", "permitted"]:
++        assert grade_nemotron_instructions(
++            candidate, record
++        ) == grade_instruction_following(candidate, record)
++
++
++def test_explicit_zero_span_index_is_deterministic():
++    record = {
++        "instruction_id_list": ["new:copy_span_idx"],
++        "kwargs": [
++            {"prompt_to_repeat": "long example string", "n_start": 0, "n_end": 3}
++        ],
++    }
++    state = random.getstate()
++    for candidate, score in [("lon", 1.0), ("ong", 0.0)]:
++        native = grade_instruction_following(candidate, record)
++        cutover = grade_nemotron_instructions(candidate, record)
++        assert native == cutover
++        assert cutover[0] == score
++    assert random.getstate() == state
++
++
++def test_unresolved_legacy_reference_is_invalid_at_grading():
++    record = {
++        "instruction_id_list": ["keywords:exclude_word_harder"],
++        "kwargs": [{"instruction": "red blue green"}],
++    }
++    score, detail = grade_nemotron_instructions("permitted", record)
++    assert score == 0.0
++    assert detail["error_type"] == "schema_error"
++
++
++@pytest.mark.parametrize(
++    "identity",
++    ["length_constraints:nth_paragraph_first_word", "count:count_increment_word"],
++)
++def test_default_source_defects_are_resolved_before_serialization(identity):
++    raw = {
++        "uuid": "resolved-default",
++        "agent_ref": {"name": "instruction_following_simple_agent"},
++        "responses_create_params": {
++            "input": [{"role": "user", "content": "Write a response"}]
++        },
++        "instruction_id_list": [identity],
++        "kwargs": [{}],
++    }
++    row = nemotron_ultra_mopd_source(instruction_reference_seed=13).prepare_row(
++        raw, 0, None
++    )
++    record = json.loads(row["extra_info"]["nemotron_ultra"]["record_json"])
++    args = record["kwargs"][0]
++    if identity == "length_constraints:nth_paragraph_first_word":
++        assert 1 <= args["nth_paragraph"] <= args["num_paragraphs"]
++        positive = "\n\n".join([args["first_word"] + " body"] * args["num_paragraphs"])
++    else:
++        assert isinstance(args["keyword1"], str) and isinstance(args["keyword2"], str)
++        positive = f"{args['keyword1']} {args['keyword2']} {args['keyword2']}"
++    for candidate, expected in [(positive, 1.0), ("unrelated content", 0.0)]:
++        scores = []
++        for enabled in [False, True]:
++            env = NemotronUltraEnv(
++                OmegaConf.create({"verifyit_enabled": enabled}), extras=row
++            )
++            env.init(row["prompt"])
++            try:
++                scores.append(env.step(candidate)["reward"])
++            finally:
++                env.close()
++        assert scores == [expected, expected]
++
++
++def test_frozen_reference_revision_mismatch_is_invalid():
++    record = {
++        "instruction_id_list": ["keywords:exclude_word_harder"],
++        "kwargs": [{"keyword": "blue"}],
++        "instruction_reference_seed": 13,
++        "instruction_reference_revision": "different-registry",
++    }
++    score, detail = grade_nemotron_instructions("permitted", record)
++    assert score == 0.0
++    assert detail["error_type"] == "schema_error"
+diff --git a/skyrl-gym/tests/test_instruction_verifyit.py b/skyrl-gym/tests/test_instruction_verifyit.py
+index b56dd2a..6d5f2af 100644
+--- a/skyrl-gym/tests/test_instruction_verifyit.py
++++ b/skyrl-gym/tests/test_instruction_verifyit.py
+@@ -214,10 +214,6 @@ def test_vacuous_minimum_zero_policies_invalid(reference):
+             "detectable_format:multiple_sections",
+             {"num_sections": 0, "section_spliter": "Section"},
+         ),
+-        (
+-            "new:copy_span_idx",
+-            {"prompt_to_repeat": "long example string", "n_start": 0, "n_end": 3},
+-        ),
+         (
+             "keywords:exclude_word_harder",
+             {"instruction": "this reference chooses a random excluded word"},

@@ -1361,7 +1361,7 @@
     {
       "id": "nemotron_ultra/instruction_following_simple_agent",
       "status": "not_integrated",
-      "not_covered_reason": "Partial source integration: deterministic explicit instruction references are wired, but keywords:exclude_word_harder randomly constructs a hidden forbidden word and is rejected; the whole source route remains pending.",
+      "not_covered_reason": "Partial source integration: explicit and newly prepared frozen references are wired; historical random references without saved construction state cannot be recovered, and arbitrary valid parameter domains beyond the constructor audit are not yet validated.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
@@ -1373,8 +1373,8 @@
         "script"
       ],
       "resolution_strategy": "existing_ifeval_client_registry_extension",
-      "needed_change": "Freeze and transport the source-generated hidden forbidden word as trusted task reference before IFEval checking; preserve the original stochastic construction context rather than rerandomize at grading.",
-      "validation_gap": "Selected deterministic references validate the implemented subset; randomized source-reference construction remains unsupported.",
+      "needed_change": "Validate remaining valid parameter domains and migrate legacy task records from their original trusted construction state when available; never resample hidden references at grading.",
+      "validation_gap": "All 54 default constructors resolve and pass admission with required text inputs; this is not every valid parameter contract or historical stochastic replay.",
       "source_contract": "Pinned NVIDIA verifiable_instructions registry with instruction kwargs; binary or fraction aggregation.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1390,17 +1390,23 @@
         "integrations/MarinSkyRL/instructions-verifyit.patch",
         "evidence/e2e/wiring/skyrl-instructions/selection.json",
         "evidence/e2e/wiring/skyrl-instructions/comparison.json",
-        "evidence/e2e/wiring/skyrl-instructions/registry-audit.json"
+        "evidence/e2e/wiring/skyrl-instructions/registry-audit.json",
+        "integrations/MarinSkyRL/instruction-preparation-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-instruction-preparation/implementation-provenance.json",
+        "evidence/e2e/wiring/skyrl-instruction-preparation/manager-default-audit.json",
+        "evidence/e2e/wiring/skyrl-instruction-preparation/manager-final/roundtrip.json"
       ],
       "observed_verified_execution_links": 23,
       "actual_replayed_links": 9,
       "core_extension_requirement": "none_proposed",
       "integration_patch": "integrations/MarinSkyRL/instructions-verifyit.patch",
-      "validation_scope": "Three frozen random real links per eligible benchmark group, actual source Env/native and verifyit roundtrip; 60 source tests.",
+      "validation_scope": "Existing frozen real trace subset plus 68 source tests, 12 preparation-to-Env fixture roundtrips and reproducible 54-default-constructor reconstruction/admission audit. No full parameter-domain or historical hidden-state claim.",
       "intentional_tightening": "Strict bool results; empty/vacuous references and random-default construction rejected; detector/checker/dependency/deadline errors discard all credit; nonfinite JSON rejected.",
       "remaining_contracts": [
-        "keywords:exclude_word_harder hidden randomized forbidden word"
-      ]
+        "Historical randomized references without their original trusted construction state",
+        "Valid parameter domains beyond the audited default constructors and focused boundary tests"
+      ],
+      "preparation_patch": "integrations/MarinSkyRL/instruction-preparation-verifyit.patch"
     },
     {
       "id": "nemotron_ultra/abstention_simple_agent",

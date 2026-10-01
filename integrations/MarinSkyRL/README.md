@@ -148,9 +148,10 @@ to `f46a5ac87b1400a4f8973039844b6be9b56e3faf`, with retained NLTK and language
 detection dependencies. Predicate results must be actual booleans. Checker,
 detector, dependency and deadline failures invalidate the full result rather than
 retain partial credit. Malformed, empty, vacuous positive-minimum and randomized
-reference construction fails closed. In particular, `keywords:exclude_word_harder`
-randomizes its hidden forbidden word even with explicit kwargs and is rejected;
-this integration does not claim faithful replay of stochastic references. Meaningful
+reference construction at grading fails closed. `keywords:exclude_word_harder`
+uses an explicit keyword deterministically; when omitted, its hidden word must be
+resolved before candidate generation. The preparation patch below handles new
+references, while legacy hidden state cannot be recovered. Meaningful
 exact-zero prohibitions remain supported. JSON-format constraints use existing
 JSON-schema candidate grading and reject nonfinite JSON.
 
@@ -217,3 +218,21 @@ not training-loop initialization or model generation. No archived comparison
 cohort is available. Exact installed-package proofs and source-patch manifests
 are under `evidence/e2e/wiring/skyrl-dormant-judges/` and
 `evidence/e2e/wiring/skyrl-genrm/`.
+
+
+Apply `instruction-preparation-verifyit.patch` after the cohort patch. The three
+Nemotron source builders accept `instruction_reference_seed=<integer>` to resolve
+registry defaults in an isolated process before candidate generation. Prepared
+records contain the resolved kwargs, seed and pinned registry revision. The
+resolver rebuilds each checker and requires identical state with no additional
+random sampling. Unresolved legacy records still fail closed at grading.
+
+The source client corrects three reference-construction defects: a supplied zero
+span index was treated as missing, the paragraph sampler could select an index
+past the last paragraph, and two generated keyword defaults were lists instead
+of strings. Sixty-eight source tests and twelve actual environment roundtrips
+pass; all 54 default constructors resolve and pass admission with required text
+inputs. This does not prove every valid parameter domain or recover historical
+hidden references, so the instruction route remains partial. Reproduction
+scripts and the complete constructor audit are in
+`evidence/e2e/wiring/skyrl-instruction-preparation/`.

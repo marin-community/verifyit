@@ -235,11 +235,13 @@ bounded catastrophic-regex failure. Evidence is in
 
 Standalone IFEval now wires its 26 named source predicates through existing IFEval
 registry execution under one total ScriptSpec deadline. NVIDIA instruction following
-is partially wired and remains in the pending list: `keywords:exclude_word_harder`
-randomizes its hidden forbidden word during reference construction, and is rejected.
-The 54-class source registry is audited, but full-registry execution parity is not
-claimed. Missing/default-random, vacuous and malformed reference configurations
-fail closed; checker and language-detector errors discard the entire fraction.
+is partially wired and remains in the pending list. Trusted preparation now freezes
+random defaults into serialized kwargs before candidate generation; all 54 default
+constructors reconstruct identically without further randomness. Existing explicit
+keywords are deterministic. Legacy hidden references remain unavailable, and the
+constructor audit does not cover every valid parameter domain. Unresolved random,
+vacuous and malformed references fail closed; checker and language-detector errors
+discard the entire fraction.
 Fifteen frozen real links across five groups match recorded/native rewards; these
 validate the implemented deterministic subset, not the remaining stochastic contract.
 Sixty exported-source tests pass. See the integration README and
