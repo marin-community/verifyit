@@ -1,0 +1,173 @@
+diff --git a/lm_eval/verifyit_function_worker.py b/lm_eval/verifyit_function_worker.py
+--- a/lm_eval/verifyit_function_worker.py
++++ b/lm_eval/verifyit_function_worker.py
+@@ -2,6 +2,7 @@
+ 
+ import json
+ import math
++import re
+ import sys
+ from collections import Counter
+ 
+@@ -12,10 +13,14 @@
+ def encode(value, depth=0):
+     if depth > 50:
+         raise ValueError("value nesting exceeds limit")
++    if type(value) is int and value.bit_length() > 4096:
++        return {"type": "integer_hex", "value": format(value, "x")}
+     if value is None or type(value) in (bool, int, str):
+         return value
+-    if type(value) is float and math.isfinite(value):
+-        return value
++    if type(value) is float:
++        if math.isfinite(value):
++            return value
++        return {"type": "float_value", "value": repr(value)}
+     if type(value) in (tuple, list, set, frozenset):
+         return {
+             "type": type(value).__name__,
+@@ -43,12 +48,20 @@
+         return value
+     if type(value) is float and math.isfinite(value):
+         return value
+-    if (
+-        type(value) is not dict
+-        or set(value) != {"type", "value"}
+-        or type(value["value"]) is not list
+-    ):
++    if type(value) is not dict or set(value) != {"type", "value"}:
+         raise ValueError("invalid typed function value")
++    if value["type"] == "integer_hex":
++        text = value["value"]
++        if type(text) is not str or re.fullmatch(r"-?[0-9a-f]+", text) is None:
++            raise ValueError("invalid hexadecimal integer value")
++        return int(text, 16)
++    if value["type"] == "float_value":
++        text = value["value"]
++        if type(text) is not str or text not in ("inf", "-inf", "nan"):
++            raise ValueError("invalid floating point value")
++        return float(text)
++    if type(value["value"]) is not list:
++        raise ValueError("invalid typed function sequence")
+     values = value["value"]
+     if value["type"] == "tuple":
+         return tuple(decode(x, depth + 1) for x in values)
+@@ -58,27 +71,26 @@
+         items = [decode(x, depth + 1) for x in values]
+         return set(items) if value["type"] == "set" else frozenset(items)
+     if value["type"] == "complex":
+-        if len(values) != 2 or any(
+-            type(x) not in (int, float) or not math.isfinite(x) for x in values
+-        ):
++        components = [decode(x, depth + 1) for x in values]
++        if len(components) != 2 or any(type(x) not in (int, float) for x in components):
+             raise ValueError("invalid complex transport value")
+-        return complex(*values)
++        return complex(*components)
+     if value["type"] in ("dict", "Counter"):
+         items = {decode(k, depth + 1): decode(v, depth + 1) for k, v in values}
+         return Counter(items) if value["type"] == "Counter" else items
+     raise ValueError("unknown function transport type")
+ 
+ 
+-def read(stream):
+-    line = stream.readline(MAX_BYTES + 1)
+-    if not line or len(line) > MAX_BYTES or not line.endswith(b"\n"):
++def read(stream, max_bytes=MAX_BYTES):
++    line = stream.readline(max_bytes + 1)
++    if not line or len(line) > max_bytes or not line.endswith(b"\n"):
+         raise ValueError("missing or oversized function response")
+     return json.loads(line)
+ 
+ 
+-def write(stream, value):
++def write(stream, value, max_bytes=MAX_BYTES):
+     data = json.dumps(value, allow_nan=False).encode() + b"\n"
+-    if len(data) > MAX_BYTES:
++    if len(data) > max_bytes:
+         raise ValueError("oversized function request")
+     stream.write(data)
+     stream.flush()
+@@ -92,12 +104,24 @@
+     # Candidate execution is confined to its container.
+     exec(request["code"], scope)  # noqa: S102
+     function = scope[request["entry_point"]]
++    max_bytes = request.get("max_bytes", MAX_BYTES)
++    if type(max_bytes) is not int or max_bytes not in (MAX_BYTES, 16 * MAX_BYTES):
++        raise ValueError("unsupported function frame bound")
++    observation = request.get("result_observation", "identity")
++    if observation not in ("identity", "bool_or_presence"):
++        raise ValueError("unsupported result observation")
+     write(transport, {"ready": True})
+     while True:
+-        request = read(sys.stdin.buffer)
++        request = read(sys.stdin.buffer, max_bytes)
+         args, kwargs = decode(request)
+         result = function(*args, **kwargs)
+-        write(transport, encode(result))
++        if (
++            observation == "bool_or_presence"
++            and result is not None
++            and type(result) is not bool
++        ):
++            result = "__verifyit_non_none__"
++        write(transport, encode(result), max_bytes)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/lm_eval/verifyit_humaneval.py b/lm_eval/verifyit_humaneval.py
+--- a/lm_eval/verifyit_humaneval.py
++++ b/lm_eval/verifyit_humaneval.py
+@@ -14,7 +14,7 @@
+ from verifyit.grade import InvalidTask, Status, run
+ from verifyit.spec import ScriptSpec, render_spec
+ 
+-from lm_eval.verifyit_function_worker import decode, encode, read, write
++from lm_eval.verifyit_function_worker import MAX_BYTES, decode, encode, read, write
+ 
+ 
+ SOURCE_HASHES = {
+@@ -74,7 +74,15 @@
+     return last.value.args[0].id
+ 
+ 
+-def score(reference, prediction, name, *, image=IMAGE):
++def score(
++    reference,
++    prediction,
++    name,
++    *,
++    image=IMAGE,
++    result_observation="identity",
++    max_bytes=MAX_BYTES,
++):
+     if DOCKER is None:
+         raise RuntimeError("Docker executable is unavailable")
+     entry = entry_point(reference)
+@@ -117,15 +125,23 @@
+     )
+     calls = 0
+     try:
+-        write(process.stdin, {"code": prediction, "entry_point": entry})
++        write(
++            process.stdin,
++            {
++                "code": prediction,
++                "entry_point": entry,
++                "result_observation": result_observation,
++                "max_bytes": max_bytes,
++            },
++        )
+         if read(process.stdout) != {"ready": True}:
+             return False
+ 
+         def candidate(*args, **kwargs):
+             nonlocal calls
+             calls += 1
+-            write(process.stdin, encode((args, kwargs)))
+-            return decode(read(process.stdout))
++            write(process.stdin, encode((args, kwargs)), max_bytes)
++            return decode(read(process.stdout, max_bytes))
+ 
+         namespace = {entry: candidate}
+         # Benchmark-owned source assertions, never candidate code.

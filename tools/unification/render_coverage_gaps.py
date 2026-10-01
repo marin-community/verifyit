@@ -43,14 +43,14 @@ def table(source, statuses=None):
 
 text = """# Coverage gaps
 
-Completion scope: all 46 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **196 required routes**. The manager-reviewed checkpoint is **103/196 tested** (SkyRL 45/46, Harbor 24/87, custom 13/42, overrides 21/21). Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required.
+Completion scope: all 46 SkyRL verifiers, 87 Harbor adapters, 42 Evalchemy custom benchmarks and 21 Evalchemy task overrides must have successful cutover tests: **196 required routes**. The manager-reviewed checkpoint is **105/196 tested** (SkyRL 45/46, Harbor 24/87, custom 15/42, overrides 21/21). Cohort-specific archive, fixture, isolation and historical-evidence caveats below still apply. TaskTrove is outside completion scope. Harness counts remain report-only; exhaustive harness testing is not required.
 
 The remaining work is primarily client integration, source-specific comparison/judge profiles, and execution validation. A specification is not an implemented migration. Retaining the source scorer is compatibility or a hybrid route, not complete native equivalence. No unavoidable new verifier category has been identified.
 
 | Source population | Implemented / available | Remaining coverage |
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,329 guarded native routes + 993 retained-runtime routes available | 370 configs have no cutover; breakdown below |
-| Evalchemy 42 custom benchmarks | 8 native integrations + 3 math hybrids + 2 isolated source code runtimes | 29 not integrated (18 client/comparator audits + 11 native profile gaps) |
+| Evalchemy 42 custom benchmarks | 8 native integrations + 3 math hybrids + 4 isolated source code runtimes | 27 not integrated (16 client/comparator audits + 11 native profile gaps) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 17 retained-runtime overrides | 0 unwired; GSM hybrid retains its fallback; plus 1 orchestration group |
 SKYRL_SUMMARY_ROW
 HARBOR_SUMMARY_ROW
@@ -129,7 +129,7 @@ The source population additionally has 834 groups and 456 templates (1,290 orche
 
 ## Evalchemy custom benchmarks
 
-The 29 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
+The 27 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
 
 """ + table(
     "evalchemy-custom", {"not_integrated", "capability_gap"}

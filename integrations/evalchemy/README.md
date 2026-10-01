@@ -250,3 +250,35 @@ canonical code fails on macOS and passes on the pinned Linux image. Linux parity
 uses the untouched source scorer in that same runtime, through the original
 benchmark API; expected values and tolerances are unchanged. Source hashes and
 export dependencies are in `custom-code-source.json`.
+
+## HumanEvalPlus and MBPPPlus
+
+After the custom code patches, apply `function-rpc-plus-verifyit.patch` to the
+harness and `custom-plus-verifyit.patch` to Evalchemy. Enable
+`verifyit_enabled=True` on either Plus benchmark. They reuse the pinned custom
+code image and retain source assertion programs, pass@k, scored_count, artifact
+validation and per-task annotations. Three frozen source fixtures per benchmark
+match complete source evaluator results for canonical, incorrect and ten mixed
+completions. Archived replay is not claimed; the three selected tracker links
+per family remain frozen in campaign evidence.
+
+Plus function transport supports large integers as tagged hexadecimal values
+and nonfinite floating-point values as explicit data tokens. These values are
+candidate inputs/results; verifier rewards remain finite. Plus permits a bounded
+16 MiB RPC frame; earlier code routes retain 1 MiB. Complete canonical censuses
+measured maxima from 3.6 MB to 12.4 MB for the four affected source tasks. Those
+four actual evaluator regressions use the same explicit 30-second budget in
+both source and cutover, separately from the default three-second frozen fixtures.
+The candidate container retains its 256 MiB memory limit; this does not limit
+total supervisor memory.
+
+MBPPPlus tasks 737, 787 and 794 computed `exact_match` without asserting it. Their
+exact-hash-pinned trusted checker now asserts the result. The source observes
+only boolean values and whether other results are None; a pinned projection
+preserves that contract without reconstructing candidate regex objects in the
+supervisor. All three canonical solutions still pass, while wrong None-returning
+solutions change from source score one to zero. A changed checker profile aborts
+the batch. These corrections are reported separately from parity evidence.
+
+Source hashes, frame limits and patch dependencies are recorded in
+`custom-plus-source.json`. Evidence is under `evidence/e2e/wiring/evalchemy-plus`.

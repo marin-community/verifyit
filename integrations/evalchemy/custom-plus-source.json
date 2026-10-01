@@ -1,0 +1,65 @@
+{
+  "source_fixtures_not_archives": true,
+  "dependency_commit": "5fa2c5dc80ffd4c5a52a4f32b3630e805ea0b503",
+  "exports": [
+    {
+      "framework": "lm-eval-harness",
+      "applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/plus-family-lm-eval-harness-applied",
+      "patch": "integrations/lm-eval-harness/function-rpc-plus-verifyit.patch",
+      "patch_sha256": "5eb363b0975052b6a7c29435004e3c531dab88f1641b96516bfa040e607c0a5f",
+      "files": {
+        "lm_eval/verifyit_function_worker.py": "f0a19b4f630c252f59857aa9470d83b759b77425e9e6c77e5855748d7fd593c8",
+        "lm_eval/verifyit_humaneval.py": "d5ea48f6ce7f81031829074cd8a7ee31f5e8386147cfcad2bd30eb66de05d5cd"
+      }
+    },
+    {
+      "framework": "evalchemy",
+      "applied_tree": "/Users/benfeuer/Documents/experiments/active/verifier-unification/scratch/plus-family-evalchemy-applied",
+      "patch": "integrations/evalchemy/custom-plus-verifyit.patch",
+      "patch_sha256": "a0dde03fcba029b5893c90c2cfad6324846b0bd63abb24fce394cccf5b6784e6",
+      "files": {
+        "eval/chat_benchmarks/HumanEvalPlus/eval_instruct.py": "22eefe206ebfae359de506a1b6718c51c1858b5531693bbac37ff04acc8d5f79",
+        "eval/chat_benchmarks/MBPPPlus/eval_instruct.py": "01e7ab36bd95c8e3aeaf06cbeb5ee392b3c70dc25d1ea5fcca4550c0d771f5af",
+        "eval/graders/verifyit_code.py": "5335357742202f224c42297bf63929766317873c795d492ab41791cf7ed42ba6",
+        "eval/graders/verifyit_code_plus.py": "3b0636d6518b99fda81150979c0774cbd4e3a752fe98f32296d8cd3b61a255fc",
+        "tests/graders/test_verifyit_code_plus.py": "5254f6df54266b007d16c8ec89e2d0e79825c66f8dbfc2a0ea6cf3846e82cbec"
+      }
+    }
+  ],
+  "benchmarks": [
+    "HumanEvalPlus",
+    "MBPPPlus"
+  ],
+  "fixture_only": true,
+  "source_populations": {
+    "HumanEvalPlus": 164,
+    "MBPPPlus": 378
+  },
+  "frame_limit_bytes": 16777216,
+  "previous_routes_frame_limit_bytes": 1048576,
+  "source_frame_maxima": {
+    "HumanEval/15": 6888987,
+    "HumanEval/100": 9000027,
+    "HumanEval/130": 12426520,
+    "MBPPPlus/630": 3582333
+  },
+  "execution_boundary": "Trusted assertions remain in supervisor; candidate-only container memory256MiB; individual RPC frames bounded16MiB for Plus,1MiB elsewhere. Supervisor total memory is not bounded by candidate container limit.",
+  "scoring_fixes": {
+    "MBPPPlus737_787_794": "Source computes exact_match without asserting it; exact-hash-pinned trusted checker now asserts it, with bool/non-None-only result observation. Wrong None candidate source1 versus cutover0; canonical1 on both."
+  },
+  "transport_extensions": [
+    "tagged hexadecimal integers exceeding JSON decimal digit cap",
+    "explicit nonfinite data tokens; verifier scores remain finite",
+    "trusted source profile for bool/non-None-only observations"
+  ],
+  "limitations": [
+    "Fixture-only; three frozen archived tracker links per family not fetched because CoreWeave credentials unavailable.",
+    "Expanded-frame source tasks use explicit30second budget on both routes in supplemental proof; frozen random fixtures use source default3seconds.",
+    "HumanEvalPlus32 source checker has a scalar unpacking TypeError; failure remains zero.",
+    "Source canonical runtime and exact float assertions can be platform-sensitive."
+  ],
+  "source_files": {
+    "eval/chat_benchmarks/HumanEvalPlus/data/humanevalplus-python.jsonl": "be62961d99eb382597084b67fd8cc1d9fa6a4cd8dadcf13e0e81c10336c57a61",
+    "eval/chat_benchmarks/MBPPPlus/data/mbppplus.jsonl": "df4d44963a384d1fd727c831a4085e253fc4492f24ee27a5bf94d61621da194b"
+  }
+}

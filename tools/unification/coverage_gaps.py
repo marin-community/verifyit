@@ -801,6 +801,36 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-code-family/manager-supplemental/results.json",
                 ],
             )
+        elif name in {"HumanEvalPlus", "MBPPPlus"}:
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_isolated_plus_runtime",
+                reason=(
+                    "ScriptSpec retains source extended Python assertions, pass@k, scored_count and "
+                    "sample annotations with isolated candidate calls. Plus uses bounded 16MiB frames "
+                    "for measured source values; original code routes retain 1MiB. Three MBPPPlus "
+                    "missing-assert profiles now reject wrong candidates that source scored one."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Enable verifyit_enabled=True with the pinned candidate image. Frozen fixtures "
+                    "use source default timeouts; four larger source fixtures use 30 seconds on both "
+                    "routes. Archived replay is unclaimed; source runtime/platform defects remain documented."
+                ),
+                validation_status="source_custom_evaluator_fixtures_with_explicit_source_corrections_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/custom-plus-verifyit.patch",
+                    "integrations/evalchemy/custom-plus-source.json",
+                    "integrations/lm-eval-harness/function-rpc-plus-verifyit.patch",
+                    "../evidence/e2e/wiring/evalchemy-plus/comparison.json",
+                    "../evidence/e2e/wiring/evalchemy-plus/manager-humanevalplus/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-plus/manager-mbppplus/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-plus/manager-final-frame-humanevalplus/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-plus/manager-final-frame-mbppplus/roundtrip.json",
+                    "../evidence/e2e/wiring/evalchemy-plus/manager-presence/roundtrip.json",
+                ],
+            )
         elif record["classification"] == "adapter-hybrid":
             entity.update(
                 status="native_fallback",
