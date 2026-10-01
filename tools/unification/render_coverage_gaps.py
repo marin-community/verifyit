@@ -256,7 +256,7 @@ for name, group in sorted(groups.items()):
 text += """
 ## Scope, evidence and regeneration
 
-The register covers pinned snapshots only, not future revisions or external plugins. Source revisions and exact evidence are stored per entity. Reconciliation is automatic: indexed harness 13,982 = 12,692 tasks + 834 groups + 456 templates; tasks 12,692 = 11,329 native available + 993 retained-runtime available + 370 remaining; Evalchemy 42 custom + 22 override configs; SkyRL 48 entries; Harbor 87 adapters; TaskTrove 81 cohorts with 861,848 rows plus 19 converter, 12 mode and 7 helper contracts. Seven Harbor tracker datasets and 64 harness inline definitions are separate populations and must not be added to those source denominators.
+The register covers pinned snapshots only, not future revisions or external plugins. Source revisions and exact evidence are stored per entity. Reconciliation is automatic: indexed harness 13,982 = 12,692 tasks + 834 groups + 456 templates; tasks 12,692 = 11,329 native available + 993 retained-runtime available + 370 remaining; Evalchemy 42 custom + 22 override configs; SkyRL 49 entries; Harbor 87 adapters; TaskTrove 81 cohorts with 861,848 rows plus 19 converter, 12 mode and 7 helper contracts. Seven Harbor tracker datasets and 64 harness inline definitions are separate populations and must not be added to those source denominators.
 
 The [replay report](e2e-replay.md) records the earlier campaign baseline and exceptions: Evalchemy/harness 24 runs matched 63,360 samples; SkyRL 66/66 pinned-native and 65/66 archived results; Harbor 1,101 trials preserve 37 recovered zeros, 10 infrastructure failures and 3 database discrepancies. Later opt-in SkyRL cutovers add nine Reasoning Gym/MCQA, six tool, three calendar, three SQL, three Lean, six code, fifteen structured-output, twelve formatting and fifteen instruction random selections under campaign `evidence/e2e/wiring/`, plus two separately selected supplemental code positives; Reasoning Gym rejects boolean scorer results, and typed tool comparison rejects a boolean argument for an integer reference. Calendar rejects invalid clock values, boolean/negative/nonfinite durations and malformed reference constraints; zero durations retain source behavior. Full archived parity remains unvalidated.
 
@@ -281,7 +281,7 @@ external = skyrl_counts["not_a_correctness_verifier"]
 scoring = sum(skyrl_counts.values()) - external
 summary = (
     f"| SkyRL {scoring} scoring routes | {validated + unvalidated} source-patched "
-    f"({validated} with selected real traces, {unvalidated} without eligible real traces) | "
+    f"({validated} accepted real-trace validations, {unvalidated} fixture-only or validation-regressed) | "
     f"{skyrl_counts['not_integrated']} partial client/harness routes + "
     f"{skyrl_counts['capability_gap']} native profile gaps; {external} external-objective placeholders separate |"
 )
@@ -293,7 +293,9 @@ pending_skyrl = [
     and r["status"] in {"not_integrated", "capability_gap"}
     and r.get("completion_scope") != "user_excluded"
 ]
-pending_active = sum(bool(r.get("active_in_pinned_dispatch")) for r in pending_skyrl)
+pending_active = sum(
+    bool(r.get("active_in_pinned_dispatch") or r.get("active_in_pinned_source_registry")) for r in pending_skyrl
+)
 pending_dormant = sum(bool(r.get("dormant")) for r in pending_skyrl)
 text = text.replace(
     "SKYRL_PENDING_SUMMARY",
@@ -303,7 +305,10 @@ text = text.replace(
         else f"The {len(pending_skyrl)} pending scoring routes comprise {pending_active} active routes and "
         f"{pending_dormant} dormant implementations. "
     )
-    + "Three dormant math variants now have opt-in source "
+    + "Issue #890 adds a previously omitted source-registered generator whose native verifier was never implemented. "
+    "Issue #891 revokes abstention completion because empty output yields no judge label and the client fails; "
+    "literal empty source responses reach the judge, whereas only normalized [IDK] unconditionally scores 0.5. "
+    "The corrected inventory still needs a broader registry audit. Three dormant math variants now have opt-in source "
     "integrations and fixture evidence; archived traces remain unavailable. "
     f"{skyrl_counts['capability_gap']} rows need a native comparator/registry/schema/judge profile in an "
     "existing class; a task-owned structured source bridge remains an alternative. "
