@@ -1050,3 +1050,49 @@ mono-branch history. The pinned source image needs `python3-venv` before install
 the core wheel in `/opt/verifyit`; the local proof used that exact wheel and
 preserved the original failed build log. Candidate code executes inside the
 grading runtime: image separation alone is not candidate/assertion isolation.
+
+## Sotopia
+
+Apply `sotopia-runtime-verifyit.patch` after the base Harbor dispatcher and
+`research-code-bench-runtime-verifyit.patch` helper. Generate with
+`sotopia-harbor --split hard --verifyit` and run the patched SotopiaAgent.
+The producer executes the native conversation and exports the exact terminal
+inbox, participant identities, history and temperature. The separate Script
+verifier makes the terminal judge call using `SOTOPIA_EVALUATOR_MODEL` and
+credentials from `verifier.env`. Both participants retain all seven dimensions
+and overall means; reward remains the selected participant's normalized goal.
+
+Named `agent_1` and `agent_2` decisions correct the native evaluator's insertion-
+order attribution. Missing participants retain its five attempts and backoff.
+The shared observer checks original OpenAI-compatible replies before LiteLLM can
+discard refusals, then validates normalized output. Unrecovered actor completion
+or action-format failures return infrastructure zero; valid `none` actions and
+successful native judge repair keep their source behavior. Malformed trusted
+configuration is invalid; absent or malformed candidate conversations score zero.
+The default profile URL also moves from the unavailable `data_dir/profiles/` path
+to the pinned repository's root `profiles/`, preserving all three checksums.
+
+The fixed source runner assigns both goals and uses round-robin actions, so only
+one agent calls a model at a time. Observation is restricted to chat-completion
+POSTs and assumes one episode per process. Local proof exercises the OpenAI-
+compatible custom endpoint; other provider protocols receive normalized checks
+only. Requests, native repair/retries and HTTP client cleanup remain unchanged.
+
+All 900 source configurations were validated. The final 123-case matrix includes
+all 100 hard profiles, both evaluated positions and every dimension's endpoints;
+eight additional edge cases distinguish candidate zero, invalid tasks and
+infrastructure failure. All 131 outcomes pass. There are 107 full native metric and
+conversation matches, 109 request/raw-reply matches and two named-order
+corrections. Eight runtime regressions pass, and 131 installed images match 41 core
+and 62 native source files. Independent actual Trials verify a positive dialogue,
+raw refusal and malformed producer failure. Prior failed receipts are retained.
+
+`evidence/e2e/wiring/harbor-sotopia/manifest.json` hashes the raw proof;
+`sotopia-provenance.json` records its digest, source pins and patch hashes.
+The three frozen SOTOPIA-hard archive links were inaccessible. Cached deployment
+tasks match all 100 hard configurations and native verifier files, and its producer
+has the same AST as pinned Harbor; this establishes applicability, not archived
+execution parity. Provider replies are local fixtures, not live judge-quality
+measurements. Images require verifyit revision
+`a0861089947096aabe456ca4308ca46b1b001d7c` or its recorded wheel; Harbor deployment
+and archive replay remain separate work.

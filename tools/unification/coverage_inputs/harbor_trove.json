@@ -4657,16 +4657,29 @@
       "entity_id": "harbor:sotopia",
       "evidence": [
         "docs/unification/harbor_semantics.json#sotopia",
-        "docs/unification/harbor_inventory.json#sotopia"
+        "docs/unification/harbor_inventory.json#sotopia",
+        "integrations/harbor/sotopia-runtime-verifyit.patch",
+        "integrations/harbor/sotopia-provenance.json",
+        "evidence/e2e/wiring/harbor-sotopia/final-summary.json",
+        "evidence/e2e/wiring/harbor-sotopia/manifest.json",
+        "evidence/e2e/wiring/harbor-sotopia/v4/matrix.json",
+        "evidence/e2e/wiring/harbor-sotopia/v4/expected-outcomes.json",
+        "evidence/e2e/wiring/harbor-sotopia/v4/installed-image-hashes.json",
+        "evidence/e2e/wiring/harbor-sotopia/v4/task-file-hashes.json",
+        "evidence/e2e/wiring/harbor-sotopia/v4/raw-trial-hashes.json",
+        "evidence/e2e/wiring/harbor-sotopia/census.json",
+        "evidence/e2e/wiring/harbor-sotopia/selection.json",
+        "evidence/e2e/wiring/harbor-sotopia/observer-contract.json",
+        "evidence/e2e/wiring/harbor-sotopia/proof-versions.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "sotopia",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/sotopia/src/sotopia/task-template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate archived trajectories and live provider deployments; raw protocol validation is exercised only for the OpenAI-compatible custom endpoint. Deploy the pinned core/runtime or equivalent recorded wheel.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Official social-environment judge yields normalized multi-axis score map; scalar reward=sotopia_goal. Preserve all axes and trajectory/participant indexing. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "The opt-in client preserves the native conversation producer and exports its exact terminal inbox; ScriptSpec invokes the retained Sotopia evaluator in a separate verifier. Both participants retain seven raw and normalized dimensions and overall means; reward is the evaluated participant's normalized goal. Named participant mapping corrects insertion-order attribution. Incomplete provider envelopes and unrecovered producer failures cannot receive positive credit.",
       "source_evidence": [
         {
           "functions": [
@@ -4697,8 +4710,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "All 900 trusted configurations validated; all 100 hard profiles and both positions exercised through actual producer/Trial runs. Final 123 matrix + 8 edge outcomes pass; 107 full native metric/conversation cases and 109 request/rawreply cases match, with two named-order corrections. Eight runtime regressions pass; 131 installed images match 41 core and 62 native source files. Independent positive/refusal/malformed-producer Trials passed. Three frozen deployment archives were inaccessible; cached deployment applicability is not archive parity or model-quality evidence.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Pinned profiles, native evaluator/normalizer and verifier.toml in the separate verifier image; only the serialized conversation transfers.",
+        "needed_change": "Raw provider checks cover declared OpenAI-compatible protocols and assume the fixed one-completion round-robin process. Other provider protocols receive normalized checks only; live provider behavior and archived model trajectories remain unverified."
+      }
     },
     {
       "entity_id": "harbor:spider2-dbt",

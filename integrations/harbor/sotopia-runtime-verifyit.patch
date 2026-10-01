@@ -1,0 +1,1007 @@
+diff --git a/adapters/sotopia/README.md b/adapters/sotopia/README.md
+index 8d5efff..d2937d4 100644
+--- a/adapters/sotopia/README.md
++++ b/adapters/sotopia/README.md
+@@ -146,3 +146,61 @@ SOTOPIA has no deterministic oracle solution. Model calls also do not currently
+ ## Authors & Contributions
+ 
+ The Harbor team maintains this adapter. Please report adapter bugs or proposed improvements through this repository's issue tracker.
++
++## Opt-in verifyit runtime
++
++Generate tasks with `sotopia-harbor --split hard --verifyit`. Use this checkout's
++`adapters.sotopia.sotopia_agent:SotopiaAgent` for those tasks. The producer runs
++Sotopia's native conversation and exports the exact terminal inbox, history,
++and temperature. It makes no terminal judge call. The separate verifier runs
++the retained native evaluator with the configured `SOTOPIA_EVALUATOR_MODEL`
++(default `gpt-4o`) and provider credentials in `verifier.env`. For custom
++endpoints, use `custom/<model>@<base-url>` and `CUSTOM_API_KEY`.
++
++The verifier checks the trusted background and participant identities, preserves
++both participants' seven raw dimensions and overall means, and selects the
++configured participant's normalized goal score as reward. All seven normalized
++metrics remain in verdict details. Negative raw relationship, secrecy, social
++rule, financial, and overall scores remain legitimate; normalization uses the
++original dimension ranges.
++
++The native evaluator assigns participants by JSON insertion order. The opt-in
++path instead orders the named `agent_1` and `agent_2` decisions before native
++aggregation. It requires a complete single provider choice, distinct participant
++keys, and integer scores. Missing or malformed decisions retain the native five
++attempts, including its backoff. Valid JSON repair and structured-output requests
++remain native. Unrecovered target/partner completion or action-format failures,
++judge failures,
++and unavailable runtime assets produce `infra_error` with minimum reward;
++malformed trusted configuration produces `invalid_task`. Missing or malformed
++conversation artifacts score zero. Native source behavior remains the default.
++
++The producer and judge also inspect original HTTP replies for providers selected
++by LiteLLM as OpenAI, Azure, OpenRouter, Together AI, or hosted vLLM. This prevents
++LiteLLM from discarding a refusal before validation. Other providers receive
++normalized-response validation only. The local runtime proof exercises the
++OpenAI-compatible custom endpoint protocol; it does not establish raw-envelope
++coverage for other provider protocols. Requests, native retries, and HTTP client
++cleanup remain unchanged. Observation is scoped to chat-completion POSTs. The
++source runner fixes round-robin actions and assigns both goals before generation,
++so the inactive agent returns without a model call; judge and repair calls are
++sequential. The temporary observer assumes this single-completion process
++contract and does not support concurrent episodes in one process.
++
++The profile download URL now uses the pinned repository's root `profiles/`
++directory; the old `data_dir/profiles/` path returns 404. All three original
++profile checksums remain enforced. The pinned census contains 900 full episodes
++and 100 hard episodes (55 evaluated in position zero and 45 in position one).
++
++This integration requires Harbor's separate verifier support and the source
++runtime packaging helper. Its generated image installs verifyit at
++`a0861089947096aabe456ca4308ca46b1b001d7c`. Proof images used a wheel from that
++commit; deployments must ensure the pin is fetchable or supply the same wheel.
++Validation uses
++pinned source profiles and a local HTTP provider fixture, not model-quality
++parity. The three frozen SOTOPIA-hard deployment archive links were inaccessible.
++Cached deployment task files match all 100 generated hard configurations and
++native verifier files, and the cached deployment producer has the same Python
++AST as the pinned Harbor producer; this does not establish archive execution
++provenance. Evidence harnesses fix Python's hash seed for actor action-list
++ordering without changing the deployed source default.
+diff --git a/adapters/sotopia/run_sotopia_agent.py b/adapters/sotopia/run_sotopia_agent.py
+index b5c2c17..08e01c2 100644
+--- a/adapters/sotopia/run_sotopia_agent.py
++++ b/adapters/sotopia/run_sotopia_agent.py
+@@ -3,10 +3,11 @@ from __future__ import annotations
+ import argparse
+ import asyncio
+ import json
++import importlib
+ import logging
+ import os
+ from pathlib import Path
+-from typing import Any, TypedDict
++from typing import Any, NotRequired, TypedDict
+ 
+ from sotopia.agents import Agents, LLMAgent
+ from sotopia.database import AgentProfile, EnvironmentProfile, SotopiaDimensions
+@@ -41,6 +42,9 @@ class EpisodeResult(TypedDict):
+     overall_scores: list[int | float]
+     transcript: list[list[dict[str, str]]]
+     reasoning: str | None
++    producer_errors: NotRequired[list[str]]
++    producer_calls: NotRequired[list[dict[str, Any]]]
++    evaluator_input: NotRequired[dict[str, Any]]
+ 
+ 
+ class CapturingEpisodeEvaluator(EpisodeLLMEvaluator[SotopiaDimensions]):
+@@ -89,6 +93,32 @@ class CapturingEpisodeEvaluator(EpisodeLLMEvaluator[SotopiaDimensions]):
+         raise RuntimeError("SOTOPIA evaluator retry loop exhausted unexpectedly")
+ 
+ 
++class DeferredEpisodeEvaluator(CapturingEpisodeEvaluator):
++    """Export the exact native terminal input for the separate verifier."""
++
++    def __init__(self, model_name: str) -> None:
++        super().__init__(model_name)
++        self.evaluator_input: dict[str, Any] | None = None
++
++    async def __acall__(
++        self,
++        turn_number: int,
++        messages: list[tuple[str, Message]] | None,
++        history: str = "",
++        temperature: float | None = 0.0,
++    ) -> EvaluatorResponse:
++        self.evaluator_input = {
++            "turn_number": turn_number,
++            "messages": [
++                {"sender": sender, "message": message.to_natural_language()}
++                for sender, message in (messages or [])
++            ],
++            "history": history,
++            "temperature": temperature,
++        }
++        return []
++
++
+ def _profile(data: dict[str, Any], source_id_key: str) -> dict[str, Any]:
+     normalized = dict(data)
+     normalized["pk"] = normalized.pop(source_id_key)
+@@ -204,6 +234,7 @@ async def run_episode(
+     target_model: str,
+     partner_model: str,
+     evaluator_model: str,
++    defer_evaluation: bool = False,
+ ) -> EpisodeResult:
+     environment_data = config["environment"]
+     environment = EnvironmentProfile(**_profile(environment_data, "env_id"))
+@@ -214,7 +245,11 @@ async def run_episode(
+     models = [partner_model, partner_model]
+     models[evaluated_index] = target_model
+ 
+-    terminal_evaluator = CapturingEpisodeEvaluator(evaluator_model)
++    terminal_evaluator = (
++        DeferredEpisodeEvaluator(evaluator_model)
++        if defer_evaluation
++        else CapturingEpisodeEvaluator(evaluator_model)
++    )
+     env = ParallelSotopiaEnv(
+         env_profile=environment,
+         action_order="round-robin",
+@@ -227,7 +262,65 @@ async def run_episode(
+         for profile, model in zip(agent_profiles, models, strict=True)
+     ]
+     agents = Agents({agent.agent_name: agent for agent in agent_list})
+-    messages = await _run_conversation(env, agents, environment)
++    producer_errors: list[str] = []
++    producer_calls: list[dict[str, Any]] = []
++    generation: Any = importlib.import_module("sotopia.generation_utils.generate")
++    original_generate = generation.agenerate
++    original_completion = generation.acompletion
++    # An unrecovered provider failure becomes a source "none" action. Retain the
++    # native conversation, but do not grade that fallback as model performance.
++    completion_errors: list[str] = []
++
++    async def observed_completion(**kwargs: Any) -> Any:
++        try:
++            record: dict[str, Any] = {"model": kwargs["model"]}
++            producer_calls.append(record)
++            protocol = importlib.import_module("provider_protocol")
++            return await protocol.observed_completion(
++                original_completion, kwargs, record
++            )
++        except Exception as error:
++            completion_errors.append(f"{type(error).__name__}: {error}")
++            raise
++
++    async def observed_generate(**kwargs: Any) -> Any:
++        before = len(completion_errors)
++        try:
++            return await original_generate(**kwargs)
++        except Exception as error:
++            producer_errors.extend(
++                completion_errors[before:]
++                or [f"Native generation failed: {type(error).__name__}: {error}"]
++            )
++            raise
++
++    if defer_evaluation:
++        setattr(generation, "acompletion", observed_completion)
++        setattr(generation, "agenerate", observed_generate)
++    try:
++        messages = await _run_conversation(env, agents, environment)
++    finally:
++        setattr(generation, "acompletion", original_completion)
++        setattr(generation, "agenerate", original_generate)
++    if isinstance(terminal_evaluator, DeferredEpisodeEvaluator):
++        if terminal_evaluator.evaluator_input is None:
++            raise RuntimeError("SOTOPIA terminal evaluator did not run")
++        return {
++            "source": config["source"],
++            "combo_id": config["source"]["combo_id"],
++            "environment_id": config["environment"]["env_id"],
++            "agent_ids": [profile["agent_id"] for profile in config["agents"]],
++            "evaluated_agent_index": evaluated_index,
++            "models": [_model_identity(model) for model in models],
++            "evaluator_model": _model_identity(evaluator_model),
++            "scores": [],
++            "overall_scores": [],
++            "transcript": _serialize_messages(messages),
++            "reasoning": None,
++            "evaluator_input": terminal_evaluator.evaluator_input,
++            "producer_errors": producer_errors,
++            "producer_calls": producer_calls,
++        }
+     return _build_result(
+         config=config,
+         evaluated_index=evaluated_index,
+@@ -254,6 +347,7 @@ def main() -> None:
+             target_model=target_model,
+             partner_model=partner_model,
+             evaluator_model=evaluator_model,
++            defer_evaluation=config.get("verifier_backend") == "verifyit",
+         )
+     )
+     args.output.parent.mkdir(parents=True, exist_ok=True)
+diff --git a/adapters/sotopia/sotopia_agent.py b/adapters/sotopia/sotopia_agent.py
+index 9f98bae..1db3d50 100644
+--- a/adapters/sotopia/sotopia_agent.py
++++ b/adapters/sotopia/sotopia_agent.py
+@@ -49,6 +49,8 @@ class SotopiaAgent(BaseInstalledAgent):
+             runner_source.read_text(encoding="utf-8"), encoding="utf-8"
+         )
+         await environment.upload_file(local_copy, f"/{RUNNER_FILENAME}")
++        protocol_source = Path(__file__).with_name("provider_protocol.py")
++        await environment.upload_file(protocol_source, "/provider_protocol.py")
+ 
+     @staticmethod
+     def _custom_model(model: str, api_base: str | None) -> str:
+@@ -130,6 +132,10 @@ class SotopiaAgent(BaseInstalledAgent):
+                 "environment_id": summary["environment_id"],
+                 "combo_id": summary["combo_id"],
+                 "evaluated_agent_index": summary["evaluated_agent_index"],
+-                "scores": summary["scores"][summary["evaluated_agent_index"]],
++                "scores": (
++                    summary["scores"][summary["evaluated_agent_index"]]
++                    if summary["scores"]
++                    else None
++                ),
+             }
+         }
+diff --git a/adapters/sotopia/src/sotopia/adapter.py b/adapters/sotopia/src/sotopia/adapter.py
+index 3f3b3aa..bbf21b6 100644
+--- a/adapters/sotopia/src/sotopia/adapter.py
++++ b/adapters/sotopia/src/sotopia/adapter.py
+@@ -8,11 +8,12 @@ from dataclasses import dataclass
+ from pathlib import Path
+ from typing import Any
+ 
++from harbor.tasks.verifyit_source_runtime import package_source_runtime
++
+ 
+ SOURCE_COMMIT = "12c13d807a62ce523ff87afefacb307b277b1604"
+ SOURCE_BASE_URL = (
+-    "https://raw.githubusercontent.com/sotopia-lab/sotopia-space/"
+-    f"{SOURCE_COMMIT}/data_dir"
++    f"https://raw.githubusercontent.com/sotopia-lab/sotopia-space/{SOURCE_COMMIT}"
+ )
+ SOURCE_FILES = {
+     "agent_profiles.jsonl": "1f2f74c07fd9105242c7f2a951d5378f52cd03a6df113f6020edb90d31202f1b",
+@@ -74,9 +75,11 @@ class SotopiaAdapter:
+         cache_dir: Path | None = None,
+         limit: int | None = None,
+         overwrite: bool = False,
++        verifyit_enabled: bool = False,
+     ) -> None:
+         if split not in {"full", "hard"}:
+             raise ValueError(f"Unsupported split: {split!r}")
++        self.verifyit_enabled = verifyit_enabled
+         self.output_dir = output_dir
+         self.split = split
+         self.source_dir = source_dir
+@@ -191,6 +194,8 @@ class SotopiaAdapter:
+                 "agents": list(episode.agents),
+                 "evaluated_agent_index": episode.evaluated_agent_index,
+             }
++            if self.verifyit_enabled:
++                task_config["verifier_backend"] = "verifyit"
+             config_text = json.dumps(task_config, indent=2, sort_keys=True) + "\n"
+             (task_dir / "environment" / "task_config.json").write_text(config_text)
+             (task_dir / "tests" / "task_config.json").write_text(config_text)
+@@ -211,6 +216,34 @@ class SotopiaAdapter:
+                 "{split}", self.split
+             )
+             (task_dir / "task.toml").write_text(task_toml)
++            if self.verifyit_enabled:
++                tests = task_dir / "tests"
++                shutil.copy2(TEMPLATE_DIR / "tests/verifyit_score.py", tests)
++                shutil.copy2(Path(__file__).parents[2] / "run_sotopia_agent.py", tests)
++                shutil.copy2(Path(__file__).parents[2] / "provider_protocol.py", tests)
++                dockerfile = (TEMPLATE_DIR / "environment/Dockerfile").read_text()
++                dockerfile = dockerfile.replace(
++                    "COPY task_config.json /opt/sotopia/task_config.json", ""
++                )
++                package_source_runtime(
++                    task_dir,
++                    artifacts=["/logs/agent/sotopia-summary.json"],
++                    dockerfile=dockerfile
++                    + "\nRUN mkdir -p /logs/agent\nWORKDIR /app\n",
++                    timeout=300,
++                )
++                (tests / "native_bridge.sh").write_text(
++                    "#!/bin/sh\ncd /tests\nexec python3 /tests/verifyit_score.py\n"
++                )
++                config_path = task_dir / "task.toml"
++                config_path.write_text(
++                    config_path.read_text()
++                    + '\n[verifier.env]\nSOTOPIA_STORAGE_BACKEND = "local"\n'
++                    'SOTOPIA_EVALUATOR_MODEL = "${SOTOPIA_EVALUATOR_MODEL:-gpt-4o}"\n'
++                    'CUSTOM_API_KEY = "${CUSTOM_API_KEY:-EMPTY}"\n'
++                    'OPENAI_API_KEY = "${OPENAI_API_KEY:-}"\n'
++                    'ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}"\n'
++                )
+         except Exception:
+             shutil.rmtree(task_dir, ignore_errors=True)
+             raise
+diff --git a/adapters/sotopia/src/sotopia/main.py b/adapters/sotopia/src/sotopia/main.py
+index 6e5b944..d07a3f5 100644
+--- a/adapters/sotopia/src/sotopia/main.py
++++ b/adapters/sotopia/src/sotopia/main.py
+@@ -14,6 +14,7 @@ def main() -> None:
+     parser.add_argument("--cache-dir", type=Path)
+     parser.add_argument("--limit", type=int)
+     parser.add_argument("--overwrite", action="store_true")
++    parser.add_argument("--verifyit", action="store_true")
+     args = parser.parse_args()
+ 
+     output_dir = args.output_dir or Path("datasets") / (
+@@ -26,6 +27,7 @@ def main() -> None:
+         cache_dir=args.cache_dir,
+         limit=args.limit,
+         overwrite=args.overwrite,
++        verifyit_enabled=args.verifyit,
+     ).run()
+     print(f"Generated {len(generated)} {args.split} tasks in {output_dir}")
+ 
+diff --git a/adapters/sotopia/provider_protocol.py b/adapters/sotopia/provider_protocol.py
+new file mode 100644
+index 0000000..ac119d4
+--- /dev/null
++++ b/adapters/sotopia/provider_protocol.py
+@@ -0,0 +1,84 @@
++"""Observe native provider replies before LiteLLM discards protocol fields."""
++
++import importlib
++from typing import Any
++
++OPENAI_PROTOCOLS = frozenset(
++    {"openai", "azure", "openrouter", "together_ai", "hosted_vllm"}
++)
++
++
++def validate_completion(response: dict[str, Any]) -> None:
++    choices = response.get("choices")
++    if response.get("error") or not isinstance(choices, list) or len(choices) != 1:
++        raise ValueError("Provider must return one complete choice")
++    choice = choices[0]
++    message = choice.get("message", {})
++    if (
++        choice.get("finish_reason") != "stop"
++        or message.get("role") != "assistant"
++        or message.get("refusal")
++        or message.get("tool_calls")
++        or message.get("function_call")
++        or not isinstance(message.get("content"), str)
++        or not message["content"].strip()
++    ):
++        raise ValueError("Incomplete provider text response")
++
++
++async def observed_completion(
++    completion: Any, kwargs: dict[str, Any], record: dict[str, Any]
++) -> Any:
++    litellm = importlib.import_module("litellm")
++    httpx: Any = importlib.import_module("httpx")
++    provider = litellm.get_llm_provider(model=kwargs["model"])[1]
++    record["provider"] = provider
++    record["raw_protocol_validation"] = (
++        "openai_compatible" if provider in OPENAI_PROTOCOLS else "normalized_only"
++    )
++    record["raw_responses"] = []
++    # This adapter fixes round-robin actions and supplies both goals: inactive
++    # agents return before generation, and judge/repair calls are sequential.
++    original_send = httpx.AsyncClient.send
++    raw_errors: list[str] = []
++
++    async def observed_send(
++        client: Any, request: Any, *args: Any, **options: Any
++    ) -> Any:
++        response = await original_send(client, request, *args, **options)
++        if (
++            provider not in OPENAI_PROTOCOLS
++            or request.method != "POST"
++            or not request.url.path.rstrip("/").endswith("/chat/completions")
++            or not 200 <= response.status_code < 300
++        ):
++            return response
++        # Native agenerate requests nonstreaming completions. Reading their body
++        # leaves the same cached response for the SDK and preserves its lifecycle.
++        await response.aread()
++        try:
++            payload = response.json()
++        except (ValueError, UnicodeError):
++            return response
++        raw = {"response": payload}
++        record["raw_responses"].append(raw)
++        try:
++            validate_completion(payload)
++        except (ValueError, TypeError, AttributeError) as error:
++            raw["error"] = str(error)
++            raw_errors.append(str(error))
++        return response
++
++    setattr(httpx.AsyncClient, "send", observed_send)
++    try:
++        response = await completion(**kwargs)
++        if raw_errors:
++            raise ValueError("Invalid raw provider envelope: " + "; ".join(raw_errors))
++        if provider in OPENAI_PROTOCOLS and not record["raw_responses"]:
++            raise ValueError("Native provider returned no observable HTTP completion")
++        normalized = response.model_dump(mode="json")
++        record["response"] = normalized
++        validate_completion(normalized)
++        return response
++    finally:
++        setattr(httpx.AsyncClient, "send", original_send)
+diff --git a/adapters/sotopia/src/sotopia/task-template/tests/verifyit_score.py b/adapters/sotopia/src/sotopia/task-template/tests/verifyit_score.py
+new file mode 100644
+index 0000000..5a516d1
+--- /dev/null
++++ b/adapters/sotopia/src/sotopia/task-template/tests/verifyit_score.py
+@@ -0,0 +1,311 @@
++"""Judge native Sotopia terminal inputs in the separate verifier runtime."""
++
++import asyncio
++import importlib
++import json
++import os
++from pathlib import Path
++from typing import Any
++
++from provider_protocol import observed_completion
++
++
++class InvalidTask(ValueError):
++    pass
++
++
++class InvalidCandidate(ValueError):
++    pass
++
++
++def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
++    result: dict[str, Any] = {}
++    for key, value in pairs:
++        if key in result:
++            raise ValueError(f"Duplicate judge field: {key}")
++        result[key] = value
++    return result
++
++
++def validate_response(response: dict[str, Any]) -> None:
++    choices = response.get("choices")
++    if response.get("error") or not isinstance(choices, list) or len(choices) != 1:
++        raise ValueError("Judge must return one complete choice")
++    choice = choices[0]
++    message = choice.get("message", {})
++    if (
++        choice.get("finish_reason") != "stop"
++        or message.get("role") != "assistant"
++        or message.get("refusal")
++        or message.get("tool_calls")
++        or message.get("function_call")
++        or not isinstance(message.get("content"), str)
++        or not message["content"].strip()
++    ):
++        raise ValueError("Incomplete judge text response")
++    content = message["content"].strip()
++    if content.startswith("```json"):
++        content = content[7:].strip().removesuffix("```").strip()
++    try:
++        parsed = json.loads(content, object_pairs_hook=unique_object)
++    except json.JSONDecodeError:
++        # Preserve the source's explicit format-repair request for malformed JSON.
++        return
++    if not isinstance(parsed, dict):
++        return
++    evaluations = parsed.get("properties", parsed).get("evaluations")
++    if not isinstance(evaluations, dict):
++        return
++    for dimensions in evaluations.values():
++        if not isinstance(dimensions, dict):
++            continue
++        for value in dimensions.values():
++            if (
++                isinstance(value, list)
++                and len(value) == 2
++                and type(value[1]) is not int
++            ):
++                raise ValueError("Judge scores must be integers, without coercion")
++
++
++def validate_config(config: dict[str, Any]) -> None:
++    if not isinstance(config, dict):
++        raise InvalidTask("Task configuration must be an object")
++    if type(config.get("evaluated_agent_index")) is not int or config[
++        "evaluated_agent_index"
++    ] not in (0, 1):
++        raise InvalidTask("Invalid evaluated participant")
++    agents = config.get("agents")
++    environment = config.get("environment")
++    if (
++        not isinstance(agents, list)
++        or len(agents) != 2
++        or not isinstance(environment, dict)
++    ):
++        raise InvalidTask("Expected two trusted participant profiles")
++    for profile in agents:
++        if not isinstance(profile, dict) or any(
++            not isinstance(profile.get(key), str) or not profile[key].strip()
++            for key in ("agent_id", "first_name", "last_name")
++        ):
++            raise InvalidTask("Malformed participant profile")
++    goals = environment.get("agent_goals")
++    if (
++        not isinstance(goals, list)
++        or len(goals) != 2
++        or any(not isinstance(goal, str) or not goal.strip() for goal in goals)
++    ):
++        raise InvalidTask("Expected both trusted goals")
++    if (
++        not isinstance(environment.get("env_id"), str)
++        or not isinstance(environment.get("scenario"), str)
++        or not environment["scenario"].strip()
++    ):
++        raise InvalidTask("Malformed environment profile")
++    source = config.get("source")
++    if (
++        not isinstance(source, dict)
++        or not isinstance(source.get("combo_id"), str)
++        or not source["combo_id"]
++    ):
++        raise InvalidTask("Missing trusted combination identity")
++
++
++def validate_candidate(
++    config: dict[str, Any], candidate: dict[str, Any], runner: Any
++) -> dict[str, Any]:
++    if not isinstance(candidate, dict):
++        raise InvalidCandidate("Conversation artifact must be an object")
++    expected = {
++        "combo_id": config["source"]["combo_id"],
++        "environment_id": config["environment"]["env_id"],
++        "agent_ids": [profile["agent_id"] for profile in config["agents"]],
++        "evaluated_agent_index": config["evaluated_agent_index"],
++    }
++    if any(candidate.get(key) != value for key, value in expected.items()):
++        raise InvalidCandidate("Episode participant or task identity mismatch")
++    terminal = candidate.get("evaluator_input")
++    if (
++        not isinstance(terminal, dict)
++        or terminal.get("history") != ""
++        or terminal.get("temperature") != 0.0
++    ):
++        raise InvalidCandidate("Missing native terminal input")
++    turn = terminal.get("turn_number")
++    messages = terminal.get("messages")
++    if (
++        type(turn) is not int
++        or not 1 <= turn <= 20
++        or not isinstance(messages, list)
++        or len(messages) != 1 + 3 * turn
++    ):
++        raise InvalidCandidate("Incomplete native conversation")
++    try:
++        profiles = [
++            runner.AgentProfile(**runner._profile(profile, "agent_id"))
++            for profile in config["agents"]
++        ]
++        agents = runner.Agents(
++            {
++                agent.agent_name: agent
++                for agent in [
++                    runner.LLMAgent(agent_profile=profile) for profile in profiles
++                ]
++            }
++        )
++        env = runner.ParallelSotopiaEnv(
++            env_profile=runner.EnvironmentProfile(
++                **runner._profile(config["environment"], "env_id")
++            ),
++            action_order="round-robin",
++        )
++        env.reset(agents=agents)
++    except (ValueError, TypeError, KeyError) as error:
++        raise InvalidTask(f"Malformed trusted profile: {error}") from error
++    if len(agents) != 2:
++        raise InvalidTask("Trusted participants must have distinct names")
++    background = {
++        "sender": env.inbox[0][0],
++        "message": env.inbox[0][1].to_natural_language(),
++    }
++    if messages[0] != background:
++        raise InvalidCandidate("Conversation background differs from trusted profiles")
++    names = list(agents)
++    for index, message in enumerate(messages[1:]):
++        if (
++            not isinstance(message, dict)
++            or message.get("sender") != (["Environment"] + names)[index % 3]
++            or not isinstance(message.get("message"), str)
++            or not message["message"]
++        ):
++            raise InvalidCandidate("Conversation participant ordering is incomplete")
++        if index % 3 == 0 and message["message"] != f"Turn #{index // 3 + 1}":
++            raise InvalidCandidate("Conversation turn marker mismatch")
++    return terminal
++
++
++async def evaluate_terminal(
++    terminal: dict[str, Any], model: str, runner: Any, diagnostics: dict[str, Any]
++) -> list:
++    evaluators: Any = importlib.import_module("sotopia.envs.evaluators")
++    generation: Any = importlib.import_module("sotopia.generation_utils.generate")
++    messages_module = importlib.import_module("sotopia.messages.message_classes")
++    original_generate = evaluators.agenerate
++    original_completion = generation.acompletion
++    diagnostics["judge_calls"] = []
++    diagnostics["parsed_evaluations"] = []
++
++    async def checked_completion(**kwargs: Any) -> Any:
++        record = {
++            "request": {
++                key: (
++                    value.model_json_schema()
++                    if key == "response_format" and isinstance(value, type)
++                    else value
++                )
++                for key, value in kwargs.items()
++                if key != "api_key"
++            }
++        }
++        diagnostics["judge_calls"].append(record)
++        try:
++            response = await observed_completion(original_completion, kwargs, record)
++            record["response"] = response.model_dump(mode="json")
++            validate_response(record["response"])
++            return response
++        except Exception as error:
++            record["error"] = f"{type(error).__name__}: {error}"
++            raise
++
++    async def named_generate(**kwargs: Any) -> Any:
++        response = await original_generate(**kwargs)
++        evaluations = response.evaluations
++        diagnostics["parsed_evaluations"].append(response.model_dump(mode="json"))
++        if set(evaluations) != {"agent_1", "agent_2"}:
++            raise ValueError("Judge omitted or renamed a participant")
++        # Native evaluator enumerates values; canonical order preserves named identity.
++        response.evaluations = {key: evaluations[key] for key in ("agent_1", "agent_2")}
++        return response
++
++    setattr(evaluators, "agenerate", named_generate)
++    setattr(generation, "acompletion", checked_completion)
++    try:
++        evaluator = runner.CapturingEpisodeEvaluator(model)
++        return await evaluator.__acall__(
++            turn_number=terminal["turn_number"],
++            messages=[
++                (
++                    message["sender"],
++                    messages_module.SimpleMessage(message=message["message"]),
++                )
++                for message in terminal["messages"]
++            ],
++            history=terminal["history"],
++            temperature=terminal["temperature"],
++        )
++    finally:
++        setattr(evaluators, "agenerate", original_generate)
++        setattr(generation, "acompletion", original_completion)
++
++
++def score(
++    tests: Path = Path("/tests"),
++    candidate_path: Path = Path("/logs/agent/sotopia-summary.json"),
++) -> dict[str, Any]:
++    diagnostics: dict[str, Any] = {}
++    status = "infra_error"
++    reward = 0.0
++    try:
++        try:
++            config = json.loads((tests / "task_config.json").read_text())
++            validate_config(config)
++        except (json.JSONDecodeError, InvalidTask, TypeError, KeyError) as error:
++            raise InvalidTask(str(error)) from error
++        runner = importlib.import_module("run_sotopia_agent")
++        native = importlib.import_module("verify")
++        if not candidate_path.exists():
++            raise InvalidCandidate("Missing conversation artifact")
++        try:
++            candidate = json.loads(candidate_path.read_text())
++            terminal = validate_candidate(config, candidate, runner)
++        except (json.JSONDecodeError, TypeError, KeyError) as error:
++            raise InvalidCandidate(str(error)) from error
++        if candidate.get("producer_errors"):
++            raise RuntimeError(
++                f"Conversation provider failed: {candidate['producer_errors']}"
++            )
++        model = os.environ["SOTOPIA_EVALUATOR_MODEL"]
++        response = asyncio.run(evaluate_terminal(terminal, model, runner, diagnostics))
++        evaluation = runner.unweighted_aggregate_evaluate(response)
++        rates = [evaluation.p1_rate, evaluation.p2_rate]
++        if any(rate is None for rate in rates):
++            raise ValueError("Missing participant rating")
++        scores = [
++            {key: value for key, value in rate[1].items() if key != "overall_score"}
++            for rate in rates
++        ]
++        metrics = [native.normalized_scores(value) for value in scores]
++        diagnostics.update(
++            scores=scores,
++            overall_scores=[rate[0] for rate in rates],
++            participant_metrics=metrics,
++            reasoning=evaluation.comments,
++        )
++        reward = metrics[config["evaluated_agent_index"]]["reward"]
++        diagnostics["native_metrics"] = metrics[config["evaluated_agent_index"]]
++        status = "scored"
++    except InvalidCandidate as error:
++        status = "scored"
++        diagnostics["error"] = str(error)
++    except InvalidTask as error:
++        status = "invalid_task"
++        diagnostics["error"] = str(error)
++    except Exception as error:
++        diagnostics["error"] = f"{type(error).__name__}: {error}"
++    return {"status": status, "reward": reward, "detail": diagnostics}
++
++
++if __name__ == "__main__":
++    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "native-verdict.json").write_text(
++        json.dumps(score(), allow_nan=False) + "\n"
++    )
+diff --git a/tests/runtime/test_verifyit_sotopia_runtime.py b/tests/runtime/test_verifyit_sotopia_runtime.py
+new file mode 100644
+index 0000000..46bf025
+--- /dev/null
++++ b/tests/runtime/test_verifyit_sotopia_runtime.py
+@@ -0,0 +1,252 @@
++"""Ordinary Sotopia participant identity regressions with a local provider."""
++
++import asyncio
++import importlib.util
++import json
++import shutil
++import sys
++import threading
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++pytestmark = pytest.mark.runtime
++
++ROOT = Path(__file__).parents[2]
++
++
++def load_module(name, path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    if spec is None or spec.loader is None:
++        raise RuntimeError(f"Cannot load runtime module: {path}")
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++@pytest.fixture
++def modules(monkeypatch):
++    monkeypatch.syspath_prepend(str(ROOT / "adapters/sotopia"))
++    runner = load_module(
++        "run_sotopia_agent", ROOT / "adapters/sotopia/run_sotopia_agent.py"
++    )
++    wrapper = load_module(
++        "sotopia_score",
++        ROOT / "adapters/sotopia/src/sotopia/task-template/tests/verifyit_score.py",
++    )
++    return runner, wrapper
++
++
++@pytest.fixture
++def provider():
++    state: dict[str, Any] = {"mode": "reverse", "requests": []}
++    dimensions = [
++        "believability",
++        "relationship",
++        "knowledge",
++        "secret",
++        "social_rules",
++        "financial_and_material_benefits",
++        "goal",
++    ]
++    scores = {
++        name: dict(zip(dimensions, [["Reason", score] for score in values]))
++        for name, values in [
++            ("agent_1", [8, -3, 6, -7, -2, 1, 9]),
++            ("agent_2", [2, 4, 3, -1, -8, -4, 1]),
++        ]
++    }
++
++    class Handler(BaseHTTPRequestHandler):
++        def do_POST(self):
++            state["requests"].append(
++                json.loads(self.rfile.read(int(self.headers["Content-Length"])))
++            )
++            values = {"agent_2": scores["agent_2"], "agent_1": scores["agent_1"]}
++            if state["mode"] == "missing":
++                values.pop("agent_2")
++            content = json.dumps({"evaluations": values})
++            if state["mode"] == "duplicate":
++                content = content.replace('"agent_1":', '"agent_1": {}, "agent_1":', 1)
++            message = {"role": "assistant", "content": content}
++            if (
++                state["mode"] in {"producer-refusal", "producer-malformed"}
++                and state["requests"][-1]["model"] != "judge"
++            ):
++                message["content"] = (
++                    "{}"
++                    if state["mode"] == "producer-malformed"
++                    else json.dumps({"action_type": "none", "argument": ""})
++                )
++            if state["mode"] in {"refusal", "producer-refusal"}:
++                message["refusal"] = "Unable to evaluate"
++            response: dict[str, Any] = {
++                "id": "test",
++                "object": "chat.completion",
++                "created": 1,
++                "model": "judge",
++                "choices": [
++                    {
++                        "index": 0,
++                        "message": message,
++                        "finish_reason": "length"
++                        if state["mode"] == "truncated"
++                        else "stop",
++                    }
++                ],
++            }
++            status = 200
++            if (
++                state["mode"] == "producer-failure"
++                and state["requests"][-1]["model"] != "judge"
++            ):
++                status = 400
++                response = {
++                    "error": {
++                        "type": "invalid_request_error",
++                        "message": "Ordinary provider failure",
++                        "code": "fixture",
++                    }
++                }
++            data = json.dumps(response).encode()
++            self.send_response(status)
++            self.send_header("Content-Type", "application/json")
++            self.send_header("Content-Length", str(len(data)))
++            self.end_headers()
++            self.wfile.write(data)
++
++        def log_message(self, *args):
++            pass
++
++    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
++    thread = threading.Thread(target=server.serve_forever, daemon=True)
++    thread.start()
++    try:
++        yield state, f"custom/judge@http://127.0.0.1:{server.server_port}/v1"
++    finally:
++        server.shutdown()
++        server.server_close()
++        thread.join()
++
++
++def terminal_input():
++    return {
++        "turn_number": 1,
++        "messages": [
++            {"sender": "Environment", "message": "Alex and Blair have distinct goals."},
++            {"sender": "Alex", "message": 'said: "Agreed."'},
++            {"sender": "Blair", "message": "left the conversation"},
++        ],
++        "history": "",
++        "temperature": 0.0,
++    }
++
++
++def test_reversed_participant_keys_preserve_named_scores_and_source_request(
++    modules, provider
++):
++    runner, wrapper = modules
++    state, model = provider
++    messages = importlib.import_module("sotopia.messages.message_classes")
++
++    terminal = terminal_input()
++    original = asyncio.run(
++        runner.CapturingEpisodeEvaluator(model).__acall__(
++            turn_number=1,
++            messages=[
++                (item["sender"], messages.SimpleMessage(message=item["message"]))
++                for item in terminal["messages"]
++            ],
++        )
++    )
++    corrected = asyncio.run(wrapper.evaluate_terminal(terminal, model, runner, {}))
++    source = runner.unweighted_aggregate_evaluate(original)
++    result = runner.unweighted_aggregate_evaluate(corrected)
++    assert source.p1_rate[1]["goal"] == 1
++    assert source.p2_rate[1]["goal"] == 9
++    assert result.p1_rate[1] == {
++        "believability": 8,
++        "relationship": -3,
++        "knowledge": 6,
++        "secret": -7,
++        "social_rules": -2,
++        "financial_and_material_benefits": 1,
++        "goal": 9,
++        "overall_score": 12 / 7,
++    }
++    assert result.p2_rate[1]["goal"] == 1
++    assert state["requests"][0] == state["requests"][1]
++
++
++@pytest.mark.parametrize("mode", ["missing", "duplicate", "truncated", "refusal"])
++def test_invalid_participant_decisions_exhaust_native_retry_without_credit(
++    modules, provider, mode
++):
++    runner, wrapper = modules
++    state, model = provider
++    state["mode"] = mode
++    diagnostics = {}
++    with pytest.raises(ValueError, match="after 5 attempts"):
++        asyncio.run(
++            wrapper.evaluate_terminal(terminal_input(), model, runner, diagnostics)
++        )
++    assert len(state["requests"]) == 5
++    assert (
++        all(call.get("error") for call in diagnostics["judge_calls"])
++        if mode != "missing"
++        else len(diagnostics["parsed_evaluations"]) == 5
++    )
++
++
++@pytest.mark.parametrize(
++    "mode", ["producer-failure", "producer-refusal", "producer-malformed"]
++)
++def test_failed_conversation_provider_cannot_receive_native_fallback_credit(
++    modules, provider, tmp_path, monkeypatch, mode
++):
++    runner, wrapper = modules
++    state, model = provider
++    state["mode"] = mode
++    config = {
++        "source": {"combo_id": "fixture-combo"},
++        "environment": {
++            "env_id": "fixture-env",
++            "scenario": "Two colleagues plan a meeting.",
++            "agent_goals": ["Meet on Monday.", "Meet on Tuesday."],
++            "relationship": 1,
++        },
++        "agents": [
++            {"agent_id": "fixture-alex", "first_name": "Alex", "last_name": "Example"},
++            {
++                "agent_id": "fixture-blair",
++                "first_name": "Blair",
++                "last_name": "Example",
++            },
++        ],
++        "evaluated_agent_index": 0,
++    }
++    models = {
++        "target_model": model.replace("custom/judge@", "custom/target@"),
++        "partner_model": model.replace("custom/judge@", "custom/partner@"),
++        "evaluator_model": model,
++    }
++    source = asyncio.run(runner.run_episode(config, **models))
++    candidate = asyncio.run(runner.run_episode(config, defer_evaluation=True, **models))
++    assert source["scores"][0]["goal"] == 1
++    assert candidate["producer_errors"]
++    (tmp_path / "task_config.json").write_text(json.dumps(config))
++    artifact = tmp_path / "conversation.json"
++    artifact.write_text(json.dumps(candidate))
++    shutil.copy2(
++        ROOT / "adapters/sotopia/src/sotopia/task-template/tests/verify.py",
++        tmp_path / "verify.py",
++    )
++    monkeypatch.syspath_prepend(str(tmp_path))
++    monkeypatch.setitem(sys.modules, "run_sotopia_agent", runner)
++    monkeypatch.setenv("SOTOPIA_EVALUATOR_MODEL", model)
++    verdict = wrapper.score(tmp_path, artifact)
++    assert verdict["status"] == "infra_error"
++    assert verdict["reward"] == 0
++    assert "judge_calls" not in verdict["detail"]
