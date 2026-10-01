@@ -8,29 +8,29 @@
     "inventory_entries": 49,
     "scoring_routes": 47,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 45,
-    "pending_scoring_routes": 2,
-    "pending_active_scoring_routes": 1,
+    "source_patched_routes": 46,
+    "pending_scoring_routes": 1,
+    "pending_active_scoring_routes": 0,
     "pending_dormant_scoring_routes": 1,
-    "zero_core_extension_unwired_routes": 1,
+    "zero_core_extension_unwired_routes": 0,
     "existing_class_behavior_gap_routes": 0,
     "real_replayed_source_routes": 30,
-    "implemented_routes_missing_real_traces": 15,
+    "implemented_routes_missing_real_traces": 16,
     "native_fallback_in_cutover_routes": 0,
-    "distinct_source_scoring_contract_families": 17,
+    "distinct_source_scoring_contract_families": 18,
     "status_counts": {
       "implemented_validated": 30,
-      "implemented_not_validated": 15,
+      "implemented_not_validated": 16,
       "capability_gap": 0,
       "not_a_correctness_verifier": 2,
-      "not_integrated": 2
+      "not_integrated": 1
     },
     "unwired_dormant_math_comparator_parity_audits": 0,
     "inherited_planning_existing_class_extension_routes": 23,
     "validation_regressed_routes": 0
   },
   "classification_notes": [
-    "The original 46 scoring routes have composition/extension specs. The newly recovered registered IPI route needs its upstream scoring contract established before a mapping can be specified; no new mode category is proposed.",
+    "All 47 inventoried scoring routes have existing-mode mappings, including the recovered IPI route; coder1 remains user-excluded and partial. No new mode category is proposed.",
     "Capability_gap rows also require source wiring; not_integrated rows need no proposed core extension. Dormant status is orthogonal.",
     "No real verified traces is a validation gap only for implemented routes, not a missing capability. Unpatched observed real traces do not imply migration.",
     "Existing prepared math API is implemented; remaining math semantics require source parity/comparator-policy proof. Historic docs proposal to expose this API is stale and not counted as missing.",
@@ -43,7 +43,7 @@
     "Standalone26 IFEval predicates and the pinned NVIDIA registry execute through source-owned IFEval extensions under ScriptSpec deadlines. NVIDIA runtime preserves source Python RNG advancement; deterministic language detection is a documented client fix. Missing historical hidden state is a replay limitation, not missing dispatch.",
     "Dormant BrowseComp/RULER/STEM use existing core schema/exact primitives for raw external judge output; both GenRM routes retain the full source cohort runtime inside ScriptSpec. These five routes have fixture evidence only; GenRM training-loop initialization and archived cohort replay are not claimed.",
     "Legacy math policy is the pinned source hybrid contract, not inferred solely from successful parsing. Ordinary parser rejection requires a real symmetric judge verdict; raised parser failures are unscored zero. All18 frozen archives match after correcting nested judge transcript extraction; previous missing-transcript reports are superseded.",
-    "Issues #890/#891 correction: IPI was registered in the pinned MOPD source but omitted from this inventory; its verifier remains unimplemented. Abstention completion is restored after the explicit empty-output policy and actual env.step regression proof. This is a tested client export, not a claim of deployment on SkyRL main. Broader source-registry audit remains pending."
+    "Issues #890/#891: IPI now has an exported stateful client using pinned NeMo handlers and exact-comparator composition; abstention completion is restored. Both have actual env.step evidence, not a claim of deployment on SkyRL main. All three pinned Nemotron source registry sets are reconciled; a broader inventory audit remains unclaimed."
   ],
   "real_trace_replay": {
     "verified_population": 5460,
@@ -139,6 +139,9 @@
       "nemotron_ultra/single_step_tool_use_with_argument_comparison_agent",
       "nemotron_ultra/swe_pivot_single_step_tool_use_with_argument_comparison_agent",
       "nemotron_ultra/toolcall_schema_single_step_tool_use_with_argument_comparison_agent"
+    ],
+    "stateful_tool_trace": [
+      "nemotron_ultra/indirect_prompt_injection_simple_agent"
     ]
   },
   "entries": [
@@ -2268,20 +2271,22 @@
     },
     {
       "id": "nemotron_ultra/indirect_prompt_injection_simple_agent",
-      "status": "not_integrated",
-      "not_covered_reason": "Pinned MOPD registry accepts this generator, but the original environment has no verifier implementation and raises NotImplementedError. The original coverage inventory omitted this registered route; verifyit cutover also cannot score it.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "Completed archived-score parity is unavailable; actual SkyRL fixtures and pinned NeMo helper comparisons are validated.",
       "active_in_pinned_dispatch": false,
       "active_in_pinned_source_registry": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "unimplemented_native_and_cutover",
+      "source_runtime": "pinned_nemo_tool_handlers_with_existing_exact_composition",
       "native_fallback_in_cutover": false,
-      "contract_family": "indirect_prompt_injection_contract_unresolved",
-      "existing_primitive_candidate": [],
-      "resolution_strategy": "recover_upstream_contract_before_mapping",
-      "needed_change": "Establish the original upstream verifier and task contract, then implement and test a reusable existing-mode composition or explicitly remove the source from the training registry.",
-      "validation_gap": "No implemented source or verifyit scoring contract; no successful roundtrip.",
-      "source_contract": "Registered by NEMOTRON_ULTRA_MOPD_AGENTS; registry comment explicitly says verifier has not been ported and environment rejects these rows.",
+      "contract_family": "stateful_tool_trace",
+      "existing_primitive_candidate": [
+        "exact"
+      ],
+      "resolution_strategy": "source_tool_runtime_existing_exact_composition",
+      "needed_change": "Apply exported IPI patch after the existing integration stack including the #891 correction; deployment pins remain unchanged.",
+      "validation_gap": "No completed archived score exists: three selected archived prefixes remain unavailable until an explicit fixture terminal turn. Actual completed source-row fixtures cover three domains; matcher census covers all seven domains and 37 types.",
+      "source_contract": "Pinned NeMo Gym 7a19900 safety times required-tool utility over complete structured tool events; strict discriminator argument projection and normalized exact equality. Original SkyRL source had no implementation.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
         "path": "infra/rl_data/sources.py",
@@ -2290,22 +2295,30 @@
         "dispatch": "MOPD source registration; no NemotronUltraEnv._step implementation"
       },
       "evidence": [
-        "https://github.com/marin-community/MarinSkyRL/issues/890"
+        "https://github.com/marin-community/MarinSkyRL/issues/890",
+        "integrations/MarinSkyRL/indirect-prompt-injection-provenance.json",
+        "evidence/e2e/wiring/skyrl-ipi/final-manifest.json",
+        "evidence/e2e/wiring/skyrl-ipi/manager-terminal-replay.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "not_assessed_until_source_contract_recovered"
+      "core_extension_requirement": "existing_primitives_no_core_edit",
+      "integration_patch": "integrations/MarinSkyRL/indirect-prompt-injection-verifyit.patch",
+      "validation_scope": "2,000 pinned MOPD rows pass preflight; 4,000 NeMo pure-helper/verifyit comparison pairs; 12 actual SkyRL episodes from three frozen rows; three recorded incomplete prefixes; five independent manager terminal scenarios; 14 durable tests. Full NeMo HTTP server execution and completed archived-score parity are not claimed. Unfinished budget exhaustion, malformed arguments and refusal envelopes fail closed; terminal results latch.",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     }
   ],
   "tested_cutover_reporting": {
     "denominator": 46,
-    "wired_routes": 45,
-    "tested_complete_routes": 45,
+    "wired_routes": 46,
+    "tested_complete_routes": 46,
     "real_trace_routes": 30,
-    "source_fixture_routes": 15,
+    "source_fixture_routes": 16,
     "route_specific_witness_pending": [],
-    "partial_routes_reported_separately": 1,
-    "definition": "45 accepted tested routes: 30 with historical real-trace evidence and 15 source-fixture routes. Abstention completion is restored by manager-replayed issue #891 env.step fixtures and explicit empty-answer task policy. IPI remains required and unimplemented; coder1 alone remains user-excluded. This is a corrected known inventory, not a completed broader registry audit or current-main deployment claim.",
+    "partial_routes_reported_separately": 0,
+    "definition": "46 accepted tested routes: 30 historical real-trace routes and 16 source-fixture routes. IPI uses pinned NeMo helper comparisons and actual SkyRL episodes; its archived prefixes have no completed source score. Coder1 alone remains user-excluded. This is the corrected known inventory, not a current-main deployment or universal registry-audit claim.",
     "inventory_denominator": 47,
     "excluded_routes": [
       {
@@ -2315,8 +2328,6 @@
       }
     ],
     "known_regressed_routes": [],
-    "unimplemented_registered_routes": [
-      "nemotron_ultra/indirect_prompt_injection_simple_agent"
-    ]
+    "unimplemented_registered_routes": []
   }
 }

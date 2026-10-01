@@ -311,3 +311,33 @@ local HTTP fixtures, alongside the existing archived judge-family evidence.
 See `empty-abstention-provenance.json` for source and patch hashes and
 `evidence/issues/skyrl-891/env-manager/roundtrip.json` for raw verdicts.
 This restores tested exported coverage, not deployment on current SkyRL main.
+
+
+### Stateful indirect prompt injection (#890)
+
+Apply `indirect-prompt-injection-verifyit.patch` after the complete existing
+client patch stack, including `empty-abstention-verifyit.patch`. The new route
+uses the existing structured rollout evidence, pinned NeMo Gym tool handlers
+(7a19900a114f8c349c9fac031b016575e39cfa36), and verifyit's exact comparator.
+Enable `verifyit_enabled` to compose safety with required-tool utility. The
+source handlers retain Apache-2.0 notices. This export does not update the
+published SkyRL dependency pin or deploy the route to SkyRL main.
+
+The original SkyRL registry accepted IPI rows but had no implementation.
+Validation therefore compares the pinned NeMo pure scoring helper and its
+safety-times-utility formula against verifyit, then runs actual registered
+SkyRL episodes. The 2,000 MOPD rows cover seven domains and 37 verification
+types; all pass reference preflight and 4,000 matcher comparisons. Twelve
+completed fixture episodes use three frozen source rows. Three selected saved
+model prefixes remain unavailable at their recorded boundary; added terminal
+turns are fixtures, not completed archived-score parity. Full NeMo HTTP server
+execution and all nine domains in the separate public dataset are not claimed.
+
+Malformed tool arguments, refusal envelopes and unfinished five-turn episodes
+return zero. Tool reads alone cannot earn a terminal reward; later steps cannot
+revive a terminal failure. Five independent manager scenarios confirm positive,
+missing-read, length, refusal and exhausted-turn outcomes; 14 durable tests
+cover structured rollout, termination and task-reference behavior. The unfinished-turn and
+refusal checks deliberately tighten the source completion contract. See
+`indirect-prompt-injection-provenance.json` for exact patch, source and evidence
+hashes; raw traces remain in the campaign evidence directory.

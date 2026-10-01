@@ -305,7 +305,7 @@ text = text.replace(
         else f"The {len(pending_skyrl)} pending scoring routes comprise {pending_active} active routes and "
         f"{pending_dormant} dormant implementations. "
     )
-    + "Issue #890 adds a previously omitted source-registered generator whose native verifier was never implemented. "
+    + "Issue #890 now has an exported stateful IPI route using pinned NeMo tool handlers and existing exact grading. Its original SkyRL verifier was absent; validation compares the NeMo helper and actual SkyRL fixture episodes, not completed archived scores. "
     "Issue #891 is repaired and tested in the exported abstention adapter using an explicit empty-answer policy; "
     "literal empty responses reach the judge, whereas only normalized [IDK] unconditionally scores 0.5. Existing SkyRL deployment pins are unchanged. "
     "The corrected inventory still needs a broader registry audit. Three dormant math variants now have opt-in source "
