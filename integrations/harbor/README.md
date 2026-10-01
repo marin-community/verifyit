@@ -113,6 +113,23 @@ answers score zero. All 1,000 source references pass the added validation.
 No matching saved model trace was available. Evidence and installed file hashes
 are in `evidence/e2e/wiring/harbor-mmau/isolation-final-manifest.json`.
 
+Apply `mmmlu-mcq-verifyit.patch` after the Harbor dispatcher and
+`answer-isolation-verifyit.patch`. The generated private verifier preserves
+the source multilingual marker patterns, normalization and agent-log priority,
+then grades the extracted label with existing McqSpec. It receives only
+`/logs/agent`; the expected label remains in the verifier image. Repeated
+identical labels retain their score, while conflicting explicit labels score
+zero. This intentionally tightens the source's first-marker policy.
+
+The image pins verifyit `ca7fce7c50f61a3b4b26fe1f9609853effadb87c`; local proofs
+substitute the exact-commit wheel for its unpublished Git install. Eighteen
+ordinary language and log-path fixtures ran the source script and actual Harbor
+Trials: seventeen scores match and one conflicting-answer case changes from
+one to zero. Primitive witnesses record actual MCQ calls in three languages.
+No matching archived traces were available. These results cover ordinary score
+parity, with no additional security validation. Evidence and installed hashes
+are in `evidence/e2e/wiring/harbor-mmmlu/final-manifest.json`.
+
 Apply `compilebench-pytest-verifyit.patch` after the Harbor dispatcher patch.
 With `--verifyit-enabled`, the adapter fetches the pinned 15 CompileBench tasks
 and declares each unchanged `/tests/test_outputs.py` suite to PytestSpec. Empty
