@@ -464,3 +464,20 @@ emulation on the validation host; source comparisons use the same runtime.
 Candidate code still shares the source grader with trusted assertions, so this
 bridge does not establish candidate/assertion isolation. See
 `multiple-source.json` for exact sources, images, scope and evidence.
+
+### Consolidated Judge client checkpoint
+
+`shared-judges-verifyit.patch` requires the core `grade_judge_candidate` API and
+`JudgeConnection`. Its existing `verifyit_enabled=True` clients now pass actual
+candidate text directly to Judge mode; the per-answer Script subprocess and
+client-owned judge transport/parser are removed. Apply it before the separate
+FinanceBench client patch. Default source paths remain available.
+
+SimpleQA, SimpleQAMini, FinanceBench, OlympiadBench and OlympiadBenchFull have
+fresh local-HTTP framework evidence: seven result scenarios and 45 malformed
+batch failures. Blank candidates receive zero without a judge request. The shared
+transport uses `max_completion_tokens`, retries incomplete output from 128 to
+2048 tokens, and requires an unambiguous complete final label. These are explicit
+near-parity policies; archived validation is still pending. See
+[checkpoint provenance](shared-judges-source.json). This frozen patch excludes
+later Math-family consolidation work.

@@ -113,72 +113,58 @@ diff --git a/eval/graders/verifyit_judges.py b/eval/graders/verifyit_judges.py
 new file mode 100644
 --- /dev/null
 +++ b/eval/graders/verifyit_judges.py
-@@ -0,0 +1,196 @@
-+"""Preserve Evalchemy judge protocols through ScriptSpec and strict label grading."""
+@@ -0,0 +1,130 @@
++"""Map Evalchemy prompts and result types to the shared Judge mode."""
 +
 +import asyncio
-+import dataclasses
 +import json
-+import os
-+import sys
-+import tempfile
-+from pathlib import Path
 +
-+from openai import AsyncOpenAI
-+from verifyit.grade import InvalidTask, Status, run
-+from verifyit.json_objects import unique_object
-+from verifyit.modes.grade_exact import grade_exact_candidate
-+from verifyit.spec import ExactSpec, ScriptSpec, render_spec
++from verifyit.grade import InvalidTask
++from verifyit.modes.grade_judge import JudgeConnection, grade_judge_candidate
++from verifyit.spec import EmptyOutputPolicy, JudgeSpec
 +
 +from eval.graders.answer_equivalence import (
 +    DEFAULT_NUM_WORKERS,
 +    JUDGE_PROMPT,
-+    JUDGE_TOKEN_BUDGETS,
 +    EquivalenceJudgment,
 +    EquivalenceMethod,
 +    EquivalenceResult,
 +    JudgeLabel,
-+    _parse_judgment,
 +    math_answers_equivalent,
 +)
-+from eval.graders.simpleqa import SIMPLEQA_GRADER_TEMPLATE, _parse_simpleqa_judgment
++from eval.graders.simpleqa import SIMPLEQA_GRADER_TEMPLATE
 +
 +
-+def _judge_one(prompt, config, profile):
-+    with tempfile.TemporaryDirectory(prefix="verifyit-judge-") as directory:
-+        tests = Path(directory)
-+        payload = tests / "input.json"
-+        payload.write_text(
-+            json.dumps(
-+                {
-+                    "prompt": prompt,
-+                    "model": config.model,
-+                    "base_url": config.base_url,
-+                    "api_key": config.api_key,
-+                    "profile": profile,
-+                }
-+            )
-+        )
-+        (tests / "run.sh").write_text('exec "$@"\n')
-+        specification = ScriptSpec(
-+            "run.sh",
-+            args=(sys.executable, "-m", "eval.graders.verifyit_judges", str(payload)),
-+            timeout=5500,
-+            verdict_file="result.json",
-+        )
-+        spec = tests / "verifier.toml"
-+        spec.write_text(render_spec(specification))
-+        verdict = run(spec, tests)
-+    if verdict.status == Status.INVALID_TASK:
-+        raise InvalidTask(str(verdict.detail))
-+    if verdict.status != Status.SCORED:
-+        raise RuntimeError(f"Judge verifier failed: {verdict.status}: {verdict.detail}")
-+    raw = verdict.detail["raw"]
-+    parsed = _parse_simpleqa_judgment(raw) if profile == "simpleqa" else EquivalenceJudgment(_parse_judgment(raw), raw)
-+    label = JudgeLabel.CORRECT if verdict.reward == 1 else parsed.label
-+    if verdict.reward not in (0, 1) or (parsed.label == JudgeLabel.CORRECT) != (verdict.reward == 1):
-+        raise RuntimeError("Judge label and verifier score disagree")
-+    return EquivalenceJudgment(label, raw)
++def _judge_one(request, config, profile):
++    question, reference, candidate = request
++    simpleqa = profile == "simpleqa"
++    template = SIMPLEQA_GRADER_TEMPLATE if simpleqa else JUDGE_PROMPT
++    template = template.replace("{target}", "{reference}").replace("{predicted_answer}", "{candidate}")
++    template = template.replace("{reference_answers}", "{reference}").replace("{candidate_answer}", "{candidate}")
++    labels = (
++        {"A": JudgeLabel.CORRECT, "B": JudgeLabel.INCORRECT, "C": JudgeLabel.NOT_ATTEMPTED}
++        if simpleqa
++        else {label.value: label for label in JudgeLabel}
++    )
++    labels.update({label.lower() if simpleqa else label.upper(): value for label, value in list(labels.items())})
++    spec = JudgeSpec(
++        references=(reference,),
++        question=question,
++        rubric="labels",
++        model=config.model,
++        exact_gate=False,
++        prompt_template=template,
++        label_scores={label: float(value == JudgeLabel.CORRECT) for label, value in labels.items()},
++        label_scan="lines",
++        request_timeout=300,
++        max_completion_tokens=128,
++        incomplete_retry_tokens=2048,
++        empty_output=EmptyOutputPolicy.ZERO,
++    )
++    verdict = grade_judge_candidate(spec, candidate, connection=JudgeConnection(config.base_url, config.api_key))
++    if verdict.detail.get("reason") == "empty_output":
++        return EquivalenceJudgment(JudgeLabel.NOT_ATTEMPTED, "")
++    return EquivalenceJudgment(labels[verdict.detail["verdict"]], verdict.detail["completion"])
 +
 +
 +async def _judge(prompts, config, profile, num_workers):
@@ -209,12 +195,24 @@ new file mode 100644
 +        _required(request.target, "Reference")
 +        if not isinstance(request.predicted_answer, str):
 +            raise InvalidTask("Candidate must be a string")
-+        prompts.append(
-+            SIMPLEQA_GRADER_TEMPLATE.format(
-+                question=request.question, target=request.target, predicted_answer=request.predicted_answer
-+            )
-+        )
++        prompts.append((request.question, request.target, request.predicted_answer))
 +    return await _judge(prompts, config, "simpleqa", num_workers)
++
++
++async def judge_equivalence(requests, config, num_workers=DEFAULT_NUM_WORKERS):
++    prompts = []
++    for request in requests:
++        _required(request.question, "Question")
++        if not request.reference_answers:
++            raise InvalidTask("Equivalence judge requires reference answers")
++        for reference in request.reference_answers:
++            _required(reference, "Reference")
++        if not isinstance(request.candidate_answer, str):
++            raise InvalidTask("Candidate must be a string")
++        prompts.append(
++            (request.question, json.dumps(request.reference_answers, ensure_ascii=False), request.candidate_answer)
++        )
++    return await _judge(prompts, config, "equivalence", num_workers)
 +
 +
 +async def grade_math_equivalence(requests, config, num_workers=DEFAULT_NUM_WORKERS):
@@ -237,11 +235,7 @@ new file mode 100644
 +            positions.append(len(outcomes))
 +            outcomes.append(None)
 +            pending.append(
-+                JUDGE_PROMPT.format(
-+                    question=request.question,
-+                    reference_answers=json.dumps(request.reference_answers, ensure_ascii=False),
-+                    candidate_answer=request.candidate_answer,
-+                )
++                (request.question, json.dumps(request.reference_answers, ensure_ascii=False), request.candidate_answer)
 +            )
 +    if pending:
 +        judgments = await _judge(pending, config, "equivalence", num_workers)
@@ -250,72 +244,12 @@ new file mode 100644
 +                judgment.label == JudgeLabel.CORRECT, EquivalenceMethod.LLM_JUDGE, judgment
 +            )
 +    return outcomes
-+
-+
-+async def _complete(payload):
-+    async with AsyncOpenAI(
-+        api_key=payload["api_key"], base_url=payload["base_url"], timeout=300.0, max_retries=5
-+    ) as client:
-+        for budget in JUDGE_TOKEN_BUDGETS:
-+            raw_response = await client.chat.completions.with_raw_response.create(
-+                model=payload["model"],
-+                max_tokens=budget,
-+                temperature=0,
-+                messages=[{"role": "user", "content": payload["prompt"]}],
-+            )
-+            transport = json.loads(raw_response.http_response.text, object_pairs_hook=unique_object)
-+            json.dumps(transport, allow_nan=False)
-+            if not isinstance(transport, dict) or transport.get("error") is not None:
-+                raise RuntimeError("Judge transport returned an error")
-+            response = raw_response.parse()
-+            if len(response.choices) != 1:
-+                raise RuntimeError("Judge returned no completion choices")
-+            choice = response.choices[0]
-+            message = choice.message
-+            if message.refusal or message.tool_calls or message.function_call:
-+                raise RuntimeError("Judge returned refusal or tool calls")
-+            if choice.finish_reason not in ("stop", "length"):
-+                raise RuntimeError("Judge returned an unsupported completion state")
-+            raw = (message.content or "").strip()
-+            if not raw:
-+                continue
-+            if choice.finish_reason != "stop":
-+                raise RuntimeError("Judge returned an incomplete completion")
-+            return raw
-+    raise RuntimeError("Judge exhausted source token budgets without text")
-+
-+
-+def main():
-+    payload = json.loads(Path(sys.argv[1]).read_text())
-+    raw = asyncio.run(_complete(payload))
-+    if payload["profile"] == "simpleqa":
-+        label = _parse_simpleqa_judgment(raw).label
-+    elif payload["profile"] == "equivalence":
-+        label = _parse_judgment(raw)
-+    else:
-+        raise InvalidTask("Unsupported source judge profile")
-+    exact = grade_exact_candidate(
-+        ExactSpec(expected=("correct",), ignore_case=False, ignore_whitespace=False, strip_outer_whitespace=False),
-+        label.value,
-+    )
-+    if exact.status != Status.SCORED:
-+        raise RuntimeError("Label verifier did not score")
-+    verdict = {
-+        "status": "scored",
-+        "reward": exact.reward,
-+        "detail": {"raw": raw, "label": label.value, "exact_verdict": dataclasses.asdict(exact)},
-+    }
-+    (Path(os.environ["VERIFYIT_LOGS_DIR"]) / "result.json").write_text(json.dumps(verdict, allow_nan=False))
-+
-+
-+if __name__ == "__main__":
-+    main()
 diff --git a/tests/graders/test_verifyit_judges.py b/tests/graders/test_verifyit_judges.py
 new file mode 100644
 --- /dev/null
 +++ b/tests/graders/test_verifyit_judges.py
-@@ -0,0 +1,105 @@
-+"""Exercise judge transport validation through real ScriptSpec subprocesses."""
+@@ -0,0 +1,160 @@
++"""Exercise judge transport validation through the shared Judge candidate API."""
 +
 +import asyncio
 +import json
@@ -324,6 +258,7 @@ new file mode 100644
 +
 +import pytest
 +
++from eval.chat_benchmarks.FinanceBench.eval_instruct import FinanceBenchBenchmark
 +from eval.graders.answer_equivalence import JudgeConfig, JudgeLabel
 +from eval.graders.simpleqa import SimpleQARequest
 +from eval.graders.verifyit_judges import judge_simpleqa
@@ -338,7 +273,7 @@ new file mode 100644
 +        def do_POST(self):
 +            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
 +            state["requests"].append(body)
-+            bad = "Question: bad" in body["messages"][0]["content"]
++            bad = any(marker in body["messages"][0]["content"] for marker in ("Question: bad", "Question:\nbad"))
 +            fault = state["fault"] if bad else None
 +            message = {"role": "assistant", "content": state["label"]}
 +            choice = {"index": 0, "finish_reason": "stop", "message": message}
@@ -346,7 +281,7 @@ new file mode 100644
 +                choice["finish_reason"] = "length"
 +            elif fault == "refusal":
 +                message["refusal"] = "refused"
-+            elif fault == "retry" and body["max_tokens"] == 128:
++            elif fault == "retry" and body.get("max_completion_tokens", body.get("max_tokens")) == 128:
 +                message["content"] = ""
 +                choice["finish_reason"] = "length"
 +            elif fault == "invalid":
@@ -388,19 +323,19 @@ new file mode 100644
 +    assert results[0].raw == label
 +
 +
-+def test_judge_retries_empty_completion_with_source_token_budget(judge_server):
++def test_judge_retries_incomplete_completion_with_shared_token_budget(judge_server):
 +    state, config = judge_server
 +    state["fault"] = "retry"
 +    results = asyncio.run(judge_simpleqa([SimpleQARequest("bad", "Paris", "candidate")], config))
 +    assert results[0].label == JudgeLabel.CORRECT
-+    assert [request["max_tokens"] for request in state["requests"]] == [128, 512]
++    assert [request["max_completion_tokens"] for request in state["requests"]] == [128, 2048]
 +
 +
 +@pytest.mark.parametrize("fault", ["truncated", "refusal", "duplicate", "invalid"])
 +def test_invalid_judge_completion_aborts_batch_after_valid_result(judge_server, fault):
 +    state, config = judge_server
 +    state["fault"] = fault
-+    with pytest.raises(RuntimeError, match="Judge verifier failed"):
++    with pytest.raises((RuntimeError, ValueError)):
 +        asyncio.run(
 +            judge_simpleqa(
 +                [SimpleQARequest("good", "Paris", "candidate"), SimpleQARequest("bad", "Paris", "candidate")],
@@ -408,7 +343,7 @@ new file mode 100644
 +                num_workers=1,
 +            )
 +        )
-+    assert len(state["requests"]) == 2
++    assert len(state["requests"]) == (3 if fault == "truncated" else 2)
 +
 +
 +def test_invalid_reference_rejects_entire_batch_before_requests(judge_server):
@@ -419,4 +354,58 @@ new file mode 100644
 +                [SimpleQARequest("good", "Paris", "candidate"), SimpleQARequest("bad", " ", "candidate")], config
 +            )
 +        )
++    assert state["requests"] == []
++
++
++@pytest.mark.parametrize(("label", "accuracy"), [("correct", 1.0), ("incorrect", 0.0), ("not_attempted", 0.0)])
++def test_financebench_source_labels_drive_metrics(judge_server, label, accuracy):
++    state, config = judge_server
++    state["label"] = label
++    benchmark = FinanceBenchBenchmark(
++        annotator_model=config.model,
++        judge_api_key=config.api_key,
++        judge_base_url=config.base_url,
++        verifyit_enabled=True,
++    )
++    result = benchmark.evaluate_responses({"examples": [{"question": "good", "answer": "$5", "model_output": "$5"}]})
++    assert result["accuracy"] == accuracy
++    assert result["num_judged"] == 1
++    assert result["examples"][0]["judge_label"] == label
++
++
++def test_financebench_judge_failure_aborts_instead_of_excluding_failed_sample(judge_server):
++    state, config = judge_server
++    state.update(label="correct", fault="truncated")
++    benchmark = FinanceBenchBenchmark(
++        annotator_model=config.model,
++        judge_api_key=config.api_key,
++        judge_base_url=config.base_url,
++        verifyit_enabled=True,
++    )
++    examples = [{"question": question, "answer": "$5", "model_output": "$5"} for question in ("good", "bad")]
++    with pytest.raises(RuntimeError):
++        benchmark.evaluate_responses({"examples": examples})
++    assert all("judge_label" not in example for example in examples)
++
++
++def test_financebench_missing_reference_is_not_stringified(judge_server):
++    state, config = judge_server
++    state["label"] = "correct"
++    benchmark = FinanceBenchBenchmark(
++        annotator_model=config.model,
++        judge_api_key=config.api_key,
++        judge_base_url=config.base_url,
++        verifyit_enabled=True,
++    )
++    with pytest.raises(InvalidTask):
++        benchmark.evaluate_responses({"examples": [{"question": "good", "answer": None, "model_output": "None"}]})
++    assert not state["requests"]
++
++
++def test_empty_candidate_cannot_receive_positive_judge_credit(judge_server):
++    state, config = judge_server
++    state["label"] = "A"
++    results = asyncio.run(judge_simpleqa([SimpleQARequest("good", "Paris", "  ")], config))
++    assert results[0].label == JudgeLabel.NOT_ATTEMPTED
++    assert results[0].raw == ""
 +    assert state["requests"] == []

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from verifyit.grade import Status, run, write_reward
+from verifyit.grade import InvalidTask, Status, run, write_reward
 from verifyit.modes import grade_judge
 from verifyit.spec import Constraint, EmptyOutputPolicy, JudgeSpec, render_spec
 
@@ -109,11 +109,7 @@ def _workspace(tmp_path: Path, response: str) -> Path:
 
 
 @pytest.mark.parametrize(
-    "response",
-    [
-        pytest.param(BOXED_RESPONSE, id="boxed"),
-        pytest.param(SPACED_RESPONSE, id="unboxed_case_and_spacing"),
-    ],
+    "response", [pytest.param(BOXED_RESPONSE, id="boxed"), pytest.param(SPACED_RESPONSE, id="unboxed_case_and_spacing")]
 )
 def test_exact_gate_scores_one_without_calling_a_model(tmp_path, unconfigured_judge, response):
     spec = JudgeSpec(references=("Paris", REFERENCE), question=QUESTION)
@@ -538,3 +534,38 @@ def test_score_rubrics_reject_positive_text_in_invalid_envelope(tmp_path, fake_j
     result = run(spec_path, workspace)
     assert (result.status, result.reward) == (Status.INFRA_ERROR, 0.0)
     assert len(fake_judge.requests) == 1
+
+
+def test_direct_candidate_uses_explicit_connection_and_preserves_text(fake_judge, monkeypatch):
+    for name in ENV_VARS:
+        monkeypatch.delenv(name, raising=False)
+    fake_judge.replies = ["CORRECT", "INCORRECT"]
+    connection = grade_judge.JudgeConnection(f"http://127.0.0.1:{fake_judge.server_port}/v1", "private-test-key")
+    spec = JudgeSpec(
+        references=("answer",),
+        rubric="labels",
+        model="explicit-model",
+        prompt_template="Reference: {reference}\nCandidate: {candidate}",
+        label_scores={"CORRECT": 1.0, "INCORRECT": 0.0},
+        label_scan="lines",
+        empty_output=EmptyOutputPolicy.GRADE,
+    )
+    assert grade_judge.grade_judge_candidate(spec, "  candidate\n", connection=connection).reward == 1
+    assert grade_judge.grade_judge_candidate(spec, "", connection=connection).reward == 0
+    assert fake_judge.prompts == ["Reference: answer\nCandidate:   candidate\n", "Reference: answer\nCandidate: "]
+    assert all(request["model"] == "explicit-model" for request in fake_judge.requests)
+    assert "private-test-key" not in repr(connection)
+
+
+def test_direct_candidate_validates_trusted_constraints_before_empty_gate():
+    spec = JudgeSpec(references=("answer",), constraints=(Constraint("unknown_instruction", {}),))
+    with pytest.raises(InvalidTask):
+        grade_judge.grade_judge_candidate(spec, "")
+
+
+def test_direct_candidate_provider_failure_never_returns_a_score(fake_judge):
+    fake_judge.message_fields = {"refusal": "Cannot judge"}
+    fake_judge.replies = ["SCORE: 1"]
+    spec = JudgeSpec(references=("answer",), exact_gate=False)
+    with pytest.raises(RuntimeError, match="refusal"):
+        grade_judge.grade_judge_candidate(spec, "wrong")

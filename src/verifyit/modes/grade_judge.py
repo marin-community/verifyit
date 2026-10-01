@@ -16,23 +16,35 @@ The judge is any OpenAI-compatible chat endpoint, configured through ``VERIFYIT_
 without a configured endpoint returns an infrastructure failure.
 """
 
+import json
 import logging
 import math
 import os
 import re
 import string
 import unicodedata
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
 
 import openai
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
-from verifyit.grade import InvalidTask, Reward, read_output, scored
+from verifyit.grade import InvalidTask, Reward, empty_output_policy, read_output, scored
+from verifyit.json_objects import unique_object
 from verifyit.modes.extract import extract_boxed
 from verifyit.modes.grade_ifeval import resolve_checks
 from verifyit.modes.ifeval import Check
-from verifyit.spec import RUBRIC_CHECKLIST, RUBRIC_LABELS, RUBRIC_REFERENCE, RUBRICS, JudgeSpec, Spec
+from verifyit.spec import (
+    RUBRIC_CHECKLIST,
+    RUBRIC_LABELS,
+    RUBRIC_REFERENCE,
+    RUBRICS,
+    Constraint,
+    EmptyOutputPolicy,
+    JudgeSpec,
+    Spec,
+)
 
 BASE_URL_ENV = "VERIFYIT_JUDGE_BASE_URL"
 API_KEY_ENV = "VERIFYIT_JUDGE_API_KEY"
@@ -81,8 +93,25 @@ SCORE_PATTERN = re.compile(r"score\s*:\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
 logger = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True)
+class JudgeConnection:
+    """Per-call endpoint credentials, kept outside serialized task specifications."""
+
+    base_url: str
+    api_key: str = field(repr=False)
+
+
 def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
     assert isinstance(spec, JudgeSpec)
+    _validate_spec(spec)
+    context = _context(spec, tests_dir)
+    candidate = read_output(spec, workspace)
+    if candidate is None:
+        return scored(0.0, reason="no_output")
+    return grade_judge_candidate(spec, candidate, context=context)
+
+
+def _validate_spec(spec: JudgeSpec) -> tuple[tuple[str, ...], tuple[str, ...], list[tuple[Constraint, Check]]]:
     if spec.rubric not in RUBRICS:
         raise InvalidTask(f"unknown judge rubric {spec.rubric!r}; known rubrics: {sorted(RUBRICS)}")
     if spec.rubric == RUBRIC_LABELS and (
@@ -100,13 +129,23 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
         raise InvalidTask("judge rubric 'checklist' needs non-empty criteria")
     if spec.rubric == RUBRIC_LABELS:
         _validate_label_spec(spec, references)
-    checks = resolve_checks(spec.constraints) if spec.constraints else []
-    context = _context(spec, tests_dir)
+    return (references, criteria, resolve_checks(spec.constraints) if spec.constraints else [])
 
-    candidate = read_output(spec, workspace)
-    if candidate is None:
-        return scored(0.0, reason="no_output")
 
+def grade_judge_candidate(
+    spec: JudgeSpec, candidate: str, *, connection: JudgeConnection | None = None, context: str = ""
+) -> Reward:
+    """Grade candidate text using the same contract as file-based judge tasks.
+
+    Invalid tasks and provider failures raise, so callers cannot aggregate partial success.
+    A supplied connection avoids process-wide environment mutation.
+    """
+    references, criteria, checks = _validate_spec(spec)
+    policy = empty_output_policy(spec)
+    if not isinstance(candidate, str):
+        raise InvalidTask("judge candidate must be text")
+    if policy is EmptyOutputPolicy.ZERO and not candidate.strip():
+        return scored(0.0, reason="empty_output")
     failed = [constraint.name for constraint, check in checks if not _passes(check, candidate, constraint.params)]
     if failed:
         return scored(0.0, gate="constraints", failed=failed)
@@ -114,10 +153,13 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
         normalized = normalize(boxed_answer(candidate))
         if spec.exact_gate and normalized and normalized in {normalize(r) for r in references}:
             return scored(1.0, gate="exact")
-        return _judge_reference(spec, references, candidate)
-    if spec.rubric == RUBRIC_LABELS:
-        return _judge_labels(spec, references[0], candidate)
-    return _judge_checklist(spec, criteria, context, candidate)
+    client, model = _client(spec, connection)
+    with client:
+        if spec.rubric == RUBRIC_REFERENCE:
+            return _judge_reference(spec, references, candidate, client, model)
+        if spec.rubric == RUBRIC_LABELS:
+            return _judge_labels(spec, references[0], candidate, client, model)
+        return _judge_checklist(spec, criteria, context, candidate, client, model)
 
 
 def _validate_label_spec(spec: JudgeSpec, references: tuple[str, ...]) -> None:
@@ -181,8 +223,7 @@ def _label_answer(reply: str, strip_reasoning: bool) -> str:
     return reply.strip().removesuffix("<|eot_id|>").strip()
 
 
-def _judge_labels(spec: JudgeSpec, reference: str, candidate: str) -> Reward:
-    client, model = _client(spec)
+def _judge_labels(spec: JudgeSpec, reference: str, candidate: str, client: openai.OpenAI, model: str) -> Reward:
     fields = {"question": spec.question, "reference": reference, "candidate": candidate}
     messages: list[ChatCompletionMessageParam] = []
     if spec.system_prompt:
@@ -193,16 +234,14 @@ def _judge_labels(spec: JudgeSpec, reference: str, candidate: str) -> Reward:
         budgets.append(spec.incomplete_retry_tokens)
     options: dict[str, Any] = {"reasoning_effort": spec.reasoning_effort} if spec.reasoning_effort else {}
     for index, budget in enumerate(budgets):
-        response = cast(
-            ChatCompletion,
-            client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=0.0,
-                timeout=spec.request_timeout,
-                max_completion_tokens=budget,
-                **options,
-            ),
+        response = _chat_completion(
+            client,
+            model=model,
+            messages=messages,
+            temperature=0.0,
+            timeout=spec.request_timeout,
+            max_completion_tokens=budget,
+            **options,
         )
         choice = _completion_choice(response)
         if choice.finish_reason == "length" and index + 1 < len(budgets):
@@ -263,8 +302,8 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def _client(spec: JudgeSpec) -> tuple[openai.OpenAI, str]:
-    base_url = os.environ.get(BASE_URL_ENV, "").strip()
+def _client(spec: JudgeSpec, connection: JudgeConnection | None) -> tuple[openai.OpenAI, str]:
+    base_url = connection.base_url.strip() if connection else os.environ.get(BASE_URL_ENV, "").strip()
     model = spec.model.strip() or os.environ.get(MODEL_ENV, "").strip()
     if not base_url:
         raise RuntimeError(f"no judge endpoint: set {BASE_URL_ENV}")
@@ -272,15 +311,23 @@ def _client(spec: JudgeSpec) -> tuple[openai.OpenAI, str]:
         raise RuntimeError(f"no judge model: set {MODEL_ENV} or the spec's model field")
     # Local OpenAI-compatible servers ignore the key, but the client insists on a non-empty one.
     options: dict[str, Any] = {"max_retries": 0} if spec.rubric == RUBRIC_LABELS else {}
-    return openai.OpenAI(base_url=base_url, api_key=os.environ.get(API_KEY_ENV) or "unused", **options), model
+    return (
+        openai.OpenAI(
+            base_url=base_url,
+            api_key=(connection.api_key if connection else os.environ.get(API_KEY_ENV) or "unused"),
+            **options,
+        ),
+        model,
+    )
 
 
 def _question(spec: JudgeSpec) -> str:
     return f"\nQuestion:\n{spec.question.strip()}\n" if spec.question.strip() else ""
 
 
-def _judge_reference(spec: JudgeSpec, references: tuple[str, ...], candidate: str) -> Reward:
-    client, model = _client(spec)
+def _judge_reference(
+    spec: JudgeSpec, references: tuple[str, ...], candidate: str, client: openai.OpenAI, model: str
+) -> Reward:
     prompt = REFERENCE_PROMPT.format(
         question=_question(spec),
         references="\n".join(f"- {reference}" for reference in references),
@@ -290,8 +337,9 @@ def _judge_reference(spec: JudgeSpec, references: tuple[str, ...], candidate: st
     return scored(score, model=model, reasoning=_reasoning(reply))
 
 
-def _judge_checklist(spec: JudgeSpec, criteria: tuple[str, ...], context: str, candidate: str) -> Reward:
-    client, model = _client(spec)
+def _judge_checklist(
+    spec: JudgeSpec, criteria: tuple[str, ...], context: str, candidate: str, client: openai.OpenAI, model: str
+) -> Reward:
     context_block = f"\nReference context (not the candidate):\n{context.strip()}\n" if context.strip() else ""
     results = []
     for criterion in criteria:
@@ -319,13 +367,19 @@ def _ask(
 
 
 def _complete(client: openai.OpenAI, model: str, prompt: str, timeout: float) -> str:
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
-        timeout=timeout,
+    response = _chat_completion(
+        client, model=model, messages=[{"role": "user", "content": prompt}], temperature=0.0, timeout=timeout
     )
     return _completed_text(_completion_choice(response))
+
+
+def _chat_completion(client: openai.OpenAI, **options: Any) -> ChatCompletion:
+    response = client.chat.completions.with_raw_response.create(**options)
+    transport = json.loads(response.http_response.text, object_pairs_hook=unique_object)
+    json.dumps(transport, allow_nan=False)
+    if not isinstance(transport, dict) or transport.get("error") is not None:
+        raise RuntimeError("judge transport returned an error")
+    return cast(ChatCompletion, response.parse())
 
 
 def _completion_choice(response: ChatCompletion):

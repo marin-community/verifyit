@@ -341,3 +341,27 @@ cover structured rollout, termination and task-reference behavior. The unfinishe
 refusal checks deliberately tighten the source completion contract. See
 `indirect-prompt-injection-provenance.json` for exact patch, source and evidence
 hashes; raw traces remain in the campaign evidence directory.
+
+### Judge profile consolidation
+
+Apply `judge-profiles-consolidation.patch` after the existing judge-family patch
+stack and `empty-abstention-verifyit.patch`. Enable the same `verifyit_enabled`
+option. Install the verifyit checkout containing this consolidation change with
+its `judge` extra: the older published SkyRL dependency pin does not provide
+`grade_judge_candidate`, `JudgeConnection`, or `call_bounded`. This export does
+not advance that dependency pin or change default SkyRL behavior.
+
+The six profile routes call the existing JudgeSpec grader through a shared
+bounded execution helper. It replaces profile-specific Script/TOML/tempfile
+plumbing while preserving a hard deadline and process-group cleanup. Credentials
+travel through the worker's stdin rather than temporary files or command-line
+arguments. Blank multichallenge and policy answers score zero; explicit empty
+abstention retains its existing judge policy.
+
+Fresh replay of 36 frozen archived trajectories preserves complete source
+results and HTTP request multisets. Request ordering differs in ten cases; the
+replay uses recorded external judge text keyed by exact source messages, not new
+model inference. Thirty-two SkyRL tests and 26 execution tests pass. Including
+the shared execution helper, this slice removes 37 production lines. See
+`judge-profiles-consolidation-source.json` for the raw sequential patch-apply
+proof, hashes, and evidence under `evidence/consolidation/skyrl-judges/`.

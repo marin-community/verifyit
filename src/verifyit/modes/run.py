@@ -81,11 +81,13 @@ def run_command(
             except subprocess.TimeoutExpired:
                 stdout, stderr = "", ""
             return Completed(proc.returncode, stdout, stderr, timed_out=True)
+        finally:
+            _kill_group(proc)
 
 
 def _kill_group(proc: subprocess.Popen) -> None:
     try:
-        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        os.killpg(proc.pid, signal.SIGKILL)
     except (ProcessLookupError, PermissionError):
         proc.kill()
 

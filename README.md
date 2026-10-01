@@ -164,6 +164,15 @@ spec = parse_spec((tests_dir / "verifier.toml").read_text())
 reward = grade(spec, tests_dir=tests_dir, workspace=Path("/app"))
 ```
 
+Clients holding answer text can call `grade_judge_candidate` from
+`verifyit.modes.grade_judge` with the same `JudgeSpec`. Pass a runtime-only
+`JudgeConnection(base_url, api_key)` to avoid changing process environment
+variables or serializing credentials into task specs. This helper returns a
+`Reward`; invalid tasks and provider failures raise, so clients must abort the
+batch rather than aggregate partial success. Clients close on success or failure.
+The spec's `empty_output` policy applies to direct candidates. File-based grading
+still scores missing output artifacts zero, independently of empty-string policy.
+
 For development, see [CONTRIBUTING.md](CONTRIBUTING.md),
 [AGENTS.md](AGENTS.md), and the [repository skills](.agents/skills).
 Run the package checks from the repository root:

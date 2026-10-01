@@ -13,6 +13,39 @@ distinguishes missing client integration, missing profiles within existing modes
 implemented source fallbacks, and validation gaps. These counts apply only to the
 source revisions below.
 
+## Consolidation phase
+
+The previous integration campaign reached **155/196** required routes with its
+then-current implementations and evidence. That historical count is not fresh
+validation of the consolidated implementation. Fresh acceptance is **6/196** after six SkyRL judge routes passed archived-response
+replays. Shared core validation passed 857 tests, with two Go tests skipped because
+the host lacks Go. The required population remains: 46 SkyRL routes, 87 Harbor routes, 42 Evalchemy custom benchmarks and
+21 Evalchemy overrides. TaskTrove and coder1 are excluded; harness mapping counts
+remain report-only rather than an exhaustive replay requirement.
+
+The first Evalchemy slice replaces per-answer Script subprocesses and duplicated
+judge transport/parsing with the existing Judge mode. SimpleQA, SimpleQAMini,
+FinanceBench, OlympiadBench and OlympiadBenchFull have fresh local-HTTP framework
+replays, including failed batches and empty candidates. These five routes are
+fixture-tested, with archived-trace validation still pending, so they add no
+acceptance credit yet. The Evalchemy slice removes 86 client production lines and adds 54
+shared core lines: 32 fewer production lines overall, excluding tests and docs.
+The SkyRL slice removes 115 client lines and adds 78 shared execution lines, a
+net reduction of 37. No verifier mode was added.
+
+Historical mappings and trace evidence remain in the linked coverage register.
+Fresh route status is summarized here independently of generated historical tables:
+
+| Routes | Fresh evidence | Acceptance |
+|---|---|---|
+| [Six SkyRL judge profiles](../../integrations/MarinSkyRL/judge-profiles-consolidation-source.json) | 36 archived-response rounds with original source results and HTTP request comparison | 6 accepted |
+| SimpleQA, SimpleQAMini, FinanceBench, OlympiadBench, OlympiadBenchFull | Seven framework scenarios, 30 direct Judge outcomes, 45 malformed-batch aborts and empty-candidate zero corrections | Fixture-tested; archived validation pending |
+
+Raw replay receipts are retained under the campaign evidence directory, outside
+this repository; they are not claimed as committed test assets. The repository's
+Judge tests and exported client tests cover the reusable contracts. Regenerating
+the historical coverage tables does not overwrite this phase section.
+
 ## Pinned populations and mappings
 
 | Source snapshot | Enumerated population | Mapping and specification evidence |
