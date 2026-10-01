@@ -1,0 +1,85 @@
+{
+  "source_revision": "6d642546f4688648fced259eb3302efd36ece5af",
+  "tasks": [
+    {
+      "name": "cabbq_age",
+      "path": "lm_eval/tasks/cabbq/cabbq_age.yaml"
+    },
+    {
+      "name": "cabbq_disability_status",
+      "path": "lm_eval/tasks/cabbq/cabbq_disability_status.yaml"
+    },
+    {
+      "name": "cabbq_gender",
+      "path": "lm_eval/tasks/cabbq/cabbq_gender.yaml"
+    },
+    {
+      "name": "cabbq_lgbtqia",
+      "path": "lm_eval/tasks/cabbq/cabbq_lgbtqia.yaml"
+    },
+    {
+      "name": "cabbq_nationality",
+      "path": "lm_eval/tasks/cabbq/cabbq_nationality.yaml"
+    },
+    {
+      "name": "cabbq_physical_appearance",
+      "path": "lm_eval/tasks/cabbq/cabbq_physical_appearance.yaml"
+    },
+    {
+      "name": "cabbq_race_ethnicity",
+      "path": "lm_eval/tasks/cabbq/cabbq_race_ethnicity.yaml"
+    },
+    {
+      "name": "cabbq_religion",
+      "path": "lm_eval/tasks/cabbq/cabbq_religion.yaml"
+    },
+    {
+      "name": "cabbq_ses",
+      "path": "lm_eval/tasks/cabbq/cabbq_ses.yaml"
+    },
+    {
+      "name": "cabbq_spanish_region",
+      "path": "lm_eval/tasks/cabbq/cabbq_spanish_region.yaml"
+    },
+    {
+      "name": "esbbq_age",
+      "path": "lm_eval/tasks/esbbq/esbbq_age.yaml"
+    },
+    {
+      "name": "esbbq_disability_status",
+      "path": "lm_eval/tasks/esbbq/esbbq_disability_status.yaml"
+    },
+    {
+      "name": "esbbq_gender",
+      "path": "lm_eval/tasks/esbbq/esbbq_gender.yaml"
+    },
+    {
+      "name": "esbbq_lgbtqia",
+      "path": "lm_eval/tasks/esbbq/esbbq_lgbtqia.yaml"
+    },
+    {
+      "name": "esbbq_nationality",
+      "path": "lm_eval/tasks/esbbq/esbbq_nationality.yaml"
+    },
+    {
+      "name": "esbbq_physical_appearance",
+      "path": "lm_eval/tasks/esbbq/esbbq_physical_appearance.yaml"
+    },
+    {
+      "name": "esbbq_race_ethnicity",
+      "path": "lm_eval/tasks/esbbq/esbbq_race_ethnicity.yaml"
+    },
+    {
+      "name": "esbbq_religion",
+      "path": "lm_eval/tasks/esbbq/esbbq_religion.yaml"
+    },
+    {
+      "name": "esbbq_ses",
+      "path": "lm_eval/tasks/esbbq/esbbq_ses.yaml"
+    },
+    {
+      "name": "esbbq_spanish_region",
+      "path": "lm_eval/tasks/esbbq/esbbq_spanish_region.yaml"
+    }
+  ]
+}

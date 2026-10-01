@@ -1067,11 +1067,34 @@ def main():
                     "../evidence/e2e/wiring/harness-humaneval/trace-census.json",
                 ],
             )
+    bbq_manifest = json.loads((root / "integrations/lm-eval-harness/bbq-source.json").read_text())
+    bbq_ids = {f"lm-eval-harness:{task['path']}" for task in bbq_manifest["tasks"]}
+    for entity in entities:
+        if entity["entity_id"] in bbq_ids:
+            entity.update(
+                status="native_route_available",
+                reason_id="bbq_mcq_correctness",
+                reason=(
+                    "Existing MCQ grades the first maximum likelihood choice with all unknown alternatives "
+                    "mapped to label 2. Source bias observation tuples and signed corpus aggregates remain client-owned."
+                ),
+                primitive_candidates=["mcq"],
+                needed_change="Enable verifyit_bbq metadata; archived replay remains unvalidated.",
+                validation_status="all_twenty_source_evaluator_fixtures_no_archived_replay",
+                blockers=[],
+                evidence=[
+                    "integrations/lm-eval-harness/bbq-mcq-verifyit.patch",
+                    "integrations/lm-eval-harness/bbq-source.json",
+                    "../evidence/e2e/wiring/harness-bbq/roundtrip-final/roundtrip.json",
+                    "../evidence/e2e/wiring/harness-bbq/negative/negative-batches.json",
+                    "../evidence/e2e/wiring/harness-bbq/trace-census.json",
+                ],
+            )
     counts = Counter((e["source"], e["status"]) for e in entities)
     harness_gaps = [e for e in entities if e["source"] == "lm-eval-harness" and e["status"] == "not_integrated"]
-    assert len(harness_gaps) == 491
+    assert len(harness_gaps) == 471
     assert sum(e["status"] == "retained_runtime_available" and e["source"] == "lm-eval-harness" for e in entities) == 980
-    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11221
+    assert sum(e["status"] == "native_route_available" and e["source"] == "lm-eval-harness" for e in entities) == 11241
     ids = [e["entity_id"] for e in entities]
     assert len(ids) == len(set(ids)), "duplicate coverage entities"
     payload = {

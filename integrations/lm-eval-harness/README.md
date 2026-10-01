@@ -241,3 +241,22 @@ model-run artifacts were found, so this is source-fixture validation.
 The exported source patch requires the API revision containing `harness_mmmu`.
 An earlier installed Babilong revision must use its earlier source-patch prefix,
 or the untouched source checkout for baseline comparisons.
+
+## CaBBQ and EsBBQ
+
+Apply `bbq-mcq-verifyit.patch` after the Evalchemy Uncheatable, DROP and
+HumanEval source patches. Set task metadata `verifyit_bbq: true` to enable the
+20 pinned CaBBQ/EsBBQ category configurations.
+
+The source's first maximum likelihood choice uses verifyit's existing MCQ
+primitive. All nine unknown-answer alternatives map to label 2. Source bias
+classification, observation tuples and corpus aggregators remain; their signed
+bias values are not correctness rewards. All eleven likelihoods must be finite.
+Malformed metadata, missing alternatives, changed scoring configuration and
+undefined corpus aggregates abort evaluation without partial results.
+
+Each of the 20 configurations preserves all four sample observations and corpus
+metrics in five source evaluator fixtures, including ties and the final unknown
+alternative. Regression checks reject a NaN likelihood that the source previously
+counted correct and a bias aggregate with a missing comparison population.
+Evidence is under `evidence/e2e/wiring/harness-bbq`; no archived replay is claimed.
