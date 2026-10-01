@@ -1192,16 +1192,18 @@
       "entity_id": "harbor:crustbench",
       "evidence": [
         "docs/unification/harbor_semantics.json#crustbench",
-        "docs/unification/harbor_inventory.json#crustbench"
+        "docs/unification/harbor_inventory.json#crustbench",
+        "integrations/harbor/crustbench-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-crustbench/final-manifest.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "crustbench",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/crustbench/template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate real completed implementations and archived model traces; candidate execution inside the source grader remains unverified.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "Cargo release build plus cargo release test, binary conjunction; Rust test-report support absent, retain explicit compile/test commands. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "The opt-in generator retains the Rust source Cargo build/test runtime behind ScriptSpec in a separate image and transfers candidate interface files. A completed failing test summary preserves scored0; unknown build/setup failures remain unscored minimum. Successful source runs require nonempty executed tests.",
       "source_evidence": [
         {
           "functions": [
@@ -1230,8 +1232,15 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Three frozen actual upstream starter tasks (libbase122, rbtree_lab, utf8) build and fail their tests, matching source0 through final v2 Harbor Trials. No real positive/reference implementation available. Separate synthetic scalar positive matches1; synthetic empty suite exposes source1 to verifyit infra_error minimum0. Four completion regressions pass. No full production-positive or archive coverage.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Source Cargo scaffold, test binaries, completion helper and verifier.toml in separate image",
+        "remaining_gap": "candidate_execution_in_grader",
+        "needed_change": "Candidate interface code executes in the source grader runtime; candidate/assertion isolation remains unverified."
+      }
     },
     {
       "entity_id": "harbor:cybergym",

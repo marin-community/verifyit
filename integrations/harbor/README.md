@@ -554,7 +554,35 @@ All six reference solutions score1, including the corrected Java runtime.
 upstream selection, twelve final comparisons, original Java failure, separate
 Java v2 proof, image/source hashes and independent manager Trials. Two malformed
 exercise-reference regressions pass. These are real exercise fixtures, not archived
-model replays or coverage of all225 exercises. Candidate code executes inside the
+model replays or coverage of all 225 exercises. Candidate code executes inside the
 source grader; candidate/assertion isolation remains unverified. No new security
 tests were run. The local wheel substitution above is required for the unpushed
 core pin; both source and verifier runtime images were built.
+
+
+## CrustBench
+
+Apply `crustbench-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate with `--verifyit`.
+The existing ScriptSpec bridge runs the source Rust1.83 Cargo build/test runtime
+in a separate image with candidate interface files. A completed failing Cargo
+test summary retains scored0. Unknown build/setup failures remain unscored
+minimum; an empty successful test suite also returns unscored minimum instead
+of the source's positive reward.
+
+The frozen real upstream sample is libbase122, rbtree_lab and utf8. Their starter
+implementations build and fail six, six and 25 tests respectively; final source
+and Harbor scores match0. No real completed implementation or reference oracle
+was available. A separate synthetic scalar control matches1, and a separate
+empty-suite control demonstrates source1 to verifyit infra_error minimum0.
+These controls supplement the selected real tasks; they do not establish
+production-positive or archived model coverage.
+
+`evidence/e2e/wiring/harbor-crustbench/final-manifest.json` records the 100-project
+runtime census, frozen selection, final v2 real-task and v3 control results,
+source/task/image hashes and independent manager Trials. The earlier synthetic
+control namespace error and its unscored result are retained separately. Four
+Cargo completion regressions pass. Candidate code still executes inside the
+source grader, so candidate/assertion isolation remains unverified. No new
+security tests were run. Use the exact local core wheel recipe above for the
+unpushed verifyit pin.
