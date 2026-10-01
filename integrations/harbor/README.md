@@ -451,3 +451,33 @@ The source runtime image was built with the exact local core wheel substitution
 shown above. Evidence is in
 `evidence/e2e/wiring/harbor-livecodebench/final-manifest.json`. Candidate execution
 inside the grader remains an unverified trust boundary.
+
+
+## SimpleQA, HLE and OmniMath
+
+Apply `judge-families-verifyit.patch` after the dispatcher patch and
+`research-code-bench-runtime-verifyit.patch`. Pass `--verifyit` to each adapter.
+The source judge runs inside ScriptSpec in a separate verifier image. It keeps
+its original prompt, request parameters and answer extraction, while core
+JSONSchema and Exact grade the raw response fields. Invalid JSON, incomplete
+responses and judge failures remain unscored at minimum reward. No new core
+verifier class is required.
+
+Nine frozen source-generated fixtures, three per adapter, match native scores
+and exact HTTP request bytes through actual Harbor Trials. OmniMath covers both
+OpenAI and Anthropic. Seven additional fixtures exercise the source scorer's
+string and range modes by changing trusted generated metadata; the adapter
+itself always emits `llm_verifier`. Distinct Unicode strings now go through the
+judge when ASCII normalization empties the reference, correcting source false
+credit. Nonfinite or reversed trusted ranges raise within the retained runtime:
+`infra_error`, reward zero, and no Harbor reward value. These are malformed tasks,
+not candidate-wrong scored zeros.
+
+These are controlled HTTP fixtures, not archived model-score replays. The fixture
+agent image uses bounded Python 3.11 SDK dependencies rather than claiming a
+production deployment of every original agent image. The separate verifier uses
+core revision `a0861089947096aabe456ca4308ca46b1b001d7c`; until publication, use the
+exact local archive-wheel substitution described above. Installation witnesses
+hash all 41 core Python files and the task files inside actual grading containers.
+Evidence, patch order, source hashes and independent manager roundtrips are under
+`evidence/e2e/wiring/harbor-judge-family/implementation-provenance.json`.

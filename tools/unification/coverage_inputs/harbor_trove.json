@@ -2540,16 +2540,21 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#hle",
         "docs/unification/harbor_inventory.json#hle",
-        "docs/unification/harbor_specs.md#judge-profile"
+        "integrations/harbor/judge-families-verifyit.patch",
+        "evidence/e2e/wiring/harbor-judge-family/implementation-provenance.json",
+        "evidence/e2e/wiring/harbor-judge-family/worker-frozen-final/summary.json",
+        "evidence/e2e/wiring/harbor-judge-family/worker-supplemental/summary.json"
       ],
-      "gap_kind": "native_judge_profile",
-      "implementation_present": false,
+      "gap_kind": "implemented_native_runtime_bridge",
+      "implementation_present": true,
       "name": "hle",
-      "needed_change": "Retain agent-log extraction and native reference-judge prompt/parser; carry source API failures through structured infra_error, preserving its existing non-scoring error behavior.",
+      "needed_change": "Validate actual benchmark tasks and matching archived model traces; current evidence uses controlled source-generated HTTP fixtures.",
       "primitive_candidates": [
-        "judge"
+        "script",
+        "json_schema",
+        "exact"
       ],
-      "reason": "Binary reference judge after agent-log extraction; source deliberately raises on API failure rather than scoring zero. Preserve this error contract. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in source generator retains its original judge prompt, SDK request and source routing inside ScriptSpec in a separate verifier image. Raw HTTP responses are validated before SDK parsing, then core JSONSchema and Exact grade raw judge fields. Missing, malformed or incomplete judge output remains unscored at minimum reward.",
       "source_evidence": [
         {
           "functions": [
@@ -2594,8 +2599,13 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Three frozen actual Harbor Trial source/cutover pairs per adapter match scores and exact HTTP request bytes. Fixtures use controlled judge responses, not archived model scores. Actual grading-container core and task hashes are verified against the pinned local wheel; the unpushed core revision requires local archive-wheel substitution. ",
+      "boundary_hardening": {
+        "needed_change": "Validate additional production tasks and archived model traces.",
+        "status": "separate_verifier_validated",
+        "trusted_assets": "Source judge, reference data and verifier.toml in the separate verifier image; only candidate answer/log text crosses from the agent."
+      }
     },
     {
       "entity_id": "harbor:humanevalfix",
@@ -3523,18 +3533,21 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#omnimath",
         "docs/unification/harbor_inventory.json#omnimath",
-        "docs/unification/harbor_specs.md#judge-profile"
+        "integrations/harbor/judge-families-verifyit.patch",
+        "evidence/e2e/wiring/harbor-judge-family/implementation-provenance.json",
+        "evidence/e2e/wiring/harbor-judge-family/worker-frozen-final/summary.json",
+        "evidence/e2e/wiring/harbor-judge-family/worker-supplemental/summary.json"
       ],
-      "gap_kind": "typed_answer_and_judge_routing",
-      "implementation_present": false,
+      "gap_kind": "implemented_native_runtime_bridge",
+      "implementation_present": true,
       "name": "omnimath",
-      "needed_change": "Dispatch eval_mode to source-compatible string normalization, interval/numeric-range matching, or native judge; implement the interval policy in the client rather than ordinary point NumericSpec tolerance.",
+      "needed_change": "Validate actual benchmark tasks and matching archived model traces; current evidence uses controlled source-generated HTTP fixtures.",
       "primitive_candidates": [
-        "exact",
-        "numeric",
-        "judge"
+        "script",
+        "json_schema",
+        "exact"
       ],
-      "reason": "eval_mode routes string normalization, numeric range matching or hosted semantic judge; preserve interval/range policy and model parser rather than default math extraction. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in source generator retains its original judge prompt, SDK request and source routing inside ScriptSpec in a separate verifier image. Raw HTTP responses are validated before SDK parsing, then core JSONSchema and Exact grade raw judge fields. Missing, malformed or incomplete judge output remains unscored at minimum reward.",
       "source_evidence": [
         {
           "functions": [
@@ -3575,8 +3588,13 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Three frozen actual Harbor Trial source/cutover pairs per adapter match scores and exact HTTP request bytes. Fixtures use controlled judge responses, not archived model scores. Actual grading-container core and task hashes are verified against the pinned local wheel; the unpushed core revision requires local archive-wheel substitution. Seven additional manually selected string/range scorer fixtures cover fastpaths and source defects. The adapter itself always emits llm_verifier. Distinct Unicode strings now require the judge instead of receiving empty-normalization credit. Malformed nonfinite/reversed trusted ranges return infra_error0 with Harbor reward None, not candidate-wrong scores.",
+      "boundary_hardening": {
+        "needed_change": "Validate additional production tasks and archived model traces.",
+        "status": "separate_verifier_validated",
+        "trusted_assets": "Source judge, reference data and verifier.toml in the separate verifier image; only candidate answer/log text crosses from the agent."
+      }
     },
     {
       "entity_id": "harbor:pixiu",
@@ -4336,16 +4354,21 @@
       "evidence": [
         "docs/unification/harbor_semantics.json#simpleqa",
         "docs/unification/harbor_inventory.json#simpleqa",
-        "docs/unification/harbor_specs.md#judge-profile"
+        "integrations/harbor/judge-families-verifyit.patch",
+        "evidence/e2e/wiring/harbor-judge-family/implementation-provenance.json",
+        "evidence/e2e/wiring/harbor-judge-family/worker-frozen-final/summary.json",
+        "evidence/e2e/wiring/harbor-judge-family/worker-supplemental/summary.json"
       ],
-      "gap_kind": "native_judge_profile",
-      "implementation_present": false,
+      "gap_kind": "implemented_native_runtime_bridge",
+      "implementation_present": true,
       "name": "simpleqa",
-      "needed_change": "Retain native SimpleQA correctness labels, prompt/schema and answer-log extraction in a status-preserving client; connect OPENAI_BASE_URL/OPENAI_API_KEY/MODEL_NAME without treating missing judge capability as candidate failure.",
+      "needed_change": "Validate actual benchmark tasks and matching archived model traces; current evidence uses controlled source-generated HTTP fixtures.",
       "primitive_candidates": [
-        "judge"
+        "script",
+        "json_schema",
+        "exact"
       ],
-      "reason": "SimpleQA reference judge labels answer correctness; preserve prompt/schema and answer log extraction. Judge capability failure must be infra error. The client can preserve its native prompt/parser through a structured ScriptSpec verdict; a reusable JudgeSpec prompt/parser profile is optional and not implemented. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "Opt-in source generator retains its original judge prompt, SDK request and source routing inside ScriptSpec in a separate verifier image. Raw HTTP responses are validated before SDK parsing, then core JSONSchema and Exact grade raw judge fields. Missing, malformed or incomplete judge output remains unscored at minimum reward.",
       "source_evidence": [
         {
           "functions": [
@@ -4389,8 +4412,13 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "Three frozen actual Harbor Trial source/cutover pairs per adapter match scores and exact HTTP request bytes. Fixtures use controlled judge responses, not archived model scores. Actual grading-container core and task hashes are verified against the pinned local wheel; the unpushed core revision requires local archive-wheel substitution. ",
+      "boundary_hardening": {
+        "needed_change": "Validate additional production tasks and archived model traces.",
+        "status": "separate_verifier_validated",
+        "trusted_assets": "Source judge, reference data and verifier.toml in the separate verifier image; only candidate answer/log text crosses from the agent."
+      }
     },
     {
       "entity_id": "harbor:sldbench",
