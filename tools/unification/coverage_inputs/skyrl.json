@@ -8,20 +8,20 @@
     "inventory_entries": 48,
     "scoring_routes": 46,
     "external_objective_placeholders": 2,
-    "source_patched_routes": 37,
-    "pending_scoring_routes": 9,
-    "pending_active_scoring_routes": 5,
-    "pending_dormant_scoring_routes": 4,
+    "source_patched_routes": 42,
+    "pending_scoring_routes": 4,
+    "pending_active_scoring_routes": 3,
+    "pending_dormant_scoring_routes": 1,
     "zero_core_extension_unwired_routes": 4,
-    "existing_class_behavior_gap_routes": 5,
+    "existing_class_behavior_gap_routes": 0,
     "real_replayed_source_routes": 27,
-    "implemented_routes_missing_real_traces": 10,
+    "implemented_routes_missing_real_traces": 15,
     "native_fallback_in_cutover_routes": 0,
     "distinct_source_scoring_contract_families": 17,
     "status_counts": {
       "implemented_validated": 27,
-      "implemented_not_validated": 10,
-      "capability_gap": 5,
+      "implemented_not_validated": 15,
+      "capability_gap": 0,
       "not_a_correctness_verifier": 2,
       "not_integrated": 4
     },
@@ -39,7 +39,8 @@
     "Eight additional opt-in cutovers comprise two Reasoning Gym routes, Nemotron MCQA, three tool-comparison routes, and two dormant exported QA APIs. Five have selected real framework traces; pivot and QA lack eligible trace links. Typed tool comparison intentionally rejects JSON boolean for expected integer despite source Python bool/int equality.",
     "Structured-output policy is implemented entirely in a client dialect registration using existing json-schema grading; source XML/CSV parsing and tool extraction require no core extension. Fifteen selected archived links match pinned native and archive; four reach schema grading and eleven reject in client parsing.",
     "Citation/freeform format rules are source-owned parameterized IFEval constraint extensions with ScriptSpec deadline orchestration; they are not built-in comparator coverage. Twelve selected real links match source/archive and reach actual child IFEval grading. Vacuous configurations and regex deadlines fail closed.",
-    "Standalone26 IFEval predicates are integrated with source-owned registry extensions under a total ScriptSpec deadline. NVIDIA instruction dispatch is partially wired and remains pending: deterministic explicit references replay successfully, but exclude_word_harder intrinsically randomizes its hidden reference. Fifteen selected real traces validate the implemented subset, not full registry coverage."
+    "Standalone26 IFEval predicates are integrated with source-owned registry extensions under a total ScriptSpec deadline. NVIDIA instruction dispatch is partially wired and remains pending: deterministic explicit references replay successfully, but exclude_word_harder intrinsically randomizes its hidden reference. Fifteen selected real traces validate the implemented subset, not full registry coverage.",
+    "Dormant BrowseComp/RULER/STEM use existing core schema/exact primitives for raw external judge output; both GenRM routes retain the full source cohort runtime inside ScriptSpec. These five routes have fixture evidence only; GenRM training-loop initialization and archived cohort replay are not claimed."
   ],
   "real_trace_replay": {
     "verified_population": 5460,
@@ -1439,7 +1440,12 @@
       "actual_replayed_links": 9,
       "core_extension_requirement": "existing_judge_label_extension_implemented",
       "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
-      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation.",
+      "implemented_primitive_modes": [
+        "exact",
+        "judge",
+        "script"
+      ]
     },
     {
       "id": "nemotron_ultra/multichallenge_simple_agent",
@@ -1478,7 +1484,11 @@
       "actual_replayed_links": 9,
       "core_extension_requirement": "existing_judge_label_extension_implemented",
       "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
-      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation.",
+      "implemented_primitive_modes": [
+        "judge",
+        "script"
+      ]
     },
     {
       "id": "nemotron_ultra/jailbreak_engagement_with_disclaimer",
@@ -1518,7 +1528,11 @@
       "actual_replayed_links": 4,
       "core_extension_requirement": "existing_judge_label_extension_implemented",
       "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
-      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation.",
+      "implemented_primitive_modes": [
+        "judge",
+        "script"
+      ]
     },
     {
       "id": "nemotron_ultra/jailbreak_hard_refusal_no_redirection",
@@ -1558,7 +1572,11 @@
       "actual_replayed_links": 3,
       "core_extension_requirement": "existing_judge_label_extension_implemented",
       "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
-      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation.",
+      "implemented_primitive_modes": [
+        "judge",
+        "script"
+      ]
     },
     {
       "id": "nemotron_ultra/jailbreak_hard_refusal_with_helplines",
@@ -1598,7 +1616,11 @@
       "actual_replayed_links": 3,
       "core_extension_requirement": "existing_judge_label_extension_implemented",
       "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
-      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation.",
+      "implemented_primitive_modes": [
+        "judge",
+        "script"
+      ]
     },
     {
       "id": "nemotron_ultra/jailbreak_refusal_with_explanation",
@@ -1638,7 +1660,11 @@
       "actual_replayed_links": 8,
       "core_extension_requirement": "existing_judge_label_extension_implemented",
       "integration_patch": "integrations/MarinSkyRL/judge-profiles-verifyit.patch",
-      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation."
+      "validation_scope": "Frozen random real links per eligible benchmark group; pinned-native, cutover and exact installed package all match archive scores/rewards. Archived judge text is keyed by source messages over HTTP; no fresh generation.",
+      "implemented_primitive_modes": [
+        "judge",
+        "script"
+      ]
     },
     {
       "id": "nemotron_ultra/reasoning_gym_simple_agent",
@@ -1679,21 +1705,21 @@
     },
     {
       "id": "nemotron_ultra/genrm_simple_agent",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native. Source replaces the environment placeholder in the cohort runner; a per-candidate grade cannot reconstruct sibling comparison or optimization shaping.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "No eligible archived cohort in local verified census; source group scorer fixtures cover both transports, but training-loop initialization is not exercised.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_retains_source_genrm_cohort_runtime",
       "native_fallback_in_cutover": false,
       "contract_family": "cohort",
       "existing_primitive_candidate": [
         "judge",
         "script"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Batch/cohort adapter required; a single-output judge is not equivalent. Keep scorer external to per-candidate grade API.",
-      "validation_gap": null,
+      "resolution_strategy": "existing_script_cohort_runtime",
+      "needed_change": "Obtain archived cohort validation; full training-loop initialization remains outside fixture evidence.",
+      "validation_gap": "No eligible archived cohort in local verified census; source group scorer fixtures cover both transports, but training-loop initialization is not exercised.",
       "source_contract": "Circular cohort pair comparisons, simple tiebreaker aggregate, reasoning/answer bonuses and group length penalties; placeholder replaced in runner.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1705,29 +1731,38 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#cohort",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/genrm-cohort-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-genrm/worker/roundtrip.json",
+        "evidence/e2e/wiring/skyrl-genrm/implementation-provenance.json",
+        "evidence/e2e/wiring/skyrl-dormant-judges/trace-availability.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "core_extension_requirement": "existing_primitives_no_core_edit",
+      "integration_patch": "integrations/MarinSkyRL/genrm-cohort-verifyit.patch",
+      "validation_scope": "Fixture-only retained source-runtime cohort scoring through ScriptSpec; complete vectors, metrics and HTTP requests match.",
+      "implemented_primitive_modes": [
+        "script"
+      ]
     },
     {
       "id": "nemotron_ultra/genrm_simple_agent_reasoning_off",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native. Source replaces the environment placeholder in the cohort runner; a per-candidate grade cannot reconstruct sibling comparison or optimization shaping.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "No eligible archived cohort in local verified census; source group scorer fixtures cover both transports, but training-loop initialization is not exercised.",
       "active_in_pinned_dispatch": true,
       "dormant": false,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "bounded_script_retains_source_genrm_cohort_runtime",
       "native_fallback_in_cutover": false,
       "contract_family": "cohort",
       "existing_primitive_candidate": [
         "judge",
         "script"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Batch/cohort adapter required; a single-output judge is not equivalent. Keep scorer external to per-candidate grade API.",
-      "validation_gap": null,
+      "resolution_strategy": "existing_script_cohort_runtime",
+      "needed_change": "Obtain archived cohort validation; full training-loop initialization remains outside fixture evidence.",
+      "validation_gap": "No eligible archived cohort in local verified census; source group scorer fixtures cover both transports, but training-loop initialization is not exercised.",
       "source_contract": "Circular cohort pair comparisons, simple tiebreaker aggregate, reasoning/answer bonuses and group length penalties; placeholder replaced in runner.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1739,11 +1774,20 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#cohort",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/genrm-cohort-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-genrm/worker/roundtrip.json",
+        "evidence/e2e/wiring/skyrl-genrm/implementation-provenance.json",
+        "evidence/e2e/wiring/skyrl-dormant-judges/trace-availability.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "core_extension_requirement": "existing_primitives_no_core_edit",
+      "integration_patch": "integrations/MarinSkyRL/genrm-cohort-verifyit.patch",
+      "validation_scope": "Fixture-only retained source-runtime cohort scoring through ScriptSpec; complete vectors, metrics and HTTP requests match.",
+      "implemented_primitive_modes": [
+        "script"
+      ]
     },
     {
       "id": "dormant/torl",
@@ -1918,20 +1962,20 @@
     },
     {
       "id": "dormant/qa_browsecomp",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "No eligible archived trace for the dormant source API; actual exported scorer and HTTP/core roundtrips are fixture-tested.",
       "active_in_pinned_dispatch": false,
       "dormant": true,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_core_schema_and_exact_external_judge_response",
       "native_fallback_in_cutover": false,
       "contract_family": "rubric",
       "existing_primitive_candidate": [
         "judge"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Source judge prompt and parser.",
-      "validation_gap": null,
+      "resolution_strategy": "existing_schema_exact_judge_client_composition",
+      "needed_change": "Obtain archived execution evidence when this dormant source API is used.",
+      "validation_gap": "No eligible archived trace for the dormant source API; actual exported scorer and HTTP/core roundtrips are fixture-tested.",
       "source_contract": "External LLM judge question+answer.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1943,28 +1987,38 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#rubric",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/dormant-judges-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-dormant-judges/worker/roundtrip.json",
+        "evidence/e2e/wiring/skyrl-dormant-judges/implementation-provenance.json",
+        "evidence/e2e/wiring/skyrl-dormant-judges/trace-availability.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "core_extension_requirement": "existing_primitives_no_core_edit",
+      "integration_patch": "integrations/MarinSkyRL/dormant-judges-verifyit.patch",
+      "validation_scope": "Fixture-only exported source API calls through real local HTTP and existing core schema/exact grading; source requests and scores match.",
+      "implemented_primitive_modes": [
+        "json-schema",
+        "exact"
+      ]
     },
     {
       "id": "dormant/qa_ruler",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "No eligible archived trace for the dormant source API; actual exported scorer and HTTP/core roundtrips are fixture-tested.",
       "active_in_pinned_dispatch": false,
       "dormant": true,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_core_schema_and_exact_external_judge_response",
       "native_fallback_in_cutover": false,
       "contract_family": "rubric",
       "existing_primitive_candidate": [
         "judge"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Source judge prompt and parser.",
-      "validation_gap": null,
+      "resolution_strategy": "existing_schema_exact_judge_client_composition",
+      "needed_change": "Obtain archived execution evidence when this dormant source API is used.",
+      "validation_gap": "No eligible archived trace for the dormant source API; actual exported scorer and HTTP/core roundtrips are fixture-tested.",
       "source_contract": "External LLM judge long-context QA.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -1976,11 +2030,21 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#rubric",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/dormant-judges-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-dormant-judges/worker/roundtrip.json",
+        "evidence/e2e/wiring/skyrl-dormant-judges/implementation-provenance.json",
+        "evidence/e2e/wiring/skyrl-dormant-judges/trace-availability.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "core_extension_requirement": "existing_primitives_no_core_edit",
+      "integration_patch": "integrations/MarinSkyRL/dormant-judges-verifyit.patch",
+      "validation_scope": "Fixture-only exported source API calls through real local HTTP and existing core schema/exact grading; source requests and scores match.",
+      "implemented_primitive_modes": [
+        "json-schema",
+        "exact"
+      ]
     },
     {
       "id": "dormant/qa_f1",
@@ -2064,20 +2128,20 @@
     },
     {
       "id": "dormant/stem_llm_judge",
-      "status": "capability_gap",
-      "not_covered_reason": "Existing judge mode exposes reference/checklist rubrics, not the required source prompt-template/final-label grammar and reward-table contract; source dispatch remains native. This implementation is dormant/exported-only in the pinned source, not an active built-in dispatch route.",
+      "status": "implemented_not_validated",
+      "not_covered_reason": "No eligible archived trace for the dormant source API; actual exported scorer and HTTP/core roundtrips are fixture-tested.",
       "active_in_pinned_dispatch": false,
       "dormant": true,
       "correctness_verifier": true,
-      "source_runtime": "native_only_unmigrated",
+      "source_runtime": "verifyit_core_schema_and_exact_external_judge_response",
       "native_fallback_in_cutover": false,
       "contract_family": "rubric",
       "existing_primitive_candidate": [
         "judge"
       ],
-      "resolution_strategy": "existing_judge_extension",
-      "needed_change": "Preserve prompt, parser and tuple transport.",
-      "validation_gap": null,
+      "resolution_strategy": "existing_schema_exact_judge_client_composition",
+      "needed_change": "Obtain archived execution evidence when this dormant source API is used.",
+      "validation_gap": "No eligible archived trace for the dormant source API; actual exported scorer and HTTP/core roundtrips are fixture-tested.",
       "source_contract": "External STEM reference judge.",
       "source": {
         "revision": "91c7a60e85e31b6933ab0ee732125b3338e82b89",
@@ -2089,11 +2153,20 @@
       "evidence": [
         "docs/unification/skyrl-adapter-specs.md#rubric",
         "docs/unification/skyrl.json",
-        "evidence/e2e/skyrl/uncovered-routes.json"
+        "evidence/e2e/skyrl/uncovered-routes.json",
+        "integrations/MarinSkyRL/dormant-judges-verifyit.patch",
+        "evidence/e2e/wiring/skyrl-dormant-judges/worker/roundtrip.json",
+        "evidence/e2e/wiring/skyrl-dormant-judges/implementation-provenance.json",
+        "evidence/e2e/wiring/skyrl-dormant-judges/trace-availability.json"
       ],
       "observed_verified_execution_links": 0,
       "actual_replayed_links": 0,
-      "core_extension_requirement": "specified_existing_class_behavior_missing"
+      "core_extension_requirement": "existing_primitives_no_core_edit",
+      "integration_patch": "integrations/MarinSkyRL/dormant-judges-verifyit.patch",
+      "validation_scope": "Fixture-only exported source API calls through real local HTTP and existing core schema/exact grading; source requests and scores match.",
+      "implemented_primitive_modes": [
+        "exact"
+      ]
     }
   ]
 }

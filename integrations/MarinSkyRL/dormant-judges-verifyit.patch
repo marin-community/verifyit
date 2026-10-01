@@ -1,0 +1,396 @@
+diff --git a/skyrl-agent/skyrl_agent/tasks/verifiers/judge_verifyit.py b/skyrl-agent/skyrl_agent/tasks/verifiers/judge_verifyit.py
+new file mode 100644
+index 0000000..edaf7fd
+--- /dev/null
++++ b/skyrl-agent/skyrl_agent/tasks/verifiers/judge_verifyit.py
+@@ -0,0 +1,84 @@
++"""Grade external judge responses with existing schema and exact primitives."""
++
++import json
++import math
++
++from verifyit.grade import InvalidTask, Status
++from verifyit.modes.grade_exact import grade_exact_candidate
++from verifyit.modes.grade_json_schema import grade_json_schema_candidate
++from verifyit.spec import ExactSpec
++
++
++def literal_score(candidate: str, reference: str) -> float:
++    result = grade_exact_candidate(
++        ExactSpec(
++            expected=(reference,),
++            ignore_case=False,
++            ignore_whitespace=False,
++            strip_outer_whitespace=False,
++        ),
++        candidate,
++    )
++    if result.status is not Status.SCORED:
++        raise RuntimeError("Exact judge comparison failed")
++    return result.reward
++
++
++def completion_text(response) -> str:
++    choices = response["choices"]
++    if not isinstance(choices, list) or len(choices) != 1:
++        raise ValueError("Judge must return one complete response")
++    choice = choices[0]
++    message = choice["message"]
++    if (
++        choice.get("finish_reason") != "stop"
++        or message.get("tool_calls")
++        or message.get("refusal")
++    ):
++        raise ValueError("Judge response is incomplete")
++    text = message.get("content")
++    if not isinstance(text, str):
++        raise ValueError("Judge response has no text")
++    return text
++
++
++def _unique_object(pairs):
++    value = {}
++    for key, item in pairs:
++        if key in value:
++            raise ValueError("Judge JSON has duplicate keys")
++        value[key] = item
++    return value
++
++
++def _reject_constant(value):
++    raise ValueError("Judge JSON must contain finite numbers")
++
++
++def _finite_float(value):
++    number = float(value)
++    if not math.isfinite(number):
++        raise ValueError("Judge JSON must contain finite numbers")
++    return number
++
++
++def structured_score(raw: str, schema: dict) -> float:
++    instance = json.loads(
++        raw,
++        object_pairs_hook=_unique_object,
++        parse_constant=_reject_constant,
++        parse_float=_finite_float,
++    )
++    validity = grade_json_schema_candidate(schema, instance)
++    if validity.status is not Status.SCORED:
++        raise InvalidTask("Invalid judge response schema")
++    if not validity.reward:
++        raise ValueError("Judge response violates its schema")
++    return literal_score(instance["correct"], "yes")
++
++
++def require_reference(question, reference):
++    if not isinstance(question, str) or not question.strip():
++        raise InvalidTask("Judge question must be nonempty text")
++    if not isinstance(reference, str) or not reference.strip():
++        raise InvalidTask("Judge reference must be nonempty text")
+diff --git a/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py b/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py
+index fcbef87..9409b6c 100644
+--- a/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py
++++ b/skyrl-agent/skyrl_agent/tasks/verifiers/qa.py
+@@ -240,13 +240,17 @@ def compute_score_em(solution_str, ground_truth, format_score=0.0, score=1.0, *,
+ 
+ 
+ # use llm as a verifier
+-def compute_score_browsecomp(solution_str, ground_truth, question):
++def compute_score_browsecomp(solution_str, ground_truth, question, *, verifyit_enabled=False):
+     """The scoring function for LLM"""
+ 
+     if isinstance(ground_truth["target"], list):
+         assert len(ground_truth["target"]) == 1, "Only one correct answer is supported for browsecomp"
+         ground_truth["target"] = ground_truth["target"][0]
+ 
++    if verifyit_enabled:
++        from skyrl_agent.tasks.verifiers.judge_verifyit import require_reference
++
++        require_reference(question, ground_truth["target"])
+     if solution_str is None:
+         return {"score": 0}
+     else:
+@@ -262,6 +266,10 @@ def compute_score_browsecomp(solution_str, ground_truth, question):
+             response_format=extracted_answer_format_for_confidence,
+         )
+         print(f"Response from judge model: {response}")
++        if verifyit_enabled:
++            from skyrl_agent.tasks.verifiers.judge_verifyit import completion_text, structured_score
++
++            return {"score": structured_score(completion_text(response.model_dump()), extracted_answer_format_for_confidence["json_schema"]["schema"])}
+         raw_content = response.choices[0].message["content"]
+         raw_judge = json.loads(raw_content)
+         judgement = "Correct" if raw_judge["correct"].lower() == "yes" else ""
+@@ -270,8 +278,12 @@ def compute_score_browsecomp(solution_str, ground_truth, question):
+ 
+ 
+ # use llm as a verifier
+-def compute_score_ruler(solution_str, ground_truth, question):
++def compute_score_ruler(solution_str, ground_truth, question, *, verifyit_enabled=False):
+     """The scoring function for LLM"""
++    if verifyit_enabled:
++        from skyrl_agent.tasks.verifiers.judge_verifyit import require_reference
++
++        require_reference(question, ground_truth)
+     if solution_str is None:
+         return {"score": 0}
+     else:
+@@ -287,6 +299,10 @@ def compute_score_ruler(solution_str, ground_truth, question):
+             response_format=ruler_answer_format,
+         )
+         print(f"Response from judge model: {response}")
++        if verifyit_enabled:
++            from skyrl_agent.tasks.verifiers.judge_verifyit import completion_text, structured_score
++
++            return {"score": structured_score(completion_text(response.model_dump()), ruler_answer_format["json_schema"]["schema"])}
+         raw_content = response.choices[0].message["content"]
+         print(f"Raw content from judge model: {raw_content}")
+         raw_judge = json.loads(raw_content)
+diff --git a/skyrl-agent/skyrl_agent/tasks/verifiers/web_search/stem_llm_judge.py b/skyrl-agent/skyrl_agent/tasks/verifiers/web_search/stem_llm_judge.py
+index e34a6be..f7eff1d 100644
+--- a/skyrl-agent/skyrl_agent/tasks/verifiers/web_search/stem_llm_judge.py
++++ b/skyrl-agent/skyrl_agent/tasks/verifiers/web_search/stem_llm_judge.py
+@@ -35,7 +35,7 @@ from typing import Tuple
+ 
+ 
+ # ------------ Core LLM call --------------------------------------------------
+-def _llm_judge(question: str, student: str, reference: str, verbose: bool = False) -> bool:
++def _llm_judge(question: str, student: str, reference: str, verbose: bool = False, *, verifyit_enabled=False) -> bool:
+     url_base = os.getenv("STEM_LLM_JUDGE_URL")
+     if not url_base:
+         raise EnvironmentError("STEM_LLM_JUDGE_URL not set")
+@@ -67,6 +67,15 @@ def _llm_judge(question: str, student: str, reference: str, verbose: bool = Fals
+     resp.raise_for_status()
+     data = resp.json()
+ 
++    if verifyit_enabled:
++        from skyrl_agent.tasks.verifiers.judge_verifyit import completion_text, literal_score
++
++        text = completion_text(data)
++        decisions = {match.group(1).lower() for match in _FINAL_DECISION_RE.finditer(text)}
++        final = text.strip().splitlines()[-1] if text.strip() else ""
++        if len(decisions) != 1 or _FINAL_DECISION_RE.fullmatch(final) is None:
++            raise ValueError("Judge response has missing or contradictory decisions")
++        return literal_score(next(iter(decisions)), "yes")
+     text = data["choices"][0]["message"]["content"]
+ 
+     decision = _extract_final_decision(text)
+@@ -148,7 +157,7 @@ def match_answer(response):
+ 
+ 
+ # ------------ Public API -----------------------------------------------------
+-def compute_score(data_source: str, model_output: str, ground_truth: str, extra_info: dict) -> Tuple[bool, float, str]:
++def compute_score(data_source: str, model_output: str, ground_truth: str, extra_info: dict, *, verifyit_enabled=False) -> Tuple[bool, float, str]:
+     """
+     Arguments
+     ---------
+@@ -161,6 +170,10 @@ def compute_score(data_source: str, model_output: str, ground_truth: str, extra_
+     (is_correct, score, normalized_student_answer)
+         score is 1.0 if correct, else 0.0
+     """
++    if verifyit_enabled:
++        from skyrl_agent.tasks.verifiers.judge_verifyit import require_reference
++
++        require_reference(extra_info.get("question"), ground_truth)
+     model_output = str(model_output)
+     ground_truth = str(ground_truth)
+ 
+@@ -172,6 +185,10 @@ def compute_score(data_source: str, model_output: str, ground_truth: str, extra_
+     if answer_type == "exactmatch":
+         student = extracted_model_output.strip()
+         gt = ground_truth.strip()
++        if verifyit_enabled:
++            from skyrl_agent.tasks.verifiers.judge_verifyit import literal_score
++
++            return literal_score(student, gt)
+         return 1.0 if student == gt else 0.0
+ 
+     # Otherwise, require boxed for LLM judging (legacy behavior)
+@@ -180,7 +197,7 @@ def compute_score(data_source: str, model_output: str, ground_truth: str, extra_
+         return 0.0
+     else:
+         try:
+-            is_correct = _llm_judge(question, extracted_model_output, ground_truth, verbose=False)
++            is_correct = _llm_judge(question, extracted_model_output, ground_truth, verbose=False, verifyit_enabled=verifyit_enabled)
+         except Exception as e:
+             instance_id = extra_info.get("instance_id", "unknown") if isinstance(extra_info, dict) else "unknown"
+             print(f"[judge-error] instance_id={instance_id} {e}")
+diff --git a/skyrl-agent/tests/test_judge_verifyit.py b/skyrl-agent/tests/test_judge_verifyit.py
+new file mode 100644
+index 0000000..32f5c37
+--- /dev/null
++++ b/skyrl-agent/tests/test_judge_verifyit.py
+@@ -0,0 +1,172 @@
++"""Source judge APIs over the real local OpenAI-compatible HTTP boundary."""
++
++import json
++import threading
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++
++import pytest
++
++import importlib
++import sys
++import types
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[1] / "skyrl_agent"
++for name, path in [
++    ("skyrl_agent", ROOT),
++    ("skyrl_agent.tasks", ROOT / "tasks"),
++    ("skyrl_agent.tasks.verifiers", ROOT / "tasks/verifiers"),
++]:
++    if name not in sys.modules:
++        module = types.ModuleType(name)
++        module.__path__ = [str(path)]
++        sys.modules[name] = module
++
++qa = importlib.import_module("skyrl_agent.tasks.verifiers.qa")
++stem = importlib.import_module("skyrl_agent.tasks.verifiers.web_search.stem_llm_judge")
++compute_score_browsecomp = qa.compute_score_browsecomp
++compute_score_ruler = qa.compute_score_ruler
++compute_score = stem.compute_score
++
++
++@pytest.fixture
++def judge_server(monkeypatch):
++    class Handler(BaseHTTPRequestHandler):
++        def do_POST(self):
++            request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
++            server.requests.append(request)
++            body = json.dumps(
++                {
++                    "id": "test",
++                    "object": "chat.completion",
++                    "created": 0,
++                    "model": request["model"],
++                    "choices": [
++                        {
++                            "index": 0,
++                            "finish_reason": server.finish,
++                            "message": {"role": "assistant", "content": server.reply},
++                        }
++                    ],
++                }
++            ).encode()
++            self.send_response(200)
++            self.send_header("Content-Type", "application/json")
++            self.send_header("Content-Length", str(len(body)))
++            self.end_headers()
++            self.wfile.write(body)
++
++        def log_message(self, *args):
++            pass
++
++    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
++    server.requests, server.reply, server.finish = [], "", "stop"
++    thread = threading.Thread(target=server.serve_forever, daemon=True)
++    thread.start()
++    monkeypatch.setenv("OPENAI_API_BASE", f"http://127.0.0.1:{server.server_port}/v1")
++    monkeypatch.setenv("OPENAI_API_KEY", "local-test")
++    monkeypatch.setenv("STEM_LLM_JUDGE_URL", f"http://127.0.0.1:{server.server_port}")
++    yield server
++    server.shutdown()
++    server.server_close()
++    thread.join()
++
++
++def invoke(route, enabled):
++    if route == "browsecomp":
++        return compute_score_browsecomp(
++            "candidate {literal}",
++            {"target": ["reference"]},
++            "Question?",
++            verifyit_enabled=enabled,
++        )
++    if route == "ruler":
++        return compute_score_ruler(
++            "candidate {literal}", "reference", "Question?", verifyit_enabled=enabled
++        )
++    return compute_score(
++        "",
++        r"\boxed{candidate}",
++        "reference",
++        {"question": "Question?"},
++        verifyit_enabled=enabled,
++    )
++
++
++@pytest.mark.parametrize("route", ["browsecomp", "ruler", "stem"])
++@pytest.mark.parametrize("answer,score", [("yes", 1.0), ("no", 0.0)])
++def test_original_prompts_and_scores_survive_core_cutover(
++    judge_server, route, answer, score
++):
++    raw = {"correct": answer}
++    if route == "browsecomp":
++        raw.update(
++            extracted_final_answer="candidate",
++            reasoning="comparison",
++            confidence=100,
++            strict=True,
++        )
++    judge_server.reply = (
++        f"Final Decision: {answer}" if route == "stem" else json.dumps(raw)
++    )
++    native = invoke(route, False)
++    requests = list(judge_server.requests)
++    judge_server.requests.clear()
++    cutover = invoke(route, True)
++    assert cutover == native == (score if route == "stem" else {"score": score})
++    assert judge_server.requests == requests
++
++
++@pytest.mark.parametrize("route", ["browsecomp", "ruler", "stem"])
++def test_truncated_positive_completion_never_scores(judge_server, route):
++    judge_server.reply = (
++        "Final Decision: Yes" if route == "stem" else '{"correct":"yes"}'
++    )
++    judge_server.finish = "length"
++    if route == "stem":
++        assert invoke(route, True) == 0.0
++    else:
++        with pytest.raises(ValueError, match="incomplete"):
++            invoke(route, True)
++
++
++def test_structured_judge_cannot_bypass_required_schema(judge_server):
++    judge_server.reply = '{"correct":"yes"}'
++    assert invoke("browsecomp", False) == {"score": 1}
++    with pytest.raises(ValueError, match="schema"):
++        invoke("browsecomp", True)
++
++
++def test_contradictory_stem_judge_loses_last_positive_credit(judge_server):
++    judge_server.reply = "Final Decision: No\nFinal Decision: Yes"
++    assert invoke("stem", False) == 1.0
++    assert invoke("stem", True) == 0.0
++
++
++@pytest.mark.parametrize(
++    "raw",
++    [
++        '{"correct":"no","correct":"yes"}',
++        '{"correct":"yes","extra":NaN}',
++        '{"correct":"yes","extra":1e999}',
++    ],
++)
++def test_structured_judge_rejects_ambiguous_or_nonfinite_json(judge_server, raw):
++    judge_server.reply = raw
++    assert invoke("ruler", False) == {"score": 1}
++    with pytest.raises(ValueError):
++        invoke("ruler", True)
++
++
++@pytest.mark.parametrize(
++    "text",
++    [
++        "Not Final Decision: Yes",
++        "Final Decision: Yes because",
++        "Final Decision: Yes\nUnfinished decision:",
++    ],
++)
++def test_stem_requires_complete_final_decision_line(judge_server, text):
++    judge_server.reply = text
++    assert invoke("stem", False) == 1.0
++    assert invoke("stem", True) == 0.0

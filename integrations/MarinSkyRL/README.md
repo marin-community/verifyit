@@ -189,3 +189,31 @@ trace records actual child primitive verdicts. Evidence and rerun commands are
 in `evidence/e2e/wiring/skyrl-judge-family/`. The dependency pin includes
 complete-line label parsing and rejection of malformed direct ExactSpec
 reference containers.
+
+
+Apply `dormant-judges-verifyit.patch` after the judge-profile patch to enable
+`verifyit_enabled=True` on the exported BrowseComp, RULER and STEM judge APIs.
+BrowseComp and RULER preserve source requests and response schemas, then grade
+raw external JSON through JSONSchemaSpec and ExactSpec. Duplicate fields,
+nonfinite numbers, truncated responses and malformed schemas abort grading.
+STEM preserves its request and exact-match branch, but requires a complete final
+decision line and rejects contradictory decisions. Its existing error boundary
+returns zero. These are core-primitive integrations with 17 source tests and six
+HTTP roundtrips; no eligible archived trace exists in the local census.
+
+Apply `genrm-cohort-verifyit.patch` next, with the dependency patch last. The
+Nemotron runner forwards `verifyit_enabled` into GenRM configuration. Both
+GenRM routes execute the source cohort scorer inside a trusted ScriptSpec child;
+this is a retained-runtime integration, not independent per-response judging.
+The child preserves circular pairing, comparisons, tie breaking and length
+shaping, and returns the complete finite reward vector plus cohort metrics.
+ScriptSpec's scalar zero is an execution envelope; training consumes the vector,
+whose values may exceed one. Invalid comparisons, incomplete transport, malformed
+vectors and total-deadline failures discard the whole cohort.
+
+Thirteen GenRM source tests and six cohort HTTP roundtrips cover both transport
+formats and tie/length policies. The evidence exercises the actual group scorer,
+not training-loop initialization or model generation. No archived comparison
+cohort is available. Exact installed-package proofs and source-patch manifests
+are under `evidence/e2e/wiring/skyrl-dormant-judges/` and
+`evidence/e2e/wiring/skyrl-genrm/`.
