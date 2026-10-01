@@ -1,10 +1,10 @@
 {
   "source_revision": "e3f4a3d601896c437f37b0bd0a30e51651cce6d0",
-  "patch_sha256": "710cee93d01d61c7255696617b1771838efb2dbe980fa34ddee60d447d66296c",
+  "patch_sha256": "bd136dbc25691af73d796d6eba563d25c48aeaf97024c5a3f915156e67459870",
   "framework_files": {
-    "eval/chat_benchmarks/zeroeval/eval_instruct.py": "0b2656a44815485c876955d7ccd683f5fff9c3912cb9a062f9482b2c64904572",
+    "eval/chat_benchmarks/zeroeval/eval_instruct.py": "a4ae16e2d194a22287b4ddebdc7571ee3ff2f1ee130c339a358e44cdaaeae868",
     "eval/graders/verifyit_zeroeval.py": "117a7ac64355a158d89ab019c2a7bdafc28c48930256f910188fc19eefdc5577",
-    "tests/graders/test_verifyit_zeroeval.py": "c1e55d8343f55492d6b8b8e90d090c170d0191ace3dc00babd5f9acda292ad1d"
+    "tests/graders/test_verifyit_zeroeval.py": "de9ba3a199ce4c189c37715c4cbbcb0d15401c664c5e6220c0321c91d64f0a7b"
   },
   "source_files": {
     "eval/chat_benchmarks/zeroeval/eval_instruct.py": "12ea3126f6824181fa109426fa428ba8bcfae9e8270caadd54ef7427591f605f",
@@ -35,7 +35,7 @@
   "proof": {
     "supported_task_names": 5,
     "evaluator_samples": 20,
-    "ordinary_tests": 8,
+    "ordinary_tests": 10,
     "real_archived_replays": 0
   },
   "corrections": [

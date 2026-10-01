@@ -1,34 +1,23 @@
 --- a/eval/chat_benchmarks/zeroeval/eval_instruct.py
 +++ b/eval/chat_benchmarks/zeroeval/eval_instruct.py
-@@ -10,6 +10,7 @@
- from lm_eval.api.model import LM
- from eval.chat_benchmarks.zeroeval.src.task_configs import prompt_generation
- from eval.task import BaseBenchmark
-+from eval.graders.verifyit_zeroeval import evaluate as verifyit_evaluate
- 
- from .src.unified_utils import mapping_task_names, save_outputs
- from .src.evaluation.zebra_grid_eval import eval_model as zebra_grid_eval_model, load_private_solutions
-@@ -31,6 +32,7 @@
- 
-     def __init__(
-         self,
-+        verifyit_enabled: bool = False,
-         tasks: List[str] = ["zebra-grid", "numersense-v2", "crux", "math-l5"],
-         config: Optional[ZeroEvalConfig] = None,
-         max_tokens: Optional[int] = 4096,
-@@ -39,6 +41,7 @@
+@@ -37,8 +37,10 @@
+         debug: bool = False,
+         logger: Optional[logging.Logger] = None,
          system_instruction: Optional[str] = None,
++        verifyit_enabled: bool = False,
      ):
          super().__init__(logger, system_instruction=system_instruction)
 +        self.verifyit_enabled = verifyit_enabled
          self.tasks = tasks
          self.config = config or ZeroEvalConfig()
          self.max_new_tokens = int(max_tokens) if max_tokens is not None else 4096
-@@ -166,6 +169,8 @@
+@@ -166,6 +168,10 @@
          """
          Evaluate responses for ZeroEval tasks.
          """
 +        if self.verifyit_enabled:
++            from eval.graders.verifyit_zeroeval import evaluate as verifyit_evaluate
++
 +            return verifyit_evaluate(self.tasks, results)
          temp_dir_obj = results["temp_dir_obj"]
          temp_dir = temp_dir_obj.name
@@ -231,12 +220,15 @@
 +    main()
 --- /dev/null
 +++ b/tests/graders/test_verifyit_zeroeval.py
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,107 @@
 +"""Zeroeval source parity and complete-batch failure behavior."""
 +
++import importlib
 +import json
 +from pathlib import Path
 +import tempfile
++import subprocess
++import sys
 +
 +import pytest
 +from verifyit.grade import InvalidTask
@@ -308,3 +300,31 @@
 +    assert result["Acc"] == "0.00"
 +    assert result["No answer"] == "100.00"
 +    assert result["Reason Lens"] == "0.00"
++
++
++def test_original_positional_task_argument(monkeypatch):
++    directory = Path(__file__).resolve().parents[2] / "eval/chat_benchmarks/zeroeval"
++    monkeypatch.syspath_prepend(str(directory))
++    module = importlib.import_module("eval.chat_benchmarks.zeroeval.eval_instruct")
++    benchmark = module.ZeroEvalBenchmark(["crux"])
++    assert benchmark.tasks == ["crux"]
++    assert benchmark.verifyit_enabled is False
++
++
++def test_disabled_import_does_not_require_verifyit():
++    directory = Path(__file__).resolve().parents[2] / "eval/chat_benchmarks/zeroeval"
++    program = """
++import importlib.abc
++import sys
++class BlockVerifyit(importlib.abc.MetaPathFinder):
++    def find_spec(self, fullname, path=None, target=None):
++        if fullname == 'verifyit' or fullname.startswith('verifyit.') or fullname == 'lm_eval.verifyit_humaneval':
++            raise ModuleNotFoundError(fullname)
++sys.meta_path.insert(0, BlockVerifyit())
++sys.path.append(sys.argv[1])
++from eval.chat_benchmarks.zeroeval.eval_instruct import ZeroEvalBenchmark
++benchmark = ZeroEvalBenchmark(['crux'])
++assert benchmark.tasks == ['crux']
++assert not benchmark.verifyit_enabled
++"""
++    subprocess.run([sys.executable, "-c", program, str(directory)], check=True, capture_output=True, text=True)
