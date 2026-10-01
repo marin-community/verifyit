@@ -80,7 +80,8 @@ logger = logging.getLogger(__name__)
 def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
     assert isinstance(spec, JudgeSpec)
     _validate_spec(spec)
-    return grade_candidate(spec, read_output(spec, workspace) or "", context=_context(spec, tests_dir))
+    context = _context(spec, tests_dir)
+    return grade_candidate(spec, read_output(spec, workspace) or "", context=context)
 
 
 def grade_candidate(spec: JudgeSpec, candidate: str, *, context: str = "") -> Reward:
