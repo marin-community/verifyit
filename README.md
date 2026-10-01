@@ -99,6 +99,14 @@ spec = parse_spec((tests_dir / "verifier.toml").read_text())
 reward = grade(spec, tests_dir=tests_dir, workspace=Path("/app"))
 ```
 
+
+### In-memory judge input
+
+With the `judge` extra installed, `verifyit.modes.grade_judge.grade_candidate(spec, candidate, context="")`
+grades answer text without a workspace or temporary files. Pass decoded context text through `context`;
+`spec.context` continues to name a tests-directory file for the existing `grade(spec, tests_dir, workspace)`
+entry point. Both APIs use the same rubric, deterministic gates, score parser, and empty-answer behavior.
+
 For development, see [CONTRIBUTING.md](CONTRIBUTING.md),
 [AGENTS.md](AGENTS.md), and the [repository skills](.agents/skills).
 Run the package checks from the repository root:

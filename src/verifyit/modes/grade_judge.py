@@ -79,6 +79,15 @@ logger = logging.getLogger(__name__)
 
 def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
     assert isinstance(spec, JudgeSpec)
+    return grade_candidate(spec, read_output(spec, workspace) or "", context=_context(spec, tests_dir))
+
+
+def grade_candidate(spec: JudgeSpec, candidate: str, *, context: str = "") -> Reward:
+    """Grade candidate text with decoded context, without reading or writing files.
+
+    The caller supplies the contents of any context file named by the spec.
+    Empty candidate text scores zero, as it does through the file-based API.
+    """
     if spec.rubric not in RUBRICS:
         raise InvalidTask(f"unknown judge rubric {spec.rubric!r}; known rubrics: {sorted(RUBRICS)}")
     references = tuple(reference for reference in spec.references if reference.strip())
@@ -88,10 +97,9 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
     if spec.rubric == RUBRIC_CHECKLIST and not criteria:
         raise InvalidTask("judge rubric 'checklist' needs non-empty criteria")
     checks = resolve_checks(spec.constraints) if spec.constraints else []
-    context = _context(spec, tests_dir)
+    context = context[:CONTEXT_LIMIT]
 
-    candidate = read_output(spec, workspace)
-    if candidate is None:
+    if not candidate.strip():
         return scored(0.0, reason="no_output")
 
     failed = [constraint.name for constraint, check in checks if not _passes(check, candidate, constraint.params)]
