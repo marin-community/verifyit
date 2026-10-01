@@ -2747,16 +2747,20 @@
       "entity_id": "harbor:kumo",
       "evidence": [
         "docs/unification/harbor_semantics.json#kumo",
-        "docs/unification/harbor_inventory.json#kumo"
+        "docs/unification/harbor_inventory.json#kumo",
+        "integrations/harbor/kumo-exact-verifyit.patch",
+        "evidence/e2e/wiring/harbor-kumo/final-manifest.json",
+        "evidence/e2e/wiring/harbor-kumo/manager-positive.json",
+        "evidence/e2e/wiring/harbor-kumo/manager-wrong.json"
       ],
-      "gap_kind": "scalar_metric_adapter",
-      "implementation_present": false,
+      "gap_kind": "implemented_exact_client",
+      "implementation_present": true,
       "name": "kumo",
-      "needed_change": "Extract only the first nonempty answer line, grade literal-cased valid_truth with ExactSpec flags, and emit scalar reward explicitly while keeping actions_used/relative_action_count and nonnumeric source metadata in detail.",
+      "needed_change": "Validate archived model traces and broader Kumo scenarios before wider deployment.",
       "primitive_candidates": [
         "exact"
       ],
-      "reason": "Compare first nonempty answer line to valid_truth; actions_used/relative_action_count are auxiliary metrics. Source JSON lacks reward and includes nonnumeric metadata; explicit scalar adapter required. Set ExactSpec(ignore_case=False, ignore_whitespace=False) after first-line extraction to retain literal casing. No current per-adapter client patch implements the stated conversion/composition.",
+      "reason": "The source first nonempty stripped answer line is compared case-sensitively against trusted valid_truth with strict ExactSpec. Existing source Compose action service is retained. Action counts and relative action counts remain auxiliary verdict details, while the primitive controls the scalar reward. A separate verifier image owns the reference and comparator.",
       "source_evidence": [
         {
           "functions": [
@@ -2795,8 +2799,13 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_route_available",
+      "validation_limit": "Three seeded source-generated easy-scenario tasks each ran positive, wrong and multiline-answer cases through the original source scorer and actual Harbor Trials. All nine rewards and action metrics match; each Trial called the real source action service once. Five helper regressions pass. Source upstream prompt and oracle computation are retained. No matching archived model traces were available. Invalid UTF-8 candidates receive zero instead of source replacement decoding. Validation covers ordinary parity; no additional security tests were performed.",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "/tests/expected.json and strict exact comparator",
+        "needed_change": "Ordinary score parity and source action-service roundtrips validated; security scope and archived model traces remain unverified."
+      }
     },
     {
       "entity_id": "harbor:labbench",

@@ -305,3 +305,20 @@ Provenance and original result hashes are in
 `evidence/e2e/wiring/harbor-labbench/final-manifest.json`. No matching archived
 model traces were available; validation covers ordinary parity, and security
 scope remains unverified.
+
+## Kumo
+
+Apply `kumo-exact-verifyit.patch` after the Harbor dispatcher and
+`answer-isolation-verifyit.patch`, then pass `--verifyit-enabled` to Kumo's
+adapter. The source Compose action service is retained. A separate grader
+compares the first nonempty stripped answer line with trusted `valid_truth`
+using strict ExactSpec. Action counts and relative counts remain auxiliary
+verdict details; they do not alter reward. Invalid trusted references fail
+task validation, and unreadable or invalid UTF-8 candidates score zero.
+
+Nine ordinary cases across three seeded source-generated tasks match original
+source scores and action metrics, with one real action-service call per Trial.
+Five helper regressions pass. Independent manager positive/wrong Trials confirm
+the final images. Provenance is in
+`evidence/e2e/wiring/harbor-kumo/final-manifest.json`. No matching archived
+model traces were available; security scope remains unverified.
