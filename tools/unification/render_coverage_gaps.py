@@ -58,13 +58,13 @@ The remaining work is primarily client integration, source-specific comparison/j
 | Source population | Implemented / available | Remaining coverage |
 | --- | --- | --- |
 | Harness 12,692 indexed task configs | 11,329 guarded native routes + 993 retained-runtime routes available | 370 configs have no cutover; breakdown below |
-| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 25 source runtimes | 5 not integrated (3 client/comparator audits + 1 private-solution blocker + 1 native profile gap) |
+| Evalchemy 42 custom benchmarks | 8 native integrations + 4 math hybrids + 26 source runtimes | CUSTOM_PENDING_COUNT not integrated (2 client/comparator audits + 1 private-solution blocker + 1 native profile gap) |
 | Evalchemy 21 task overrides | 2 native exact integrations + 1 native MC2 probability-mass integration + 1 GSM hybrid + 17 retained-runtime overrides | 0 unwired; GSM hybrid retains its fallback; plus 1 orchestration group |
 SKYRL_SUMMARY_ROW
 HARBOR_SUMMARY_ROW
 | TaskTrove 81 cohorts, 861,848 metadata rows | all metadata routes and 19 converters/12 modes implemented | genuine archived task execution not validated; 0 unmapped metadata rows |
 
-Evidence-backed execution checkpoint: Harbor **HARBOR_TESTED/HARBOR_TOTAL adapters** have a cutover exercised through actual Harbor Verifier or Trial: **HARBOR_FIXTURE_TESTED** with generated fixtures and **HARBOR_ARCHIVE_TESTED** (HARBOR_ARCHIVE_NAMES) with archived replays. TaskTrove has **0/81 cohorts** with genuine archived task execution; metadata coverage is not execution validation. Tau3 completed 1,101 archived replays: 1,051 recorded-score matches, 37 previously unscored cases became scored, 10 stayed unscored, and 3 had native database-baseline mismatches. These counts describe tested adapter routes, not every task deployment. QuixBugs, ResearchCodeBench, SciCode, LiveCodeBench, USACO, Aider Polyglot, CrustBench, LLMSR, SLDBench, Dolci and QCircuitBench have a separate remaining trust gap: candidate code executes inside the grader runtime, so candidate/assertion isolation is unverified. This is distinct from the six routes still sharing the agent container.
+Evidence-backed execution checkpoint: Harbor **HARBOR_TESTED/HARBOR_TOTAL adapters** have a cutover exercised through actual Harbor Verifier or Trial: **HARBOR_FIXTURE_TESTED** with generated fixtures and **HARBOR_ARCHIVE_TESTED** (HARBOR_ARCHIVE_NAMES) with archived replays. TaskTrove has **0/81 cohorts** with genuine archived task execution; metadata coverage is not execution validation. Tau3 completed 1,101 archived replays: 1,051 recorded-score matches, 37 previously unscored cases became scored, 10 stayed unscored, and 3 had native database-baseline mismatches. These counts describe tested adapter routes, not every task deployment. QuixBugs, ResearchCodeBench, SciCode, LiveCodeBench, USACO, Aider Polyglot, CrustBench, LLMSR, SLDBench, Dolci and QCircuitBench have a separate remaining trust gap: candidate code executes inside the grader runtime, so candidate/assertion isolation is unverified. This is distinct from the six routes still sharing the agent container. Evalchemy BigCodeBench also retains candidate code and trusted unittest assertions in the same runtime; its scoring parity does not establish candidate/assertion isolation.
 
 `capability_gap` means a proposed native contract is missing from an existing mode, not that the benchmark cannot execute through task-owned `ScriptSpec`. A source-preserving structured script bridge is an alternative where the task runtime and failure/metric contract are available. `not_integrated` means client wiring, source-contract translation or a comparator parity audit remains. `native_fallback` means an implemented cutover still calls a native source scorer. Validation-only gaps are listed separately; unavailable traces are never called unsupported.
 
@@ -137,7 +137,7 @@ The source population additionally has 834 groups and 456 templates (1,290 orche
 
 ## Evalchemy custom benchmarks
 
-The 6 remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
+The CUSTOM_PENDING_COUNT remaining custom benchmarks are named below. Script/stdio/pytest candidates already exist; source code extraction, trusted tests, resource/status rules and named aggregation still need client adapters. Math and judge rows preserve source-specific normalization, fallback and protocol requirements.
 
 """ + table(
     "evalchemy-custom", {"not_integrated", "capability_gap"}
@@ -270,6 +270,10 @@ uv run python tools/unification/render_coverage_gaps.py
 
 Each entity resolves `coverage_contract` in the top-level contract table for its reason, existing mode candidates, required change and validation status. Small curated peer inputs retain their exact source contracts; generated JSON is one entity per line and can be queried by source/name/status/reason. Raw datasets and replay credentials are not included.
 """
+custom_pending = sum(
+    r["source"] == "evalchemy-custom" and r["status"] in {"not_integrated", "capability_gap"} for r in rows
+)
+text = text.replace("CUSTOM_PENDING_COUNT", str(custom_pending))
 skyrl_counts = Counter(r["status"] for r in rows if r["source"] == "MarinSkyRL")
 validated = skyrl_counts["implemented_validated"]
 unvalidated = skyrl_counts["implemented_not_validated"]

@@ -374,3 +374,31 @@ The source regularized LC prediction remains diagnostic, while uncertainty field
 retain source values. Fresh scoring bypasses annotation caches. Only the
 inapplicable AE1 cached LC NaN is represented as null; computed nonfinite metrics
 fail. No new verifier class is introduced.
+
+## BigCodeBench
+
+Apply `bigcodebench-verifyit.patch`, build the dependency image using the included
+`eval/graders/bigcodebench_runtime/README.md`, and enable `verifyit_enabled=True`.
+The default image is `verifyit-evalchemy-bigcodebench:source-v1`;
+`VERIFYIT_BIGCODEBENCH_IMAGE` selects an equivalent validated runtime. The tested
+lock targets Linux arm64. The build pins its Python base and 252 resolved Python
+package versions; native system libraries and NLTK assets remain runtime inputs.
+
+All four prompt populations retain the original Python unittest scorer, timeout,
+`safe_mode`, completion IDs and pass@k denominator behavior. Three tasks per
+population were frozen before scoring. Source/cutover parity covers 240 mixed
+completions across both safe modes, plus 24 on a fresh documented build. Canonical
+task 736 keeps its original scipy-related failure and receives zero. These are
+source-task fixtures, not archived validated model traces.
+
+Missing or empty trusted suites invalidate the task; missing trusted dependencies
+abort the entire batch. Current responses replace stale generated files, and a
+failed later population cannot return earlier positive metrics. Parent cleanup
+removes named containers after grading, including timeout paths. Docker networking
+remains at its default, preserving the absence of a source network ban.
+
+Candidate code and trusted assertions share the source runtime; isolation remains
+unverified. The tested boundary is `evaluate_responses`. The original
+`run_benchmark` references missing `self.languages` and remains unchanged. Only
+Python execution is implemented by the source executor. No new verifier class
+is introduced.

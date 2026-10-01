@@ -1044,6 +1044,38 @@ def evalchemy_entities(root):
                     "../evidence/e2e/wiring/evalchemy-zeroeval/solution-availability.json",
                 ],
             )
+        elif name == "BigCodeBench":
+            entity.update(
+                status="retained_runtime_available",
+                reason_id="custom_bigcodebench_unittest_runtime",
+                reason=(
+                    "ScriptSpec supervises the source Python unittest runtime in a documented "
+                    "dependency image, retaining four prompt populations, safe_mode, per-task "
+                    "outcomes and source pass@k aggregation. Failed batches cannot return partial metrics."
+                ),
+                primitive_candidates=["script"],
+                needed_change=(
+                    "Build the documented Linux arm64 image or supply an equivalent validated image, "
+                    "then enable verifyit_enabled=True. Three frozen tasks per population have "
+                    "240 source-equal grades across both safe modes and pass@1/pass@10; a fresh "
+                    "build also has 24 source-equal grades and matching dependency versions. "
+                    "Canonical task 736 retains its original source failure. Candidate and trusted "
+                    "assertions share the runtime, so isolation remains unverified. The original "
+                    "run_benchmark self.languages defect is outside the tested evaluator boundary. "
+                    "No archived replay is claimed."
+                ),
+                validation_status="source_evaluator_fixtures_rebuilt_runtime_no_archives",
+                blockers=[],
+                evidence=[
+                    "integrations/evalchemy/bigcodebench-verifyit.patch",
+                    "integrations/evalchemy/bigcodebench-source.json",
+                    "../evidence/e2e/wiring/evalchemy-bigcodebench/manager-fresh-image/results.json",
+                    "../evidence/e2e/wiring/evalchemy-bigcodebench/final-parity-summary.json",
+                    "../evidence/e2e/wiring/evalchemy-bigcodebench/fresh-image-summary.json",
+                    "../evidence/e2e/wiring/evalchemy-bigcodebench/timeout-container-cleanup.json",
+                    "../evidence/e2e/wiring/evalchemy-bigcodebench/archive-census.json",
+                ],
+            )
         elif name == "alpaca_eval":
             entity.update(
                 status="retained_runtime_available",
