@@ -108,16 +108,18 @@
       "entity_id": "harbor:ace-bench",
       "evidence": [
         "docs/unification/harbor_semantics.json#ace-bench",
-        "docs/unification/harbor_inventory.json#ace-bench"
+        "docs/unification/harbor_inventory.json#ace-bench",
+        "integrations/harbor/acebench-runtime-verifyit.patch",
+        "evidence/e2e/wiring/harbor-acebench/final-manifest.json"
       ],
-      "gap_kind": "retained_specialized_runtime_wiring",
-      "implementation_present": false,
+      "gap_kind": "implemented_source_runtime",
+      "implementation_present": true,
       "name": "ace-bench",
-      "needed_change": "Add a structured ScriptSpec producer around adapters/ace-bench/template/tests/test.sh preserving the exact contract above, declared native runtime/assets, unit reward policy, auxiliary metrics and non-scoring infrastructure statuses; then test the real runtime boundary.",
+      "needed_change": "Validate archived model traces and production deployment; the upstream agent split has no implemented static adapter/verifier.",
       "primitive_candidates": [
         "script"
       ],
-      "reason": "checker.py implements tool-call AST correctness; exact text/schema validation cannot replace semantic function argument checks. Existing ScriptSpec can host this executable runtime, but no status/metric-normalizing Harbor client bridge for this adapter is implemented.",
+      "reason": "Opt-in generation transfers JSON/text outputs to a separate verifier image and retains all four native checker branches through existing ScriptSpec. Source numeric coercion, normalized substring strings, nested subsets and more-specific repeated-call matching remain unchanged. Malformed or nonfinite trusted references are rejected before task generation.",
       "source_evidence": [
         {
           "functions": [
@@ -146,8 +148,14 @@
         }
       ],
       "source_revision": "6f94f2237224869a49c249a737d701147afc33b6",
-      "status": "not_integrated",
-      "validation_limit": "No deployed per-task parity established for this adapter."
+      "status": "native_fallback",
+      "validation_limit": "All1940 supported source rows pass reference generation preflight. Three frozen random real rows per15categories/two languages yield90original-oracle actual Harbor roundtrips; eight wrong, two missing and two overlapping-call cases also match,102paired scores total. Missing checker source0 becomes infra_error0 with no Harbor reward. Five regressions pass;31immutable image witnesses and90source checker/oracle/instruction byte-equality proofs recorded. Real source-oracle evidence is conservatively fixture-classified, not archived traces. Exact local wheel used while production core pin is unpublished.",
+      "execution_evidence_kind": "fixture",
+      "boundary_hardening": {
+        "status": "separate_verifier_parity_validated",
+        "trusted_assets": "Generated native checker and verifier.toml in a separate verifier image; candidate JSON/text artifacts only",
+        "needed_change": "Validate archived traces and production deployment; no new security tests were performed."
+      }
     },
     {
       "entity_id": "harbor:adebench",

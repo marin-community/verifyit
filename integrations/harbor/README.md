@@ -693,3 +693,29 @@ assets, and all 41 installed core Python files match the pinned wheel.
 The tracker has no eligible LawBench archive links. These are source-contract
 fixtures, not archived model replays. No new security tests were run. Use the
 exact local wheel recipe above while the production verifyit pin is unpublished.
+
+
+## ACEBench
+
+Apply `acebench-runtime-verifyit.patch` after the base dispatcher and
+`research-code-bench-runtime-verifyit.patch`, then generate with `--verifyit`.
+Existing ScriptSpec transfers `/workspace/output.json` and `output.txt` to the
+separate verifier image. The generated native checker remains unchanged,
+including numeric coercion, normalized string substrings, nested dictionary
+subsets and matching more-specific repeated calls first. This preserves the
+source contract; it does not impose strict JSON/type equality.
+
+The source census covers all 1,940 implemented rows across 15 categories in
+English and Chinese. Three frozen random rows per category and language give
+90 original-oracle roundtrips. Eight wrong candidates, two missing candidates
+and two overlapping-call regression cases also match source scores. A missing
+checker reports infrastructure error at the minimum score. Five generation and
+matching regression tests pass. The manifest at
+`evidence/e2e/wiring/harbor-acebench/final-manifest.json` records source revision,
+selections, source/installed hashes and actual Harbor results.
+
+These are real source rows and reference oracles, not archived model traces.
+The upstream agent split has no implemented static adapter/verifier and is not
+included in the existing-contract coverage claim. No new security tests were
+run. Use the exact local core wheel recipe above while the production verifyit
+pin remains unpublished.
