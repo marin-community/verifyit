@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from verifyit.bounded import call_bounded
 from verifyit.execution.command import run_command
+from verifyit.execution.worker import call_bounded
 from verifyit.grade import InvalidTask
 
 
@@ -47,6 +47,19 @@ def grading_with_child(receipt: str, behavior: str):
     if behavior in {"timeout", "interrupt"}:
         time.sleep(30)
     return {"score": 0.5}
+
+
+def grading_with_large_result(private_output: str):
+    print(private_output)
+    print(private_output, file=sys.stderr)
+    return b"x" * (1024 * 1024)
+
+
+def test_bounded_grading_drains_large_result_without_exposing_worker_output(capfd):
+    result = call_bounded(grading_with_large_result, "private grading input", timeout=5)
+
+    assert result == b"x" * (1024 * 1024)
+    assert capfd.readouterr() == ("", "")
 
 
 def assert_child_stopped(receipt):

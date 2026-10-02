@@ -1,10 +1,6 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
-"""Hard deadlines for trusted, importable Python grading functions.
-
-The worker is an execution boundary, not a sandbox. Only the parent-produced payload is
-accepted; credentials travel over stdin, never command arguments or temporary files.
-"""
+"""Run trusted Python grading functions in a subprocess."""
 
 import base64
 import contextlib
