@@ -5,6 +5,7 @@ import pytest
 
 from verifyit.adapters.skyrl import (
     grade_aime_candidate,
+    grade_aime_extracted,
     grade_grid_candidate,
     grade_gsm8k_final_line,
     grade_gsm8k_strict,
@@ -191,3 +192,28 @@ def test_deep_grid_candidate_is_schema_zero_and_cannot_mask_invalid_reference():
 def test_search_invalid_reference_precedes_candidate_format_or_early_match(targets, response):
     with pytest.raises(InvalidTask):
         grade_search_em(targets, response)
+
+
+@pytest.mark.parametrize("candidate,reward", [("(18,-24)", 1.0), ("(-24,18)", 0.0), ("(18.0,-24)", 0.0)])
+def test_aime_flat_tuple_keeps_literal_source_spelling(candidate, reward):
+    assert grade_aime_extracted("(18,-24)", candidate).reward == reward
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "(18,-24]",
+        "(18,-24),",
+        "((18,-24),3)",
+        "[18,-24]",
+        "(18,)",
+        "(True,2)",
+        "(nan,2)",
+        "(1e9999,2)",
+        "(1e309,2)",
+        "(-1e309,2)",
+    ],
+)
+def test_aime_unsupported_tuple_reference_cannot_match_itself(reference):
+    with pytest.raises(InvalidTask):
+        grade_aime_extracted(reference, reference)

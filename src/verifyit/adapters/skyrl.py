@@ -3,7 +3,9 @@
 
 """Client extraction and canonicalization for SkyRL's existing exact grader."""
 
+import ast
 import json
+import math
 import re
 import string
 from decimal import Decimal, InvalidOperation
@@ -143,7 +145,8 @@ def grade_grid_candidate(expected: object, candidate: object) -> Reward:
     return aggregate_rewards((protocol, equality), expected_total=2, policy=Aggregation.ALL)
 
 
-def _aime_exact(expected: str, candidate: str) -> Reward:
+def grade_aime_extracted(expected: str, candidate: str) -> Reward:
+    """Grade trusted already-extracted answers; the caller must own the shared deadline."""
     expected_ratio = RATIO.fullmatch(expected) if isinstance(expected, str) else None
     candidate_ratio = RATIO.fullmatch(candidate) if isinstance(candidate, str) else None
     try:
@@ -153,7 +156,20 @@ def _aime_exact(expected: str, candidate: str) -> Reward:
     except ValueError as error:
         raise InvalidTask("AIME reference must define one valid exact answer") from error
     if len(reference) != 1:
-        raise InvalidTask("AIME reference must define one valid exact answer")
+        try:
+            composite = ast.literal_eval(expected)
+        except (SyntaxError, ValueError) as error:
+            raise InvalidTask("AIME reference must define one valid exact answer") from error
+        if not (
+            expected.startswith("(")
+            and expected.endswith(")")
+            and isinstance(composite, tuple)
+            and len(composite) >= 2
+            and all(type(member) is int or (type(member) is float and math.isfinite(member)) for member in composite)
+        ):
+            raise InvalidTask("AIME reference must define one valid exact answer")
+        # Source tuple answers compare their normalized spelling, not component values.
+        return grade_literal_candidate(expected, candidate)
     try:
         tokens = canonical_math_members(
             "/".join(candidate_ratio.groups()) if candidate_ratio else candidate,
@@ -166,7 +182,7 @@ def _aime_exact(expected: str, candidate: str) -> Reward:
 
 def grade_aime_candidate(expected: str, candidate: str) -> Reward:
     """Prepare one exact answer under a deadline, then delegate to Exact."""
-    return call_bounded(_aime_exact, expected, candidate, timeout=10)
+    return call_bounded(grade_aime_extracted, expected, candidate, timeout=10)
 
 
 def grade_gsm8k_final_line(expected: str, response: str) -> Reward:
