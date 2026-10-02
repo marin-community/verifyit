@@ -15,6 +15,7 @@ import math
 import re
 import string
 from collections.abc import Sequence
+from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
@@ -30,6 +31,66 @@ MAX_OPTIONS = len(string.ascii_uppercase)
 class LikelihoodScoring(StrEnum):
     MOST_LIKELY = "most_likely"
     PROBABILITY_MASS = "probability_mass"
+
+
+@dataclass(frozen=True)
+class LikelihoodStatistics:
+    """Corpus diagnostics, not a bounded candidate Reward."""
+
+    mean_log_likelihood: float
+    perplexity: float
+    bits_per_unit: float
+
+
+def _normalization_size(lengths: Sequence[int]) -> int:
+    if (
+        not isinstance(lengths, Sequence)
+        or not lengths
+        or any(type(length) is not int or length <= 0 for length in lengths)
+    ):
+        raise InvalidTask("likelihood normalization requires positive integer lengths")
+    return len(lengths)
+
+
+def _validate_likelihoods(likelihoods: Sequence[float], expected: int) -> None:
+    if not isinstance(likelihoods, Sequence) or len(likelihoods) != expected:
+        raise InvalidTask("likelihood count must match normalization lengths")
+    try:
+        if any(
+            isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+            for value in likelihoods
+        ):
+            raise InvalidTask("model likelihoods must be finite numbers")
+    except OverflowError as error:
+        raise InvalidTask("model likelihoods must be finite numbers") from error
+
+
+def summarize_log_likelihoods(
+    likelihoods: Sequence[float], *, normalization_lengths: Sequence[int]
+) -> LikelihoodStatistics:
+    """Compute weighted corpus diagnostics under the supplied word/byte/token counts.
+
+    Trusted lengths are validated before model observations. Log probabilities
+    must be finite and nonpositive; source-order summation preserves corpus
+    weighting. Invalid or unrepresentable statistics raise InvalidTask rather
+    than returning a favorable zero. No result is converted into a Reward.
+    """
+    size = _normalization_size(normalization_lengths)
+    _validate_likelihoods(likelihoods, size)
+    if any(value > 0 for value in likelihoods):
+        raise InvalidTask("model log-likelihoods must be nonpositive")
+    try:
+        total = sum(likelihoods)
+        if not math.isfinite(total):
+            raise InvalidTask("corpus log-likelihood sum must be finite")
+        mean = total / sum(normalization_lengths)
+        perplexity = math.exp(-mean)
+        bits = -mean / math.log(2)
+        if not all(math.isfinite(value) for value in (mean, perplexity, bits)):
+            raise InvalidTask("corpus likelihood statistics must be finite")
+    except OverflowError as error:
+        raise InvalidTask("corpus likelihood statistics must be finite") from error
+    return LikelihoodStatistics(mean, perplexity, bits)
 
 
 def grade_mcq_likelihoods(
@@ -48,27 +109,15 @@ def grade_mcq_likelihoods(
     """
     if not isinstance(policy, LikelihoodScoring):
         raise InvalidTask("unknown MCQ likelihood scoring policy")
-    if (
-        not isinstance(normalization_lengths, Sequence)
-        or not normalization_lengths
-        or any(type(length) is not int or length <= 0 for length in normalization_lengths)
-    ):
-        raise InvalidTask("MCQ likelihood normalization requires positive integer lengths")
-    options = len(normalization_lengths)
+    options = _normalization_size(normalization_lengths)
     if (
         not isinstance(correct_indices, Sequence)
         or not correct_indices
         or any(type(index) is not int or not 0 <= index < options for index in correct_indices)
     ):
         raise InvalidTask("MCQ requires correct indices within the declared choices")
-    if not isinstance(likelihoods, Sequence) or len(likelihoods) != options:
-        raise InvalidTask("MCQ requires one finite likelihood per choice")
+    _validate_likelihoods(likelihoods, options)
     try:
-        if any(
-            isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
-            for value in likelihoods
-        ):
-            raise InvalidTask("MCQ likelihoods must be finite numbers")
         scores = [value / length for value, length in zip(likelihoods, normalization_lengths, strict=True)]
     except OverflowError as error:
         raise InvalidTask("MCQ likelihoods must be finite numbers") from error

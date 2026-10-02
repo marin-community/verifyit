@@ -203,3 +203,32 @@ def test_invalid_mcq_reference_removes_previous_cli_credit_before_reading_candid
 def test_noninteger_option_count_cannot_award_a_correct_answer(options):
     with pytest.raises(InvalidTask):
         grade_mcq.grade_mcq_candidate(McqSpec(expected="A", options=options), "A")
+
+
+@pytest.mark.parametrize(
+    "likelihoods,lengths,perplexity,bits",
+    [
+        ([-math.log(4), -math.log(8)], [1, 4], 2.0, 1.0),
+        ([-2.0, -8.0], [2, 3], math.exp(2), 2 / math.log(2)),
+        ([0.0], [3], 1.0, 0.0),
+    ],
+)
+def test_corpus_diagnostics_weight_total_log_probability_by_total_units(likelihoods, lengths, perplexity, bits):
+    result = grade_mcq.summarize_log_likelihoods(likelihoods, normalization_lengths=lengths)
+    assert result.perplexity == pytest.approx(perplexity, rel=1e-15)
+    assert result.bits_per_unit == pytest.approx(bits, rel=1e-15)
+    assert result.mean_log_likelihood == pytest.approx(-math.log(perplexity), rel=1e-15)
+
+
+@pytest.mark.parametrize(
+    "likelihoods", [None, [None], [True], [float("nan")], [float("-inf")], [1.0], [-1000.0], [-1e308, -1e308]]
+)
+def test_invalid_or_overflowing_corpus_observations_cannot_publish_favorable_statistics(likelihoods):
+    lengths = [1] * len(likelihoods) if isinstance(likelihoods, list) else [1]
+    with pytest.raises(InvalidTask):
+        grade_mcq.summarize_log_likelihoods(likelihoods, normalization_lengths=lengths)
+
+
+def test_invalid_corpus_weights_are_validated_before_missing_observations():
+    with pytest.raises(InvalidTask, match="normalization"):
+        grade_mcq.summarize_log_likelihoods(None, normalization_lengths=[0])

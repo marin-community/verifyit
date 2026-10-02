@@ -16,6 +16,7 @@ from verifyit.adapters.harness_math_literal import hendrycks_config_profile, hen
 from verifyit.adapters.harness_mmmu import mmmu_config_profile, mmmu_task_metrics
 from verifyit.adapters.harness_probability import truthfulqa_mc2_profile, truthfulqa_task_metrics
 from verifyit.adapters.harness_profiles import generation_profile, profile_task_metrics
+from verifyit.adapters.harness_rolling import rolling_config_profile, rolling_task_metrics
 from verifyit.grade import Aggregation, InvalidTask, Reward, aggregate_rewards
 from verifyit.modes.grade_exact import grade_exact_candidate
 from verifyit.modes.grade_mcq import LikelihoodScoring, grade_mcq_likelihoods
@@ -99,6 +100,8 @@ def likelihood_choice(
 
 def native_config_route(config: dict) -> str | None:
     """Recognize implemented source branches; unknown options are not native coverage."""
+    if rolling_config_profile(config):
+        return "rolling_likelihood_statistics"
     if mmmu_config_profile(config):
         return "mmmu_typed_answers"
     if babilong_config_profile(config):
@@ -180,6 +183,9 @@ def native_task_metrics(
         or getattr(method, "__qualname__", None) != "ConfigurableTask.process_results"
     ):
         return None
+    rolling = rolling_task_metrics(task, doc, responses)
+    if rolling is not None:
+        return rolling
     mmmu = mmmu_task_metrics(task, doc, responses)
     if mmmu is not None:
         return mmmu

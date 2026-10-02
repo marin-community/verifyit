@@ -208,6 +208,15 @@ provider cohorts raise `RuntimeError`. Abort the entire affected batch at minimu
 reward on either failure, before applying any framework reward shaping. This API
 does not call a provider or introduce another verifier spec.
 
+`summarize_log_likelihoods(likelihoods, normalization_lengths=...)` from
+`verifyit.modes.grade_mcq` reports corpus mean log-likelihood, perplexity and bits
+per supplied unit. Supply positive integer word, byte or token counts matching the
+task; the helper divides total log-likelihood by total counts in source order.
+These are unbounded diagnostics, not Rewards or a new mode. Model log-likelihoods
+must be finite and nonpositive. Missing data, invalid counts and unrepresentable
+statistics raise `InvalidTask`; callers must abort reporting rather than substitute
+a favorable zero.
+
 Clients with already normalized tokens or canonical labels can call
 `grade_collection_f1(reference, candidate, multiplicity=..., empty_reference=...,
 round_digits=...)` from `verifyit.modes.grade_exact`. Both inputs are sequences or sets
