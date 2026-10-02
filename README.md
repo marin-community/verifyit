@@ -122,6 +122,11 @@ The opt-in `labels` rubric supplies one reference, trusted `system_prompt`/`prom
 strings using only `{question}`, `{reference}` and `{candidate}`, and a nonempty
 `label_scores` table of finite rewards in `[0, 1]`. Its final line must exactly name one
 configured label; contradictory labels in the answer invalidate the result.
+Optional `exact_gate_answers` and `exact_gate_label` resolve literal matches through
+Exact to the declared label reward without a provider call. Both default to disabled.
+The complete Judge contract is validated before gating. The Python
+`grade_judge_candidate` API accepts a separately prepared `gate_candidate`, preserving
+the original candidate in provider prompts; `validate_judge_spec` preflights component specs.
 `label_scan = "lines"` recognizes only completed label lines for bare labels such as
 `A`/`B`/`C`, leaving letters inside explanatory prose alone; the default `literal`
 scan remains unchanged. `label_scan = "whole"` requires the entire answer to be one label;
@@ -269,7 +274,8 @@ statistics raise `InvalidTask`; callers must abort reporting rather than substit
 a favorable zero.
 
 `aggregate_rewards(..., expected_total=..., policy=..., round_digits=None)`
-combines core verdicts with ALL, MEAN, MAX or MIN. MIN preserves fractional scores
+combines core verdicts with ALL, MEAN, MAX, MIN or PRODUCT. PRODUCT multiplies
+all required fractional rewards; a missing component scores zero. MIN preserves fractional scores
 under additional binary gates; missing required components contribute zero. Invalid
 task or infrastructure outcomes discard all credit. Optional `round_digits` from
 zero to six applies ties-to-even decimal scaling after aggregation; the default

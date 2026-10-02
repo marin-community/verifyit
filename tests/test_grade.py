@@ -186,3 +186,26 @@ def test_invalid_rounding_contract_cannot_publish_positive_reward(tmp_path, roun
     write_reward(tmp_path, result)
     assert result.status == Status.INVALID_TASK
     assert not (tmp_path / "reward.json").exists()
+
+
+def test_product_preserves_fractional_components_and_requires_complete_valid_set():
+    result = grade_module.aggregate_rewards(
+        [grade_module.scored(1.0), grade_module.scored(0.3), grade_module.scored(0.3)],
+        expected_total=3,
+        policy=grade_module.Aggregation.PRODUCT,
+    )
+    assert result.status == grade_module.Status.SCORED
+    assert result.reward == pytest.approx(0.09)
+    missing = grade_module.aggregate_rewards(
+        [grade_module.scored(1.0), grade_module.scored(0.3)],
+        expected_total=3,
+        policy=grade_module.Aggregation.PRODUCT,
+    )
+    assert missing.reward == 0.0
+    failed = grade_module.aggregate_rewards(
+        [grade_module.scored(0.0), grade_module.infra_error("provider unavailable")],
+        expected_total=2,
+        policy=grade_module.Aggregation.PRODUCT,
+    )
+    assert failed.reward == 0.0
+    assert failed.status == grade_module.Status.INFRA_ERROR

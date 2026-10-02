@@ -35,6 +35,7 @@ from verifyit.file_ops.read import read_text
 from verifyit.grade import Aggregation, InvalidTask, Reward, aggregate_rewards, empty_output_policy, read_output, scored
 from verifyit.json_objects import unique_object
 from verifyit.modes.extract import extract_boxed
+from verifyit.modes.grade_exact import grade_exact_candidate
 from verifyit.modes.grade_ifeval import resolve_checks
 from verifyit.modes.ifeval import Check
 from verifyit.spec import (
@@ -44,6 +45,7 @@ from verifyit.spec import (
     RUBRICS,
     Constraint,
     EmptyOutputPolicy,
+    ExactSpec,
     JudgeSpec,
     Spec,
 )
@@ -137,11 +139,31 @@ def _validate_spec(spec: JudgeSpec) -> tuple[tuple[str, ...], tuple[str, ...], l
         raise InvalidTask("judge rubric 'checklist' needs non-empty criteria")
     if spec.rubric == RUBRIC_LABELS:
         _validate_label_spec(spec, references)
+    if (
+        not isinstance(spec.exact_gate_answers, tuple)
+        or any(not isinstance(answer, str) or not answer for answer in spec.exact_gate_answers)
+        or not isinstance(spec.exact_gate_label, str)
+    ):
+        raise InvalidTask("label exact gate requires nonempty answer strings and a label")
+    if spec.exact_gate_answers or spec.exact_gate_label:
+        if spec.rubric != RUBRIC_LABELS or not spec.exact_gate_answers or spec.exact_gate_label not in spec.label_scores:
+            raise InvalidTask("label exact gate requires answers and a declared label")
     return (references, criteria, resolve_checks(spec.constraints) if spec.constraints else [])
 
 
+def validate_judge_spec(spec: JudgeSpec) -> None:
+    """Validate a complete judge contract before any provider side effects."""
+    _validate_spec(spec)
+    empty_output_policy(spec)
+
+
 def grade_judge_candidate(
-    spec: JudgeSpec, candidate: str, *, connection: JudgeConnection | None = None, context: str = ""
+    spec: JudgeSpec,
+    candidate: str,
+    *,
+    connection: JudgeConnection | None = None,
+    context: str = "",
+    gate_candidate: str | None = None,
 ) -> Reward:
     """Grade candidate text using the same contract as file-based judge tasks.
 
@@ -157,6 +179,20 @@ def grade_judge_candidate(
     failed = [constraint.name for constraint, check in checks if not _passes(check, candidate, constraint.params)]
     if failed:
         return scored(0.0, gate="constraints", failed=failed)
+    if spec.rubric == RUBRIC_LABELS and spec.exact_gate_answers:
+        gate_text = candidate if gate_candidate is None else gate_candidate
+        for answer in spec.exact_gate_answers:
+            exact = grade_exact_candidate(
+                ExactSpec(expected=(answer,), ignore_case=False, ignore_whitespace=False, strip_outer_whitespace=False),
+                gate_text,
+            )
+            if exact.reward == 1.0:
+                return scored(
+                    float(spec.label_scores[spec.exact_gate_label]),
+                    gate="exact",
+                    verdict=spec.exact_gate_label,
+                    exact_verdict=exact.detail,
+                )
     if spec.rubric == RUBRIC_REFERENCE:
         normalized = normalize(boxed_answer(candidate))
         if spec.exact_gate and normalized and normalized in {normalize(r) for r in references}:

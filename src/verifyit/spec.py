@@ -263,6 +263,8 @@ class JudgeSpec:
     system_prompt: str = ""
     prompt_template: str = ""
     label_scores: dict[str, float] = field(default_factory=dict)
+    exact_gate_answers: tuple[str, ...] = ()
+    exact_gate_label: str = ""
     strip_reasoning_blocks: bool = False
     max_completion_tokens: int = 8192
     incomplete_retry_tokens: int = 0

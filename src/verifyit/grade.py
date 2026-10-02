@@ -53,6 +53,7 @@ class Aggregation(StrEnum):
     MEAN = "mean"
     MAX = "max"
     MIN = "min"
+    PRODUCT = "product"
 
 
 class InvalidTask(Exception):
@@ -136,6 +137,8 @@ def aggregate_rewards(
         reward = max((verdict.reward for verdict in validated), default=0.0)
     elif policy == Aggregation.MIN:
         reward = min((verdict.reward for verdict in validated), default=0.0) if len(validated) == expected_total else 0.0
+    elif policy == Aggregation.PRODUCT:
+        reward = math.prod(verdict.reward for verdict in validated) if len(validated) == expected_total else 0.0
     else:
         reward = sum(verdict.reward for verdict in validated) / expected_total
     if round_digits is not None:

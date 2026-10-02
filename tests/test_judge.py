@@ -10,7 +10,7 @@ import pytest
 
 from verifyit.grade import InvalidTask, Status, run, write_reward
 from verifyit.modes import grade_judge
-from verifyit.spec import Constraint, EmptyOutputPolicy, JudgeSpec, render_spec
+from verifyit.spec import Constraint, EmptyOutputPolicy, JudgeSpec, parse_spec, render_spec
 
 # The dataset's own reference answer, apostrophe included: the gate must fold case, spacing and
 # punctuation without mangling non-ASCII text.
@@ -791,3 +791,25 @@ def test_responses_completed_envelope_cannot_hide_incomplete_reasoning(tmp_path,
     path.write_text(render_spec(_label_spec(api="responses")))
     result = run(path, _workspace(tmp_path, "candidate"))
     assert (result.reward, result.status) == (0, Status.INFRA_ERROR)
+
+
+def test_label_exact_gate_roundtrip_uses_declared_reward_without_provider(tmp_path, fake_judge):
+    spec = _label_spec(label_scores={"A": 1.0, "B": 0.0, "C": 0.5}, exact_gate_answers=("idk",), exact_gate_label="C")
+    spec = parse_spec(render_spec(spec))
+    result = grade_judge.grade_judge_candidate(spec, "[IDK]", gate_candidate="idk")
+    assert result.status == Status.SCORED
+    assert result.reward == 0.5
+    assert result.detail["verdict"] == "C"
+    assert not fake_judge.requests
+    fake_judge.replies = ["A"]
+    result = grade_judge.grade_judge_candidate(spec, "Original Answer", gate_candidate="original answer")
+    assert result.reward == 1.0
+    assert "Original Answer" in fake_judge.prompts[-1]
+
+
+def test_label_exact_gate_validates_reference_and_table_before_provider_avoidance(fake_judge):
+    for changes in ({"references": ("",)}, {"label_scores": {"C": 0.5, "B": float("nan")}}):
+        spec = _label_spec(exact_gate_answers=("idk",), exact_gate_label="C", **changes)
+        with pytest.raises(InvalidTask):
+            grade_judge.grade_judge_candidate(spec, "idk")
+    assert not fake_judge.requests
