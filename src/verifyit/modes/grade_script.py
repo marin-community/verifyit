@@ -240,13 +240,8 @@ def _structured_verdict(logs: Path, filename: str, completion: Completion) -> Re
         detail = payload["detail"]
     except (KeyError, ValueError, TypeError) as error:
         raise RuntimeError("declared script verdict requires status, reward and detail") from error
-    if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value):
-        raise RuntimeError("declared script verdict reward must be a finite number")
-    if not 0.0 <= value <= 1.0 or (status != Status.SCORED and value != 0):
-        raise RuntimeError("declared script verdict reward conflicts with its status or unit interval")
-    if not isinstance(detail, dict):
-        raise RuntimeError("declared script verdict detail must be an object")
-    return Reward(float(value), status, {**detail, "script": execution})
+    verdict = _validated_reward(Reward(value, status, detail))
+    return Reward(float(verdict.reward), verdict.status, {**verdict.detail, "script": execution})
 
 
 def _reject_json_constant(value: str) -> None:
