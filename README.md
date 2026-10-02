@@ -295,6 +295,14 @@ Direct text grading follows the spec's `empty_output` policy. Keyword existence
 and forbidden-word constraints accept `word_boundary = false` in their params
 for case-insensitive substring matching; the default keeps whole-word matching.
 
+`verifyit.instruction_observations.prepare_instruction_observations` prepares the
+IFEval, LiveBench, and extended IFEvalG instruction dialects using their trusted
+builders and tokenizer tools. `grade_instruction_observations` in the same grader
+requires every prepared Schema or IFEval constraint to pass. Preparation does not
+call source acceptance predicates; language detection failure and malformed
+candidate JSON cannot award credit. Source wrappers still select their documented
+empty-response policy and aggregate instructions with the core reducer.
+
 `canonical_math_members` from `verifyit.modes.grade_math` prepares finite exact
 constants as delimiter-safe strings for Exact scalar or multiset comparison.
 It rejects symbolic variables, nonfinite values and approximate compound
