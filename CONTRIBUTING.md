@@ -68,21 +68,24 @@ then regenerate and check the vendored files with the commands above.
 
 ## Package boundaries
 
-The core depends only on `tomlkit`. Keep optional dependencies in mode extras
+The core depends on `tomlkit` and an immutable `harbor-config` revision for shared
+error categories; it does not import the Harbor runtime. Keep grading dependencies in mode extras
 (`answer`, `schema`, `judge`, and `reasoning-gym`); execution modes use the task
 image's toolchain. An optional import must not prevent a core-only installation
 from importing the package or running unrelated modes.
 
 [src/verifyit/spec.py](src/verifyit/spec.py) defines spec parsing and rendering.
 [src/verifyit/grade.py](src/verifyit/grade.py) owns dispatch, the API, CLI, and
-verdict files. Graders and shared execution helpers live in
-[src/verifyit/modes](src/verifyit/modes).
+verdict files. Primitive graders live in [modes](src/verifyit/modes). Shared
+command and trusted-call execution lives in [execution](src/verifyit/execution);
+[file_ops](src/verifyit/file_ops) owns text, bounded artifact, and restoration
+mechanics. Callers retain their decoding and format-validation policies.
 
 For pytest, JUnit, and Go modes, `restore` entries copy files/directories from
 the task's tests directory back into the workspace before setup and execution.
 The `must_not_break` IDs protect previously passing tests when calculating reward.
 See the [spec dataclasses](src/verifyit/spec.py) and
-[restoration helper](src/verifyit/modes/run.py).
+[restoration helper](src/verifyit/file_ops/restore.py).
 
 ## Pull requests
 

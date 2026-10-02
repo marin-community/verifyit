@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
+from decimal import Decimal
 
 import pytest
+import reasoning_gym
 
-from verifyit.grade import InvalidTask, Status
+from verifyit.grade import InvalidTask, Status, run, write_reward
 from verifyit.modes import grade_reasoning_gym
-from verifyit.spec import ReasoningGymSpec
+from verifyit.spec import ReasoningGymSpec, render_spec
 
 NEEDLE_ENTRY = {
     "question": "Who savors playing the accordion? Reply only with a name.",
@@ -103,14 +105,79 @@ def test_missing_entry_file_is_an_invalid_task(tmp_path, workspace):
     "entry_text, message",
     [
         ("{not json", "is not JSON"),
+        ('{"answer":"wrong","answer":"Richard","metadata":{}}', "is not JSON"),
+        ('{"answer":"Richard","metadata":{"ignored":NaN}}', "is not JSON"),
         ('{"answer": "Richard"}', "metadata field"),
         ("[1, 2, 3]", "metadata field"),
     ],
 )
-def test_unusable_entry_file_is_an_invalid_task(tmp_path, workspace, entry_text, message):
+@pytest.mark.parametrize("candidate", ["Richard", ""])
+def test_unusable_entry_file_is_an_invalid_task(tmp_path, workspace, entry_text, message, candidate):
     tests_dir = tmp_path / "tests"
     tests_dir.mkdir()
     (tests_dir / "entry.json").write_text(entry_text)
-    answer(workspace, "Richard")
+    answer(workspace, candidate)
     with pytest.raises(InvalidTask, match=message):
         grade(tests_dir, workspace)
+    spec_path = tests_dir / "verifier.toml"
+    spec_path.write_text(render_spec(ReasoningGymSpec(dataset="needle_haystack")))
+    verdict = run(spec_path, workspace)
+    assert (verdict.status, verdict.reward) == (Status.INVALID_TASK, 0.0)
+
+
+@pytest.mark.parametrize("score", [True, float("nan"), float("inf"), -0.1, 1.1])
+def test_broken_external_scorer_cannot_persist_an_invalid_reward(tests_dir, workspace, monkeypatch, score):
+    monkeypatch.setattr(
+        grade_reasoning_gym.reasoning_gym, "get_score_answer_fn", lambda name: lambda response, entry: score
+    )
+    answer(workspace, "Richard")
+    spec_path = tests_dir / "verifier.toml"
+    spec_path.write_text(render_spec(ReasoningGymSpec(dataset="needle_haystack")))
+    logs = workspace / "logs"
+    logs.mkdir()
+    (logs / "reward.json").write_text('{"reward":1.0}')
+    verdict = run(spec_path, workspace)
+    write_reward(logs, verdict)
+    assert (verdict.status, verdict.reward) == (Status.INFRA_ERROR, 0.0)
+    assert not (logs / "reward.json").exists()
+
+
+def test_configured_decimal_precision_preserves_source_score(tests_dir, workspace):
+    params = {"seed": 11, "size": 1, "min_num_decimal_places": 4, "max_num_decimal_places": 4}
+    dataset = reasoning_gym.create_dataset("decimal_arithmetic", **params)
+    entry = dataset[0]
+    (tests_dir / "entry.json").write_text(json.dumps(entry))
+    (tests_dir / "params.json").write_text(json.dumps(params))
+    answer(workspace, str(Decimal(entry["answer"]) + Decimal("0.001")))
+    assert grade(tests_dir, workspace, dataset="decimal_arithmetic").reward == 1.0
+    configured = ReasoningGymSpec(dataset="decimal_arithmetic", params="params.json")
+    reward = grade_reasoning_gym.grade(configured, tests_dir, workspace)
+    assert reward.status == Status.SCORED
+    assert reward.reward == dataset.score_answer((workspace / "answer.txt").read_text(), entry) == 0.0
+    answer(workspace, entry["answer"])
+    assert grade_reasoning_gym.grade(configured, tests_dir, workspace).reward == 1.0
+
+
+@pytest.mark.parametrize(
+    "params_text",
+    [None, "{broken", "[]", '{"unknown_option": 1}', '{"precision": 1}', '{"seed": NaN}', '{"seed": 11, "seed": 12}'],
+)
+def test_invalid_configuration_precedes_missing_candidate(tests_dir, workspace, params_text):
+    if params_text is not None:
+        (tests_dir / "params.json").write_text(params_text)
+    spec_path = tests_dir / "verifier.toml"
+    spec_path.write_text(render_spec(ReasoningGymSpec(dataset="decimal_arithmetic", params="params.json")))
+    reward = run(spec_path, workspace)
+    assert (reward.status, reward.reward) == (Status.INVALID_TASK, 0.0)
+
+
+def test_dataset_construction_failure_is_infrastructure(tests_dir, workspace, monkeypatch):
+    def unavailable_dataset(*args, **kwargs):
+        raise RuntimeError("dataset assets unavailable")
+
+    monkeypatch.setattr(grade_reasoning_gym.reasoning_gym, "create_dataset", unavailable_dataset)
+    (tests_dir / "params.json").write_text("{}")
+    spec_path = tests_dir / "verifier.toml"
+    spec_path.write_text(render_spec(ReasoningGymSpec(dataset="needle_haystack", params="params.json")))
+    reward = run(spec_path, workspace)
+    assert (reward.status, reward.reward) == (Status.INFRA_ERROR, 0.0)

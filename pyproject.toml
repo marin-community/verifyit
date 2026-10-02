@@ -10,10 +10,10 @@ readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
-# The core depends only on a TOML reader so it installs quickly into every task image. Each mode
-# that needs more declares an extra below.
+# Grading dependencies remain optional; shared error metadata uses Harbor's config-only package.
 dependencies = [
     "tomlkit>=0.13",
+    "harbor-config @ git+https://github.com/marin-community/harbor@6b2e76e1dae5c084eed05edefefffcec8c0c1ad9#subdirectory=packages/harbor-config",
 ]
 
 [project.urls]
@@ -24,10 +24,10 @@ Issues = "https://github.com/marin-community/verifyit/issues"
 verifyit = "verifyit.grade:main"
 
 [project.optional-dependencies]
-answer = ["math-verify>=0.7", "sympy>=1.12"]
+answer = ["math-verify>=0.9", "sympy>=1.12"]
 schema = ["jsonschema>=4.20", "pyyaml>=6.0"]
-judge = ["openai>=1.40"]
-reasoning-gym = ["reasoning-gym>=0.1"]
+judge = ["openai>=1.59.9"]
+reasoning-gym = ["reasoning-gym>=0.1.25"]
 all = ["verifyit[answer,schema,judge,reasoning-gym]"]
 
 [dependency-groups]
@@ -42,6 +42,9 @@ test = [
     "black==25.9.0",
     "pyrefly>=1.0.0,<1.1.0",
 ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/verifyit"]

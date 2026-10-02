@@ -19,25 +19,151 @@ Statuses are `scored`, `invalid_task`, and `infra_error`. A scored result also w
 so the trial can be masked instead of recorded as a zero. Candidate output never causes a nonzero
 process exit after a verdict has been written.
 
+Rewards must be finite numbers in `[0, 1]`; malformed grader rewards or statuses become
+`infra_error` with reward zero. Persisting malformed verdict details also replaces any previous
+verdict with this failure and removes stale reward files. Source metrics and training reward
+shaping belong in the client rather than this bounded correctness scalar.
+
+The base installation includes `tomlkit` and the config-only `harbor-config`
+revision pinned in [pyproject.toml](pyproject.toml). Shared failure metadata imports
+Harbor’s error categories without installing its task runtime. Grading libraries
+remain in mode extras.
+
+## Framework integration
+
+Framework repositories own dispatch, task generation, execution transport, and
+dependency pins. Each framework opts in explicitly; installing verifyit does not
+patch SkyRL, Harbor, Evalchemy, or lm-eval-harness. Adapters prepare task data and
+manage tools; grading decisions and score aggregation belong in verifyit's
+primitives and shared reducers.
+A bridge that invokes a retained native evaluator still depends on that evaluator.
+
+Source inventories, coverage reports, exported patches, and replay receipts are
+campaign artifacts maintained outside this repository. Historical replay counts
+do not establish coverage of later framework revisions.
+
+### Text preparation
+
+`verifyit.preparation.text.structure_text` snapshots the candidate and ordered
+reference strings without normalization. `normalize_text` applies a named policy
+and returns `PreparedText`, retaining the raw snapshot and effective options.
+Neither stage grades. The harness exact adapter composes them with Exact and MAX.
+Its default `harness_exact_v1` policy preserves source regex removal, NumPy
+fixed-width Unicode lowering, and punctuation/digit removal. NumPy is imported
+only for this policy; the structural types and `identity` policy do not need it.
+
+Clients can explicitly select literal comparison through the existing adapter API:
+
+```python
+from verifyit.adapters.harness_native import exact_match
+from verifyit.preparation.text import TextPolicy
+
+literal = exact_match("İ", ["i"], normalization_policy=TextPolicy.IDENTITY)
+assert literal.reward == 0
+```
+
+Identity rejects normalization options instead of silently ignoring them. The
+returned verdict's `detail["preparation"]` records the selected policy, its
+options, and `empty_output`. Scalar framework metrics do not carry this detail;
+capture the underlying verdict when policy provenance is needed.
+
+Failed preparation returns a `PreparationFailure` without a partial value.
+`normalize_text` preserves an incoming failure. The core finalizer assigns minimum
+reward and retains the original status, Harbor category, and finalization policy.
+Unknown or passthrough failures have no completed grade to preserve and become
+infrastructure errors. The exact adapter raises `PreparationError`, carrying
+`.failure` and `.verdict`, so scalar metric callers cannot erase the failure.
+Invalid trusted preparation remains catchable as `InvalidTask`.
+
 ## Modes
 
-| mode | contract |
-|---|---|
-| `mcq` | expected option letter |
-| `math` | expression equality through math-verify |
-| `numeric` | numeric equality with explicit tolerances |
-| `exact` | normalized string equality |
-| `json-schema` | JSON, YAML, or TOML checked against JSON Schema |
-| `xml-elements` | required XML elements and attributes |
-| `csv-columns` | required CSV header columns |
-| `ifeval` | deterministic instruction-following constraints |
-| `reasoning-gym` | the named reasoning-gym scorer and entry |
-| `stdio` | program stdout over hidden cases |
-| `pytest` | pytest JSON report with required and protected tests |
-| `junit` | JUnit XML report |
-| `gotest` | `go test -json` events |
-| `judge` | reference-answer or checklist rubric through a configured model endpoint |
-| `script` | legacy `test.sh` fallback with normalized reward files and fail-closed errors |
+| mode | contract | empty or absent candidate contract |
+|---|---|---|
+| `mcq` | expected option letter | `empty_output`; no option still scores zero |
+| `math` | expression equality through math-verify | `empty_output`; an absent expression cannot match |
+| `numeric` | numeric equality with explicit tolerances | `empty_output`; no number scores zero; numeric zero is data |
+| `exact` | normalized equality or single-reference substring | `empty_output`; explicit `grade` permits an intentionally empty expected string |
+| `json-schema` | JSON, YAML, or TOML checked against JSON Schema | `empty_output`; decoded null and empty collections follow the schema |
+| `xml-elements` | required elements and attributes | `empty_output`; an empty document is invalid XML |
+| `csv-columns` | required header columns | `empty_output`; missing columns fail, a valid header-only table can pass |
+| `ifeval` | deterministic constraints | `empty_output`; explicit `grade` evaluates constraints against empty text |
+| `reasoning-gym` | named scorer and trusted entry | `empty_output`; explicit `grade` delegates empty text to the scorer |
+| `stdio` | program stdout over hidden cases | empty stdout may match an explicit empty expected output; failed execution cannot pass |
+| `pytest` | required and protected tests | no collected tests or missing/malformed report cannot earn reward |
+| `junit` | JUnit XML report | absent or empty test reports cannot earn reward |
+| `gotest` | Go test events | absent tests or incomplete events cannot earn reward |
+| `judge` | reference, checklist or final-label rubric | `empty_output`; explicit `grade` sends present empty text to the configured rubric |
+| `script` | declared verdict or scalar reward producer | missing/malformed reward is failure; no implicit empty reward |
+
+Every answer-file spec has an explicit typed `empty_output` policy. Parsing an omitted
+policy materializes `zero`, and rendering always writes it. `zero` gives a present empty
+or whitespace-only file the minimum score. `grade` passes that text, unchanged, to the
+mode's validated task contract. It never supplies a fixed abstention reward or judge label.
+A missing file stays minimum under either policy; provider failures and incomplete judge
+responses remain infrastructure failures. The five execution/report modes use their
+artifact contracts in the table instead of an answer-file policy.
+
+This policy concerns submitted text, not trusted references or decoded truthiness. Missing
+or malformed required references remain invalid tasks. A JSON document containing `null`,
+`[]`, `{}`, `0`, `false`, or `""` is a present document; its schema decides whether it is valid.
+Direct text-candidate APIs honor the same policy, while already-decoded JSON values retain
+schema semantics. Clients must preserve absent or incomplete transport as failure instead
+of converting it into a present empty answer. For example, an abstention task may set
+`empty_output = "grade"` and let a completed judge label map to 0.5; a missing response or
+unfinished reasoning block is not a valid abstention.
+
+For `judge`, a length-truncated or content-filtered judge response is an infrastructure
+error. Only explicit `finish_reason="stop"` completes grading; tool requests and missing or
+unknown reasons also fail closed. A completed response with no parseable score is retried once; if the retry
+also fails, the verdict is `infra_error`. These failures write no reward files.
+The last nonempty response line must be a complete `SCORE: value` label: reference accepts
+`0`, `0.5`, or `1`; checklist accepts `0` or `1`. Numeric prefixes and other labels fail closed.
+The opt-in `labels` rubric supplies one reference, trusted `system_prompt`/`prompt_template`
+strings using only `{question}`, `{reference}` and `{candidate}`, and a nonempty
+`label_scores` table of finite rewards in `[0, 1]`. Its final line must exactly name one
+configured label; contradictory labels in the answer invalidate the result.
+Optional `exact_gate_answers` and `exact_gate_label` resolve literal matches through
+Exact to the declared label reward without a provider call. Both default to disabled.
+The complete Judge contract is validated before gating. The Python
+`grade_judge_candidate` API accepts a separately prepared `gate_candidate`, preserving
+the original candidate in provider prompts; `validate_judge_spec` preflights component specs.
+`label_scan = "lines"` recognizes only completed label lines for bare labels such as
+`A`/`B`/`C`, leaving letters inside explanatory prose alone; the default `literal`
+scan remains unchanged. `label_scan = "whole"` requires the entire answer to be one label;
+`label_case = "upper"` uppercases both labels and replies, rejecting colliding configured labels.
+The default case policy is `sensitive`. For the labels rubric, `api = "responses"` selects
+Responses instead of the default `chat_completions`: `max_completion_tokens` becomes
+`max_output_tokens`, `reasoning_effort` becomes `reasoning.effort`, and temperature is omitted.
+Only a completed response containing one completed assistant text message is accepted;
+reasoning metadata is never graded, and refusals, tool output and ambiguous JSON fail closed. Optional
+`strip_reasoning_blocks` removes completed think/thinking blocks before label parsing.
+Unfinished reasoning, malformed labels, HTTP errors and non-completed responses are
+infrastructure failures with zero reward; label judging does not retry HTTP failures.
+`incomplete_retry_tokens` permits one larger budget only after length truncation; it does not retry malformed labels. Successful
+label verdict detail retains the complete judge response in `completion`.
+
+For `stdio`, a candidate program that exits unsuccessfully scores zero even if its stdout matches.
+
+For `script`, a nonzero producer exit is an infrastructure error even when it writes a positive
+reward. Optional `verdict_file = "result.json"` declares an authoritative JSON verdict inside the
+private `VERIFYIT_LOGS_DIR`: `status`, finite `reward`, and object `detail`. Status is `scored`,
+`invalid_task`, or `infra_error`; unscored reward must be zero. Structured producers must complete
+successfully before their timeout. Missing/malformed verdicts never fall back to scalar reward
+files or stdout. Native metadata may be placed under `detail.native`; `detail.script` is reserved
+for process diagnostics. Scalar-only scripts keep their existing timeout-zero behavior.
+
+JUnit report globs declare output files: matching old files are removed before execution so stale
+passing reports cannot satisfy required tests. Report paths must remain inside the workspace.
+Interrupted pytest runs, collection errors and incomplete Go test/package event streams cannot
+earn positive rewards. Ordinary reported test failures retain required/protected test scoring.
+For pytest tasks, `setup_failure_is_infra = true` makes a failed or timed-out `setup` an unscored
+infrastructure error with no reward file. Use it for task-owned dependency installation and
+environment preparation; the default remains scored zero for candidate-dependent setup commands.
+Pytest `batch_size` splits selected paths into separate invocations (`0` runs one invocation).
+The timeout covers restoration, setup and all batches; a later execution error cannot retain
+partial credit. Failed or skipped repeated tests cannot be overridden by an earlier pass.
+`id_matching = "exact"` is the default. `"unique_prefix"` also accepts uniquely matching
+bracket-truncated parameter IDs and Unicode-escaped IDs; ambiguous or overlapping aliases fail.
 
 For the `math` and `numeric` grading modes, the last `\boxed{...}` occurrence determines the
 candidate when the output contains a box marker. Its braces must be balanced and its content must be
@@ -65,6 +191,12 @@ For library use in a Python project, run:
 ```bash
 uv add "verifyit[answer] @ git+https://github.com/marin-community/verifyit@<sha>"
 ```
+
+The `reasoning-gym` spec optionally accepts `params`, a JSON object file beside the spec.
+It preserves configured dataset scoring; omitting it retains the default scorer.
+The optional extra requires reasoning-gym >=0.1.25, whose registered config dataclasses
+are validated before the public dataset factory runs. Invalid configuration is an invalid
+task; dataset construction failures remain infrastructure errors.
 
 Extras are `answer`, `schema`, `judge`, `reasoning-gym`, and `all`. Execution modes use the task
 image's toolchain.
@@ -99,6 +231,83 @@ spec = parse_spec((tests_dir / "verifier.toml").read_text())
 reward = grade(spec, tests_dir=tests_dir, workspace=Path("/app"))
 ```
 
+Clients holding answer text can call `grade_judge_candidate` from
+`verifyit.modes.grade_judge` with the same `JudgeSpec`. Pass a runtime-only
+`JudgeConnection(base_url, api_key)` to avoid changing process environment
+variables or serializing credentials into task specs. This helper returns a
+`Reward`; invalid tasks and provider failures raise, so clients must abort the
+batch rather than aggregate partial success. Clients close on success or failure.
+The spec's `empty_output` policy applies to direct candidates. File-based grading
+still scores missing output artifacts zero, independently of empty-string policy.
+
+For decoded paired judge ratings, install `verifyit[judge,schema]` and call
+`grade_paired_ordinal` from `verifyit.modes.grade_judge`:
+
+```python
+from verifyit.modes.grade_judge import grade_paired_ordinal
+
+verdicts = grade_paired_ordinal(
+    2, [(0, 1)],
+    [{"left": 0, "right": 1, "score_left": 5, "score_right": 2, "ranking": 1}],
+)
+```
+
+The trusted cohort must have at least two responses and directed edges covering
+all responses, without self edges or duplicates. Opposite directions are distinct.
+Provider records must match those edges in order, exactly once. JSON integer-valued
+indices are accepted; booleans are rejected. Default rating bounds are 1–5 and
+ranking bounds 1–6. Equal ratings receive opposite adjustments of `3.5 - ranking`;
+each response receives the mean of its incident ratings. Rewards are normalized to
+[0, 1], while `detail["raw_score"]` and `detail["raw_bounds"]` retain the native
+scale (default −1.5–7.5). Invalid trusted contracts raise `InvalidTask`; malformed
+provider cohorts raise `RuntimeError`. Abort the entire affected batch at minimum
+reward on either failure, before applying any framework reward shaping. This API
+does not call a provider or introduce another verifier spec.
+
+`summarize_log_likelihoods(likelihoods, normalization_lengths=...)` from
+`verifyit.modes.grade_mcq` reports corpus mean log-likelihood, perplexity and bits
+per supplied unit. Supply positive integer word, byte or token counts matching the
+task; the helper divides total log-likelihood by total counts in source order.
+These are unbounded diagnostics, not Rewards or a new mode. Model log-likelihoods
+must be finite and nonpositive. Missing data, invalid counts and unrepresentable
+statistics raise `InvalidTask`; callers must abort reporting rather than substitute
+a favorable zero.
+
+`aggregate_rewards(..., expected_total=..., policy=..., round_digits=None)`
+combines core verdicts with ALL, MEAN, MAX, MIN or PRODUCT. PRODUCT multiplies
+all required fractional rewards; a missing component scores zero. MIN preserves fractional scores
+under additional binary gates; missing required components contribute zero. Invalid
+task or infrastructure outcomes discard all credit. Optional `round_digits` from
+zero to six applies ties-to-even decimal scaling after aggregation; the default
+preserves the unrounded result. Unmatched task slots should be explicit scored-zero
+components, distinct from missing execution results.
+
+Clients with already normalized tokens or canonical labels can call
+`grade_collection_f1(reference, candidate, multiplicity=..., empty_reference=...,
+round_digits=...)` from `verifyit.modes.grade_exact`. Both inputs are sequences or sets
+of strings. Choose `multiplicity="set"` to ignore repeats or `"multiset"` to
+count occurrences; tokenization and normalization remain the caller's responsibility.
+Choose `empty_reference="zero"` for tasks defining empty references as zero, or
+`"invalid"` to reject them. Empty or malformed candidates score zero; malformed
+references raise `InvalidTask` before candidate scoring. Each input is limited
+to 10,000 items and 1,000,000 characters. `round_digits=None` preserves the
+unrounded overlap score; integers from 0 through 6 request binary64 scaled,
+ties-to-even decimal rounding. The unrounded calculation uses
+`2 * overlap / (reference_count + candidate_count)` and can differ by floating-point
+roundoff from an equivalent precision/recall calculation. This direct API leaves
+Exact specs' equality behavior unchanged.
+
+`grade_collection_precision_interval(reference, candidate, minimum_percent=...,
+maximum_percent=..., multiplicity=..., empty_reference=...)` uses the same prepared
+collections, multiplicity policies and limits. It scores one when
+`overlap / candidate_count * 100` lies within the inclusive finite, ordered bounds.
+Bounds accept finite Python integers or floats and may extend outside 0–100 to
+express a tolerance around an endpoint; integers are compared without a float cast.
+`empty_reference="zero"` gives a valid nonempty candidate zero precision;
+`"invalid"` rejects an empty reference. Malformed or empty candidates always score
+zero, even when the interval includes zero. A valid disjoint candidate can pass
+that interval. Tokenization remains the caller's responsibility.
+
 For development, see [CONTRIBUTING.md](CONTRIBUTING.md),
 [AGENTS.md](AGENTS.md), and the [repository skills](.agents/skills).
 Run the package checks from the repository root:
@@ -115,3 +324,45 @@ uv build
 This repository was extracted from [`lib/tasktrove-verify` in Marin](https://github.com/marin-community/marin/tree/9c2d1a0be3cd1b7d71f8af3b22231038acb213e9/lib/tasktrove-verify).
 The package's commit history and author attribution are preserved. The standalone package,
 Python import, and command are named `verifyit`.
+
+Exact specs default to equality. `substring = true` explicitly grades whether one
+nonempty normalized reference occurs in the candidate. Multiple references or
+a reference emptied by normalization are invalid tasks, even when no candidate
+output exists. This option preserves the existing case/whitespace controls;
+clients requiring source `lower()` semantics should lowercase their inputs and
+set `ignore_case = false` rather than relying on casefold normalization.
+
+`MathSpec.allow_additive_constant` is an opt-in equivalence policy for finite scalar
+expressions. After ordinary equality fails, a simplified difference with no free
+symbols and a proven finite value counts as equal. Multiplicative factors, collection
+differences and nonfinite constants do not qualify. Existing parsing profiles, exact
+comparison and defaults remain unchanged; backend deadlines fail closed.
+
+The opt-in math `raw` profile preserves an unwrapped prediction for expression and
+LaTeX extraction, while parsing the reference as boxed LaTeX. A final box still
+takes precedence and a malformed final box scores zero. Unlike the default profile,
+it does not wrap bare symbolic text to make it parse. A reference that yields only
+an unparsed string is an invalid task. Additive fallback in this profile uses
+LaTeX extraction only.
+
+Clients can grade prepared text with `grade_ifeval_candidate` from
+`verifyit.modes.grade_ifeval`. Its optional `registry` supplies additional trusted
+checks without changing global registrations or overriding built-in names.
+Direct text grading follows the spec's `empty_output` policy. Keyword existence
+and forbidden-word constraints accept `word_boundary = false` in their params
+for case-insensitive substring matching; the default keeps whole-word matching.
+
+`verifyit.instruction_observations.prepare_instruction_observations` prepares the
+IFEval, LiveBench, and extended IFEvalG instruction dialects using their trusted
+builders and tokenizer tools. `grade_instruction_observations` in the same grader
+requires every prepared Schema or IFEval constraint to pass. Preparation does not
+call source acceptance predicates; language detection failure and malformed
+candidate JSON cannot award credit. Source wrappers still select their documented
+empty-response policy and aggregate instructions with the core reducer.
+
+`canonical_math_members` from `verifyit.modes.grade_math` prepares finite exact
+constants as delimiter-safe strings for Exact scalar or multiset comparison.
+It rejects symbolic variables, nonfinite values and approximate compound
+expressions. Run preparation inside `verifyit.execution.worker.call_bounded` so parsing
+and simplification share a process deadline; it does not implement approximate
+numeric equivalence.

@@ -11,8 +11,10 @@ below supplement the shared core and take precedence where they differ.
 ## Package and grading contracts
 
 - Support Python >=3.11. The shared style tooling runs separately on Python >=3.12.
-- Keep the core dependency limited to `tomlkit`; isolate optional dependencies
-  in mode extras. Do not add a dependency on Marin or its services to verifyit.
+- Keep dependencies light; isolate mode-specific dependencies in extras. Approved
+  lightweight configuration error packages may be imported with declared
+  dependencies. The released `harbor-config` error API is approved, including a
+  base dependency when shared preparation uses it. Do not import heavy runtimes.
 - Preserve spec parsing/rendering, public imports, CLI behavior, verdict statuses,
   and reward files described in README.md. Distinguish a candidate scoring zero
   from an invalid task or infrastructure error.
@@ -20,6 +22,50 @@ below supplement the shared core and take precedence where they differ.
   restore task-supplied paths from `spec.restore` before setup and execution;
   `must_not_break` IDs protect previously passing tests when scoring.
 - Search the existing parsers, graders, and shared execution helpers before adding a helper.
+
+## Integration ownership
+
+- `src/verifyit/spec.py` defines contracts; `src/verifyit/modes/` owns primitive
+  grading; `src/verifyit/grade.py` owns dispatch, verdicts, and
+  `aggregate_rewards`. Mode-specific metrics stay with their primitive.
+  Extend an existing contract minimally before proposing another mode.
+- Adapters do not grade. They may extract, normalize, serialize, or obtain
+  observations from tools. Matching, acceptance thresholds, partial credit, and
+  reward aggregation belong in verifyit primitives. Passing a locally computed
+  correctness flag or wrapping a source grader in Script does not consolidate it.
+- Client repositories own framework dispatch, benchmark data, prompts, runtime
+  images, and deployment assets. Shared preparation belongs in verifyit only
+  when it has actual reuse and leaves grading in the primitives. Existing
+  source-specific modules are not a precedent for copying another grader here.
+- Separate preparation into typed structural conversion and named policy
+  preparation. Preserve source defaults and effective policy provenance. A factory
+  abstraction is deferred; implement one representative path before staged migration.
+- Every added structural-conversion or policy-preparation function requires an
+  independent clean-room [preparation audit](.agents/skills/audit-preparation/SKILL.md)
+  before acceptance or publication. The auditor reads actual code and existing
+  primitives, classifies safe/unsafe, checks duplication, and explains
+  whether an unsafe transformation can be made safe. Static checks supplement
+  this review; an author or agent with implementation context is not the auditor.
+- Safe preparation needs unit tests; composed safe/unsafe stages need actual
+  end-to-end path evidence. Safety describes grading semantics, not sandbox security.
+- Import `harbor_config.errors.ErrorCategory` and `error_category` directly
+  rather than duplicating the approved released taxonomy. The reviewed Evalchemy configuration release has
+  no error taxonomy; do not invent such imports. Preserve core statuses and source
+  error provenance; declare the chosen package version and dependencies.
+- Minimize maintained production code across both repositories. Measure the
+  implementations removed as well as those added; an unchanged mode count alone
+  does not demonstrate consolidation.
+- Keep cutovers explicit and opt-in, preserving source defaults. Declare null,
+  empty-output, and missing-component policies per task contract. Fail closed
+  at the minimum score while preserving invalid-task and infrastructure statuses;
+  never turn errors into successful partial execution or favorable diagnostics.
+- Keep replay outputs, inventories, temporary patches, and investigation notes
+  in the task's external artifact directory. Track reusable regression tests,
+  required runtime assets in their owning client, and durable usage instructions.
+
+Use [add-integration](.agents/skills/add-integration/SKILL.md) for implementation
+and [test-integration](.agents/skills/test-integration/SKILL.md) for framework
+roundtrips and coverage claims.
 
 ## Repository workflows
 

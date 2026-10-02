@@ -13,8 +13,11 @@ import json
 from pathlib import Path
 
 import reasoning_gym
+from reasoning_gym.factory import DATASETS
 
+from verifyit.file_ops.read import read_text
 from verifyit.grade import InvalidTask, Reward, read_output, scored
+from verifyit.json_objects import unique_object
 from verifyit.spec import ReasoningGymSpec
 
 CANDIDATE_DETAIL_CHARS = 200
@@ -25,7 +28,8 @@ def load_entry(path: Path) -> dict:
     if not path.is_file():
         raise InvalidTask(f"reasoning-gym entry not found: {path}")
     try:
-        entry = json.loads(path.read_text())
+        entry = json.loads(read_text(path), object_pairs_hook=unique_object)
+        json.dumps(entry, allow_nan=False)
     except ValueError as error:
         raise InvalidTask(f"reasoning-gym entry {path} is not JSON: {error}") from error
     if not isinstance(entry, dict) or "metadata" not in entry:
@@ -35,10 +39,39 @@ def load_entry(path: Path) -> dict:
 
 def grade(spec: ReasoningGymSpec, tests_dir: Path, workspace: Path) -> Reward:
     entry = load_entry(tests_dir / spec.entry)
-    try:
-        score_answer = reasoning_gym.get_score_answer_fn(spec.dataset)
-    except ValueError as error:
-        raise InvalidTask(f"unknown reasoning-gym dataset {spec.dataset!r}") from error
+    if spec.params is None:
+        try:
+            score_answer = reasoning_gym.get_score_answer_fn(spec.dataset)
+        except ValueError as error:
+            raise InvalidTask(f"unknown reasoning-gym dataset {spec.dataset!r}") from error
+    else:
+        if not isinstance(spec.params, str) or not spec.params:
+            raise InvalidTask("reasoning-gym params must name a JSON file")
+        params_path = tests_dir / spec.params
+        if not params_path.is_file():
+            raise InvalidTask(f"reasoning-gym params not found: {params_path}")
+        try:
+            params = json.loads(read_text(params_path), object_pairs_hook=unique_object)
+            if not isinstance(params, dict):
+                raise ValueError("params must be an object")
+            json.dumps(params, allow_nan=False)
+        except (ValueError, UnicodeError) as error:
+            raise InvalidTask(f"invalid reasoning-gym params: {error}") from error
+        try:
+            _, config_cls = DATASETS[spec.dataset]
+        except KeyError as error:
+            raise InvalidTask(f"unknown reasoning-gym dataset {spec.dataset!r}") from error
+        # reasoning-gym >=0.1.25 registers (dataset class, config dataclass).
+        # Validate only the config here; dataset construction below is infrastructure.
+        try:
+            config = config_cls(**params)
+            # Upstream permits configs without validate (power_function and tsumego).
+            validate = getattr(config, "validate", None)
+            if validate is not None:
+                validate()
+        except (TypeError, ValueError, AssertionError) as error:
+            raise InvalidTask(f"invalid reasoning-gym configuration: {error}") from error
+        score_answer = reasoning_gym.create_dataset(spec.dataset, **params).score_answer
 
     text = read_output(spec, workspace)
     if text is None:
@@ -50,6 +83,6 @@ def grade(spec: ReasoningGymSpec, tests_dir: Path, workspace: Path) -> Reward:
         score = score_answer(answer, entry)
     except Exception as error:
         return scored(0.0, reason="scorer_error", error=f"{type(error).__name__}: {error}")
-    if not isinstance(score, int | float):
+    if isinstance(score, bool) or not isinstance(score, int | float):
         raise TypeError(f"reasoning-gym scorer for {spec.dataset} returned {type(score).__name__}")
     return scored(float(score), dataset=spec.dataset, answer=answer[:CANDIDATE_DETAIL_CHARS])
