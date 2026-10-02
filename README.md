@@ -363,6 +363,6 @@ empty-response policy and aggregate instructions with the core reducer.
 `canonical_math_members` from `verifyit.modes.grade_math` prepares finite exact
 constants as delimiter-safe strings for Exact scalar or multiset comparison.
 It rejects symbolic variables, nonfinite values and approximate compound
-expressions. Run preparation inside `verifyit.bounded.call_bounded` so parsing
+expressions. Run preparation inside `verifyit.execution.worker.call_bounded` so parsing
 and simplification share a process deadline; it does not implement approximate
 numeric equivalence.

@@ -1,3 +1,4 @@
+import sys
 from dataclasses import asdict
 
 import pytest
@@ -42,12 +43,12 @@ def test_named_identity_policy_retains_literal_text_and_exposes_effective_policy
         exact_match("İ", ["i"], normalization_policy=TextPolicy.IDENTITY, ignore_case=True)
 
 
-def test_preparation_failure_keeps_metadata_and_cannot_recover_through_normalization():
-    failure = structure_text("correct", ["correct", None])
-    assert isinstance(failure, PreparationFailure)
-    assert normalize_text(failure, TextNormalization(policy=TextPolicy.IDENTITY)) is failure
-    verdict = finalize_preparation_failure(**asdict(failure))
-    assert (verdict.status, verdict.reward) == (Status.INVALID_TASK, 0)
+def test_preparation_raises_at_failure_with_original_metadata_and_minimum_verdict():
+    with pytest.raises(PreparationError) as structural:
+        structure_text("correct", ["correct", None])
+    assert isinstance(structural.value, InvalidTask)
+    assert structural.value.failure.stage == "structure"
+    assert (structural.value.verdict.status, structural.value.verdict.reward) == (Status.INVALID_TASK, 0)
     with pytest.raises(PreparationError) as caught:
         exact_match("correct", ["correct"], regexes_to_ignore=["["])
     assert isinstance(caught.value, InvalidTask)
@@ -73,3 +74,13 @@ def test_failed_preparation_has_no_partial_grade_to_pass_through(error_type, sta
     assert isinstance(failure.category, ErrorCategory)
     assert verdict.detail["error_type"] == error_type
     assert verdict.detail["source_status"] == status
+
+
+def test_missing_numpy_raises_infrastructure_failure_before_exact_grading(monkeypatch):
+    monkeypatch.setitem(sys.modules, "numpy", None)
+    with pytest.raises(PreparationError) as caught:
+        exact_match("correct", ["correct"], ignore_case=True)
+    assert not isinstance(caught.value, InvalidTask)
+    assert caught.value.failure.stage == "normalize"
+    assert caught.value.failure.error_type == "ModuleNotFoundError"
+    assert (caught.value.verdict.status, caught.value.verdict.reward) == (Status.INFRA_ERROR, 0)

@@ -12,7 +12,7 @@ import math_verify
 import sympy
 from math_verify.errors import TimeoutException
 
-from verifyit.bounded import call_bounded
+from verifyit.execution.worker import call_bounded
 from verifyit.grade import InvalidTask, Status, run, write_reward
 from verifyit.grade import grade as dispatch
 from verifyit.modes import grade_math

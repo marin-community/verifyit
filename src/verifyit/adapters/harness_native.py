@@ -17,10 +17,9 @@ from verifyit.adapters.harness_mmmu import mmmu_config_profile, mmmu_task_metric
 from verifyit.adapters.harness_probability import truthfulqa_mc2_profile, truthfulqa_task_metrics
 from verifyit.adapters.harness_profiles import generation_profile, profile_task_metrics
 from verifyit.adapters.harness_rolling import rolling_config_profile, rolling_task_metrics
-from verifyit.grade import Aggregation, InvalidTask, Reward, Status, aggregate_rewards, finalize_preparation_failure
+from verifyit.grade import Aggregation, InvalidTask, Reward, aggregate_rewards
 from verifyit.modes.grade_exact import grade_exact_candidate
 from verifyit.modes.grade_mcq import LikelihoodScoring, grade_mcq_likelihoods
-from verifyit.preparation.errors import InvalidPreparation, PreparationError, PreparationFailure
 from verifyit.preparation.text import TextNormalization, TextPolicy, normalize_text, structure_text
 from verifyit.spec import EmptyOutputPolicy, ExactSpec
 
@@ -43,23 +42,16 @@ def exact_match(
     allowed = {"regexes_to_ignore", "ignore_case", "ignore_punctuation", "ignore_numbers"}
     if unknown := options.keys() - allowed:
         raise InvalidTask(f"unsupported exact_match options: {sorted(unknown)}")
-    prepared = structure_text(candidate, references)
-    if not isinstance(prepared, PreparationFailure):
-        prepared = normalize_text(
-            prepared,
-            TextNormalization(
-                policy=normalization_policy,
-                regexes_to_ignore=tuple(options.get("regexes_to_ignore") or ()),
-                ignore_case=options.get("ignore_case", False),
-                ignore_punctuation=options.get("ignore_punctuation", False),
-                ignore_numbers=options.get("ignore_numbers", False),
-            ),
-        )
-    if isinstance(prepared, PreparationFailure):
-        failure = finalize_preparation_failure(**asdict(prepared))
-        if failure.status == Status.INVALID_TASK:
-            raise InvalidPreparation(prepared, failure)
-        raise PreparationError(prepared, failure)
+    prepared = normalize_text(
+        structure_text(candidate, references),
+        TextNormalization(
+            policy=normalization_policy,
+            regexes_to_ignore=tuple(options.get("regexes_to_ignore") or ()),
+            ignore_case=options.get("ignore_case", False),
+            ignore_punctuation=options.get("ignore_punctuation", False),
+            ignore_numbers=options.get("ignore_numbers", False),
+        ),
+    )
     value = prepared.candidate
     normalized_references = prepared.references
     results = [

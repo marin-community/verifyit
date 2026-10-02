@@ -3,14 +3,14 @@
 import re
 import string
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from enum import StrEnum
 from typing import Any, cast
 
 from harbor_config.errors import error_category
 
-from verifyit.grade import Status
-from verifyit.preparation.errors import PreparationFailure
+from verifyit.grade import InvalidTask, Status, finalize_preparation_failure
+from verifyit.preparation.errors import InvalidPreparation, PreparationError, PreparationFailure
 
 
 class TextPolicy(StrEnum):
@@ -41,90 +41,61 @@ class PreparedText:
     normalization: TextNormalization
 
 
-def structure_text(candidate: str, references: Sequence[str]) -> TextInputs | PreparationFailure:
+def _preparation_error(error: Exception, status: Status, stage: str) -> PreparationError:
+    failure = PreparationFailure(status, error_category(type(error).__name__), type(error).__name__, str(error), stage)
+    verdict = finalize_preparation_failure(**asdict(failure))
+    exception = InvalidPreparation if status is Status.INVALID_TASK else PreparationError
+    return exception(failure, verdict)
+
+
+def structure_text(candidate: str, references: Sequence[str]) -> TextInputs:
     """Snapshot strings without filtering, coercion, reordering, or normalization."""
     if not references or any(not isinstance(reference, str) for reference in references):
-        return PreparationFailure(
+        raise _preparation_error(
+            InvalidTask("exact_match references must be a nonempty sequence of strings"),
             Status.INVALID_TASK,
-            error_category("InvalidTask"),
-            "InvalidTask",
-            "exact_match references must be a nonempty sequence of strings",
             "structure",
         )
     if not isinstance(candidate, str):
-        return PreparationFailure(
-            Status.INVALID_TASK,
-            error_category("InvalidTask"),
-            "InvalidTask",
-            "exact_match candidate must be a string",
-            "structure",
-        )
+        raise _preparation_error(InvalidTask("exact_match candidate must be a string"), Status.INVALID_TASK, "structure")
     return TextInputs(candidate, tuple(references))
 
 
-def normalize_text(
-    inputs: TextInputs | PreparationFailure, normalization: TextNormalization
-) -> PreparedText | PreparationFailure:
+def normalize_text(inputs: TextInputs, normalization: TextNormalization) -> PreparedText:
     """Apply the selected policy, retaining its input snapshot and effective options.
 
     Harness policy deliberately uses separate fixed-width NumPy arrays for the
     candidate and references. Combining their batches changes Unicode lowering.
     """
-    if isinstance(inputs, PreparationFailure):
-        return inputs
     if not isinstance(normalization.policy, TextPolicy) or any(
         not isinstance(flag, bool)
         for flag in (normalization.ignore_case, normalization.ignore_punctuation, normalization.ignore_numbers)
     ):
-        return PreparationFailure(
-            Status.INVALID_TASK,
-            error_category("InvalidTask"),
-            "InvalidTask",
-            "invalid text normalization policy or flags",
-            "normalize",
+        raise _preparation_error(
+            InvalidTask("invalid text normalization policy or flags"), Status.INVALID_TASK, "normalize"
         )
     if not isinstance(normalization.regexes_to_ignore, tuple) or any(
         not isinstance(pattern, str) for pattern in normalization.regexes_to_ignore
     ):
-        return PreparationFailure(
-            Status.INVALID_TASK,
-            error_category("InvalidTask"),
-            "InvalidTask",
-            "normalization regexes must be a tuple of strings",
-            "normalize",
+        raise _preparation_error(
+            InvalidTask("normalization regexes must be a tuple of strings"), Status.INVALID_TASK, "normalize"
         )
     if normalization.policy == TextPolicy.IDENTITY:
         if normalization.regexes_to_ignore or any(
             (normalization.ignore_case, normalization.ignore_punctuation, normalization.ignore_numbers)
         ):
-            return PreparationFailure(
-                Status.INVALID_TASK,
-                error_category("InvalidTask"),
-                "InvalidTask",
-                "identity policy does not accept normalization options",
-                "normalize",
+            raise _preparation_error(
+                InvalidTask("identity policy does not accept normalization options"), Status.INVALID_TASK, "normalize"
             )
         return PreparedText(inputs, inputs.candidate, inputs.references, normalization)
     try:
         patterns = tuple(re.compile(pattern) for pattern in normalization.regexes_to_ignore)
     except re.error as error:
-        return PreparationFailure(
-            Status.INVALID_TASK,
-            error_category(type(error).__name__),
-            type(error).__name__,
-            str(error),
-            "normalize",
-        )
+        raise _preparation_error(error, Status.INVALID_TASK, "normalize") from error
     try:
         import numpy as np  # noqa: PLC0415
     except ImportError as error:
-        return PreparationFailure(
-            Status.INFRA_ERROR,
-            error_category(type(error).__name__),
-            type(error).__name__,
-            str(error),
-            "normalize",
-        )
+        raise _preparation_error(error, Status.INFRA_ERROR, "normalize") from error
     batches = []
     for values in ((inputs.candidate,), inputs.references):
         for pattern in patterns:
