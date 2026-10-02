@@ -12,7 +12,12 @@ def test_qa_exact_keeps_literal_normalized_alternatives():
     assert grade_qa_exact("PARIS", ["paris"]).reward == 0
     assert grade_qa_exact("paris ", ["paris"]).reward == 0
     assert grade_qa_exact("", [""]).reward == 1
-    assert grade_qa_exact("paris", []).reward == 0
+
+
+@pytest.mark.parametrize("references", [[], None, ["paris", None]])
+def test_qa_exact_invalid_alternatives_are_not_successful_zero_verdicts(references):
+    with pytest.raises(InvalidTask):
+        grade_qa_exact("paris", references)
 
 
 @pytest.mark.parametrize(
