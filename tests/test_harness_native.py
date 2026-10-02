@@ -2,6 +2,7 @@ import pytest
 
 from verifyit.adapters.harness_native import exact_match, likelihood_choice
 from verifyit.grade import InvalidTask
+from verifyit.spec import EmptyOutputPolicy
 
 
 @pytest.mark.parametrize(
@@ -49,3 +50,13 @@ def test_invalid_gold_does_not_award_a_selected_default(targets):
 def test_empty_target_string_is_a_valid_literal_reference():
     assert exact_match("", [""]).reward == 1
     assert exact_match("attempt", [""]).reward == 0
+
+
+@pytest.mark.parametrize("candidate", ["", "!!!"])
+def test_explicit_empty_policy_rejects_normalized_empty_without_hiding_invalid_reference(candidate):
+    assert exact_match(candidate, ["!!!"], ignore_punctuation=True).reward == 1
+    assert exact_match(candidate, ["!!!"], ignore_punctuation=True, empty_output=EmptyOutputPolicy.ZERO).reward == 0
+    with pytest.raises(InvalidTask, match="references"):
+        exact_match(candidate, ["!!!", None], ignore_punctuation=True, empty_output=EmptyOutputPolicy.ZERO)
+    with pytest.raises(InvalidTask, match="policy"):
+        exact_match(candidate, ["!!!"], ignore_punctuation=True, empty_output="unknown")

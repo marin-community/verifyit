@@ -22,8 +22,16 @@ from verifyit.modes.grade_mcq import LikelihoodScoring, grade_mcq_likelihoods
 from verifyit.spec import EmptyOutputPolicy, ExactSpec
 
 
-def exact_match(candidate: str, references: Sequence[str], **options) -> Reward:
-    """Harness exact_match normalization, then literal equality against any reference."""
+def exact_match(
+    candidate: str, references: Sequence[str], *, empty_output: EmptyOutputPolicy = EmptyOutputPolicy.GRADE, **options
+) -> Reward:
+    """Normalize source text and compare aliases under an explicit empty-output policy.
+
+    ZERO rejects answers that become empty during normalization; GRADE preserves
+    source literal-empty matching. Trusted aliases are validated in either case.
+    """
+    if not isinstance(empty_output, EmptyOutputPolicy):
+        raise InvalidTask("unknown exact empty-output policy")
     allowed = {"regexes_to_ignore", "ignore_case", "ignore_punctuation", "ignore_numbers"}
     if unknown := options.keys() - allowed:
         raise InvalidTask(f"unsupported exact_match options: {sorted(unknown)}")
@@ -61,7 +69,7 @@ def exact_match(candidate: str, references: Sequence[str], **options) -> Reward:
                 ignore_case=False,
                 ignore_whitespace=False,
                 strip_outer_whitespace=False,
-                empty_output=EmptyOutputPolicy.GRADE,
+                empty_output=empty_output,
             ),
             value,
         )
@@ -156,12 +164,16 @@ def native_config_route(config: dict) -> str | None:
     return None
 
 
-def native_task_metrics(task, doc, responses) -> dict | None:
+def native_task_metrics(
+    task, doc, responses, *, exact_empty_output: EmptyOutputPolicy = EmptyOutputPolicy.GRADE
+) -> dict | None:
     """Route only the pinned ConfigurableTask implementation and recognized metrics.
 
     None means compatibility-only source scoring is required; it is never a reward.
     Invalid recognized task/sample contracts raise InvalidTask instead of fallback.
     """
+    if not isinstance(exact_empty_output, EmptyOutputPolicy):
+        raise InvalidTask("unknown exact empty-output policy")
     method = task.process_results
     if (
         getattr(method, "__module__", None) != "lm_eval.api.task"
@@ -216,7 +228,11 @@ def native_task_metrics(task, doc, responses) -> dict | None:
         elif type(gold) is not type(candidate):
             gold = type(candidate)(gold)
         references = gold if task.multiple_target else [gold]
-        return {"exact_match": exact_match(candidate, references, **task._metric_fn_kwargs["exact_match"]).reward}
+        return {
+            "exact_match": exact_match(
+                candidate, references, empty_output=exact_empty_output, **task._metric_fn_kwargs["exact_match"]
+            ).reward
+        }
     choices = task.doc_to_choice(doc)
     likelihoods, greedy = zip(*responses, strict=True)
     gold = task.doc_to_text(doc) if task.multiple_input else task.doc_to_target(doc)
