@@ -2,13 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 """Babilong's explicit substring benchmark contract with source preprocessing."""
 
-import hashlib
 import inspect
 from importlib import import_module
 from pathlib import Path
-from types import CodeType
 
-from verifyit.adapters.harness_validation import validate_default_filter
+from verifyit.adapters import harness_validation as validation
 from verifyit.grade import InvalidTask, Reward
 from verifyit.modes.grade_exact import grade_exact_candidate
 from verifyit.spec import ExactSpec
@@ -26,28 +24,25 @@ def _pinned_scorer(callback) -> bool:
         recognized = callback.__name__ == "process_results"
     else:
         return False
-    if not recognized or not str(path).endswith(_SUFFIX) or not path.is_file():
+    if not recognized or not str(path).endswith(_SUFFIX):
         return False
-    source = path.read_bytes()
-    if hashlib.sha256(source).hexdigest() != _HASH:
+    source = validation.pinned_source_bytes(path, {_HASH})
+    if source is None:
         return False
     if inspect.isfunction(callback):
         namespace = callback.__globals__
         if namespace.get("process_results") is not callback or namespace.get("re") is not import_module("re"):
             return False
-        for code in compile(source, str(path), "exec").co_consts:
-            if not isinstance(code, CodeType) or code.co_name not in {"process_results", "postprocess_pred"}:
-                continue
-            function = namespace.get(code.co_name)
-            if (
-                not inspect.isfunction(function)
-                or function.__code__ != code
-                or function.__globals__ is not namespace
-                or function.__defaults__ is not None
-                or function.__kwdefaults__ is not None
-                or function.__closure__ is not None
-            ):
-                return False
+        if not validation.source_functions_match(
+            namespace,
+            tuple(
+                code
+                for code in validation.compiled_source_functions(source, str(path))
+                if code.co_name in {"process_results", "postprocess_pred"}
+            ),
+            {},
+        ):
+            return False
     return True
 
 
@@ -83,7 +78,7 @@ def validate_babilong_task(task) -> bool:
         or task._aggregation_list.get("acc") is not mean
     ):
         raise InvalidTask("Babilong requires the registered acc/mean metric contract")
-    validate_default_filter(task, "BabiLong")
+    validation.validate_default_filter(task, "BabiLong")
     return True
 
 

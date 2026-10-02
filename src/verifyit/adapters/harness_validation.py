@@ -3,10 +3,47 @@
 """Shared validation for pinned harness task contracts."""
 
 import functools
+import hashlib
+import inspect
 import math
+from collections.abc import Collection, Mapping, Sequence
 from importlib import import_module
+from pathlib import Path
+from types import CodeType
+from typing import Any
 
 from verifyit.grade import InvalidTask
+
+
+def pinned_source_bytes(path: Path, digests: Collection[str]) -> bytes | None:
+    """Read one source snapshot for both digest verification and code comparison."""
+    if not path.is_file():
+        return None
+    source = path.read_bytes()
+    return source if hashlib.sha256(source).hexdigest() in digests else None
+
+
+@functools.lru_cache(maxsize=4)
+def compiled_source_functions(source: bytes, filename: str) -> tuple[CodeType, ...]:
+    return tuple(code for code in compile(source, filename, "exec").co_consts if isinstance(code, CodeType))
+
+
+def source_functions_match(
+    namespace: dict[str, Any], codes: Sequence[CodeType], defaults: Mapping[str, tuple[object, ...]]
+) -> bool:
+    """Match function code, globals and defaults against the verified snapshot."""
+    for code in codes:
+        function = namespace.get(code.co_name)
+        if (
+            not inspect.isfunction(function)
+            or function.__code__ != code
+            or function.__globals__ is not namespace
+            or function.__defaults__ != defaults.get(code.co_name)
+            or function.__kwdefaults__ is not None
+            or function.__closure__ is not None
+        ):
+            return False
+    return True
 
 
 def validate_default_filter(task, label: str) -> None:

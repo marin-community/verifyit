@@ -4,14 +4,12 @@
 
 import ast
 import functools
-import hashlib
 import inspect
 import math
 from importlib import import_module
 from pathlib import Path
-from types import CodeType
 
-from verifyit.adapters.harness_validation import validate_default_filter
+from verifyit.adapters import harness_validation as validation
 from verifyit.adapters.skyrl import grade_literal_candidate
 from verifyit.grade import InvalidTask, Reward, scored
 from verifyit.modes.grade_exact import grade_exact_candidate
@@ -22,11 +20,6 @@ from verifyit.spec import ExactSpec, McqSpec, NumericSpec
 _SUFFIX = "/tasks/mmmu/utils.py"
 _ORIGINAL = "65e52c4a7694c68df5fdd250be8c3998af3a835d22e669a64235197d42a83057"
 _PATCHED = "5c63ed4a1fd1bc271d4903ed0b523fc57ea5c3699874664eeb48b455c91e6154"
-
-
-@functools.lru_cache(maxsize=4)
-def _source_codes(source: bytes, path: str) -> tuple[CodeType, ...]:
-    return tuple(code for code in compile(source, path, "exec").co_consts if isinstance(code, CodeType))
 
 
 @functools.lru_cache(maxsize=4)
@@ -51,11 +44,10 @@ def _pinned_function(callback, name: str) -> bool:
         recognized = callback.__name__ == name
     else:
         return False
-    if not recognized or not str(path).endswith(_SUFFIX) or not path.is_file():
+    if not recognized or not str(path).endswith(_SUFFIX):
         return False
-    source = path.read_bytes()
-    digest = hashlib.sha256(source).hexdigest()
-    if digest not in ({_PATCHED} if inspect.isfunction(callback) else {_ORIGINAL, _PATCHED}):
+    source = validation.pinned_source_bytes(path, {_PATCHED} if inspect.isfunction(callback) else {_ORIGINAL, _PATCHED})
+    if source is None:
         return False
     if inspect.isfunction(callback):
         namespace = callback.__globals__
@@ -69,17 +61,8 @@ def _pinned_function(callback, name: str) -> bool:
             return False
         if any(namespace.get(name) != value for name, value in _source_constants(source)):
             return False
-        for code in _source_codes(source, str(path)):
-            function = namespace.get(code.co_name)
-            if (
-                not inspect.isfunction(function)
-                or function.__code__ != code
-                or function.__globals__ is not namespace
-                or function.__defaults__ is not None
-                or function.__kwdefaults__ is not None
-                or function.__closure__ is not None
-            ):
-                return False
+        if not validation.source_functions_match(namespace, validation.compiled_source_functions(source, str(path)), {}):
+            return False
     return True
 
 
@@ -125,7 +108,7 @@ def validate_mmmu_task(task) -> bool:
         or task._aggregation_list.get("acc") is not mean
     ):
         raise InvalidTask("MMMU requires the registered acc/mean metric contract")
-    validate_default_filter(task, "MMMU")
+    validation.validate_default_filter(task, "MMMU")
     return True
 
 

@@ -10,15 +10,13 @@ import string
 from decimal import Decimal, InvalidOperation
 from fractions import Fraction
 
+from verifyit.bounded import call_bounded
 from verifyit.grade import InvalidTask, Reward, scored
 from verifyit.modes.grade_exact import grade_exact_candidate
+from verifyit.modes.grade_math import MathMemberPolicy, canonical_math_members
 from verifyit.spec import EmptyOutputPolicy, ExactSpec
 
-TEX_FRACTION = re.compile(r"\\[dt]?frac\{(-?\d+(?:\.\d+)?)\}\{(-?\d+(?:\.\d+)?)\}")
-TEX_FRACTION_COMMAND = re.compile(r"\\[dt]?frac(?=\{)")
-SLASH_FRACTION = re.compile(r"(-?\d+(?:\.\d+)?)/(-?\d+(?:\.\d+)?)")
 RATIO = re.compile(r"(-?\d+):(-?\d+)")
-PLAIN_DECIMAL = re.compile(r"-?\d+(?:\.\d+)?")
 GSM8K_FINAL = re.compile(r"#### (-?(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)(?:\.[0-9]+)?)")
 GSM8K_STRICT = re.compile(r"#### (\-?[0-9\.\,]+)")
 ANSWER_TAG = re.compile(r"<answer>(.*?)</answer>", re.DOTALL)
@@ -109,40 +107,30 @@ def grade_grid_candidate(expected: object, candidate: object) -> Reward:
     return grade_literal_candidate(json.dumps(expected), json.dumps(candidate))
 
 
-def _rational(answer: str) -> Fraction | None:
-    candidate = answer.replace(r"\left", "").replace(r"\right", "").strip()
-    sign = -1 if candidate.startswith("-\\") else 1
-    if sign == -1:
-        candidate = candidate[1:]
-    for pattern in (TEX_FRACTION, SLASH_FRACTION, RATIO):
-        match = pattern.fullmatch(candidate)
-        if match is not None:
-            denominator = Fraction(match.group(2))
-            return sign * Fraction(match.group(1)) / denominator if denominator else None
-    return Fraction(candidate) if PLAIN_DECIMAL.fullmatch(candidate) else None
+def _aime_exact(expected: str, candidate: str) -> Reward:
+    expected_ratio = RATIO.fullmatch(expected) if isinstance(expected, str) else None
+    candidate_ratio = RATIO.fullmatch(candidate) if isinstance(candidate, str) else None
+    try:
+        reference = canonical_math_members(
+            "/".join(expected_ratio.groups()) if expected_ratio else expected, policy=MathMemberPolicy.LITERAL_SYMBOLIC
+        )
+    except ValueError as error:
+        raise InvalidTask("AIME reference must define one valid exact answer") from error
+    if len(reference) != 1:
+        raise InvalidTask("AIME reference must define one valid exact answer")
+    try:
+        tokens = canonical_math_members(
+            "/".join(candidate_ratio.groups()) if candidate_ratio else candidate,
+            policy=MathMemberPolicy.LITERAL_SYMBOLIC,
+        )
+    except ValueError:
+        tokens = ()
+    return grade_exact_candidate(ExactSpec(expected=reference, ordered=True), ",".join(tokens))
 
 
 def grade_aime_candidate(expected: str, candidate: str) -> Reward:
-    """Score source-normalized AIME answers by literal or exact rational equality.
-
-    TeX fraction styles are equivalent, and an outer minus applies to the whole fraction.
-    The caller retains AIME's tail extraction and text normalization. Strict-box
-    scoring is a separate whitespace-sensitive contract; this helper does not implement it.
-    """
-    spec = ExactSpec(expected=(expected,))
-    if candidate == expected:
-        return grade_exact_candidate(spec, candidate)
-    expected = TEX_FRACTION_COMMAND.sub(lambda _: r"\frac", expected)
-    candidate = TEX_FRACTION_COMMAND.sub(lambda _: r"\frac", candidate)
-    if expected == candidate:
-        # Formatting equivalence must not add credit for an undefined fraction.
-        if any(Fraction(match.group(2)) == 0 for match in TEX_FRACTION.finditer(expected)):
-            return scored(0.0, extracted=candidate, expected=[expected])
-        return grade_exact_candidate(ExactSpec(expected=(expected,)), candidate)
-    expected_value, candidate_value = _rational(expected), _rational(candidate)
-    if expected_value is None or candidate_value is None:
-        return scored(0.0, extracted=candidate, expected=[expected])
-    return grade_exact_candidate(ExactSpec(expected=(str(expected_value),)), str(candidate_value))
+    """Prepare one exact answer under a deadline, then delegate to Exact."""
+    return call_bounded(_aime_exact, expected, candidate, timeout=10)
 
 
 def grade_gsm8k_final_line(expected: str, response: str) -> Reward:

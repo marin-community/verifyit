@@ -18,6 +18,11 @@ from verifyit.grade import InvalidTask, Status
 @pytest.mark.parametrize(
     ("expected", "candidate", "reward"),
     [
+        ("Evelyn", "Evelyn", 1.0),
+        ("Evelyn", "E*y*n*v*l*e", 0.0),
+        ("p-q", "p-q", 1.0),
+        ("p-q", "-q+p", 0.0),
+        ("2x-8", "2x-8", 1.0),
         ("20:7", "40:14", 1.0),
         ("20:7", "7:20", 0.0),
         ("0.5", r"\frac{1}{2}", 1.0),
@@ -29,18 +34,15 @@ from verifyit.grade import InvalidTask, Status
         ("-1/4", r"-\dfrac{1}{4}", 1.0),
         (r"-\frac{-1}{4}", "1/4", 1.0),
         (r"-\frac{1}{4}", "1/4", 0.0),
-        (r"\frac{1}{0}", r"\dfrac{1}{0}", 0.0),
-        (r"-\frac{1}{0}", "-1/4", 0.0),
         ("-1/4", r"--\frac{1}{4}", 0.0),
         (r"-\frac{1}{-4}", "1/4", 1.0),
         (r"-\frac{-1}{-4}", "-1/4", 1.0),
         (r"\frac{3}{\pi}", r"\dfracfoo{3}{\pi}", 0.0),
-        (r"\dfracfoo{3}{\pi}", r"\fracfoo{3}{\pi}", 0.0),
         ("045", "45", 1.0),
         ("9007199254740992", "9007199254740993", 0.0),
         ("9007199254740992.5", "18014398509481985/2", 1.0),
         ("20:7", "20:0", 0.0),
-        ("1000", "1e3", 0.0),
+        ("1000", "1e3", 1.0),
         ("1000", "1_000", 0.0),
         ("0.5", "1.0:2.0", 0.0),
     ],
@@ -140,3 +142,30 @@ def test_invalid_grid_reference_is_not_candidate_zero():
 def test_gsm8k_malformed_reference_cannot_award_literal_or_format_credit(expected):
     with pytest.raises(InvalidTask, match="finite decimal"):
         grade_gsm8k_strict(expected, f"#### {expected}", format_score=0.04)
+
+
+@pytest.mark.parametrize(
+    "expected",
+    [
+        None,
+        "",
+        "nan",
+        "inf",
+        r"\frac{1}{0}",
+        r"x/0",
+        r"\frac{x}{x-x}",
+        r"\mathrm{NaN}",
+        r"\text{Inf}",
+        r"\dfracfoo{3}{\pi}",
+        "1,2",
+    ],
+)
+@pytest.mark.parametrize("candidate", ["", "42", "same_reference"])
+def test_aime_invalid_reference_precedes_candidate_scoring(expected, candidate):
+    with pytest.raises(InvalidTask, match="one valid exact answer"):
+        grade_aime_candidate(expected, expected if candidate == "same_reference" else candidate)
+
+
+@pytest.mark.parametrize("candidate", [r"\frac{1}{0}", "nan", "inf", "42,43", "43,42"])
+def test_aime_undefined_or_multiple_candidates_cannot_earn_credit(candidate):
+    assert grade_aime_candidate("42", candidate).reward == 0.0

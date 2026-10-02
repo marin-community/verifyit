@@ -2,14 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 """Translate source likelihood and label vectors into MCQ probability grading."""
 
-import hashlib
 import inspect
 from collections.abc import Sequence
 from importlib import import_module
 from pathlib import Path
-from types import CodeType
 
-from verifyit.adapters.harness_validation import log_likelihoods, validate_default_filter
+from verifyit.adapters import harness_validation as validation
 from verifyit.grade import InvalidTask, Reward
 from verifyit.modes.grade_mcq import LikelihoodScoring, grade_mcq_likelihoods
 
@@ -24,7 +22,7 @@ def probability_mass(labels: Sequence[int], responses: Sequence[tuple[float, boo
         raise InvalidTask("probability mass requires one label per nonempty response vector")
     if any(type(label) is not int or label not in (0, 1) for label in labels) or not any(labels):
         raise InvalidTask("probability mass requires binary labels and at least one correct alternative")
-    likelihoods = log_likelihoods(responses, "TruthfulQA MC2")
+    likelihoods = validation.log_likelihoods(responses, "TruthfulQA MC2")
     return grade_mcq_likelihoods(
         likelihoods,
         [index for index, label in enumerate(labels) if label == 1],
@@ -40,16 +38,7 @@ def _pinned_callable(callback: object, name: str) -> bool:
         recognized = symbol == f"utils.{name}"
     elif inspect.isfunction(callback):
         path = Path(callback.__code__.co_filename)
-        compiled = compile(path.read_bytes(), str(path), "exec") if path.is_file() else None
-        expected_code = (
-            next(
-                (part for part in compiled.co_consts if isinstance(part, CodeType) and part.co_name == name),
-                None,
-            )
-            if compiled
-            else None
-        )
-        recognized = callback.__name__ == name and callback.__code__ == expected_code
+        recognized = callback.__name__ == name
     else:
         return False
     sources = {
@@ -57,10 +46,16 @@ def _pinned_callable(callback: object, name: str) -> bool:
         "/eval/lm_eval_tasks/truthfulqa/utils.py": "81170af2ddc5fc3a4c0e039cfd9846d31d86f3ffbed4b0f731004426c1924ac5",
     }
     digest = next((value for suffix, value in sources.items() if str(path).endswith(suffix)), None)
-    if not recognized or digest is None or not path.is_file():
+    if not recognized or digest is None:
         return False
-    if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+    source = validation.pinned_source_bytes(path, {digest})
+    if source is None:
         return False
+    if inspect.isfunction(callback):
+        expected_code = next(
+            (code for code in validation.compiled_source_functions(source, str(path)) if code.co_name == name), None
+        )
+        return callback.__code__ == expected_code
     return True
 
 
@@ -107,7 +102,7 @@ def validate_truthfulqa_task(task) -> bool:
         return False
     mean = import_module("lm_eval.api.metrics").mean
 
-    validate_default_filter(task, "TruthfulQA MC2")
+    validation.validate_default_filter(task, "TruthfulQA MC2")
     aggregate = task._aggregation_list.get("acc")
     if tuple(task._metric_fn_list) != ("acc",) or task._metric_fn_kwargs.get("acc", {}) or aggregate is not mean:
         raise InvalidTask("TruthfulQA MC2 requires the registered acc/mean metric contract")

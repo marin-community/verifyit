@@ -2,13 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 """Pinned AGIEval multi-answer likelihood scoring through existing choice grading."""
 
-import hashlib
 import inspect
 from importlib import import_module
 from pathlib import Path
-from types import CodeType
 
-from verifyit.adapters.harness_validation import log_likelihoods, validate_default_filter
+from verifyit.adapters import harness_validation as validation
 from verifyit.grade import InvalidTask
 
 _SOURCE_HASH = "d54929f3cfcae8ee7f1f0171414cb81ec19b4243ea6474d8155956beb18327d3"
@@ -28,25 +26,18 @@ def agieval_config_profile(config: dict) -> bool:
         path, name = Path(callback.__code__.co_filename), callback.__name__
     else:
         return False
-    if name != "process_results_mcqa" or not str(path).endswith(_SUFFIX) or not path.is_file():
+    if name != "process_results_mcqa" or not str(path).endswith(_SUFFIX):
         return False
-    source = path.read_bytes()
-    if hashlib.sha256(source).hexdigest() != _SOURCE_HASH:
+    source = validation.pinned_source_bytes(path, {_SOURCE_HASH})
+    if source is None:
         return False
     if inspect.isfunction(callback):
-        code = next(
-            part
-            for part in compile(source, str(path), "exec").co_consts
-            if isinstance(part, CodeType) and part.co_name == name
-        )
+        code = next(part for part in validation.compiled_source_functions(source, str(path)) if part.co_name == name)
         namespace = callback.__globals__
         if (
-            callback.__code__ != code
+            not validation.source_functions_match(namespace, (code,), {})
             or namespace.get(name) is not callback
             or namespace.get("np") is not import_module("numpy")
-            or callback.__defaults__ is not None
-            or callback.__kwdefaults__ is not None
-            or callback.__closure__ is not None
         ):
             return False
     return (
@@ -79,7 +70,7 @@ def validate_agieval_task(task) -> bool:
         or any(task._aggregation_list.get(metric) is not mean for metric in ("acc", "acc_norm"))
     ):
         raise InvalidTask("AGIEval MCQA requires registered acc/acc_norm means")
-    validate_default_filter(task, "AGIEval MCQA")
+    validation.validate_default_filter(task, "AGIEval MCQA")
     return True
 
 
@@ -93,7 +84,7 @@ def agieval_metrics(choices, gold, responses) -> dict[str, float]:
         raise InvalidTask("AGIEval requires nonempty integer gold indices")
     if not isinstance(responses, list) or len(responses) != len(choices):
         raise InvalidTask("AGIEval requires one likelihood response per choice")
-    likelihoods = log_likelihoods(responses, "AGIEval MCQA")
+    likelihoods = validation.log_likelihoods(responses, "AGIEval MCQA")
     return {
         "acc": likelihood_choice(choices, likelihoods, gold).reward,
         "acc_norm": likelihood_choice(choices, likelihoods, gold, "characters").reward,

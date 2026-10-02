@@ -20,6 +20,7 @@ Expected text that math-verify cannot parse raises ``InvalidTask``.
 import math
 import re
 import threading
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -94,17 +95,25 @@ def _split_members(text: str) -> list[str]:
     return members
 
 
-def canonical_math_members(text: str) -> tuple[str, ...]:
+class MathMemberPolicy(StrEnum):
+    FINITE = "finite"
+    LITERAL_SYMBOLIC = "literal_symbolic"
+
+
+def canonical_math_members(text: str, *, policy: MathMemberPolicy = MathMemberPolicy.FINITE) -> tuple[str, ...]:
     """Prepare finite exact constants for Exact multiset grading inside a bounded worker.
 
     Tokens encode canonical expressions as hex so commas inside symbolic constructors
-    cannot become Exact member separators. Approximate compound expressions are rejected.
+    cannot become Exact member separators. The literal-symbolic policy keeps parsed
+    variable expressions as raw text; undefined expressions never become literal tokens.
     """
     from latex2sympy2_extended import NormalizationConfig  # noqa: PLC0415
     from math_verify import parse  # noqa: PLC0415
     from math_verify.parser import LatexExtractionConfig  # noqa: PLC0415
-    from sympy import Expr, Float, Rational, simplify, srepr  # noqa: PLC0415
+    from sympy import Expr, Float, Rational, nan, oo, simplify, srepr, zoo  # noqa: PLC0415
 
+    if not isinstance(policy, MathMemberPolicy):
+        raise ValueError("unknown math member policy")
     strict_latex = LatexExtractionConfig(
         normalization_config=NormalizationConfig(
             basic_latex=True, units=False, malformed_operators=False, nits=False, boxed="none", equations=False
@@ -114,6 +123,12 @@ def canonical_math_members(text: str) -> tuple[str, ...]:
         raise ValueError("math members require nonempty text")
     tokens = []
     for member in _split_members(text):
+        if re.fullmatch(
+            r"[+-]?(?:nan|inf|infinity|\\(?:mathrm|text|operatorname)\{(?:nan|inf|infinity)\})",
+            member,
+            flags=re.IGNORECASE,
+        ):
+            raise ValueError("math member must be finite")
         if re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?", member):
             value = Rational(member)
         else:
@@ -127,6 +142,12 @@ def canonical_math_members(text: str) -> tuple[str, ...]:
             if len(parsed) != 1:
                 raise ValueError("math member is missing or ambiguous")
             value = parsed[0]
+        canonical = simplify(value) if isinstance(value, Expr) else value
+        if isinstance(canonical, Expr) and canonical.has(nan, zoo, oo, -oo):
+            raise ValueError("math member must be finite")
+        if isinstance(value, Expr) and value.free_symbols and policy is MathMemberPolicy.LITERAL_SYMBOLIC:
+            tokens.append("literal:" + member.encode("utf-8").hex())
+            continue
         if (
             not isinstance(value, Expr)
             or value.free_symbols
@@ -134,7 +155,6 @@ def canonical_math_members(text: str) -> tuple[str, ...]:
             or value.has(Float)
         ):
             raise ValueError("math member must be a finite exact constant")
-        canonical = simplify(value)
         if canonical.free_symbols or getattr(canonical, "is_finite", None) is not True or canonical.has(Float):
             raise ValueError("math member cannot be normalized exactly")
         tokens.append(srepr(canonical).encode("utf-8").hex())

@@ -2,16 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 """Strict exact grading after trusted Hendrycks string normalization."""
 
-import hashlib
 import inspect
 import math
 from collections.abc import Callable
-from functools import lru_cache
 from importlib import import_module
 from pathlib import Path
-from types import CodeType
 
-from verifyit.adapters.harness_validation import validate_default_filter
+from verifyit.adapters import harness_validation as validation
 from verifyit.adapters.skyrl import grade_literal_candidate
 from verifyit.grade import InvalidTask, Reward, Status, invalid_task, scored
 
@@ -53,11 +50,6 @@ def grade_normalized_math(expected: object, candidate: object, normalize: Callab
     return grade_literal_candidate(reference, answer)
 
 
-@lru_cache(maxsize=4)
-def _source_codes(source: bytes, filename: str) -> tuple[CodeType, ...]:
-    return tuple(part for part in compile(source, filename, "exec").co_consts if isinstance(part, CodeType))
-
-
 def hendrycks_config_profile(config: dict) -> bool:
     """Recognize eight pinned pure-normalization/exact task configurations."""
     callback = config.get("process_results")
@@ -72,22 +64,14 @@ def hendrycks_config_profile(config: dict) -> bool:
         return False
     if not recognized or not str(path).endswith("/tasks/hendrycks_math/utils.py"):
         return False
-    if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != (
-        "8332e42f23c62043b23d74ee6d3934f997b209cd60a1ad45b7882d6b00929d5c"
-    ):
+    source = validation.pinned_source_bytes(path, {"8332e42f23c62043b23d74ee6d3934f997b209cd60a1ad45b7882d6b00929d5c"})
+    if source is None:
         return False
     if inspect.isfunction(callback):
-        for code in _source_codes(path.read_bytes(), str(path)):
-            function = callback.__globals__.get(code.co_name)
-            if (
-                not inspect.isfunction(function)
-                or function.__code__ != code
-                or function.__globals__ is not callback.__globals__
-                or function.__defaults__ != ((False,) if code.co_name == "is_equiv" else None)
-                or function.__kwdefaults__ is not None
-                or function.__closure__ is not None
-            ):
-                return False
+        if not validation.source_functions_match(
+            callback.__globals__, validation.compiled_source_functions(source, str(path)), {"is_equiv": (False,)}
+        ):
+            return False
         if callback.__globals__.get("process_results") is not callback:
             return False
     docs = config.get("process_docs")
@@ -134,7 +118,7 @@ def validate_hendrycks_task(task) -> bool:
         raise InvalidTask("Hendrycks exact requires the registered exact_match/mean contract")
     if task._metric_fn_kwargs.get("exact_match", {}):
         raise InvalidTask("Hendrycks exact does not accept additional metric options")
-    validate_default_filter(task, "Hendrycks exact")
+    validation.validate_default_filter(task, "Hendrycks exact")
     return True
 
 

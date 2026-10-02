@@ -2,14 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 """CrowS-Pairs preference and difference metrics, not universal correctness rewards."""
 
-import hashlib
 import inspect
 import math
 from importlib import import_module
 from pathlib import Path
-from types import CodeType
 
-from verifyit.adapters.harness_validation import log_likelihoods, validate_default_filter
+from verifyit.adapters import harness_validation as validation
 from verifyit.grade import InvalidTask
 
 _SUFFIX = "/tasks/crows_pairs/utils.py"
@@ -29,28 +27,17 @@ def _pinned_function(callback, name: str) -> bool:
         recognized = callback.__name__ == name
     else:
         return False
-    if not recognized or not str(path).endswith(_SUFFIX) or not path.is_file():
+    if not recognized or not str(path).endswith(_SUFFIX):
         return False
-    source = path.read_bytes()
-    if hashlib.sha256(source).hexdigest() != _HASH:
+    source = validation.pinned_source_bytes(path, {_HASH})
+    if source is None:
         return False
     if inspect.isfunction(callback):
         namespace = callback.__globals__
         if namespace.get(name) is not callback or namespace.get("datasets") is not import_module("datasets"):
             return False
-        for code in compile(source, str(path), "exec").co_consts:
-            if not isinstance(code, CodeType):
-                continue
-            function = namespace.get(code.co_name)
-            if (
-                not inspect.isfunction(function)
-                or function.__code__ != code
-                or function.__globals__ is not namespace
-                or function.__defaults__ is not None
-                or function.__kwdefaults__ is not None
-                or function.__closure__ is not None
-            ):
-                return False
+        if not validation.source_functions_match(namespace, validation.compiled_source_functions(source, str(path)), {}):
+            return False
     return True
 
 
@@ -97,7 +84,7 @@ def validate_crows_task(task) -> bool:
         or any(task._aggregation_list.get(metric) is not mean for metric in metrics)
     ):
         raise InvalidTask("CrowS-Pairs requires the original named mean metrics")
-    validate_default_filter(task, "CrowS-Pairs")
+    validation.validate_default_filter(task, "CrowS-Pairs")
     return True
 
 
@@ -112,7 +99,7 @@ def crows_metrics(choices, responses) -> dict[str, float]:
         raise InvalidTask("CrowS-Pairs requires two nonempty source sentence references")
     if not isinstance(responses, list) or len(responses) != 2:
         raise InvalidTask("CrowS-Pairs requires two likelihood responses")
-    likelihoods = log_likelihoods(responses, "CrowS-Pairs")
+    likelihoods = validation.log_likelihoods(responses, "CrowS-Pairs")
     difference = abs(likelihoods[0] - likelihoods[1])
     if not math.isfinite(difference):
         raise InvalidTask("CrowS-Pairs likelihood difference is nonfinite")
