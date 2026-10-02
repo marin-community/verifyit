@@ -12,6 +12,7 @@ from pathlib import Path
 from verifyit.adapters.skyrl import grade_literal_candidate
 from verifyit.artifact_files import read_regular_bytes
 from verifyit.grade import DEFAULT_LOGS_DIR, InvalidTask, Reward, infra_error, invalid_task, scored, write_reward
+from verifyit.json_objects import unique_object
 from verifyit.modes.grade_mcq import grade_mcq_candidate
 from verifyit.spec import McqSpec
 
@@ -59,9 +60,9 @@ def grade_files(mode: str, expected_path: Path, candidate_path: Path) -> Reward:
         return infra_error(f"cannot read expected answer: {error}")
     if mode == "satbench":
         try:
-            data = json.loads(expected)
+            data = json.loads(expected, object_pairs_hook=unique_object)
             label = data["expected_answer"]
-        except (json.JSONDecodeError, TypeError, KeyError) as error:
+        except (ValueError, TypeError, KeyError) as error:
             return invalid_task(f"invalid SATBench ground truth: {error}")
         if not isinstance(label, str):
             return invalid_task("SATBench expected answer must be a string")

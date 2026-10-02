@@ -90,6 +90,7 @@ def test_harbor_answer_cli_rejects_candidate_alias_to_protected_reference(tmp_pa
         ("gpqa-diamond", "E"),
         ("satbench", '{"expected_answer":"MAYBE"}'),
         ("satbench", "not JSON"),
+        ("satbench", '{"expected_answer":"UNSAT","expected_answer":"SAT"}'),
         ("unknown", "42"),
     ],
 )

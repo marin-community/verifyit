@@ -173,3 +173,27 @@ def test_missing_or_malformed_likelihood_cannot_award_correct_first_choice(likel
         grade_mcq.grade_mcq_likelihoods(
             likelihoods, [0], normalization_lengths=[1, 1], policy=grade_mcq.LikelihoodScoring.MOST_LIKELY
         )
+
+
+@pytest.mark.parametrize("expected", ["AB", ""])
+def test_partial_option_alphabet_cannot_be_a_reference(expected):
+    with pytest.raises(InvalidTask):
+        grade_mcq.grade_mcq_candidate(McqSpec(expected=expected, options=4), expected)
+
+
+@pytest.mark.parametrize("expected", ["AB", ""])
+def test_invalid_mcq_reference_removes_previous_cli_credit_before_reading_candidate(tmp_path, expected):
+    spec = tmp_path / "verifier.toml"
+    logs = tmp_path / "logs"
+    spec.write_text('mode = "mcq"\nexpected = "A"\noptions = 4\n')
+    _answer(tmp_path, "Answer: A")
+    args = [str(spec), "--logs-dir", str(logs), "--workspace", str(tmp_path)]
+    assert main(args) == 0
+    assert json.loads((logs / "reward.json").read_text()) == {"reward": 1.0}
+    spec.write_text(f'mode = "mcq"\nexpected = "{expected}"\noptions = 4\n')
+    (tmp_path / "answer.txt").unlink()
+    assert main(args) == 0
+    verdict = json.loads((logs / "verdict.json").read_text())
+    assert (verdict["status"], verdict["reward"]) == ("invalid_task", 0)
+    assert not (logs / "reward.json").exists()
+    assert not (logs / "reward.txt").exists()

@@ -101,7 +101,7 @@ def grade_mcq_candidate(spec: McqSpec, candidate: str) -> Reward:
     empty_output_policy(spec)
     if not 1 <= spec.options <= MAX_OPTIONS:
         raise InvalidTask(f"mcq options must be 1..{MAX_OPTIONS}, got {spec.options}")
-    letters = string.ascii_uppercase[: spec.options]
+    letters = tuple(string.ascii_uppercase[: spec.options])
     expected = spec.expected.strip().upper()
     if expected not in letters:
         raise InvalidTask(f"mcq expected {spec.expected!r} is not one of {letters!r}")
