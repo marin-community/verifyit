@@ -14,8 +14,10 @@ has the id ``FooSuite.AddsTwo``.
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+from verifyit.execution.command import run_command
+from verifyit.file_ops.restore import restore
 from verifyit.grade import InvalidTask, Reward, scored
-from verifyit.modes.run import STDERR_TAIL, check_ids, restore, run_command, run_setup, split_command, workdir
+from verifyit.modes.run import STDERR_TAIL, check_ids, run_setup, split_command, workdir
 from verifyit.spec import JunitSpec
 
 FAILURE_TAGS = ("failure", "error")

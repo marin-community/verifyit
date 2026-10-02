@@ -24,6 +24,14 @@ inputs. Capture full per-item results and aggregate metrics, including counts,
 status, metric direction, and relevant RNG or filter behavior. State narrowly
 which nondeterministic fields are excluded from comparison.
 
+## Test preparation and policy composition
+
+Unit-test audited safe conversions against their preservation contract. Exercise
+composed safe/unsafe stages through the actual client path, including named policy
+selection, source defaults, error propagation, and effective policy provenance.
+Obtain the per-function [clean-room audit](../audit-preparation/SKILL.md) before
+acceptance or publication; passing tests do not substitute for classification.
+
 ## Prove the path and installation
 
 Capture raw primitive inputs and verdicts, source callback observations where
@@ -48,7 +56,9 @@ and bulky evidence in the task's external artifact directory.
 
 ## Bound runs and investigate differences
 
-Coordinate the session's resource budget before launching work. Record owned
+Coordinate the session's shared resource budget before launching work. New global
+limits and cancellation mechanics require explicit pinned evidence and a reviewed
+policy; do not treat a prior run's local cap as a universal contract. Record owned
 process groups, container identities, deadlines, and output locations in the
 task's job record. A tool timeout or lost session handle does not mean the job
 stopped: inspect the original run before retrying. Reap owned processes and remove

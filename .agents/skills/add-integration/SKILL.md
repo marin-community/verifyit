@@ -47,6 +47,23 @@ including stale reward removal where files are used. Never drop failed component
 from a denominator. Treat malformed or unrepresentable diagnostic results as
 failures, not favorable values.
 
+## Prepare in two stages
+
+Use typed structural conversion followed by policy preparation. Structural
+conversion preserves the information needed by the declared grading contract;
+answer selection, coercion, truncation, reordering, or filtering may change grades
+and must not be assumed safe. Name grade-affecting policies, preserve source
+behavior by default, and record the effective policy and input provenance.
+Preparation errors stop grading and retain candidate/task/infrastructure identity.
+Import the released `harbor_config.errors.ErrorCategory` and `error_category`
+API directly, with a declared package version/dependency. The reviewed Evalchemy configuration release has no error
+taxonomy to import. Keep heavy framework runtimes excluded.
+
+For every added structural-conversion or policy-preparation function, obtain an
+independent clean-room [audit](../audit-preparation/SKILL.md) before acceptance or
+publication. Implement one representative path first, then migrate callers in
+reviewable stages. Defer a factory abstraction until a separate decision approves it.
+
 ## Wire and verify
 
 Preserve the disabled source path, including optional-dependency behavior. Install

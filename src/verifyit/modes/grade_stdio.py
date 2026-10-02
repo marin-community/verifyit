@@ -15,9 +15,11 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import NamedTuple
 
+from verifyit.execution.command import Completed, run_command
+from verifyit.file_ops.read import read_text
 from verifyit.grade import InvalidTask, Reward, scored
 from verifyit.modes.extract import last_line
-from verifyit.modes.run import STDERR_TAIL, Completed, run_command, split_command, workdir
+from verifyit.modes.run import STDERR_TAIL, split_command, workdir
 from verifyit.spec import Compare, StdioSpec
 
 INPUT_PATTERN = re.compile(r"^input_(.+)\.txt$")
@@ -31,7 +33,7 @@ def grade(spec: StdioSpec, tests_dir: Path, workspace: Path) -> Reward:
         raise InvalidTask(f"stdio needs at least {spec.min_cases} cases, found {len(cases)}")
     if spec.compare == Compare.DECIMAL_LINES:
         for case in cases:
-            _decimal_reference(case.expected.read_text(errors="replace"))
+            _decimal_reference(read_text(case.expected, errors="replace"))
     directory = workdir(spec, workspace)
     argv = split_command(spec.command)
     judge = tests_dir / spec.special_judge if spec.special_judge else None
@@ -46,7 +48,7 @@ def grade(spec: StdioSpec, tests_dir: Path, workspace: Path) -> Reward:
         got_path = Path(scratch) / "got.txt"
         for index, (number, input_path, expected_path) in enumerate(cases):
             try:
-                result = run_command(argv, directory, spec.per_case_timeout, input_path.read_text(errors="replace"))
+                result = run_command(argv, directory, spec.per_case_timeout, read_text(input_path, errors="replace"))
             except (FileNotFoundError, NotADirectoryError, PermissionError) as error:
                 return scored(0.0, reason="command_failed", error=str(error), passed=0, total=len(cases))
             if result.timed_out:
@@ -61,7 +63,7 @@ def grade(spec: StdioSpec, tests_dir: Path, workspace: Path) -> Reward:
                     total=len(cases),
                     first_failure=number,
                 )
-            expected = expected_path.read_text(errors="replace")
+            expected = read_text(expected_path, errors="replace")
             if judge is None:
                 accepted = grade_stdio_candidate(spec, result.stdout, expected).reward == 1.0
             else:

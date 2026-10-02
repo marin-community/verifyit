@@ -231,11 +231,13 @@ def test_checklist_scores_the_fraction_of_criteria_the_judge_passes(tmp_path, fa
 
 
 def test_checklist_shows_the_context_file_to_the_judge(tmp_path, fake_judge):
-    (tmp_path / "conversation.txt").write_text("[USER]: plan my week\n[ASSISTANT]: sure")
+    context = "é" * (grade_judge.CONTEXT_LIMIT - 4) + "TAIL" + "excluded"
+    (tmp_path / "conversation.txt").write_text(context)
     fake_judge.replies = ["SCORE: 1"]
     spec = JudgeSpec(rubric="checklist", criteria=(CRITERIA[0],), context="conversation.txt")
     grade_judge.grade(spec, tmp_path, _workspace(tmp_path, "1. 2. 3."))
-    assert "plan my week" in fake_judge.prompts[0]
+    assert context[: grade_judge.CONTEXT_LIMIT] in fake_judge.prompts[0]
+    assert "excluded" not in fake_judge.prompts[0]
 
 
 def test_missing_context_file_is_an_invalid_task(tmp_path, fake_judge):

@@ -12,8 +12,10 @@ cannot produce positive credit. A build failure with no test outcomes scores zer
 import json
 from pathlib import Path
 
+from verifyit.execution.command import run_command
+from verifyit.file_ops.restore import restore
 from verifyit.grade import Reward, scored
-from verifyit.modes.run import STDERR_TAIL, check_ids, restore, run_command, run_setup, workdir
+from verifyit.modes.run import STDERR_TAIL, check_ids, run_setup, workdir
 from verifyit.spec import GotestSpec
 
 GO = "go"

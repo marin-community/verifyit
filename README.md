@@ -24,6 +24,11 @@ Rewards must be finite numbers in `[0, 1]`; malformed grader rewards or statuses
 verdict with this failure and removes stale reward files. Source metrics and training reward
 shaping belong in the client rather than this bounded correctness scalar.
 
+The base installation includes `tomlkit` and the config-only `harbor-config`
+revision pinned in [pyproject.toml](pyproject.toml). Shared failure metadata imports
+Harbor’s error categories without installing its task runtime. Grading libraries
+remain in mode extras.
+
 ## Framework integration
 
 Framework repositories own dispatch, task generation, execution transport, and
@@ -36,6 +41,39 @@ A bridge that invokes a retained native evaluator still depends on that evaluato
 Source inventories, coverage reports, exported patches, and replay receipts are
 campaign artifacts maintained outside this repository. Historical replay counts
 do not establish coverage of later framework revisions.
+
+### Text preparation
+
+`verifyit.preparation.text.structure_text` snapshots the candidate and ordered
+reference strings without normalization. `normalize_text` applies a named policy
+and returns `PreparedText`, retaining the raw snapshot and effective options.
+Neither stage grades. The harness exact adapter composes them with Exact and MAX.
+Its default `harness_exact_v1` policy preserves source regex removal, NumPy
+fixed-width Unicode lowering, and punctuation/digit removal. NumPy is imported
+only for this policy; the structural types and `identity` policy do not need it.
+
+Clients can explicitly select literal comparison through the existing adapter API:
+
+```python
+from verifyit.adapters.harness_native import exact_match
+from verifyit.preparation.text import TextPolicy
+
+literal = exact_match("İ", ["i"], normalization_policy=TextPolicy.IDENTITY)
+assert literal.reward == 0
+```
+
+Identity rejects normalization options instead of silently ignoring them. The
+returned verdict's `detail["preparation"]` records the selected policy, its
+options, and `empty_output`. Scalar framework metrics do not carry this detail;
+capture the underlying verdict when policy provenance is needed.
+
+Failed preparation returns a `PreparationFailure` without a partial value.
+`normalize_text` preserves an incoming failure. The core finalizer assigns minimum
+reward and retains the original status, Harbor category, and finalization policy.
+Unknown or passthrough failures have no completed grade to preserve and become
+infrastructure errors. The exact adapter raises `PreparationError`, carrying
+`.failure` and `.verdict`, so scalar metric callers cannot erase the failure.
+Invalid trusted preparation remains catchable as `InvalidTask`.
 
 ## Modes
 

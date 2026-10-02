@@ -20,6 +20,7 @@ import yaml
 from jsonschema.exceptions import SchemaError
 from jsonschema.validators import validator_for
 
+from verifyit.file_ops.read import read_text
 from verifyit.grade import InvalidTask, Reward, read_output, scored
 from verifyit.modes.extract import unwrap_fence
 from verifyit.spec import JsonSchemaSpec, SchemaFormat
@@ -52,7 +53,7 @@ def load_schema(path: Path) -> dict:
     if not path.is_file():
         raise InvalidTask(f"schema file not found: {path}")
     try:
-        schema = json.loads(path.read_text())
+        schema = json.loads(read_text(path))
     except (ValueError, RecursionError) as error:
         raise InvalidTask(f"schema file {path} is not JSON: {error}") from error
     if not isinstance(schema, dict):

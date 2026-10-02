@@ -16,6 +16,9 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+from harbor_config.errors import ErrorCategory
+
+from verifyit.file_ops.read import read_text
 from verifyit.spec import (
     DEFAULT_WORKSPACE,
     RUBRIC_REFERENCE,
@@ -145,6 +148,33 @@ def invalid_task(message: str) -> Reward:
     return Reward(0.0, Status.INVALID_TASK, {"error": message})
 
 
+def finalize_preparation_failure(
+    *, status: Status, category: ErrorCategory, error_type: str, message: str, stage: str
+) -> Reward:
+    """Terminate failed preparation at minimum reward without grading partial data.
+
+    Task validity is separate from the imported framework error category.
+    PASSTHROUGH requires a completed grade; preparation has none to preserve.
+    """
+    source_status = status
+    if status != Status.INVALID_TASK and (status != Status.SCORED or category != ErrorCategory.AGENT):
+        status = Status.INFRA_ERROR
+    return _validated_reward(
+        Reward(
+            0.0,
+            status,
+            {
+                "error": message,
+                "error_type": error_type,
+                "category": category,
+                "stage": stage,
+                "source_status": source_status,
+                "finalization_policy": "failed_preparation_v1",
+            },
+        )
+    )
+
+
 def numeric_tolerance(spec: NumericSpec) -> float:
     """Return the finite effective tolerance for a valid numeric grading spec."""
     if not math.isfinite(spec.expected):
@@ -204,7 +234,7 @@ def read_output(spec: Spec, workspace: Path) -> str | None:
     output = local_output_path(spec.output, workspace)  # type: ignore[union-attr]
     if not output.is_file():
         return None
-    text = output.read_text(errors="replace")
+    text = read_text(output, errors="replace")
     return text if text.strip() or policy is EmptyOutputPolicy.GRADE else None
 
 
@@ -289,7 +319,7 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
 
 def run(spec_path: Path, workspace: Path) -> Reward:
     try:
-        spec = parse_spec(spec_path.read_text())
+        spec = parse_spec(read_text(spec_path))
     except (OSError, ValueError, KeyError) as error:
         return invalid_task(f"cannot read verifier spec {spec_path}: {error}")
     try:

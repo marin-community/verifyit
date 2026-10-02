@@ -9,7 +9,7 @@ import string
 from decimal import Decimal, InvalidOperation
 from fractions import Fraction
 
-from verifyit.bounded import call_bounded
+from verifyit.execution.worker import call_bounded
 from verifyit.grade import Aggregation, InvalidTask, Reward, aggregate_rewards, scored
 from verifyit.modes.grade_exact import grade_exact_candidate
 from verifyit.modes.grade_json_schema import grade_json_schema_candidate

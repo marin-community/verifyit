@@ -31,6 +31,7 @@ from typing import Any, cast
 import openai
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 
+from verifyit.file_ops.read import read_text
 from verifyit.grade import Aggregation, InvalidTask, Reward, aggregate_rewards, empty_output_policy, read_output, scored
 from verifyit.json_objects import unique_object
 from verifyit.modes.extract import extract_boxed
@@ -332,7 +333,7 @@ def _context(spec: JudgeSpec, tests_dir: Path) -> str:
     path = tests_dir / spec.context
     if not path.is_file():
         raise InvalidTask(f"judge context {spec.context!r} is not in the tests directory")
-    return path.read_text(errors="replace")[:CONTEXT_LIMIT]
+    return read_text(path, characters=CONTEXT_LIMIT, errors="replace")
 
 
 def _passes(check: Check, candidate: str, params: dict) -> bool:

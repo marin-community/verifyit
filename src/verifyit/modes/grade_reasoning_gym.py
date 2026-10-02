@@ -15,6 +15,7 @@ from pathlib import Path
 import reasoning_gym
 from reasoning_gym.factory import DATASETS
 
+from verifyit.file_ops.read import read_text
 from verifyit.grade import InvalidTask, Reward, read_output, scored
 from verifyit.json_objects import unique_object
 from verifyit.spec import ReasoningGymSpec
@@ -27,7 +28,7 @@ def load_entry(path: Path) -> dict:
     if not path.is_file():
         raise InvalidTask(f"reasoning-gym entry not found: {path}")
     try:
-        entry = json.loads(path.read_text(), object_pairs_hook=unique_object)
+        entry = json.loads(read_text(path), object_pairs_hook=unique_object)
         json.dumps(entry, allow_nan=False)
     except ValueError as error:
         raise InvalidTask(f"reasoning-gym entry {path} is not JSON: {error}") from error
@@ -50,7 +51,7 @@ def grade(spec: ReasoningGymSpec, tests_dir: Path, workspace: Path) -> Reward:
         if not params_path.is_file():
             raise InvalidTask(f"reasoning-gym params not found: {params_path}")
         try:
-            params = json.loads(params_path.read_text(), object_pairs_hook=unique_object)
+            params = json.loads(read_text(params_path), object_pairs_hook=unique_object)
             if not isinstance(params, dict):
                 raise ValueError("params must be an object")
             json.dumps(params, allow_nan=False)

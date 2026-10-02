@@ -25,8 +25,9 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from verifyit.artifact_files import read_regular_bytes
-from verifyit.bounded import call_bounded
+from verifyit.execution.command import run_command
+from verifyit.execution.worker import call_bounded
+from verifyit.file_ops.read import read_regular_bytes
 from verifyit.grade import (
     REWARD_JSON,
     REWARD_TXT,
@@ -40,7 +41,7 @@ from verifyit.grade import (
 )
 from verifyit.json_objects import unique_object
 from verifyit.modes.extract import last_line
-from verifyit.modes.run import STDERR_TAIL, run_command
+from verifyit.modes.run import STDERR_TAIL
 from verifyit.spec import DEFAULT_REWARD_KEY, DEFAULT_WORKSPACE, ScriptSpec, Spec
 
 SHELL = "bash"

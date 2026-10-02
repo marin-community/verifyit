@@ -11,8 +11,10 @@ below supplement the shared core and take precedence where they differ.
 ## Package and grading contracts
 
 - Support Python >=3.11. The shared style tooling runs separately on Python >=3.12.
-- Keep the core dependency limited to `tomlkit`; isolate optional dependencies
-  in mode extras. Do not add a dependency on Marin or its services to verifyit.
+- Keep dependencies light; isolate mode-specific dependencies in extras. Approved
+  lightweight configuration error packages may be imported with declared
+  dependencies. The released `harbor-config` error API is approved, including a
+  base dependency when shared preparation uses it. Do not import heavy runtimes.
 - Preserve spec parsing/rendering, public imports, CLI behavior, verdict statuses,
   and reward files described in README.md. Distinguish a candidate scoring zero
   from an invalid task or infrastructure error.
@@ -35,6 +37,21 @@ below supplement the shared core and take precedence where they differ.
   images, and deployment assets. Shared preparation belongs in verifyit only
   when it has actual reuse and leaves grading in the primitives. Existing
   source-specific modules are not a precedent for copying another grader here.
+- Separate preparation into typed structural conversion and named policy
+  preparation. Preserve source defaults and effective policy provenance. A factory
+  abstraction is deferred; implement one representative path before staged migration.
+- Every added structural-conversion or policy-preparation function requires an
+  independent clean-room [preparation audit](.agents/skills/audit-preparation/SKILL.md)
+  before acceptance or publication. The auditor reads actual code and existing
+  primitives, classifies safe/unsafe, checks duplication, and explains
+  whether an unsafe transformation can be made safe. Static checks supplement
+  this review; an author or agent with implementation context is not the auditor.
+- Safe preparation needs unit tests; composed safe/unsafe stages need actual
+  end-to-end path evidence. Safety describes grading semantics, not sandbox security.
+- Import `harbor_config.errors.ErrorCategory` and `error_category` directly
+  rather than duplicating the approved released taxonomy. The reviewed Evalchemy configuration release has
+  no error taxonomy; do not invent such imports. Preserve core statuses and source
+  error provenance; declare the chosen package version and dependencies.
 - Minimize maintained production code across both repositories. Measure the
   implementations removed as well as those added; an unchanged mode count alone
   does not demonstrate consolidation.

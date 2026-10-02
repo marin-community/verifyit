@@ -4,10 +4,9 @@ These functions do not invoke source scorers. Unknown metric options fail closed
 Task loading, extraction filters and corpus aggregations remain caller-owned.
 """
 
-import re
-import string
 from collections.abc import Sequence
-from typing import Any, cast
+from dataclasses import asdict, replace
+from typing import Any
 
 from verifyit.adapters.harness_agieval import agieval_config_profile, agieval_task_metrics
 from verifyit.adapters.harness_babilong import babilong_config_profile, babilong_task_metrics
@@ -18,14 +17,21 @@ from verifyit.adapters.harness_mmmu import mmmu_config_profile, mmmu_task_metric
 from verifyit.adapters.harness_probability import truthfulqa_mc2_profile, truthfulqa_task_metrics
 from verifyit.adapters.harness_profiles import generation_profile, profile_task_metrics
 from verifyit.adapters.harness_rolling import rolling_config_profile, rolling_task_metrics
-from verifyit.grade import Aggregation, InvalidTask, Reward, aggregate_rewards
+from verifyit.grade import Aggregation, InvalidTask, Reward, Status, aggregate_rewards, finalize_preparation_failure
 from verifyit.modes.grade_exact import grade_exact_candidate
 from verifyit.modes.grade_mcq import LikelihoodScoring, grade_mcq_likelihoods
+from verifyit.preparation.errors import InvalidPreparation, PreparationError, PreparationFailure
+from verifyit.preparation.text import TextNormalization, TextPolicy, normalize_text, structure_text
 from verifyit.spec import EmptyOutputPolicy, ExactSpec
 
 
 def exact_match(
-    candidate: str, references: Sequence[str], *, empty_output: EmptyOutputPolicy = EmptyOutputPolicy.GRADE, **options
+    candidate: str,
+    references: Sequence[str],
+    *,
+    empty_output: EmptyOutputPolicy = EmptyOutputPolicy.GRADE,
+    normalization_policy: TextPolicy = TextPolicy.HARNESS_EXACT,
+    **options,
 ) -> Reward:
     """Normalize source text and compare aliases under an explicit empty-output policy.
 
@@ -37,33 +43,25 @@ def exact_match(
     allowed = {"regexes_to_ignore", "ignore_case", "ignore_punctuation", "ignore_numbers"}
     if unknown := options.keys() - allowed:
         raise InvalidTask(f"unsupported exact_match options: {sorted(unknown)}")
-    if not references:
-        raise InvalidTask("exact_match requires at least one reference")
-
-    if any(not isinstance(reference, str) for reference in references):
-        raise InvalidTask("exact_match references must be strings")
-    if not isinstance(candidate, str):
-        raise InvalidTask("exact_match candidate must be a string")
-    if any(not isinstance(options.get(flag, False), bool) for flag in allowed - {"regexes_to_ignore"}):
-        raise InvalidTask("exact_match normalization flags must be booleans")
-
-    def normalize(values: Sequence[str]) -> list[str]:
-        # NumPy's fixed-width Unicode lowering can truncate expanding characters.
-        # Python str.lower is NOT equivalent for e.g. U+0130; use the source API.
-        import numpy as np  # noqa: PLC0415
-
-        for pattern in options.get("regexes_to_ignore") or ():
-            values = [re.sub(pattern, "", value) for value in values]
-        array = np.asarray(values)
-        if options.get("ignore_case", False):
-            array = np.char.lower(array)
-        for flag, characters in (("ignore_punctuation", string.punctuation), ("ignore_numbers", string.digits)):
-            if options.get(flag, False):
-                array = np.char.translate(array, table=cast(Any, str.maketrans("", "", characters)))
-        return array.tolist()
-
-    value = normalize([candidate])[0]
-    normalized_references = normalize(references)
+    prepared = structure_text(candidate, references)
+    if not isinstance(prepared, PreparationFailure):
+        prepared = normalize_text(
+            prepared,
+            TextNormalization(
+                policy=normalization_policy,
+                regexes_to_ignore=tuple(options.get("regexes_to_ignore") or ()),
+                ignore_case=options.get("ignore_case", False),
+                ignore_punctuation=options.get("ignore_punctuation", False),
+                ignore_numbers=options.get("ignore_numbers", False),
+            ),
+        )
+    if isinstance(prepared, PreparationFailure):
+        failure = finalize_preparation_failure(**asdict(prepared))
+        if failure.status == Status.INVALID_TASK:
+            raise InvalidPreparation(prepared, failure)
+        raise PreparationError(prepared, failure)
+    value = prepared.candidate
+    normalized_references = prepared.references
     results = [
         grade_exact_candidate(
             ExactSpec(
@@ -77,7 +75,11 @@ def exact_match(
         )
         for reference in normalized_references
     ]
-    return aggregate_rewards(results, expected_total=len(normalized_references), policy=Aggregation.MAX)
+    verdict = aggregate_rewards(results, expected_total=len(normalized_references), policy=Aggregation.MAX)
+    return replace(
+        verdict,
+        detail={**verdict.detail, "preparation": {**asdict(prepared.normalization), "empty_output": empty_output}},
+    )
 
 
 def likelihood_choice(

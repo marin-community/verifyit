@@ -10,7 +10,7 @@ import subprocess
 from dataclasses import asdict
 from pathlib import Path
 
-from verifyit.artifact_files import read_regular_bytes
+from verifyit.file_ops.read import read_regular_bytes
 from verifyit.grade import scored
 from verifyit.modes.grade_script import parse_json_reward, parse_reward_number
 

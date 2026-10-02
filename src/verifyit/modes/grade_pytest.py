@@ -18,8 +18,11 @@ from collections import Counter
 from dataclasses import replace
 from pathlib import Path
 
+from verifyit.execution.command import run_command
+from verifyit.file_ops.read import read_text
+from verifyit.file_ops.restore import restore
 from verifyit.grade import InvalidTask, Reward, scored
-from verifyit.modes.run import STDERR_TAIL, check_ids, restore, run_command, run_setup, workdir
+from verifyit.modes.run import STDERR_TAIL, check_ids, run_setup, workdir
 from verifyit.spec import PytestSpec, TestIdMatching
 
 REPORT_NAME = "report.json"
@@ -94,7 +97,7 @@ def grade(spec: PytestSpec, tests_dir: Path, workspace: Path) -> Reward:
                     f"pytest wrote no json report (exit {result.returncode}): "
                     f"{_tail(result.stderr or result.stdout)}"
                 )
-            report = json.loads(report_path.read_text())
+            report = json.loads(read_text(report_path))
             if result.returncode == 5:
                 return scored(0.0, reason="no_tests", passed=0, total=0, exit_code=5)
             if any(collector.get("outcome") == "failed" for collector in report.get("collectors", [])):
