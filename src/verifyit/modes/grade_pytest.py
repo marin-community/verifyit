@@ -10,6 +10,7 @@ not a failed attempt, so it raises instead of scoring zero.
 """
 
 import json
+import math
 import os
 import tempfile
 import time
@@ -27,6 +28,17 @@ FAIL_OUTCOMES = frozenset({"failed", "error"})
 
 
 def grade(spec: PytestSpec, tests_dir: Path, workspace: Path) -> Reward:
+    try:
+        valid_timeout = (
+            not isinstance(spec.timeout, bool)
+            and isinstance(spec.timeout, (int, float))
+            and math.isfinite(spec.timeout)
+            and spec.timeout > 0
+        )
+    except OverflowError:
+        valid_timeout = False
+    if not valid_timeout:
+        raise InvalidTask("pytest timeout must be finite and positive")
     if type(spec.batch_size) is not int or spec.batch_size < 0:
         raise InvalidTask("pytest batch_size must be a nonnegative integer")
     try:

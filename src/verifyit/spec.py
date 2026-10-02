@@ -333,8 +333,11 @@ def _coerce(name: str, annotation: Any, value: Any) -> Any:
         return tuple(Constraint(name=c["name"], params=dict(c.get("params", {}))) for c in value)
     if isinstance(annotation, type) and issubclass(annotation, StrEnum):
         return annotation(value)
-    if annotation is float and isinstance(value, int):
-        return float(value)
+    if annotation is float and type(value) is int:
+        try:
+            return float(value)
+        except OverflowError as error:
+            raise ValueError(f"field {name!r} is outside the float range") from error
     if annotation == (str | None):
         return value
     if isinstance(annotation, type) and not isinstance(value, annotation):

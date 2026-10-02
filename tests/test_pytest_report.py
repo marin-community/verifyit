@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from verifyit.grade import Status, run
+from verifyit.grade import InvalidTask, Status, run
 from verifyit.modes import grade_pytest
-from verifyit.spec import PytestSpec
+from verifyit.spec import PytestSpec, render_spec
 from verifyit.spec import TestIdMatching as IdMatching
 
 REAL_TESTS = """
@@ -348,3 +348,23 @@ def test_distinct_required_ids_cannot_share_one_reported_case(tmp_path, required
         id_matching=IdMatching.UNIQUE_PREFIX,
     )
     assert grade_pytest.grade(spec, tmp_path, workspace).reward == 0.0
+
+
+@pytest.mark.parametrize("timeout", [float("nan"), float("inf"), -1.0, 0.0, True, 10**400])
+def test_invalid_timeout_rejects_before_restore_or_setup(tmp_path, timeout):
+    workspace = _project(tmp_path, FIXED)
+    trusted = tmp_path / "trusted"
+    (trusted / "tests").mkdir(parents=True)
+    (trusted / "tests/test_calc.py").write_text(TAMPERED_TESTS)
+    spec = _spec(timeout=timeout, restore=("tests/test_calc.py",), setup="touch setup-ran")
+    with pytest.raises(InvalidTask):
+        grade_pytest.grade(spec, trusted, workspace)
+    assert (workspace / "tests/test_calc.py").read_text() == REAL_TESTS
+    assert not (workspace / "setup-ran").exists()
+    config = trusted / "verifier.toml"
+    config.write_text(render_spec(spec))
+    result = run(config, workspace)
+    assert result.status is Status.INVALID_TASK
+    assert result.reward == 0.0
+    assert (workspace / "tests/test_calc.py").read_text() == REAL_TESTS
+    assert not (workspace / "setup-ran").exists()
