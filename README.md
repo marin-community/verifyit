@@ -217,6 +217,17 @@ ties-to-even decimal rounding. The unrounded calculation uses
 roundoff from an equivalent precision/recall calculation. This direct API leaves
 Exact specs' equality behavior unchanged.
 
+`grade_collection_precision_interval(reference, candidate, minimum_percent=...,
+maximum_percent=..., multiplicity=..., empty_reference=...)` uses the same prepared
+collections, multiplicity policies and limits. It scores one when
+`overlap / candidate_count * 100` lies within the inclusive finite, ordered bounds.
+Bounds accept finite Python integers or floats and may extend outside 0–100 to
+express a tolerance around an endpoint; integers are compared without a float cast.
+`empty_reference="zero"` gives a valid nonempty candidate zero precision;
+`"invalid"` rejects an empty reference. Malformed or empty candidates always score
+zero, even when the interval includes zero. A valid disjoint candidate can pass
+that interval. Tokenization remains the caller's responsibility.
+
 For development, see [CONTRIBUTING.md](CONTRIBUTING.md),
 [AGENTS.md](AGENTS.md), and the [repository skills](.agents/skills).
 Run the package checks from the repository root:

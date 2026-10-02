@@ -18,11 +18,12 @@ with ``ignore_whitespace=False`` for literal boundary comparison.
 It is an explicit benchmark contract; equality remains the default.
 """
 
+import math
 import re
 from collections import Counter
 from collections.abc import Sequence, Set
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from verifyit.grade import InvalidTask, Reward, empty_output_policy, read_output, scored
 from verifyit.modes.extract import extract_boxed
@@ -114,6 +115,35 @@ def _collection_counts(items: object) -> Counter[str]:
     return counts
 
 
+class _CollectionOverlap(NamedTuple):
+    overlap: int
+    reference_count: int
+    candidate_count: int
+
+
+def _collection_overlap(
+    reference: Sequence[str] | Set[str],
+    candidate: Sequence[str] | Set[str],
+    multiplicity: Literal["set", "multiset"],
+    empty_reference: Literal["zero", "invalid"],
+) -> _CollectionOverlap | Reward:
+    if multiplicity not in ("set", "multiset") or empty_reference not in ("zero", "invalid"):
+        raise InvalidTask("invalid collection policy")
+    try:
+        references = _collection_counts(reference)
+    except ValueError as error:
+        raise InvalidTask(f"invalid collection reference: {error}") from error
+    if not references and empty_reference == "invalid":
+        raise InvalidTask("collection reference must not be empty")
+    try:
+        candidates = _collection_counts(candidate)
+    except ValueError as error:
+        return scored(0.0, reason="invalid_candidate", error=str(error))
+    if multiplicity == "set":
+        references, candidates = Counter(references.keys()), Counter(candidates.keys())
+    return _CollectionOverlap(sum((references & candidates).values()), references.total(), candidates.total())
+
+
 def grade_collection_f1(
     reference: Sequence[str] | Set[str],
     candidate: Sequence[str] | Set[str],
@@ -128,29 +158,52 @@ def grade_collection_f1(
     Empty candidate collections score zero. Rounding uses binary64 scaling and
     ties-to-even, as in fixed-decimal array scoring, without an optional dependency.
     """
-    if multiplicity not in ("set", "multiset") or empty_reference not in ("zero", "invalid"):
-        raise InvalidTask("invalid collection F1 policy")
     if round_digits is not None and (type(round_digits) is not int or not 0 <= round_digits <= 6):
         raise InvalidTask("collection F1 rounding must be an integer from zero to six or None")
-    try:
-        references = _collection_counts(reference)
-    except ValueError as error:
-        raise InvalidTask(f"invalid F1 reference: {error}") from error
-    if not references and empty_reference == "invalid":
-        raise InvalidTask("collection F1 reference must not be empty")
-    try:
-        candidates = _collection_counts(candidate)
-    except ValueError as error:
-        return scored(0.0, reason="invalid_candidate", error=str(error))
-    if multiplicity == "set":
-        references, candidates = Counter(references.keys()), Counter(candidates.keys())
-    overlap = sum((references & candidates).values())
-    reference_count, candidate_count = references.total(), candidates.total()
+    counts = _collection_overlap(reference, candidate, multiplicity, empty_reference)
+    if isinstance(counts, Reward):
+        return counts
+    overlap, reference_count, candidate_count = counts
     reward = 2 * overlap / (reference_count + candidate_count) if reference_count and candidate_count else 0.0
     if round_digits is not None:
         scale = 10**round_digits
         reward = round(reward * scale) / scale
     return scored(reward, overlap=overlap, reference_count=reference_count, candidate_count=candidate_count)
+
+
+def grade_collection_precision_interval(
+    reference: Sequence[str] | Set[str],
+    candidate: Sequence[str] | Set[str],
+    *,
+    minimum_percent: float,
+    maximum_percent: float,
+    multiplicity: Literal["set", "multiset"],
+    empty_reference: Literal["zero", "invalid"],
+) -> Reward:
+    """Accept prepared-item precision within inclusive percentage bounds.
+
+    Empty or malformed candidates always score zero, including intervals containing
+    zero. A valid nonempty disjoint candidate has zero precision and can be accepted.
+    """
+    bounds = (minimum_percent, maximum_percent)
+    if (
+        any(type(bound) not in (int, float) or not -math.inf < bound < math.inf for bound in bounds)
+        or minimum_percent > maximum_percent
+    ):
+        raise InvalidTask("precision interval requires finite ordered bounds")
+    counts = _collection_overlap(reference, candidate, multiplicity, empty_reference)
+    if isinstance(counts, Reward):
+        return counts
+    if not counts.candidate_count:
+        return scored(0.0, reason="empty_output")
+    precision_percent = counts.overlap / counts.candidate_count * 100
+    return scored(
+        float(minimum_percent <= precision_percent <= maximum_percent),
+        precision_percent=precision_percent,
+        overlap=counts.overlap,
+        reference_count=counts.reference_count,
+        candidate_count=counts.candidate_count,
+    )
 
 
 def grade(spec: ExactSpec, tests_dir: Path, workspace: Path) -> Reward:

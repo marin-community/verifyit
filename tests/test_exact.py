@@ -173,7 +173,7 @@ def test_collection_reference_policy_is_validated_before_empty_candidate():
     assert grade_exact.grade_collection_f1([], [], empty_reference="zero", **options).reward == 0
     with pytest.raises(InvalidTask, match="reference must not be empty"):
         grade_exact.grade_collection_f1([], [], empty_reference="invalid", **options)
-    with pytest.raises(InvalidTask, match="invalid F1 reference"):
+    with pytest.raises(InvalidTask):
         grade_exact.grade_collection_f1([float("nan")], [], empty_reference="zero", **options)
     assert grade_exact.grade_collection_f1(["one"], [float("nan")], empty_reference="invalid", **options).reward == 0
 
@@ -187,3 +187,59 @@ def test_collection_limits_cannot_award_identical_oversized_inputs():
         grade_exact.grade_collection_f1(candidate, candidate, **options)
     with pytest.raises(InvalidTask, match="rounding"):
         grade_exact.grade_collection_f1(reference, reference, **{**options, "round_digits": float("inf")})
+
+
+def test_precision_zero_interval_distinguishes_disjoint_from_invalid_candidates():
+    options = {"multiplicity": "set", "empty_reference": "zero", "minimum_percent": -2, "maximum_percent": 2}
+    for reference in (["abc"], []):
+        assert grade_exact.grade_collection_precision_interval(reference, ["xyz"], **options).reward == 1
+        for candidate in ([], [float("nan")], ["xyz"] * (grade_exact.MAX_COLLECTION_ITEMS + 1)):
+            result = grade_exact.grade_collection_precision_interval(reference, candidate, **options)
+            assert result.status is Status.SCORED
+            assert result.reward == 0
+    with pytest.raises(InvalidTask):
+        grade_exact.grade_collection_precision_interval([None], [], **options)
+    with pytest.raises(InvalidTask):
+        grade_exact.grade_collection_precision_interval([], [], **{**options, "empty_reference": "invalid"})
+    with pytest.raises(InvalidTask):
+        grade_exact.grade_collection_precision_interval(["abc"], ["xyz"], **{**options, "maximum_percent": float("nan")})
+
+
+@pytest.mark.parametrize(
+    "multiplicity, minimum, maximum, expected", [("set", 49, 51, 1), ("multiset", 49, 51, 0), ("multiset", 32, 34, 1)]
+)
+def test_precision_interval_counts_candidate_occurrences(multiplicity, minimum, maximum, expected):
+    result = grade_exact.grade_collection_precision_interval(
+        ["abc"],
+        ["abc", "abc", "xyz"],
+        multiplicity=multiplicity,
+        empty_reference="invalid",
+        minimum_percent=minimum,
+        maximum_percent=maximum,
+    )
+    assert result.reward == expected
+
+
+def test_precision_interval_preserves_percent_scaling_boundary():
+    reference = [str(i) for i in range(29)]
+    candidate = [str(i) for i in range(50)]
+    options = {"multiplicity": "set", "empty_reference": "invalid"}
+    # The source contract scales the quotient: 29 / 50 * 100 is just below 58.
+    assert (
+        grade_exact.grade_collection_precision_interval(
+            reference, candidate, minimum_percent=58, maximum_percent=62, **options
+        ).reward
+        == 0
+    )
+    assert (
+        grade_exact.grade_collection_precision_interval(
+            reference, candidate, minimum_percent=56, maximum_percent=60, **options
+        ).reward
+        == 1
+    )
+
+
+def test_precision_finite_integer_bound_does_not_overflow_float_conversion():
+    options = {"minimum_percent": 0, "maximum_percent": 10**400, "multiplicity": "set", "empty_reference": "invalid"}
+    assert grade_exact.grade_collection_precision_interval(["a"], ["a"], **options).reward == 1
+    assert grade_exact.grade_collection_precision_interval(["a"], [], **options).reward == 0
