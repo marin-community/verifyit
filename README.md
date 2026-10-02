@@ -73,7 +73,13 @@ strings using only `{question}`, `{reference}` and `{candidate}`, and a nonempty
 configured label; contradictory labels in the answer invalidate the result.
 `label_scan = "lines"` recognizes only completed label lines for bare labels such as
 `A`/`B`/`C`, leaving letters inside explanatory prose alone; the default `literal`
-scan remains unchanged. Optional
+scan remains unchanged. `label_scan = "whole"` requires the entire answer to be one label;
+`label_case = "upper"` uppercases both labels and replies, rejecting colliding configured labels.
+The default case policy is `sensitive`. For the labels rubric, `api = "responses"` selects
+Responses instead of the default `chat_completions`: `max_completion_tokens` becomes
+`max_output_tokens`, `reasoning_effort` becomes `reasoning.effort`, and temperature is omitted.
+Only a completed response containing one completed assistant text message is accepted;
+reasoning metadata is never graded, and refusals, tool output and ambiguous JSON fail closed. Optional
 `strip_reasoning_blocks` removes completed think/thinking blocks before label parsing.
 Unfinished reasoning, malformed labels, HTTP errors and non-completed responses are
 infrastructure failures with zero reward; label judging does not retry HTTP failures.

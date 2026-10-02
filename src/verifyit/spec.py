@@ -268,6 +268,8 @@ class JudgeSpec:
     incomplete_retry_tokens: int = 0
     reasoning_effort: str = ""
     label_scan: str = "literal"
+    label_case: str = "sensitive"
+    api: str = "chat_completions"
 
 
 @dataclass(frozen=True)

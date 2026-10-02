@@ -113,6 +113,12 @@ def grade(spec: Spec, tests_dir: Path, workspace: Path) -> Reward:
 
 
 def _validate_spec(spec: JudgeSpec) -> tuple[tuple[str, ...], tuple[str, ...], list[tuple[Constraint, Check]]]:
+    if not isinstance(spec.api, str) or spec.api not in {"chat_completions", "responses"}:
+        raise InvalidTask("judge api must be chat_completions or responses")
+    if spec.api == "responses" and spec.rubric != RUBRIC_LABELS:
+        raise InvalidTask("Responses transport requires the labels rubric")
+    if not isinstance(spec.label_case, str) or spec.label_case not in {"sensitive", "upper"}:
+        raise InvalidTask("label_case must be sensitive or upper")
     if spec.rubric not in RUBRICS:
         raise InvalidTask(f"unknown judge rubric {spec.rubric!r}; known rubrics: {sorted(RUBRICS)}")
     if spec.rubric == RUBRIC_LABELS and (
@@ -166,8 +172,8 @@ def grade_judge_candidate(
 def _validate_label_spec(spec: JudgeSpec, references: tuple[str, ...]) -> None:
     if len(references) != 1 or len(spec.references) != 1 or not spec.prompt_template.strip() or not spec.label_scores:
         raise InvalidTask("label rubric requires one reference, a prompt template and labels")
-    if not isinstance(spec.label_scan, str) or spec.label_scan not in {"literal", "lines"}:
-        raise InvalidTask("label_scan must be literal or lines")
+    if not isinstance(spec.label_scan, str) or spec.label_scan not in {"literal", "lines", "whole"}:
+        raise InvalidTask("label_scan must be literal, lines or whole")
     if type(spec.strip_reasoning_blocks) is not bool:
         raise InvalidTask("strip_reasoning_blocks must be boolean")
     if not isinstance(spec.label_scores, dict):
@@ -182,6 +188,9 @@ def _validate_label_spec(spec: JudgeSpec, references: tuple[str, ...]) -> None:
             or not math.isfinite(score)
         ):
             raise InvalidTask("verdict label rewards must be finite unit scalars")
+    normalized_labels = [label.upper() if spec.label_case == "upper" else label for label in spec.label_scores]
+    if len(set(normalized_labels)) != len(normalized_labels):
+        raise InvalidTask("verdict labels collide after case normalization")
     for budget in (spec.max_completion_tokens, spec.incomplete_retry_tokens):
         if type(budget) is not int or budget < 0:
             raise InvalidTask("judge token budgets must be nonnegative integers")
@@ -233,8 +242,40 @@ def _judge_labels(spec: JudgeSpec, reference: str, candidate: str, client: opena
     budgets = [spec.max_completion_tokens]
     if spec.incomplete_retry_tokens:
         budgets.append(spec.incomplete_retry_tokens)
-    options: dict[str, Any] = {"reasoning_effort": spec.reasoning_effort} if spec.reasoning_effort else {}
+    labels = {
+        label.upper() if spec.label_case == "upper" else label: score for label, score in spec.label_scores.items()
+    }
     for index, budget in enumerate(budgets):
+        content, incomplete = _label_completion(spec, client, model, messages, budget)
+        if incomplete:
+            if index + 1 < len(budgets):
+                continue
+            raise RuntimeError("judge completion is incomplete")
+        answer = _label_answer(content, spec.strip_reasoning_blocks)
+        if spec.label_case == "upper":
+            answer = answer.upper()
+        if spec.label_scan == "whole":
+            final = answer
+            observed = {answer}
+        else:
+            final = answer.rsplit("\n", 1)[-1].strip()
+            completed_lines = {line.strip() for line in answer.splitlines()}
+            observed = {
+                label
+                for label in labels
+                if (label in completed_lines if spec.label_scan == "lines" else label in answer)
+            }
+        if final not in labels or observed != {final}:
+            raise RuntimeError("judge returned malformed or contradictory verdict labels")
+        return scored(float(labels[final]), model=model, verdict=final, reasoning=_reasoning(answer), completion=content)
+    raise RuntimeError("judge exhausted completion budgets")
+
+
+def _label_completion(
+    spec: JudgeSpec, client: openai.OpenAI, model: str, messages: list, budget: int
+) -> tuple[str, bool]:
+    if spec.api == "chat_completions":
+        options: dict[str, Any] = {"reasoning_effort": spec.reasoning_effort} if spec.reasoning_effort else {}
         response = _chat_completion(
             client,
             model=model,
@@ -245,27 +286,44 @@ def _judge_labels(spec: JudgeSpec, reference: str, candidate: str, client: opena
             **options,
         )
         choice = _completion_choice(response)
-        if choice.finish_reason == "length" and index + 1 < len(budgets):
-            continue
-        content = _completed_text(choice)
-        answer = _label_answer(content, spec.strip_reasoning_blocks)
-        final = answer.rsplit("\n", 1)[-1].strip()
-        completed_lines = {line.strip() for line in answer.splitlines()}
-        observed = {
-            label
-            for label in spec.label_scores
-            if (label in completed_lines if spec.label_scan == "lines" else label in answer)
-        }
-        if final not in spec.label_scores or observed != {final}:
-            raise RuntimeError("judge returned malformed or contradictory verdict labels")
-        return scored(
-            float(spec.label_scores[final]),
-            model=model,
-            verdict=final,
-            reasoning=_reasoning(answer),
-            completion=choice.message.content,
-        )
-    raise RuntimeError("judge exhausted completion budgets")
+        if choice.finish_reason == "length":
+            return "", True
+        return _completed_text(choice), False
+    options = {"reasoning": {"effort": spec.reasoning_effort}} if spec.reasoning_effort else {}
+    response = client.responses.with_raw_response.create(
+        model=model,
+        input=messages if spec.system_prompt else messages[0]["content"],
+        max_output_tokens=budget,
+        timeout=spec.request_timeout,
+        **options,
+    )
+    payload = json.loads(response.http_response.text, object_pairs_hook=unique_object)
+    json.dumps(payload, allow_nan=False)
+    if not isinstance(payload, dict) or payload.get("error") is not None:
+        raise RuntimeError("judge transport returned an error")
+    if payload.get("status") == "incomplete" and payload.get("incomplete_details") == {"reason": "max_output_tokens"}:
+        return "", True
+    if payload.get("status") != "completed" or payload.get("incomplete_details") is not None:
+        raise RuntimeError("judge response is incomplete")
+    output = payload.get("output")
+    if not isinstance(output, list) or any(not isinstance(item, dict) for item in output):
+        raise RuntimeError("judge response has no output messages")
+    if any(item.get("type") == "reasoning" and item.get("status") not in {None, "completed"} for item in output):
+        raise RuntimeError("judge reasoning is incomplete")
+    messages = [item for item in output if item.get("type") != "reasoning"]
+    if len(messages) != 1:
+        raise RuntimeError("judge must return exactly one assistant message")
+    message = messages[0]
+    if message.get("type") != "message" or message.get("role") != "assistant" or message.get("status") != "completed":
+        raise RuntimeError("judge output is not a completed assistant message")
+    blocks = message.get("content")
+    if not isinstance(blocks, list) or len(blocks) != 1 or not isinstance(blocks[0], dict):
+        raise RuntimeError("judge must return one text block")
+    block = blocks[0]
+    text = block.get("text")
+    if block.get("type") != "output_text" or not isinstance(text, str) or not text.strip():
+        raise RuntimeError("judge output is empty or contains a refusal")
+    return text, False
 
 
 def _context(spec: JudgeSpec, tests_dir: Path) -> str:

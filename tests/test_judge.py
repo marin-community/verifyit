@@ -34,15 +34,18 @@ class FakeJudgeServer(ThreadingHTTPServer):
     finish_reasons: list[str]
     http_status: int
     message_fields: dict
+    response_fields: dict
+    raw_body: str | None
 
 
 class _Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
-        assert self.path.endswith("/chat/completions")
+        assert self.path.endswith(("/chat/completions", "/responses"))
         server: FakeJudgeServer = self.server  # pyrefly: ignore[bad-assignment]
         request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         server.requests.append(request)
-        server.prompts.append(request["messages"][-1]["content"])
+        inputs = request.get("messages", request.get("input"))
+        server.prompts.append(inputs if isinstance(inputs, str) else inputs[-1]["content"])
         reply = server.replies[min(len(server.prompts) - 1, len(server.replies) - 1)]
         body = json.dumps(
             {
@@ -63,6 +66,26 @@ class _Handler(BaseHTTPRequestHandler):
                 ],
             }
         ).encode()
+        if self.path.endswith("/responses"):
+            body = json.dumps(
+                {
+                    "id": "resp-fake",
+                    "object": "response",
+                    "status": "completed",
+                    "error": None,
+                    "output": [
+                        {
+                            "type": "message",
+                            "role": "assistant",
+                            "status": "completed",
+                            "content": [{"type": "output_text", "text": reply}],
+                        }
+                    ],
+                    **server.response_fields,
+                }
+            ).encode()
+        if server.raw_body is not None:
+            body = server.raw_body.encode()
         self.send_response(server.http_status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -82,6 +105,8 @@ def fake_judge(monkeypatch):
     server.finish_reasons = []
     server.http_status = 200
     server.message_fields = {}
+    server.response_fields = {}
+    server.raw_body = None
     server.finish_reason = "stop"
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -633,3 +658,134 @@ def test_paired_ordinal_json_integer_indices_and_huge_trusted_bounds():
     assert [v.detail["raw_score"] for v in verdicts] == [3, 3]
     with pytest.raises(InvalidTask, match="bounds"):
         grade_judge.grade_paired_ordinal(2, [(0, 1)], ratings, rating_bounds=(1, 10**400))
+
+
+@pytest.mark.parametrize(
+    "reply,reward,status",
+    [
+        (" correct ", 1, Status.SCORED),
+        ("INCORRECT", 0, Status.SCORED),
+        ("Explanation\nCORRECT", 0, Status.INFRA_ERROR),
+        ("CORRECT INCORRECT", 0, Status.INFRA_ERROR),
+    ],
+)
+def test_responses_whole_labels_preserve_source_request_and_reject_prose(tmp_path, fake_judge, reply, reward, status):
+    fake_judge.replies = [reply]
+    fake_judge.response_fields = {
+        "output": [
+            {"type": "reasoning", "summary": [{"type": "summary_text", "text": "INCORRECT"}]},
+            {
+                "type": "message",
+                "role": "assistant",
+                "status": "completed",
+                "content": [{"type": "output_text", "text": reply}],
+            },
+        ]
+    }
+    spec = _label_spec(
+        api="responses",
+        label_scan="whole",
+        label_case="upper",
+        strip_reasoning_blocks=False,
+        system_prompt="",
+        label_scores={"CORRECT": 1, "INCORRECT": 0},
+        max_completion_tokens=1024,
+        reasoning_effort="low",
+    )
+    path = tmp_path / "verifier.toml"
+    path.write_text(render_spec(spec))
+    result = run(path, _workspace(tmp_path, "candidate text"))
+    assert (result.reward, result.status) == (reward, status)
+    assert fake_judge.requests == [
+        {
+            "model": "fake/judge-9b",
+            "input": "A: reference answer\nB: candidate text",
+            "max_output_tokens": 1024,
+            "reasoning": {"effort": "low"},
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"status": "incomplete", "incomplete_details": {"reason": "max_output_tokens"}},
+        {"error": {"message": "failed"}},
+        {"output": [{"type": "reasoning", "summary": [{"text": "CORRECT"}]}]},
+        {"output": [{"type": "function_call", "name": "CORRECT"}]},
+        {
+            "output": [
+                {
+                    "type": "message",
+                    "role": "assistant",
+                    "status": "completed",
+                    "content": [{"type": "refusal", "refusal": "CORRECT"}],
+                }
+            ]
+        },
+        {
+            "output": [
+                {
+                    "type": "message",
+                    "role": "assistant",
+                    "status": "incomplete",
+                    "content": [{"type": "output_text", "text": "CORRECT"}],
+                }
+            ]
+        },
+    ],
+)
+def test_responses_nonanswers_cannot_preserve_stale_credit(tmp_path, fake_judge, fields):
+    fake_judge.replies = ["CORRECT"]
+    fake_judge.response_fields = fields
+    path = tmp_path / "verifier.toml"
+    path.write_text(render_spec(_label_spec(api="responses", label_scan="whole", label_scores={"CORRECT": 1})))
+    logs = tmp_path / "logs"
+    write_reward(logs, grade_judge.scored(1))
+    result = run(path, _workspace(tmp_path, "candidate"))
+    write_reward(logs, result)
+    assert (result.reward, result.status) == (0, Status.INFRA_ERROR)
+    assert not (logs / "reward.txt").exists()
+    assert not (logs / "reward.json").exists()
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        '{"status":"failed","status":"completed","output":[{"type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"[[A=B]]"}]}]}',
+        '{"status":"completed","output":[{"type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"[[A=B]]"}]}],"usage":NaN}',
+    ],
+)
+def test_responses_ambiguous_raw_payload_fails_closed(tmp_path, fake_judge, raw):
+    fake_judge.raw_body = raw
+    path = tmp_path / "verifier.toml"
+    path.write_text(render_spec(_label_spec(api="responses")))
+    result = run(path, _workspace(tmp_path, "candidate"))
+    assert (result.reward, result.status) == (0, Status.INFRA_ERROR)
+
+
+def test_case_folded_label_collision_is_invalid_before_blank_candidate(tmp_path, fake_judge):
+    path = tmp_path / "verifier.toml"
+    path.write_text(render_spec(_label_spec(label_case="upper", label_scores={"correct": 0, "CORRECT": 1})))
+    result = run(path, _workspace(tmp_path, ""))
+    assert (result.reward, result.status) == (0, Status.INVALID_TASK)
+    assert not fake_judge.requests
+
+
+@pytest.mark.parametrize("reasoning_status", ["in_progress", "incomplete"])
+def test_responses_completed_envelope_cannot_hide_incomplete_reasoning(tmp_path, fake_judge, reasoning_status):
+    fake_judge.response_fields = {
+        "output": [
+            {"type": "reasoning", "status": reasoning_status},
+            {
+                "type": "message",
+                "role": "assistant",
+                "status": "completed",
+                "content": [{"type": "output_text", "text": "[[A=B]]"}],
+            },
+        ]
+    }
+    path = tmp_path / "verifier.toml"
+    path.write_text(render_spec(_label_spec(api="responses")))
+    result = run(path, _workspace(tmp_path, "candidate"))
+    assert (result.reward, result.status) == (0, Status.INFRA_ERROR)
