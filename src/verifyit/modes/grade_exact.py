@@ -171,6 +171,38 @@ def grade_collection_f1(
     return scored(reward, overlap=overlap, reference_count=reference_count, candidate_count=candidate_count)
 
 
+def grade_collection_subset(
+    reference: Sequence[str] | Set[str],
+    candidate: Sequence[str] | Set[str],
+    *,
+    item_credit: float,
+) -> Reward:
+    """Award full set equality or per-item credit for a strict subset.
+
+    Repeated items count once. Any extra candidate item forfeits all credit;
+    an empty candidate scores zero. References must contain nonempty items and
+    the configured strict-subset credit must remain in the unit reward domain.
+    """
+    if type(item_credit) not in (int, float) or not 0 <= item_credit <= 1 or not math.isfinite(item_credit):
+        raise InvalidTask("subset item credit must be finite and bounded")
+    try:
+        references = _collection_counts(reference)
+    except ValueError as error:
+        raise InvalidTask(f"invalid collection reference: {error}") from error
+    if not references or any(not item for item in references):
+        raise InvalidTask("subset reference must contain nonempty items")
+    if item_credit * (len(references) - 1) > 1:
+        raise InvalidTask("strict-subset credit exceeds the unit reward domain")
+    counts = _collection_overlap(reference, candidate, "set", "invalid")
+    if isinstance(counts, Reward):
+        return counts
+    overlap, reference_count, candidate_count = counts
+    reward = 0.0
+    if candidate_count and overlap == candidate_count:
+        reward = 1.0 if candidate_count == reference_count else item_credit * candidate_count
+    return scored(reward, overlap=overlap, reference_count=reference_count, candidate_count=candidate_count)
+
+
 def grade_collection_precision_interval(
     reference: Sequence[str] | Set[str],
     candidate: Sequence[str] | Set[str],

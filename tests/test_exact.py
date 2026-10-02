@@ -243,3 +243,19 @@ def test_precision_finite_integer_bound_does_not_overflow_float_conversion():
     options = {"minimum_percent": 0, "maximum_percent": 10**400, "multiplicity": "set", "empty_reference": "invalid"}
     assert grade_exact.grade_collection_precision_interval(["a"], ["a"], **options).reward == 1
     assert grade_exact.grade_collection_precision_interval(["a"], [], **options).reward == 0
+
+
+@pytest.mark.parametrize("candidate,reward", [("DAC", 1), ("AC", 0.5), ("CC", 0.25), ("AB", 0), ("", 0)])
+def test_collection_subset_preserves_complete_partial_and_extra_item_rewards(candidate, reward):
+    result = grade_exact.grade_collection_subset(tuple("ACD"), tuple(candidate), item_credit=0.25)
+    assert result.status == Status.SCORED
+    assert result.reward == reward
+
+
+def test_collection_subset_invalid_reference_precedes_empty_candidate():
+    with pytest.raises(InvalidTask):
+        grade_exact.grade_collection_subset(("",), (), item_credit=0.25)
+    with pytest.raises(InvalidTask):
+        grade_exact.grade_collection_subset(tuple("ABCDE"), (), item_credit=0.5)
+    with pytest.raises(InvalidTask):
+        grade_exact.grade_collection_subset(("A", "B"), (), item_credit=10**400)

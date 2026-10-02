@@ -16,7 +16,7 @@ from verifyit.grade import Status
         ("A,C,D", "AB", "MCQ(multiple)", 0),
         ("A", "a", "MCQ", 0),
         ("A", r"\text{A}", "MCQ", 1),
-        ("A", "AE", "MCQ", 0),
+        ("A", "AE", "MCQ", 1),
         ("0", "0.01", "Numeric", 1),
         ("0", "0.0100001", "Numeric", 0),
         ("1000000000", "1000000000.05", "Numeric", 0),
