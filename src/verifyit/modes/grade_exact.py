@@ -20,7 +20,9 @@ It is an explicit benchmark contract; equality remains the default.
 
 import re
 from collections import Counter
+from collections.abc import Sequence, Set
 from pathlib import Path
+from typing import Literal
 
 from verifyit.grade import InvalidTask, Reward, empty_output_policy, read_output, scored
 from verifyit.modes.extract import extract_boxed
@@ -28,6 +30,8 @@ from verifyit.spec import EmptyOutputPolicy, ExactSpec
 
 ITEM_SEPARATOR = re.compile(r"[\n,]")
 MAX_DETAIL_CHARS = 400
+MAX_COLLECTION_ITEMS = 10_000
+MAX_COLLECTION_CHARS = 1_000_000
 
 
 def _normalize(text: str, spec: ExactSpec) -> str:
@@ -89,6 +93,64 @@ def grade_exact_candidate(spec: ExactSpec, candidate: str) -> Reward:
         extracted=candidate.strip()[:MAX_DETAIL_CHARS],
         expected=list(spec.expected),
     )
+
+
+def _collection_counts(items: object) -> Counter[str]:
+    if not isinstance(items, (Sequence, Set)) or isinstance(items, (str, bytes)):
+        raise ValueError("items must be a sequence or set of strings")
+    if len(items) > MAX_COLLECTION_ITEMS:
+        raise ValueError("too many items")
+    counts: Counter[str] = Counter()
+    chars = 0
+    for index, item in enumerate(items):
+        if index >= MAX_COLLECTION_ITEMS:
+            raise ValueError("too many items")
+        if not isinstance(item, str):
+            raise ValueError("items must be strings")
+        chars += len(item)
+        if chars > MAX_COLLECTION_CHARS:
+            raise ValueError("item text exceeds limit")
+        counts[item] += 1
+    return counts
+
+
+def grade_collection_f1(
+    reference: Sequence[str] | Set[str],
+    candidate: Sequence[str] | Set[str],
+    *,
+    multiplicity: Literal["set", "multiset"],
+    empty_reference: Literal["zero", "invalid"],
+    round_digits: int | None,
+) -> Reward:
+    """Grade literal prepared items; callers own tokenization, never overlap counts.
+
+    Set scoring ignores repeats; multiset scoring consumes each reference occurrence.
+    Empty candidate collections score zero. Rounding uses binary64 scaling and
+    ties-to-even, as in fixed-decimal array scoring, without an optional dependency.
+    """
+    if multiplicity not in ("set", "multiset") or empty_reference not in ("zero", "invalid"):
+        raise InvalidTask("invalid collection F1 policy")
+    if round_digits is not None and (type(round_digits) is not int or not 0 <= round_digits <= 6):
+        raise InvalidTask("collection F1 rounding must be an integer from zero to six or None")
+    try:
+        references = _collection_counts(reference)
+    except ValueError as error:
+        raise InvalidTask(f"invalid F1 reference: {error}") from error
+    if not references and empty_reference == "invalid":
+        raise InvalidTask("collection F1 reference must not be empty")
+    try:
+        candidates = _collection_counts(candidate)
+    except ValueError as error:
+        return scored(0.0, reason="invalid_candidate", error=str(error))
+    if multiplicity == "set":
+        references, candidates = Counter(references.keys()), Counter(candidates.keys())
+    overlap = sum((references & candidates).values())
+    reference_count, candidate_count = references.total(), candidates.total()
+    reward = 2 * overlap / (reference_count + candidate_count) if reference_count and candidate_count else 0.0
+    if round_digits is not None:
+        scale = 10**round_digits
+        reward = round(reward * scale) / scale
+    return scored(reward, overlap=overlap, reference_count=reference_count, candidate_count=candidate_count)
 
 
 def grade(spec: ExactSpec, tests_dir: Path, workspace: Path) -> Reward:

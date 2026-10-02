@@ -178,6 +178,21 @@ batch rather than aggregate partial success. Clients close on success or failure
 The spec's `empty_output` policy applies to direct candidates. File-based grading
 still scores missing output artifacts zero, independently of empty-string policy.
 
+Clients with already normalized tokens or canonical labels can call
+`grade_collection_f1(reference, candidate, multiplicity=..., empty_reference=...,
+round_digits=...)` from `verifyit.modes.grade_exact`. Both inputs are sequences or sets
+of strings. Choose `multiplicity="set"` to ignore repeats or `"multiset"` to
+count occurrences; tokenization and normalization remain the caller's responsibility.
+Choose `empty_reference="zero"` for tasks defining empty references as zero, or
+`"invalid"` to reject them. Empty or malformed candidates score zero; malformed
+references raise `InvalidTask` before candidate scoring. Each input is limited
+to 10,000 items and 1,000,000 characters. `round_digits=None` preserves the
+unrounded overlap score; integers from 0 through 6 request binary64 scaled,
+ties-to-even decimal rounding. The unrounded calculation uses
+`2 * overlap / (reference_count + candidate_count)` and can differ by floating-point
+roundoff from an equivalent precision/recall calculation. This direct API leaves
+Exact specs' equality behavior unchanged.
+
 For development, see [CONTRIBUTING.md](CONTRIBUTING.md),
 [AGENTS.md](AGENTS.md), and the [repository skills](.agents/skills).
 Run the package checks from the repository root:

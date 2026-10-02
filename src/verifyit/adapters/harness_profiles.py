@@ -4,12 +4,12 @@
 
 import inspect
 import re
-from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
 from verifyit.adapters.skyrl import grade_literal_candidate
 from verifyit.grade import InvalidTask, Reward, scored
+from verifyit.modes.grade_exact import grade_collection_f1
 
 
 def _tokens(value: Sequence[str]) -> None:
@@ -18,19 +18,8 @@ def _tokens(value: Sequence[str]) -> None:
 
 
 def token_f1(candidate: Sequence[str], reference: Sequence[str]) -> Reward:
-    """Counter-token overlap after source normalization; repeated tokens count."""
-    _tokens(candidate)
-    _tokens(reference)
-    candidates, references = Counter(candidate), Counter(reference)
-    overlap = sum(
-        min(count, references[token])
-        for token, count in candidates.items()
-        if any(grade_literal_candidate(gold, token).reward for gold in references)
-    )
-    if not overlap:
-        return scored(0.0, overlap=0)
-    precision, recall = overlap / len(candidate), overlap / len(reference)
-    return scored(2 * precision * recall / (precision + recall), overlap=overlap)
+    """Pass prepared tokens to the core multiplicity-aware overlap contract."""
+    return grade_collection_f1(reference, candidate, multiplicity="multiset", empty_reference="zero", round_digits=None)
 
 
 def token_accuracy(candidate: Sequence[str], reference: Sequence[str]) -> Reward:

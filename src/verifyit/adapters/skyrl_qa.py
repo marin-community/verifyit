@@ -6,6 +6,7 @@ from collections.abc import Sequence, Set
 
 from verifyit.adapters.skyrl import grade_literal_candidate
 from verifyit.grade import InvalidTask, Reward, scored
+from verifyit.modes.grade_exact import grade_collection_f1
 
 
 def grade_qa_exact(candidate: str, references: Sequence[str]) -> Reward:
@@ -19,15 +20,10 @@ def grade_qa_exact(candidate: str, references: Sequence[str]) -> Reward:
 
 
 def grade_qa_token_sets(candidate: Set[str], reference: Set[str]) -> Reward:
-    """Source set-token F1, using exact for token identity and client aggregation."""
-    if not isinstance(candidate, Set) or not isinstance(reference, Set):
+    """Pass source-prepared token sets to core overlap grading."""
+    if not isinstance(reference, Set):
         raise InvalidTask("QA F1 requires token sets")
-    if any(not isinstance(token, str) for token in [*candidate, *reference]):
-        raise InvalidTask("QA F1 tokens must be strings")
-    if not candidate or not reference:
-        return scored(0.0, overlap=0, precision=0.0, recall=0.0)
-    overlap = sum(grade_qa_exact(token, sorted(reference)).reward for token in sorted(candidate))
-    precision = overlap / len(candidate)
-    recall = overlap / len(reference)
-    reward = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
-    return scored(reward, overlap=overlap, precision=precision, recall=recall)
+    if not isinstance(candidate, Set):
+        grade_collection_f1(reference, [], multiplicity="set", empty_reference="zero", round_digits=None)
+        raise InvalidTask("QA F1 requires token sets")
+    return grade_collection_f1(reference, candidate, multiplicity="set", empty_reference="zero", round_digits=None)

@@ -141,3 +141,49 @@ def test_explicit_empty_equality_requires_grade_policy_and_a_present_file(tmp_pa
     assert grade_exact.grade(configured, tmp_path, tmp_path).reward == 0
     with pytest.raises(InvalidTask):
         grade_exact.grade_exact_candidate(ExactSpec(expected=(), empty_output=EmptyOutputPolicy.GRADE), text)
+
+
+@pytest.mark.parametrize("multiplicity,reward", [("set", 1.0), ("multiset", 0.8)])
+def test_prepared_collection_f1_controls_duplicate_credit(multiplicity, reward):
+    verdict = grade_exact.grade_collection_f1(
+        ["fox", "red"],
+        ["fox", "fox", "red"],
+        multiplicity=multiplicity,
+        empty_reference="invalid",
+        round_digits=None,
+    )
+    assert verdict.status is Status.SCORED
+    assert verdict.reward == reward
+
+
+@pytest.mark.parametrize("overlap,expected", [(1, 0.0), (29, 0.14), (109, 0.55), (125, 0.62)])
+def test_collection_decimal_rounding_uses_scaled_ties_to_even(overlap, expected):
+    reference = [str(i) for i in range(200)]
+    candidate = reference[:overlap] + [f"other-{i}" for i in range(200 - overlap)]
+    assert (
+        grade_exact.grade_collection_f1(
+            reference, candidate, multiplicity="multiset", empty_reference="invalid", round_digits=2
+        ).reward
+        == expected
+    )
+
+
+def test_collection_reference_policy_is_validated_before_empty_candidate():
+    options = {"multiplicity": "multiset", "round_digits": None}
+    assert grade_exact.grade_collection_f1([], [], empty_reference="zero", **options).reward == 0
+    with pytest.raises(InvalidTask, match="reference must not be empty"):
+        grade_exact.grade_collection_f1([], [], empty_reference="invalid", **options)
+    with pytest.raises(InvalidTask, match="invalid F1 reference"):
+        grade_exact.grade_collection_f1([float("nan")], [], empty_reference="zero", **options)
+    assert grade_exact.grade_collection_f1(["one"], [float("nan")], empty_reference="invalid", **options).reward == 0
+
+
+def test_collection_limits_cannot_award_identical_oversized_inputs():
+    reference = ["one"]
+    candidate = ["one"] * (grade_exact.MAX_COLLECTION_ITEMS + 1)
+    options = {"multiplicity": "set", "empty_reference": "invalid", "round_digits": None}
+    assert grade_exact.grade_collection_f1(reference, candidate, **options).reward == 0
+    with pytest.raises(InvalidTask, match="too many items"):
+        grade_exact.grade_collection_f1(candidate, candidate, **options)
+    with pytest.raises(InvalidTask, match="rounding"):
+        grade_exact.grade_collection_f1(reference, reference, **{**options, "round_digits": float("inf")})

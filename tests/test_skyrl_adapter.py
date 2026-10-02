@@ -126,6 +126,10 @@ def test_rounded_answers_use_bankers_rounding_and_reject_nonfinite_candidates(ex
         ([[True, 2], [3, 4]], 0.0),
         ([[1.0, 2], [3, 4]], 0.0),
         ([[3, 4], [1, 2]], 0.0),
+        ([[1, 2], [3]], 0.0),
+        ([[1, 2], [3, 10]], 0.0),
+        ([[1, 2], [3, float("nan")]], 0.0),
+        (None, 0.0),
     ],
 )
 def test_grid_comparison_preserves_rows_and_rejects_boolean_and_float_cells(candidate, reward):
@@ -133,9 +137,10 @@ def test_grid_comparison_preserves_rows_and_rejects_boolean_and_float_cells(cand
     assert verdict.reward == reward
 
 
-def test_invalid_grid_reference_is_not_candidate_zero():
+@pytest.mark.parametrize("reference", [[[True]], [[1.0]], [], [[]], [[1], [2, 3]], [[10]]])
+def test_invalid_grid_reference_is_not_candidate_zero(reference):
     with pytest.raises(InvalidTask, match="expected grid"):
-        grade_grid_candidate([[True]], [[1]])
+        grade_grid_candidate(reference, [[1]])
 
 
 @pytest.mark.parametrize("expected", [".", "nan", "inf"])
@@ -169,3 +174,12 @@ def test_aime_invalid_reference_precedes_candidate_scoring(expected, candidate):
 @pytest.mark.parametrize("candidate", [r"\frac{1}{0}", "nan", "inf", "42,43", "43,42"])
 def test_aime_undefined_or_multiple_candidates_cannot_earn_credit(candidate):
     assert grade_aime_candidate("42", candidate).reward == 0.0
+
+
+def test_deep_grid_candidate_is_schema_zero_and_cannot_mask_invalid_reference():
+    candidate = []
+    for _ in range(1200):
+        candidate = [candidate]
+    assert grade_grid_candidate([[1]], candidate).reward == 0.0
+    with pytest.raises(InvalidTask, match="expected grid"):
+        grade_grid_candidate([[True]], candidate)

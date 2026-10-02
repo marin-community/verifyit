@@ -4,15 +4,15 @@
 """Client extraction and canonicalization for SkyRL's existing exact grader."""
 
 import json
-import math
 import re
 import string
 from decimal import Decimal, InvalidOperation
 from fractions import Fraction
 
 from verifyit.bounded import call_bounded
-from verifyit.grade import InvalidTask, Reward, scored
+from verifyit.grade import Aggregation, InvalidTask, Reward, aggregate_rewards, scored
 from verifyit.modes.grade_exact import grade_exact_candidate
+from verifyit.modes.grade_json_schema import grade_json_schema_candidate
 from verifyit.modes.grade_math import MathMemberPolicy, canonical_math_members
 from verifyit.spec import EmptyOutputPolicy, ExactSpec
 
@@ -79,32 +79,61 @@ def grade_search_em(targets: str | list[str], response: str) -> Reward:
 
 
 def grade_rounded_candidate(expected: float, candidate: float | None) -> Reward:
-    """Compare Python banker-rounded values through exact, with finite task data."""
-    if not math.isfinite(expected):
+    """Normalize banker-rounded data; schema and Exact own the comparisons."""
+    schema = {"type": "number"}
+    if grade_json_schema_candidate(schema, expected).reward != 1.0:
         raise InvalidTask("rounded expected answer must be finite")
-    if candidate is None or not math.isfinite(candidate):
-        return scored(0.0, reason="missing_or_nonfinite_candidate")
-    return grade_literal_candidate(str(round(expected)), str(round(candidate)))
+    protocol = grade_json_schema_candidate(schema, candidate)
+    try:
+        normalized = "" if candidate is None else str(round(candidate))
+    except (TypeError, ValueError, OverflowError):
+        normalized = ""
+    equality = grade_literal_candidate(str(round(expected)), normalized)
+    return aggregate_rewards((protocol, equality), expected_total=2, policy=Aggregation.ALL)
 
 
-def _valid_grid(value: object) -> bool:
-    return (
-        isinstance(value, list)
-        and bool(value)
-        and isinstance(value[0], list)
-        and bool(value[0])
-        and all(isinstance(row, list) and len(row) == len(value[0]) for row in value)
-        and all(type(cell) is int and 0 <= cell <= 9 for row in value for cell in row)
-    )
+def _typed_grid(value: object) -> object:
+    """Frame only grid, row and scalar levels; preserve invalid cell types."""
+
+    def scalar(item: object) -> dict:
+        return {
+            "kind": type(item).__name__,
+            "value": item if isinstance(item, (str, int, float, bool)) or item is None else None,
+        }
+
+    if not isinstance(value, list):
+        return scalar(value)
+    return [[scalar(cell) for cell in row] if isinstance(row, list) else scalar(row) for row in value]
 
 
 def grade_grid_candidate(expected: object, candidate: object) -> Reward:
-    """Compare validated grid serialization without flattening type or row order."""
-    if not _valid_grid(expected):
+    """Schema validates rectangular integer grids; Exact compares their data."""
+    width = len(expected[0]) if isinstance(expected, list) and expected and isinstance(expected[0], list) else 0
+    schema = {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+            "type": "array",
+            "minItems": max(width, 1),
+            "maxItems": width,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "kind": {"const": "int"},
+                    "value": {"type": "integer", "minimum": 0, "maximum": 9},
+                },
+                "required": ["kind", "value"],
+                "additionalProperties": False,
+            },
+        },
+    }
+    reference = _typed_grid(expected)
+    if grade_json_schema_candidate(schema, reference).reward != 1.0:
         raise InvalidTask("expected grid must be rectangular integer palette 0..9")
-    if not _valid_grid(candidate):
-        return scored(0.0, reason="invalid_candidate_grid")
-    return grade_literal_candidate(json.dumps(expected), json.dumps(candidate))
+    response = _typed_grid(candidate)
+    protocol = grade_json_schema_candidate(schema, response)
+    equality = grade_literal_candidate(json.dumps(reference), json.dumps(response))
+    return aggregate_rewards((protocol, equality), expected_total=2, policy=Aggregation.ALL)
 
 
 def _aime_exact(expected: str, candidate: str) -> Reward:
