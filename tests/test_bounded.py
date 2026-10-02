@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 
 from verifyit.bounded import call_bounded
+from verifyit.execution.command import run_command
 from verifyit.grade import InvalidTask
-from verifyit.modes.run import run_command
 
 
 @pytest.fixture

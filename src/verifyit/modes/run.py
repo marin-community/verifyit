@@ -7,9 +7,7 @@ import shlex
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from verifyit.execution.command import Completed as Completed
-from verifyit.execution.command import run_command as run_command
-from verifyit.file_ops.restore import restore as restore
+from verifyit.execution.command import Completed, run_command
 from verifyit.grade import InvalidTask, Reward, scored
 from verifyit.spec import DEFAULT_WORKSPACE, GotestSpec, JunitSpec, PytestSpec, StdioSpec
 
