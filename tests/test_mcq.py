@@ -175,8 +175,8 @@ def test_missing_or_malformed_likelihood_cannot_award_correct_first_choice(likel
         )
 
 
-@pytest.mark.parametrize("expected", ["AB", ""])
-def test_partial_option_alphabet_cannot_be_a_reference(expected):
+@pytest.mark.parametrize("expected", ["AB", "", None, 7])
+def test_malformed_reference_cannot_award_self_match(expected):
     with pytest.raises(InvalidTask):
         grade_mcq.grade_mcq_candidate(McqSpec(expected=expected, options=4), expected)
 
@@ -197,3 +197,9 @@ def test_invalid_mcq_reference_removes_previous_cli_credit_before_reading_candid
     assert (verdict["status"], verdict["reward"]) == ("invalid_task", 0)
     assert not (logs / "reward.json").exists()
     assert not (logs / "reward.txt").exists()
+
+
+@pytest.mark.parametrize("options", [True, 4.0])
+def test_noninteger_option_count_cannot_award_a_correct_answer(options):
+    with pytest.raises(InvalidTask):
+        grade_mcq.grade_mcq_candidate(McqSpec(expected="A", options=options), "A")

@@ -99,9 +99,11 @@ def grade_mcq_candidate(spec: McqSpec, candidate: str) -> Reward:
     means no answer was found; an option outside the declared range scores zero.
     """
     empty_output_policy(spec)
-    if not 1 <= spec.options <= MAX_OPTIONS:
+    if type(spec.options) is not int or not 1 <= spec.options <= MAX_OPTIONS:
         raise InvalidTask(f"mcq options must be 1..{MAX_OPTIONS}, got {spec.options}")
     letters = tuple(string.ascii_uppercase[: spec.options])
+    if not isinstance(spec.expected, str):
+        raise InvalidTask("mcq expected must be a string")
     expected = spec.expected.strip().upper()
     if expected not in letters:
         raise InvalidTask(f"mcq expected {spec.expected!r} is not one of {letters!r}")
