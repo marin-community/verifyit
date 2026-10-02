@@ -97,7 +97,8 @@ def test_gsm8k_strict_retains_first_marker_literal_equality_and_turn_shaping(exp
         ("", "<answer>The!!!</answer>", 1.0),
         ("é", "<answer>É</answer>", 1.0),
         ("ss", "<answer>ß</answer>", 0.0),
-        ([], "<answer>cat</answer>", 0.0),
+        ("", "no answer tag", 0.0),
+        ("cat", None, 0.0),
     ],
 )
 def test_search_qa_normalization_alternatives_and_last_tag(targets, response, reward):
@@ -183,3 +184,10 @@ def test_deep_grid_candidate_is_schema_zero_and_cannot_mask_invalid_reference():
     assert grade_grid_candidate([[1]], candidate).reward == 0.0
     with pytest.raises(InvalidTask, match="expected grid"):
         grade_grid_candidate([[True]], candidate)
+
+
+@pytest.mark.parametrize("targets", [[], None, ["cat", None]])
+@pytest.mark.parametrize("response", ["<answer>cat</answer>", "no answer tag"])
+def test_search_invalid_reference_precedes_candidate_format_or_early_match(targets, response):
+    with pytest.raises(InvalidTask):
+        grade_search_em(targets, response)

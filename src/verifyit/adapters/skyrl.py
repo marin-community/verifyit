@@ -69,13 +69,20 @@ def _qa_normalize(answer: str) -> str:
 
 def grade_search_em(targets: str | list[str], response: str) -> Reward:
     """Extract the last answer tag and compare normalized alternatives with exact."""
-    matches = list(ANSWER_TAG.finditer(response))
-    if not matches:
-        return scored(0.0, reason="missing_answer_tag")
-    candidate = _qa_normalize(matches[-1].group(1).strip())
     alternatives = [targets] if isinstance(targets, str) else targets
+    if (
+        grade_json_schema_candidate({"type": "array", "minItems": 1, "items": {"type": "string"}}, alternatives).reward
+        != 1
+    ):
+        raise InvalidTask("search requires nonempty string references")
+    matches = list(ANSWER_TAG.finditer(response)) if isinstance(response, str) else []
+    extracted = matches[-1].group(1).strip() if matches else None
+    protocol = grade_json_schema_candidate({"type": "string"}, extracted)
+    candidate = _qa_normalize(extracted) if extracted is not None else ""
     results = [grade_literal_candidate(_qa_normalize(target), candidate) for target in alternatives]
-    return scored(max((result.reward for result in results), default=0.0), extracted=candidate)
+    alternatives_verdict = aggregate_rewards(results, expected_total=len(alternatives), policy=Aggregation.MAX)
+    verdict = aggregate_rewards([protocol, alternatives_verdict], expected_total=2, policy=Aggregation.ALL)
+    return Reward(verdict.reward, verdict.status, {**verdict.detail, "extracted": candidate})
 
 
 def grade_rounded_candidate(expected: float, candidate: float | None) -> Reward:
