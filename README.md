@@ -24,6 +24,19 @@ Rewards must be finite numbers in `[0, 1]`; malformed grader rewards or statuses
 verdict with this failure and removes stale reward files. Source metrics and training reward
 shaping belong in the client rather than this bounded correctness scalar.
 
+## Framework integration
+
+Framework repositories own dispatch, task generation, execution transport, and
+dependency pins. Each framework opts in explicitly; installing verifyit does not
+patch SkyRL, Harbor, Evalchemy, or lm-eval-harness. Adapters prepare task data and
+manage tools; grading decisions and score aggregation belong in verifyit's
+primitives and shared reducers.
+A bridge that invokes a retained native evaluator still depends on that evaluator.
+
+Source inventories, coverage reports, exported patches, and replay receipts are
+campaign artifacts maintained outside this repository. Historical replay counts
+do not establish coverage of later framework revisions.
+
 ## Modes
 
 | mode | contract | empty or absent candidate contract |
