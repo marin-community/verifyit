@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from verifyit.grade import Status, negative_candidate
+from verifyit.grade import InvalidTask, Status, negative_candidate
 from verifyit.grade import grade as dispatch
 from verifyit.modes import grade_math
 from verifyit.spec import NumericSpec
@@ -146,3 +146,12 @@ def test_regression_cannot_hide_missing_group_rows_with_extra_rows_elsewhere():
     result = grade_math.grade_regression_candidate(truth, shifted, variance_floor=0)
     assert (result.status, result.reward) == (Status.SCORED, 0)
     assert grade_math.grade_regression_candidate(truth, truth, variance_floor=0).reward == 1
+
+
+@pytest.mark.parametrize("value", [10**400, -(10**400)])
+def test_oversized_integer_candidate_scores_zero_after_reference_validation(value):
+    result = grade_math.grade_numeric_candidate(NumericSpec(0.5), value)
+    assert (result.status, result.reward) == (Status.SCORED, 0.0)
+    json.dumps(result.detail, allow_nan=False)
+    with pytest.raises(InvalidTask):
+        grade_math.grade_numeric_candidate(NumericSpec(float("nan")), value)

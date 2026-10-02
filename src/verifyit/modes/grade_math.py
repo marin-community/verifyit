@@ -393,7 +393,11 @@ def grade_numeric_candidate(spec: NumericSpec, value: float) -> Reward:
     """Score a numeric value after the caller extracts it from its submission format."""
     empty_output_policy(spec)
     tolerance = numeric_tolerance(spec)
-    if not math.isfinite(value):
+    try:
+        finite = math.isfinite(value)
+    except OverflowError:
+        return scored(0.0, reason="unrepresentable_candidate", expected=spec.expected)
+    if not finite:
         return scored(0.0, reason="nonfinite_candidate", expected=spec.expected)
     match = abs(value - spec.expected) <= tolerance
     return scored(float(match), extracted=value, expected=spec.expected, tolerance=tolerance)
