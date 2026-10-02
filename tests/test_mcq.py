@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
+import math
+from decimal import Decimal, localcontext
 from pathlib import Path
 
 import pytest
 
-from verifyit.grade import Status, main
+from verifyit.grade import InvalidTask, Status, main
 from verifyit.grade import grade as dispatch
 from verifyit.modes import grade_mcq
 from verifyit.spec import McqSpec
@@ -122,3 +124,52 @@ def test_mcq_option_must_be_a_complete_alphanumeric_token(tmp_path, response, ex
     _answer(tmp_path, response)
     verdict = dispatch(McqSpec(expected="B"), tmp_path, tmp_path)
     assert (verdict.reward, verdict.status) == (expected_reward, Status.SCORED)
+
+
+def test_probability_mass_sums_correct_alternatives_without_duplicate_credit():
+    scores = [math.log(value) for value in (0.2, 0.5, 0.3)]
+    verdict = grade_mcq.grade_mcq_likelihoods(
+        scores, [0, 2, 0], normalization_lengths=[1, 1, 1], policy=grade_mcq.LikelihoodScoring.PROBABILITY_MASS
+    )
+    assert verdict.reward == pytest.approx(0.5)
+    assert verdict.detail["selected_index"] == 1
+    assert verdict.detail["probabilities"] == pytest.approx([0.2, 0.5, 0.3])
+
+
+def test_likelihood_choices_are_not_limited_to_alphabet_and_ties_choose_first():
+    for policy, expected in [
+        (grade_mcq.LikelihoodScoring.MOST_LIKELY, 1),
+        (grade_mcq.LikelihoodScoring.PROBABILITY_MASS, 1 / 30),
+    ]:
+        result = grade_mcq.grade_mcq_likelihoods([-1] * 30, [0], normalization_lengths=[1] * 30, policy=policy)
+        assert result.reward == pytest.approx(expected)
+        assert result.detail["selected_index"] == 0
+
+
+def test_all_correct_mass_is_exactly_one_despite_probability_rounding():
+    likelihoods = [-4.6480028589515, -3.7412643461618327, -1.128800860050413, -3.7261393895864736]
+    result = grade_mcq.grade_mcq_likelihoods(
+        likelihoods, [0, 1, 2, 3], normalization_lengths=[1] * 4, policy=grade_mcq.LikelihoodScoring.PROBABILITY_MASS
+    )
+    assert result.reward == 1
+
+
+def test_underflow_mass_matches_high_precision_reference():
+    with localcontext() as context:
+        context.prec = 80
+        weights = [Decimal(-1000).exp(), Decimal(-1001).exp()]
+        expected = float(weights[0] / sum(weights))
+    result = grade_mcq.grade_mcq_likelihoods(
+        [-1000, -1001], [0], normalization_lengths=[1, 1], policy=grade_mcq.LikelihoodScoring.PROBABILITY_MASS
+    )
+    assert result.reward == pytest.approx(expected, abs=1e-15)
+
+
+@pytest.mark.parametrize(
+    "likelihoods", [[0], None, [0, None], [0, True], [0, float("nan")], [0, float("-inf")], [0, 10**1000]]
+)
+def test_missing_or_malformed_likelihood_cannot_award_correct_first_choice(likelihoods):
+    with pytest.raises(InvalidTask):
+        grade_mcq.grade_mcq_likelihoods(
+            likelihoods, [0], normalization_lengths=[1, 1], policy=grade_mcq.LikelihoodScoring.MOST_LIKELY
+        )

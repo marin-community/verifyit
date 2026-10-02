@@ -11,8 +11,11 @@ the fallback scores prose that never states an answer, so it is not reproduced h
 ``Answer:`` line scores zero, as does a letter outside ``A``..the last option.
 """
 
+import math
 import re
 import string
+from collections.abc import Sequence
+from enum import StrEnum
 from pathlib import Path
 
 from verifyit.grade import InvalidTask, Reward, empty_output_policy, read_output, scored
@@ -22,6 +25,66 @@ ANSWER = re.compile(r"Answer\s*:\s*(?!Answer)\s*([A-Za-z0-9])(?![A-Za-z0-9])\s*"
 BOXED_LETTER = re.compile(r"\\boxed\{\s*([A-Za-z0-9])\s*\}")
 WRAPPERS = re.compile(r"[*`_()\[\]]")
 MAX_OPTIONS = len(string.ascii_uppercase)
+
+
+class LikelihoodScoring(StrEnum):
+    MOST_LIKELY = "most_likely"
+    PROBABILITY_MASS = "probability_mass"
+
+
+def grade_mcq_likelihoods(
+    likelihoods: Sequence[float],
+    correct_indices: Sequence[int],
+    *,
+    normalization_lengths: Sequence[int],
+    policy: LikelihoodScoring,
+) -> Reward:
+    """Grade choice likelihoods by first argmax or stable correct-answer mass.
+
+    Normalization lengths encode the task's raw, character, byte, or token policy.
+    Raw likelihoods use all ones. Correct indices may name several alternatives;
+    repeated indices never increase probability mass. Malformed vectors raise
+    InvalidTask, so the dispatch boundary emits zero without a reward file.
+    """
+    if not isinstance(policy, LikelihoodScoring):
+        raise InvalidTask("unknown MCQ likelihood scoring policy")
+    if (
+        not isinstance(normalization_lengths, Sequence)
+        or not normalization_lengths
+        or any(type(length) is not int or length <= 0 for length in normalization_lengths)
+    ):
+        raise InvalidTask("MCQ likelihood normalization requires positive integer lengths")
+    options = len(normalization_lengths)
+    if (
+        not isinstance(correct_indices, Sequence)
+        or not correct_indices
+        or any(type(index) is not int or not 0 <= index < options for index in correct_indices)
+    ):
+        raise InvalidTask("MCQ requires correct indices within the declared choices")
+    if not isinstance(likelihoods, Sequence) or len(likelihoods) != options:
+        raise InvalidTask("MCQ requires one finite likelihood per choice")
+    try:
+        if any(
+            isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+            for value in likelihoods
+        ):
+            raise InvalidTask("MCQ likelihoods must be finite numbers")
+        scores = [value / length for value, length in zip(likelihoods, normalization_lengths, strict=True)]
+    except OverflowError as error:
+        raise InvalidTask("MCQ likelihoods must be finite numbers") from error
+    selected = max(range(options), key=scores.__getitem__)
+    correct = sorted(set(correct_indices))
+    if policy is LikelihoodScoring.MOST_LIKELY:
+        return scored(float(selected in correct), selected_index=selected, correct_indices=correct)
+    maximum = scores[selected]
+    weights = [math.exp(value - maximum) for value in scores]
+    denominator = math.fsum(weights)
+    return scored(
+        math.fsum(weights[index] for index in correct) / denominator,
+        selected_index=selected,
+        correct_indices=correct,
+        probabilities=[weight / denominator for weight in weights],
+    )
 
 
 def answer_letters(text: str) -> list[str]:

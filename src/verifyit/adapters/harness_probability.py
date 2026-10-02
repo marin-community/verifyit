@@ -1,45 +1,35 @@
 # Copyright The Marin Authors
 # SPDX-License-Identifier: Apache-2.0
-"""Probability-weighted correctness composed from literal exact grading."""
+"""Translate source likelihood and label vectors into MCQ probability grading."""
 
 import hashlib
 import inspect
-import math
 from collections.abc import Sequence
 from importlib import import_module
 from pathlib import Path
 from types import CodeType
 
 from verifyit.adapters.harness_validation import log_likelihoods, validate_default_filter
-from verifyit.adapters.skyrl import grade_literal_candidate
-from verifyit.grade import InvalidTask, Reward, scored
+from verifyit.grade import InvalidTask, Reward
+from verifyit.modes.grade_mcq import LikelihoodScoring, grade_mcq_likelihoods
 
 
 def probability_mass(labels: Sequence[int], responses: Sequence[tuple[float, bool]]) -> Reward:
     """Grade raw alternative likelihoods against a binary correctness vector.
 
-    Stable softmax preserves finite likelihood ratios even where the source's
-    direct exponentiation underflows. Correctness is literal exact index equality,
-    not a most-likely-choice approximation.
+    The MCQ primitive owns stable softmax and correct-answer probability mass.
+    The adapter validates the harness response encoding and extracts labels.
     """
     if isinstance(labels, str | bytes) or not labels or len(labels) != len(responses):
         raise InvalidTask("probability mass requires one label per nonempty response vector")
     if any(type(label) is not int or label not in (0, 1) for label in labels) or not any(labels):
         raise InvalidTask("probability mass requires binary labels and at least one correct alternative")
     likelihoods = log_likelihoods(responses, "TruthfulQA MC2")
-    maximum = max(likelihoods)
-    weights = [math.exp(value - maximum) for value in likelihoods]
-    denominator = math.fsum(weights)
-    probabilities = [weight / denominator for weight in weights]
-    correct = [str(index) for index, label in enumerate(labels) if label == 1]
-    membership = [
-        any(grade_literal_candidate(reference, str(index)).reward == 1 for reference in correct)
-        for index in range(len(labels))
-    ]
-    return scored(
-        math.fsum(weight for weight, match in zip(weights, membership, strict=True) if match) / denominator,
-        probabilities=probabilities,
-        correct_indices=correct,
+    return grade_mcq_likelihoods(
+        likelihoods,
+        [index for index, label in enumerate(labels) if label == 1],
+        normalization_lengths=[1] * len(labels),
+        policy=LikelihoodScoring.PROBABILITY_MASS,
     )
 
 

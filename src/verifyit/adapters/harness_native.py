@@ -4,7 +4,6 @@ These functions do not invoke source scorers. Unknown metric options fail closed
 Task loading, extraction filters and corpus aggregations remain caller-owned.
 """
 
-import math
 import re
 import string
 from collections.abc import Sequence
@@ -17,10 +16,10 @@ from verifyit.adapters.harness_math_literal import hendrycks_config_profile, hen
 from verifyit.adapters.harness_mmmu import mmmu_config_profile, mmmu_task_metrics
 from verifyit.adapters.harness_probability import truthfulqa_mc2_profile, truthfulqa_task_metrics
 from verifyit.adapters.harness_profiles import generation_profile, profile_task_metrics
-from verifyit.grade import InvalidTask, Reward
+from verifyit.grade import Aggregation, InvalidTask, Reward, aggregate_rewards
 from verifyit.modes.grade_exact import grade_exact_candidate
-from verifyit.modes.grade_mcq import grade_mcq_candidate
-from verifyit.spec import EmptyOutputPolicy, ExactSpec, McqSpec
+from verifyit.modes.grade_mcq import LikelihoodScoring, grade_mcq_likelihoods
+from verifyit.spec import EmptyOutputPolicy, ExactSpec
 
 
 def exact_match(candidate: str, references: Sequence[str], **options) -> Reward:
@@ -68,7 +67,7 @@ def exact_match(candidate: str, references: Sequence[str], **options) -> Reward:
         )
         for reference in normalized_references
     ]
-    return max(results, key=lambda result: result.reward)
+    return aggregate_rewards(results, expected_total=len(normalized_references), policy=Aggregation.MAX)
 
 
 def likelihood_choice(
@@ -81,29 +80,13 @@ def likelihood_choice(
     """
     if normalization not in {"raw", "characters", "bytes"}:
         raise InvalidTask(f"unsupported likelihood normalization: {normalization}")
-    if not choices or len(choices) != len(likelihoods):
-        raise InvalidTask("likelihood choices require nonempty options and one likelihood per option")
-    if any(not isinstance(choice, str) for choice in choices):
-        raise InvalidTask("likelihood choices must be strings")
-    if not gold or any(type(index) is not int or index < 0 or index >= len(choices) for index in gold):
-        raise InvalidTask("likelihood gold index is outside the available choices")
+    if not choices or any(not isinstance(choice, str) for choice in choices):
+        raise InvalidTask("likelihood choices must be nonempty strings")
     lengths = [
         1 if normalization == "raw" else len(value if normalization == "characters" else value.encode())
         for value in choices
     ]
-    if any(length == 0 for length in lengths):
-        raise InvalidTask("normalized likelihood choices must be nonempty")
-    if any(not math.isfinite(value) for value in likelihoods):
-        raise InvalidTask("likelihood values must be finite")
-    scores = [value / length for value, length in zip(likelihoods, lengths, strict=True)]
-    selected = max(range(len(scores)), key=scores.__getitem__)
-    if len(choices) > 26:
-        return exact_match(str(selected), [str(index) for index in gold])
-    results = [
-        grade_mcq_candidate(McqSpec(string.ascii_uppercase[index], len(choices)), string.ascii_uppercase[selected])
-        for index in gold
-    ]
-    return max(results, key=lambda result: result.reward)
+    return grade_mcq_likelihoods(likelihoods, gold, normalization_lengths=lengths, policy=LikelihoodScoring.MOST_LIKELY)
 
 
 def native_config_route(config: dict) -> str | None:
@@ -249,12 +232,18 @@ def native_task_metrics(task, doc, responses) -> dict | None:
             metrics[metric] = likelihood_choice(choices, likelihoods, targets, normalization).reward
         else:
             # Validate likelihoods/targets even when only a structured metric is requested.
-            likelihood_choice(choices, likelihoods, targets)
-            selected = max(range(len(likelihoods)), key=likelihoods.__getitem__)
+            verdict = likelihood_choice(choices, likelihoods, targets)
+            selected = verdict.detail["selected_index"]
             if metric == "exact_match":
                 if any(type(flag) is not bool for flag in greedy):
                     raise InvalidTask("greedy completion flags must be booleans")
-                metrics[metric] = int(any(greedy[index] for index in targets))
+                alternatives = [
+                    grade_exact_candidate(ExactSpec(("True",), ignore_case=False), str(greedy[index]))
+                    for index in targets
+                ]
+                metrics[metric] = aggregate_rewards(
+                    alternatives, expected_total=len(targets), policy=Aggregation.MAX
+                ).reward
             elif metric == "likelihood":
                 metrics[metric] = (gold, likelihoods)
             else:
