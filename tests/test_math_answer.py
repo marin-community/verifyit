@@ -308,3 +308,19 @@ def test_canonical_members_preserve_exact_multiset_and_numeric_distinctions(gold
 def test_canonical_members_reject_empty_nonfinite_and_approximate_expressions(value):
     with pytest.raises(ValueError):
         call_bounded(grade_math.canonical_math_members, value, timeout=10)
+
+
+@pytest.mark.parametrize("expected", ["", "   ", r"\displaystyle"])
+@pytest.mark.parametrize("candidate", ["2", "1/0"])
+def test_boxed_empty_reference_parse_is_invalid_before_candidate(expected, candidate):
+    with pytest.raises(InvalidTask, match="boxed reference"):
+        grade_math.grade_math_candidate(MathSpec(expected, profile=MathProfile.BOXED), candidate)
+
+
+def test_boxed_preserves_physics_reference_raw_fallback():
+    expected = r"n=\frac{e}{\hbar} \sqrt{\frac{m_{\mathrm{e}} \lambda}{4 \pi \varepsilon_{0}}}"
+    spec = MathSpec(expected, profile=MathProfile.BOXED)
+    assert grade_math.grade_math_candidate(spec, expected).reward == 1
+    missing = grade_math.grade_math_candidate(spec, "")
+    assert missing.status == Status.SCORED
+    assert missing.reward == 0

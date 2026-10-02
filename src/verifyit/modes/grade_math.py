@@ -268,8 +268,10 @@ def _grade_math_candidate(spec: MathSpec, candidate: str) -> Reward:
         if spec.math_type is not MathType.SCALAR:
             raise InvalidTask("boxed math profile requires scalar math_type")
         expected = parse(f"\\boxed{{{spec.expected}}}", parsing_timeout=_timeout(), raise_on_error=True)
+        if not expected:
+            raise InvalidTask("math-verify cannot parse boxed reference")
         parsed = parse(f"\\boxed{{{candidate}}}", parsing_timeout=_timeout(), raise_on_error=True)
-        if not expected or not parsed:
+        if not parsed:
             return scored(0.0, reason="missing_parse", expected_parsed=bool(expected), candidate_parsed=bool(parsed))
         match = bool(verify(gold=expected, target=parsed, timeout_seconds=_timeout(), raise_on_error=True))
         if not match and spec.allow_additive_constant:
