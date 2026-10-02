@@ -178,6 +178,30 @@ batch rather than aggregate partial success. Clients close on success or failure
 The spec's `empty_output` policy applies to direct candidates. File-based grading
 still scores missing output artifacts zero, independently of empty-string policy.
 
+For decoded paired judge ratings, install `verifyit[judge,schema]` and call
+`grade_paired_ordinal` from `verifyit.modes.grade_judge`:
+
+```python
+from verifyit.modes.grade_judge import grade_paired_ordinal
+
+verdicts = grade_paired_ordinal(
+    2, [(0, 1)],
+    [{"left": 0, "right": 1, "score_left": 5, "score_right": 2, "ranking": 1}],
+)
+```
+
+The trusted cohort must have at least two responses and directed edges covering
+all responses, without self edges or duplicates. Opposite directions are distinct.
+Provider records must match those edges in order, exactly once. JSON integer-valued
+indices are accepted; booleans are rejected. Default rating bounds are 1–5 and
+ranking bounds 1–6. Equal ratings receive opposite adjustments of `3.5 - ranking`;
+each response receives the mean of its incident ratings. Rewards are normalized to
+[0, 1], while `detail["raw_score"]` and `detail["raw_bounds"]` retain the native
+scale (default −1.5–7.5). Invalid trusted contracts raise `InvalidTask`; malformed
+provider cohorts raise `RuntimeError`. Abort the entire affected batch at minimum
+reward on either failure, before applying any framework reward shaping. This API
+does not call a provider or introduce another verifier spec.
+
 Clients with already normalized tokens or canonical labels can call
 `grade_collection_f1(reference, candidate, multiplicity=..., empty_reference=...,
 round_digits=...)` from `verifyit.modes.grade_exact`. Both inputs are sequences or sets
