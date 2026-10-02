@@ -247,3 +247,30 @@ def test_present_json_falsy_values_are_data_not_missing_output(tmp_path, instanc
     assert grade_json_schema.grade_json_schema_candidate({}, instance).reward == 1
     (tmp_path / "answer.txt").unlink()
     assert grade_json_schema.grade(spec, tmp_path, tmp_path).reward == 0
+
+
+def test_deep_candidate_scores_zero_through_direct_and_file_apis(tmp_path):
+    candidate = 0
+    for _ in range(1200):
+        candidate = [candidate]
+    verdict = grade_json_schema.grade_json_schema_candidate({}, candidate)
+    assert (verdict.reward, verdict.status) == (0.0, Status.SCORED)
+    (tmp_path / "schema.json").write_text("{}")
+    for candidate_format, text in (
+        (SchemaFormat.JSON, "[" * 1200 + "0" + "]" * 1200),
+        (SchemaFormat.YAML, "&loop [*loop]"),
+    ):
+        (tmp_path / "answer.txt").write_text(text)
+        verdict = grade_json_schema.grade(JsonSchemaSpec(format=candidate_format), tmp_path, tmp_path)
+        assert (verdict.reward, verdict.status) == (0.0, Status.SCORED)
+
+
+def test_deep_trusted_schema_is_invalid_before_candidate_scoring(tmp_path):
+    schema = {}
+    for _ in range(1200):
+        schema = {"allOf": [schema]}
+    with pytest.raises(InvalidTask):
+        grade_json_schema.grade_json_schema_candidate(schema, None)
+    (tmp_path / "schema.json").write_text('{"allOf":[' * 1200 + "{}" + "]}" * 1200)
+    with pytest.raises(InvalidTask):
+        grade_json_schema.grade(JsonSchemaSpec(), tmp_path, tmp_path)

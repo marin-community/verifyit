@@ -53,14 +53,16 @@ def load_schema(path: Path) -> dict:
         raise InvalidTask(f"schema file not found: {path}")
     try:
         schema = json.loads(path.read_text())
-    except ValueError as error:
+    except (ValueError, RecursionError) as error:
         raise InvalidTask(f"schema file {path} is not JSON: {error}") from error
     if not isinstance(schema, dict):
         raise InvalidTask(f"schema file {path} must hold a JSON object")
-    if has_nonfinite_number(schema):
-        raise InvalidTask(f"schema file {path} contains a nonfinite number")
     try:
+        if has_nonfinite_number(schema):
+            raise InvalidTask(f"schema file {path} contains a nonfinite number")
         validator_for(schema).check_schema(schema)
+    except RecursionError as error:
+        raise InvalidTask(f"schema file {path} exceeds nesting limit") from error
     except SchemaError as error:
         raise InvalidTask(f"schema file {path} is not a valid JSON Schema: {error.message}") from error
     return schema
@@ -80,18 +82,23 @@ def parse_candidate(text: str, candidate_format: SchemaFormat) -> Any:
 
 def grade_json_schema_candidate(schema: dict, instance: Any) -> Reward:
     """Validate an already decoded candidate against a JSON Schema."""
-    if has_nonfinite_number(schema):
-        raise InvalidTask("schema contains a nonfinite number")
     try:
-        validator_for(schema).check_schema(schema)
+        if has_nonfinite_number(schema):
+            raise InvalidTask("schema contains a nonfinite number")
+        validator_class = validator_for(schema)
+        validator_class.check_schema(schema)
+    except RecursionError as error:
+        raise InvalidTask("schema exceeds nesting limit") from error
     except SchemaError as error:
         raise InvalidTask(f"invalid JSON Schema: {error.message}") from error
-    if has_nonfinite_number(instance):
-        return scored(0.0, reason="nonfinite_number")
-    validator_class = validator_for(schema)
-    # pyrefly: ignore[bad-instantiation, missing-argument]  # validator_for returns a concrete validator.
-    validator = validator_class(schema)
-    errors = sorted(validator.iter_errors(instance), key=lambda error: [str(part) for part in error.path])
+    try:
+        if has_nonfinite_number(instance):
+            return scored(0.0, reason="nonfinite_number")
+        # pyrefly: ignore[bad-instantiation, missing-argument]  # validator_for returns a concrete validator.
+        validator = validator_class(schema)
+        errors = sorted(validator.iter_errors(instance), key=lambda error: [str(part) for part in error.path])
+    except RecursionError:
+        return scored(0.0, reason="candidate_nesting_limit")
     if not errors:
         return scored(1.0, reason="valid")
     first = errors[0]
@@ -111,7 +118,7 @@ def grade(spec: JsonSchemaSpec, tests_dir: Path, workspace: Path) -> Reward:
         return scored(0.0, reason="no_output")
     try:
         instance = parse_candidate(unwrap_fence(text), spec.format)
-    except (ValueError, yaml.YAMLError) as error:
+    except (ValueError, yaml.YAMLError, RecursionError) as error:
         return scored(0.0, reason="parse_error", error=str(error))
 
     return grade_json_schema_candidate(schema, instance)
