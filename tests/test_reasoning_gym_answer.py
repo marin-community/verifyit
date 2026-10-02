@@ -105,17 +105,24 @@ def test_missing_entry_file_is_an_invalid_task(tmp_path, workspace):
     "entry_text, message",
     [
         ("{not json", "is not JSON"),
+        ('{"answer":"wrong","answer":"Richard","metadata":{}}', "is not JSON"),
+        ('{"answer":"Richard","metadata":{"ignored":NaN}}', "is not JSON"),
         ('{"answer": "Richard"}', "metadata field"),
         ("[1, 2, 3]", "metadata field"),
     ],
 )
-def test_unusable_entry_file_is_an_invalid_task(tmp_path, workspace, entry_text, message):
+@pytest.mark.parametrize("candidate", ["Richard", ""])
+def test_unusable_entry_file_is_an_invalid_task(tmp_path, workspace, entry_text, message, candidate):
     tests_dir = tmp_path / "tests"
     tests_dir.mkdir()
     (tests_dir / "entry.json").write_text(entry_text)
-    answer(workspace, "Richard")
+    answer(workspace, candidate)
     with pytest.raises(InvalidTask, match=message):
         grade(tests_dir, workspace)
+    spec_path = tests_dir / "verifier.toml"
+    spec_path.write_text(render_spec(ReasoningGymSpec(dataset="needle_haystack")))
+    verdict = run(spec_path, workspace)
+    assert (verdict.status, verdict.reward) == (Status.INVALID_TASK, 0.0)
 
 
 @pytest.mark.parametrize("score", [True, float("nan"), float("inf"), -0.1, 1.1])

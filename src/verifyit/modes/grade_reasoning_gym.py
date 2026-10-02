@@ -27,7 +27,8 @@ def load_entry(path: Path) -> dict:
     if not path.is_file():
         raise InvalidTask(f"reasoning-gym entry not found: {path}")
     try:
-        entry = json.loads(path.read_text())
+        entry = json.loads(path.read_text(), object_pairs_hook=unique_object)
+        json.dumps(entry, allow_nan=False)
     except ValueError as error:
         raise InvalidTask(f"reasoning-gym entry {path} is not JSON: {error}") from error
     if not isinstance(entry, dict) or "metadata" not in entry:
