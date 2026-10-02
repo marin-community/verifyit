@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Shared validation for pinned harness task contracts."""
 
+import ast
 import functools
 import hashlib
 import inspect
@@ -44,6 +45,21 @@ def source_functions_match(
         ):
             return False
     return True
+
+
+def pinned_function_namespace(function, name: str, digests: Collection[str]) -> dict[str, Any]:
+    """Validate the selected callable and top-level functions from one source snapshot."""
+    if not inspect.isfunction(function) or function.__name__ != name:
+        raise InvalidTask("source callable changed")
+    path = Path(function.__code__.co_filename)
+    source = pinned_source_bytes(path, digests)
+    if source is None or function.__globals__.get(name) is not function:
+        raise InvalidTask("source callable identity changed")
+    names = {node.name for node in ast.parse(source).body if isinstance(node, ast.FunctionDef)}
+    codes = [code for code in compiled_source_functions(source, str(path)) if code.co_name in names]
+    if not source_functions_match(function.__globals__, codes, {}):
+        raise InvalidTask("source function graph changed")
+    return function.__globals__
 
 
 def validate_default_filter(task, label: str) -> None:

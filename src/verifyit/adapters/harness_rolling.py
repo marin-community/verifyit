@@ -1,14 +1,10 @@
 """Pinned rolling-likelihood observations with core-owned corpus diagnostics."""
 
-import inspect
 import re
 from importlib import import_module
-from pathlib import Path
 
 from verifyit.adapters.harness_validation import (
-    compiled_source_functions,
-    pinned_source_bytes,
-    source_functions_match,
+    pinned_function_namespace,
     validate_default_filter,
 )
 from verifyit.grade import InvalidTask
@@ -49,17 +45,12 @@ def _validate_task(task) -> None:
             or task.aggregation().get(name) is not getattr(metrics, aggregation)
         ):
             raise InvalidTask("Uncheatable metric contract changed")
-    function = task.config.process_docs
-    if not inspect.isfunction(function) or function.__name__ != task.config.task.removeprefix("uncheatable_eval_"):
-        raise InvalidTask("Uncheatable category preparation changed")
-    path = Path(function.__code__.co_filename)
-    source = pinned_source_bytes(path, {"1e8753e77ec64e18a4c5d35bd1d4f7c229b266d0de3587880a910993b053e48e"})
-    if (
-        source is None
-        or function.__globals__.get(function.__name__) is not function
-        or not source_functions_match(function.__globals__, compiled_source_functions(source, str(path)), {})
-        or function.__globals__.get("Dataset") is not import_module("datasets").Dataset
-    ):
+    namespace = pinned_function_namespace(
+        task.config.process_docs,
+        task.config.task.removeprefix("uncheatable_eval_"),
+        {"1e8753e77ec64e18a4c5d35bd1d4f7c229b266d0de3587880a910993b053e48e"},
+    )
+    if namespace.get("Dataset") is not import_module("datasets").Dataset:
         raise InvalidTask("Uncheatable category source changed")
 
 

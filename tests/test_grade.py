@@ -98,7 +98,12 @@ def test_deeply_nested_detail_replaces_stale_positive_verdict(tmp_path):
 
 @pytest.mark.parametrize(
     "policy,expected",
-    [(grade_module.Aggregation.ALL, 0.0), (grade_module.Aggregation.MEAN, 0.5), (grade_module.Aggregation.MAX, 1.0)],
+    [
+        (grade_module.Aggregation.ALL, 0.0),
+        (grade_module.Aggregation.MEAN, 0.5),
+        (grade_module.Aggregation.MAX, 1.0),
+        (grade_module.Aggregation.MIN, 0.0),
+    ],
 )
 def test_aggregation_preserves_missing_component_denominator(policy, expected):
     verdict = grade_module.aggregate_rewards([grade_module.scored(1.0)], expected_total=2, policy=policy)
@@ -145,3 +150,39 @@ def test_max_aggregation_preserves_partial_credit_and_empty_failure():
     assert (verdict.reward, verdict.status) == (0.75, Status.SCORED)
     empty = grade_module.aggregate_rewards([], expected_total=3, policy=grade_module.Aggregation.MAX)
     assert (empty.reward, empty.status) == (0.0, Status.SCORED)
+
+
+@pytest.mark.parametrize("numeric_gate,expected", [(0.0, 0.0), (1.0, 0.22)])
+def test_fractional_gate_and_rounding_preserve_alignment_denominator(numeric_gate, expected):
+    partial = grade_module.aggregate_rewards(
+        [grade_module.scored(2 / 3), grade_module.scored(numeric_gate)],
+        expected_total=2,
+        policy=grade_module.Aggregation.MIN,
+    )
+    result = grade_module.aggregate_rewards(
+        [partial, grade_module.scored(0), grade_module.scored(0)],
+        expected_total=3,
+        policy=grade_module.Aggregation.MEAN,
+        round_digits=2,
+    )
+    assert result.reward == expected
+    assert result.status == Status.SCORED
+    assert result.detail["missing"] == 0
+
+
+def test_missing_fractional_gate_cannot_preserve_partial_credit():
+    result = grade_module.aggregate_rewards(
+        [grade_module.scored(0.75)], expected_total=2, policy=grade_module.Aggregation.MIN
+    )
+    assert (result.reward, result.status, result.detail["missing"]) == (0, Status.SCORED, 1)
+
+
+@pytest.mark.parametrize("round_digits", [True, -1, 7, float("nan")])
+def test_invalid_rounding_contract_cannot_publish_positive_reward(tmp_path, round_digits):
+    write_reward(tmp_path, grade_module.scored(1))
+    result = grade_module.aggregate_rewards(
+        [grade_module.scored(1)], expected_total=1, policy=grade_module.Aggregation.MEAN, round_digits=round_digits
+    )
+    write_reward(tmp_path, result)
+    assert result.status == Status.INVALID_TASK
+    assert not (tmp_path / "reward.json").exists()

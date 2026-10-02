@@ -217,6 +217,14 @@ must be finite and nonpositive. Missing data, invalid counts and unrepresentable
 statistics raise `InvalidTask`; callers must abort reporting rather than substitute
 a favorable zero.
 
+`aggregate_rewards(..., expected_total=..., policy=..., round_digits=None)`
+combines core verdicts with ALL, MEAN, MAX or MIN. MIN preserves fractional scores
+under additional binary gates; missing required components contribute zero. Invalid
+task or infrastructure outcomes discard all credit. Optional `round_digits` from
+zero to six applies ties-to-even decimal scaling after aggregation; the default
+preserves the unrounded result. Unmatched task slots should be explicit scored-zero
+components, distinct from missing execution results.
+
 Clients with already normalized tokens or canonical labels can call
 `grade_collection_f1(reference, candidate, multiplicity=..., empty_reference=...,
 round_digits=...)` from `verifyit.modes.grade_exact`. Both inputs are sequences or sets

@@ -49,6 +49,7 @@ class Aggregation(StrEnum):
     ALL = "all"
     MEAN = "mean"
     MAX = "max"
+    MIN = "min"
 
 
 class InvalidTask(Exception):
@@ -102,16 +103,22 @@ def _validated_reward(verdict: object) -> Reward:
     return verdict
 
 
-def aggregate_rewards(verdicts: Sequence[Reward], *, expected_total: int, policy: Aggregation) -> Reward:
+def aggregate_rewards(
+    verdicts: Sequence[Reward], *, expected_total: int, policy: Aggregation, round_digits: int | None = None
+) -> Reward:
     """Combine component grades without dropping missing or unscored components.
 
     Missing components earn zero. An invalid task or infrastructure error discards
-    all credit; infrastructure errors take precedence when both occur.
+    all credit; infrastructure errors take precedence when both occur. MIN keeps
+    fractional credit only when every required component permits it. Optional
+    decimal rounding is applied after aggregation, with ties-to-even scaling.
     """
     if type(expected_total) is not int or expected_total <= 0:
         return invalid_task("expected_total must be a positive integer")
     if not isinstance(policy, Aggregation):
         return invalid_task("unknown reward aggregation policy")
+    if round_digits is not None and (type(round_digits) is not int or not 0 <= round_digits <= 6):
+        return invalid_task("aggregation rounding must be an integer from zero to six or None")
     if len(verdicts) > expected_total:
         return invalid_task("more component grades than expected")
     validated = [_validated_reward(verdict) for verdict in verdicts]
@@ -124,8 +131,13 @@ def aggregate_rewards(verdicts: Sequence[Reward], *, expected_total: int, policy
         reward = float(passed == expected_total)
     elif policy == Aggregation.MAX:
         reward = max((verdict.reward for verdict in validated), default=0.0)
+    elif policy == Aggregation.MIN:
+        reward = min((verdict.reward for verdict in validated), default=0.0) if len(validated) == expected_total else 0.0
     else:
         reward = sum(verdict.reward for verdict in validated) / expected_total
+    if round_digits is not None:
+        scale = 10**round_digits
+        reward = round(reward * scale) / scale
     return scored(reward, passed=passed, total=expected_total, missing=expected_total - len(validated))
 
 
